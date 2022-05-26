@@ -481,46 +481,6 @@ class Interop2022 extends PolymerElement {
       </div>
       <interop-2022-summary scores="[[scores]]" stable="[[stable]]"></interop-2022-summary>
 
-      <section class="focus-area-section">
-        <h2 class="focus-area-header">Focus Areas</h2>
-
-        <p class="prose">
-          Here you can see how focus areas are improving over time.
-          The more tests that pass, the higher the score.
-        </p>
-
-        <div class="focus-area">
-          <select id="featureSelect">
-            <option value="summary">Summary</option>
-            <optgroup label="2022 Focus Areas">
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
-                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
-              </template>
-            </optgroup>
-            <optgroup label="2021 Focus Areas">
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
-                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
-              </template>
-            </optgroup>
-          </select>
-        </div>
-
-        <div id="featureReferenceList">
-          <template is="dom-repeat" items="[[featureLinks(feature)]]">
-            <template is="dom-if" if="[[item.href]]">
-              <a href$="[[item.href]]">[[item.text]]</a>
-            </template>
-            <template is="dom-if" if="[[!item.href]]">
-              <span>[[item.text]]</span>
-            </template>
-          </template>
-        </div>
-
-        <interop-2022-feature-chart data-manager="[[dataManager]]"
-                                    stable="[[stable]]"
-                                    feature="{{feature}}">
-        </interop-2022-feature-chart>
-      </section>
       <div class="score-details">
         <div class="table-card">
           <table id="score-table" class="score-table">
@@ -621,6 +581,47 @@ class Interop2022 extends PolymerElement {
           </table>
         </div>
       </div>
+
+      <section class="focus-area-section">
+        <h2 class="focus-area-header">Scores over time</h2>
+
+        <p class="prose">
+          Here you can see how focus areas are improving over time.
+          The more tests that pass, the higher the score.
+        </p>
+
+        <div class="focus-area">
+          <select id="featureSelect">
+            <option value="summary">Summary</option>
+            <optgroup label="2022 Focus Areas">
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
+                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
+              </template>
+            </optgroup>
+            <optgroup label="2021 Focus Areas">
+              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
+                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
+              </template>
+            </optgroup>
+          </select>
+        </div>
+
+        <div id="featureReferenceList">
+          <template is="dom-repeat" items="[[featureLinks(feature)]]">
+            <template is="dom-if" if="[[item.href]]">
+              <a href$="[[item.href]]">[[item.text]]</a>
+            </template>
+            <template is="dom-if" if="[[!item.href]]">
+              <span>[[item.text]]</span>
+            </template>
+          </template>
+        </div>
+
+        <interop-2022-feature-chart data-manager="[[dataManager]]"
+                                    stable="[[stable]]"
+                                    feature="{{feature}}">
+        </interop-2022-feature-chart>
+      </section>
       <footer class="compat-footer">
         <p>Focus Area scores are calculated based on test pass rates. No test
         suite is perfect and improvements are always welcome. Please feel free
