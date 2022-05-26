@@ -930,7 +930,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.isPathSorted = !this.isPathSorted;
     this.sortRow = new Array(this.testRuns.length).fill(false);
     const sortedNodes = this.displayedNodes.slice();
-    sortedNodes.sort(this.compareTestName);
+    const self = this;
+    sortedNodes.sort(function (a, b) {
+      if (self.isPathSorted) {
+        return self.compareTestNameDefaultOrder(a, b);
+      }
+      return self.compareTestNameDefaultOrder(b, a);
+    });
     this.displayedNodes = sortedNodes;
   }
 
@@ -964,7 +970,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const sortedNodes = this.displayedNodes.slice();
       const self = this;
       sortedNodes.sort(function (a, b) {
-        if (this.sortRow[index]) {
+        if (self.sortRow[index]) {
           // Switch a and b to reverse the order;
           const c = a;
           a = b;
