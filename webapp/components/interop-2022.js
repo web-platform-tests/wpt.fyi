@@ -583,7 +583,7 @@ class Interop2022 extends PolymerElement {
       </div>
 
       <section class="focus-area-section">
-        <h2 class="focus-area-header">Focus Areas</h2>
+        <h2 class="focus-area-header">Scores over time</h2>
 
         <p class="prose">
           Here you can see how focus areas are improving over time.
