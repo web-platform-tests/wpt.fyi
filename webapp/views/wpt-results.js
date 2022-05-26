@@ -211,11 +211,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[displayedNodes]]">
               <tr class="sort-row">
                 <td>
-                  <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestName]]" aria-label="Sort the test name column"></paper-icon-button>
+                  <paper-icon-button class="sort-button" src=[[getSortIcon(isPathSorted)]] onclick="[[sortTestName]]" aria-label="Sort the test name column"></paper-icon-button>
                 </td>
-                <template is="dom-repeat" items="[[testRuns]]">
+                <template is="dom-repeat" items="[[sortRow]]" as="sortItem">
                   <td>
-                    <paper-icon-button class="sort-button" src="/static/expand_more.svg" onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                    <paper-icon-button class="sort-button" src=[[getSortIcon(sortItem)]] onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
                   </td>
                 </template>
               </tr>
@@ -408,6 +408,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
+      sortRow: {
+        type: Array,
+        value: [],
+      },
+      isPathSorted: Boolean,
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
@@ -516,6 +521,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.diffRun = null;
     }
     this.testRuns = [];
+    this.sortRow = [];
     this.searchResults = [];
     this.displayedTotals = [];
     this.refreshDisplayedNodes();
@@ -553,6 +559,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         url.searchParams.set('q', q);
       }
     }
+    this.sortRow = new Array(this.testRuns.length).fill(false);
 
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
     // 422, expect backend to attempt write-on-read of missing data. In such
@@ -919,12 +926,22 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (!this.displayedNodes) {
       return;
     }
+
+    this.isPathSorted = !this.isPathSorted;
+    this.sortRow = new Array(this.testRuns.length).fill(false);
     const sortedNodes = this.displayedNodes.slice();
     sortedNodes.sort(this.compareTestName);
     this.displayedNodes = sortedNodes;
   }
 
   compareTestName(a, b) {
+    if (this.isPathSorted) {
+      return this.compareTestNameDefaultOrder(a, b);
+    }
+    return this.compareTestNameDefaultOrder(b, a);
+  }
+
+  compareTestNameDefaultOrder(a, b) {
     const pathA = a.path.toLowerCase();
     const pathB = b.path.toLowerCase();
     if (pathA < pathB) {
@@ -947,9 +964,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const sortedNodes = this.displayedNodes.slice();
       const self = this;
       sortedNodes.sort(function (a, b) {
+        if (this.sortRow[index]) {
+          // Switch a and b to reverse the order;
+          const c = a;
+          a = b;
+          b = c;
+        }
         // Both 0/0 cases; compare test names.
         if (a.results[index].total === 0 && b.results[index].total === 0) {
-          return self.compareTestName(a, b);
+          return self.compareTestNameDefaultOrder(a, b);
         }
 
         // One of them is 0/0; compare passes;
@@ -959,13 +982,24 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         const percentageA = a.results[index].passes / a.results[index].total;
         const percentageB = b.results[index].passes / b.results[index].total;
         if (percentageA === percentageB) {
-          return self.compareTestName(a, b);
+          return self.compareTestNameDefaultOrder(a, b);
         }
         return percentageA - percentageB;
       });
 
+      const newSortRow = new Array(this.sortRow.length).fill(false);
+      newSortRow[index] = !this.sortRow[index];
+      this.sortRow = newSortRow;
+      this.isPathSorted = false;
       this.displayedNodes = sortedNodes;
     };
+  }
+
+  getSortIcon(isSorted) {
+    if (isSorted) {
+      return '/static/expand_more.svg';
+    }
+    return '/static/expand_less.svg';
   }
 
   handleTriageMode(isTriageMode) {
