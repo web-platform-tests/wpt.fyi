@@ -412,7 +412,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Array,
         value: [],
       },
-      isPathSorted: Boolean,
+      isPathSorted: {
+        type: Boolean,
+        value: false,
+      },
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
@@ -617,6 +620,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   pathUpdated(path) {
     this.refreshDisplayedNodes();
+    this.sortRow = new Array(this.testRuns.length).fill(false);
+    this.isPathSorted = false;
   }
 
   refreshDisplayedNodes() {
