@@ -41,18 +41,18 @@ func doTestIC(t *testing.T, p, q string) {
 	}
 	summaries := []summary{
 		{
-			Old: map[string][]int{
+			oldFormat: map[string][]int{
 				"/a" + p + "c": []int{1, 2},
 				p + "c":        []int{9, 9},
 			},
-			New: nil,
+			newFormat: nil,
 		}, {
-			Old: map[string][]int{
+			oldFormat: map[string][]int{
 				"/z" + p + "c": []int{0, 8},
 				"/x/y/z":       []int{3, 4},
 				p + "c":        []int{5, 9},
 			},
-			New: nil,
+			newFormat: nil,
 		},
 	}
 
@@ -91,6 +91,59 @@ func doTestIC(t *testing.T, p, q string) {
 					Total:  8,
 				},
 			},
+		},
+	}
+	sort.Sort(byName(expectedResults))
+	assert.Equal(t, expectedResults, resp.Results)
+}
+
+func doTestIC_newSummary(t *testing.T, p, q string) {
+	runIDs := []int64{1, 2}
+	testRuns := []shared.TestRun{
+		{
+			ID:         runIDs[0],
+			ResultsURL: "https://example.com/1-summary.json.gz",
+		},
+		{
+			ID:         runIDs[1],
+			ResultsURL: "https://example.com/2-summary.json.gz",
+		},
+	}
+	filters := shared.QueryFilter{
+		RunIDs: runIDs,
+		Q:      q,
+	}
+	summaries := []summary{
+		{
+			oldFormat: nil,
+			newFormat: map[string]SummaryResult{
+				"/a" + p + "c": {Status: "E", Counts: []int{1, 2}},
+				p + "c":        {Status: "O", Counts: []int{9, 9}},
+			},
+		}, {
+			oldFormat: nil,
+			newFormat: map[string]SummaryResult{
+				"/z" + p + "c": {Status: "F", Counts: []int{0, 8}},
+				"/x/y/z":       {Status: "O", Counts: []int{3, 4}},
+				p + "c":        {Status: "O", Counts: []int{5, 9}},
+			},
+		},
+	}
+
+	resp := prepareSearchResponse(&filters, testRuns, summaries)
+	assert.Equal(t, testRuns, resp.Runs)
+	expectedResults := []shared.SearchResult{
+		{
+			Test:         "/a" + p + "c",
+			LegacyStatus: []shared.LegacySearchRunResult{{Passes: 1, Total: 2}, {}},
+		},
+		{
+			Test:         p + "c",
+			LegacyStatus: []shared.LegacySearchRunResult{{Passes: 9, Total: 9}, {Passes: 5, Total: 9}},
+		},
+		{
+			Test:         "/z" + p + "c",
+			LegacyStatus: []shared.LegacySearchRunResult{{}, {Passes: 0, Total: 8}},
 		},
 	}
 	sort.Sort(byName(expectedResults))

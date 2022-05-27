@@ -187,9 +187,9 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]shared.SearchResult)
 	for i, s := range summaries {
-		if s.Old != nil {
+		if s.oldFormat != nil {
 			// This is an old summary. Format according to old process.
-			for filename, passAndTotal := range s.Old {
+			for filename, passAndTotal := range s.oldFormat {
 				// Exclude filenames that do not match query.
 				if !strings.Contains(canonicalizeStr(filename), q) {
 					continue
@@ -209,7 +209,7 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 			}
 		} else {
 			// This is a new summary. Aggregate using new process.
-			for filename, testInfo := range s.New {
+			for filename, testInfo := range s.newFormat {
 				// Exclude filenames that do not match query.
 				if !strings.Contains(canonicalizeStr(filename), q) {
 					continue
