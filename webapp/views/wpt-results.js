@@ -940,7 +940,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (passes === total) {
       return '100%';
     }
+
     const percent = parseFloat(passes / total * 100).toFixed(1);
+    // If there are passing tests, but not enough to register 1/10 of 1%,
+    // show 0.1% rather than 0.0% to differentiate between possible error states.
+    if (percent < 0.1) {
+      return '0.1%';
+    }
+    // If almost every test is passing, but there are some failures,
+    // don't round up to 100% so that it's clear some failure exists.
+    if (percent > 99.9) {
+      return '99.9%';
+    }
     return `${percent}%`;
   }
 
