@@ -136,7 +136,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           min-height: 30px;
         }
       }
-      .sort-row {
+      .sort-col {
         border-top: 4px solid white;
         padding: 4px;
       }
@@ -209,11 +209,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
           <tbody>
             <template is="dom-if" if="[[displayedNodes]]">
-              <tr class="sort-row">
+              <tr class="sort-col">
                 <td>
                   <paper-icon-button class="sort-button" src=[[getSortIcon(isPathSorted)]] onclick="[[sortTestName]]" aria-label="Sort the test name column"></paper-icon-button>
                 </td>
-                <template is="dom-repeat" items="[[sortRow]]" as="sortItem">
+                <template is="dom-repeat" items="[[sortCol]]" as="sortItem">
                   <td>
                     <paper-icon-button class="sort-button" src=[[getSortIcon(sortItem)]] onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
                   </td>
@@ -408,7 +408,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
-      sortRow: {
+      sortCol: {
         type: Array,
         value: [],
       },
@@ -524,7 +524,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.diffRun = null;
     }
     this.testRuns = [];
-    this.sortRow = [];
+    this.sortCol = [];
     this.searchResults = [];
     this.displayedTotals = [];
     this.refreshDisplayedNodes();
@@ -562,7 +562,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         url.searchParams.set('q', q);
       }
     }
-    this.sortRow = new Array(this.testRuns.length).fill(false);
+    this.sortCol = new Array(this.testRuns.length).fill(false);
 
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
     // 422, expect backend to attempt write-on-read of missing data. In such
@@ -621,7 +621,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   pathUpdated(path) {
     this.refreshDisplayedNodes();
     if (this.testRuns) {
-      this.sortRow = new Array(this.testRuns.length).fill(false);
+      this.sortCol = new Array(this.testRuns.length).fill(false);
       this.isPathSorted = false;
     }
   }
@@ -935,7 +935,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
 
     this.isPathSorted = !this.isPathSorted;
-    this.sortRow = new Array(this.testRuns.length).fill(false);
+    this.sortCol = new Array(this.testRuns.length).fill(false);
     const sortedNodes = this.displayedNodes.slice();
     const self = this;
     sortedNodes.sort(function (a, b) {
@@ -967,8 +967,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return 0;
   }
 
-  sortTestResults() {
-    const [index] = arguments;
+  sortTestResults(index) {
     return () => {
       if (!this.displayedNodes) {
         return;
@@ -977,7 +976,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const sortedNodes = this.displayedNodes.slice();
       const self = this;
       sortedNodes.sort(function (a, b) {
-        if (self.sortRow[index]) {
+        if (self.sortCol[index]) {
           // Switch a and b to reverse the order;
           const c = a;
           a = b;
@@ -990,7 +989,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
         // One of them is 0/0; compare passes;
         if (a.results[index].total === 0 || b.results[index].total === 0) {
-          return a.results[index].passes - b.results[index].passes;
+          return a.results[index].total - b.results[index].total;
         }
         const percentageA = a.results[index].passes / a.results[index].total;
         const percentageB = b.results[index].passes / b.results[index].total;
@@ -1000,9 +999,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return percentageA - percentageB;
       });
 
-      const newSortRow = new Array(this.sortRow.length).fill(false);
-      newSortRow[index] = !this.sortRow[index];
-      this.sortRow = newSortRow;
+      const newSortCol = new Array(this.sortCol.length).fill(false);
+      newSortCol[index] = !this.sortCol[index];
+      this.sortCol = newSortCol;
       this.isPathSorted = false;
       this.displayedNodes = sortedNodes;
     };
