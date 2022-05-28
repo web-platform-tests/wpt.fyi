@@ -276,7 +276,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </template>
     </template>
 
-    <template is="dom-if" if="[[pathIsASubfolderOrFile]]">
+    <template is="dom-if" if="[[pathIsATestFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
           <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
