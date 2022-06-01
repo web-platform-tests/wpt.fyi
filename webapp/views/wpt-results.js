@@ -246,7 +246,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       is-dir="{{ node.isDir }}"
                       is-triage-mode=[[isTriageMode]]>
                   </path-part>
-                  <span class="total">{{ getTestTotal(node) }}</span>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
                     <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
                       <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -296,7 +295,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
                   <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
-                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ formatTestPercentage(columnTotal.passes, columnTotal.total) }}</span>
+                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ formatCellDisplay(columnTotal.passes, columnTotal.total) }}</span>
                   </td>
                 </template>
               </tr>
@@ -677,11 +676,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
       }
       for (let i = 0; i < rs.length; i++) {
-        // If we have a harness status that's not "OK",
-        // save it to display instead of showing a percentage.
-        if (rs[i].newScoringProcess && rs[i].status && rs[i].status !== 'O') {
-          row.results[i].status = STATUS_ABBREVIATIONS[rs[i].status];
-        }
+        row.results[i].status = rs[i].status;
 
         // Keep total subtest total for run comparisons.
         if (!row.results[i].subtest_total) {
@@ -690,9 +685,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         row.results[i].subtest_passes += rs[i].passes;
         row.results[i].subtest_total += rs[i].total;
-        if (rs[i].status === 'O') {
-          row.results[i].subtest_passes += 1;
-          row.results[i].subtest_total += 1;
+        if (rs[i].status) {
+          row.results[i].subtest_total++;
+          if (rs[i].status === 'O') row.results[i].subtest_passes++;
         }
 
         // If this is an old summary, aggregate using the old scoring process.
@@ -874,7 +869,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   testTotalsClass(passes, total) {
     if ((this.path === '/' && !this.colorHomepage) || total === 0) {
-      return 'top'
+      return 'top';
     }
     return this.passRateClass(passes, total);
   }
@@ -915,57 +910,70 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  getTestTotal(node) {
-    // Display test totals in the subfolder if this cell represents a directory.
-    // If this cell represents a single test, display subtests.
-    const prop = (node.isDir) ? 'total': 'subtest_total';
-
-    const total = node.results.reduce((a, b) => Math.max(a, b[prop]), 0);
-    if (!node.isDir) {
-      return (total - 1 <= 0) ? '' : ` (${total - 1})`;
-    }
-    return (total === 0) ? '' : ` (${total})`;
-  }
-
-  formatTestPercentage(passes, total) {
+  formatCellDisplay(passes, total, status=undefined, isDir=true) {
     // Display "MISSING" text if there are no tests or subtests.
-    if (total === 0) {
+    if (total === 0 && !status) {
       return 'MISSING';
     }
+    // Display a warning symbol if there is a harness error.
+    let warn = '';
+    if (status && !isDir && status !== 'O') {
+      warn = ' ⚠️';
+    }
 
-    // Show flat 0% or 100% if all or no tests/subtests pass.
+    const formatPasses = parseFloat(passes.toFixed(2));
+    let cellDisplay = '';    
+    // Show flat "0 / total" or "total / total" only if none or all tests/subtests pass.
     if (passes === 0) {
-      return '0%';
+      cellDisplay = `0 / ${total}`;
     }
-    if (passes === total) {
-      return '100%';
+    else if (passes === total) {
+      cellDisplay = `${formatPasses} / ${total}`;
     }
-
-    const percent = parseFloat(passes / total * 100).toFixed(1);
-    // If there are passing tests, but not enough to register 1/10 of 1%,
-    // show 0.1% rather than 0.0% to differentiate between possible error states.
-    if (percent < 0.1) {
-      return '0.1%';
+    // If there are passing tests, but only enough to round to 0.00,
+    // show 0.01 rather than 0.00 to differentiate between possible error states.
+    else if (formatPasses < 0.01) {
+      cellDisplay = `0.01 / ${total}`;
     }
     // If almost every test is passing, but there are some failures,
-    // don't round up to 100% so that it's clear some failure exists.
-    if (percent > 99.9) {
-      return '99.9%';
+    // don't round up to "total / total" so that it's clear some failure exists.
+    else if (formatPasses === parseFloat(total)) {
+      cellDisplay = `${formatPasses - 0.01}`;
+    } else {
+      cellDisplay = `${formatPasses} / ${total}`;
     }
-    return `${percent}%`;
+
+    // Display in parentheses if representing subtests.
+    if (!isDir) {
+      return `(${cellDisplay})${warn}`;
+    }
+    return `${cellDisplay}${warn}`;
   }
 
   getNodeResult(node, index) {
+    const status = node.results[index].status;
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
-    if (!node.isDir && node.results[index].status) {
-      return node.results[index].status;
+    const maxTotal = node.results.reduce((a, b) => Math.max(a, b.subtest_total), 0);
+    if (!node.isDir && status && maxTotal === 1) {
+      if (status in STATUS_ABBREVIATIONS) {
+        return STATUS_ABBREVIATIONS[status];
+      }
+      return status;
+    }
+    // Display test numbers at directory level, but subtest numbers when showing a single test.
+    const passes_prop = (node.isDir) ? 'passes': 'subtest_passes';
+    const total_prop = (node.isDir) ? 'total': 'subtest_total';
+    // Calculate what should be displayed in a given results row.
+    let passes = node.results[index][passes_prop];
+    let total = node.results[index][total_prop];
+    // Don't count the harness status toward subtest numbers.
+    if (!node.isDir && status) {
+      total--;
+      if (status === 'O') passes--;
     }
 
-    // Calculate what should be displayed in a given results row.
-    const passes = node.results[index].passes;
-    const total = node.results[index].total;
-    return this.formatTestPercentage(passes, total);
+    return this.formatCellDisplay(passes, total, status, node.isDir);
   }
 
   /* Function for getting total numbers.

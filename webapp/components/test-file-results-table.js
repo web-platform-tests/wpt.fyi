@@ -171,7 +171,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     </template>
     <template is="dom-if" if="[[shouldShowTotals(totals)]]">
       <tr class="totals-row">
-        <td class="sub-test-name"><code><strong>Total</strong></code></td>
+        <td class="sub-test-name"><code><strong>Subtest Total</strong></code></td>
         <template is="dom-repeat" items="[[totals]]" as="columnTotal">
           <td class$="[[ totalsColorClass(columnTotal.passes, columnTotal.total) ]]">
             <code>[[ columnTotal.passes ]]/[[ columnTotal.total ]]</code>

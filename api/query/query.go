@@ -119,7 +119,6 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			// Try to unmarshal the json using the new aggregation structure.
 			marshalErr := json.Unmarshal(data, &s.newFormat)
 			if err == nil && marshalErr != nil {
-				fmt.Println("a Marshal error occurred.")
 				// If that failed, this is likely an old summary format.
 				// Umarshal using the old structure.
 				oldMarshalErr := json.Unmarshal(data, &s.oldFormat)
