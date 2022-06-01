@@ -24,6 +24,7 @@ APP_DEPS="${APP_PATH}"
 if [[ "${APP_PATH}" == webapp/web* ]]; then APP_DEPS="webapp|api|shared"; fi
 # Be more conservative: only deploy searchcache when it's directly modified.
 if [[ "${APP_PATH}" == api/query/cache/service* ]]; then APP_DEPS="api/query"; fi
+if [[ "${APP_PATH}" == "results-processor/app.staging.yaml" ]]; then APP_DEPS="results-processor"; fi
 APP_DEPS_REGEX="^(${APP_DEPS})/"
 
 EXCLUSIONS="_test.go$|webapp/components/test/"
