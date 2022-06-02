@@ -265,6 +265,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     </template>
                     <template is="dom-if" if="[[!diffRun]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                      <template is="dom-if" if="[[ shouldDisplayHarnessWarning(node, index) ]]">
+                        <span title\$="Harness [[ getHarnessWarningText(node, index) ]]"> ⚠️</span>
+                      </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
                       <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
@@ -910,15 +913,30 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
+  shouldDisplayHarnessTextInCell(node, index) {
+    const shouldShowStatus = node.results.every(testInfo => testInfo.subtest_total <= 1);
+    return !node.isDir && node.results[index].status && shouldShowStatus
+  }
+
+  shouldDisplayHarnessWarning(node, index) {
+    // Determine if a warning sign should be displayed next to subtest counts.
+    const status = node.results[index].status;
+    return !node.isDir && status && status !== 'O'
+      && !this.shouldDisplayHarnessTextInCell(node, index);
+  }
+
+  getHarnessWarningText(node, index) {
+    let status = node.results[index].status;
+    if (status in STATUS_ABBREVIATIONS) {
+      status = STATUS_ABBREVIATIONS[status];
+    }
+    return status;
+  }
+
   formatCellDisplay(passes, total, status=undefined, isDir=true) {
     // Display "MISSING" text if there are no tests or subtests.
     if (total === 0 && !status) {
       return 'MISSING';
-    }
-    // Display a warning symbol if there is a harness error.
-    let warn = '';
-    if (status && !isDir && status !== 'O') {
-      warn = ' ⚠️';
     }
 
     const formatPasses = parseFloat(passes.toFixed(2));
@@ -945,22 +963,19 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
     // Display in parentheses if representing subtests.
     if (!isDir) {
-      return `(${cellDisplay})${warn}`;
+      return `(${cellDisplay})`;
     }
-    return `${cellDisplay}${warn}`;
+    return `${cellDisplay}`;
   }
 
   getNodeResult(node, index) {
-    const status = node.results[index].status;
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
-    const maxTotal = node.results.reduce((a, b) => Math.max(a, b.subtest_total), 0);
-    if (!node.isDir && status && maxTotal === 1) {
-      if (status in STATUS_ABBREVIATIONS) {
-        return STATUS_ABBREVIATIONS[status];
-      }
-      return status;
+    if (this.shouldDisplayHarnessTextInCell(node, index)) {
+      return this.getHarnessWarningText(node, index);
     }
+
+    const status = node.results[index].status;
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passes_prop = (node.isDir) ? 'passes': 'subtest_passes';
     const total_prop = (node.isDir) ? 'total': 'subtest_total';
