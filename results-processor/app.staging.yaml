@@ -1,0 +1,21 @@
+# Copyright 2022 The WPT Dashboard Project. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+service: processor
+runtime: custom
+env: flex
+
+manual_scaling:
+  instances: 3
+resources:
+  cpu: 2
+  memory_gb: 4
+  disk_size_gb: 10
+
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
+  app_start_timeout_sec: 300
