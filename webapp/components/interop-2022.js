@@ -944,13 +944,13 @@ class Interop2022Summary extends PolymerElement {
     if (score >= 95) {
       return ['#388E3C', '#00c70a1a'];  // Green 700
     }
-    if (score > 75) {
+    if (score >= 75) {
       return ['#568f24', '#64d60026'];  // Light Green 700
     }
-    if (score > 50) {
+    if (score >= 50) {
       return ['#b88400', '#ffc22926'];  // Yellow 700
     }
-    if (score > 25) {
+    if (score >= 25) {
       return ['#d16900', '#f57a0026'];  // Orange 700
     }
     return ['#ee2b2b', '#ff050526']; // Red 700
