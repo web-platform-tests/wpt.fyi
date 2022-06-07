@@ -938,22 +938,20 @@ class Interop2022Summary extends PolymerElement {
     }
   }
 
-  // TODO: Reuse the code from wpt-colors.js
   calculateColor(score) {
-    // RGB values from https://material.io/design/color/
     if (score >= 95) {
-      return ['#388E3C', '#00c70a1a'];  // Green 700
+      return ['#388E3C', '#00c70a1a'];
     }
-    if (score > 75) {
-      return ['#568f24', '#64d60026'];  // Light Green 700
+    if (score >= 75) {
+      return ['#568f24', '#64d60026'];
     }
-    if (score > 50) {
-      return ['#b88400', '#ffc22926'];  // Yellow 700
+    if (score >= 50) {
+      return ['#b88400', '#ffc22926'];
     }
-    if (score > 25) {
-      return ['#d16900', '#f57a0026'];  // Orange 700
+    if (score >= 25) {
+      return ['#d16900', '#f57a0026'];
     }
-    return ['#ee2b2b', '#ff050526']; // Red 700
+    return ['#ee2b2b', '#ff050526'];
   }
 }
 window.customElements.define(Interop2022Summary.is, Interop2022Summary);

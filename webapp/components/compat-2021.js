@@ -565,13 +565,13 @@ class Compat2021Summary extends PolymerElement {
     if (score >= 95) {
       return '#388E3C';  // Green 700
     }
-    if (score > 75) {
+    if (score >= 75) {
       return '#689F38';  // Light Green 700
     }
-    if (score > 50) {
+    if (score >= 50) {
       return '#FBC02D';  // Yellow 700
     }
-    if (score > 25) {
+    if (score >= 25) {
       return '#F57C00';  // Orange 700
     }
     return '#D32F2F'; // Red 700
