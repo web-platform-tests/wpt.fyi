@@ -25,7 +25,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v44 v44.5.0
 	github.com/tebeka/selenium v0.9.9
@@ -34,7 +34,7 @@ require (
 	google.golang.org/api v0.66.0
 	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44
 	google.golang.org/grpc v1.44.0
-	gopkg.in/yaml.v3 v3.0.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
