@@ -38,6 +38,7 @@ case "${APP_PATH}" in
   "webapp/web" | \
   "webapp/web/app.staging.yaml" | \
   "results-processor" | \
+  "results-processor/app.staging.yaml" | \
   "api/query/cache/service" | \
   "api/query/cache/service/app.staging.yaml")
   ;;

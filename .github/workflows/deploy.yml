@@ -46,7 +46,7 @@ jobs:
         run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
 
       - name: build processor
-        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" results-processor
+        run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" results-processor/app.staging.yaml
 
       - name: build searchcache
         run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" api/query/cache/service/app.staging.yaml
