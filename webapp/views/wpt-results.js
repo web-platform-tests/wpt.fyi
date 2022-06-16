@@ -157,9 +157,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       .sort-button {
         margin-left: -15px;
-      }
+      }dcd5752 (help cursor on warning)
       .view-triage {
         margin-left: 30px;
+      }
+      .pointer {
+        cursor: help;
       }
     </style>
 
@@ -266,7 +269,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     <template is="dom-if" if="[[!diffRun]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
                       <template is="dom-if" if="[[ shouldDisplayHarnessWarning(node, index) ]]">
-                        <span title\$="Harness [[ getHarnessWarningText(node, index) ]]"> ⚠️</span>
+                        <span class="pointer" title\$="Harness [[ getHarnessWarningText(node, index) ]]"> ⚠️</span>
                       </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
