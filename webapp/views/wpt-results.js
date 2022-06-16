@@ -1023,6 +1023,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (this.view === 'percent') {
       return this.formatCellDisplayPercentView(passes, total);
     }
+    // If we're in the subtest view and there are no subtests but a status exists,
+    // we should count the status as the test total.
+    if (total === 0) {
+      if (status === 'P') return `${passes + 1} / ${total + 1}`;
+      return `${passes} / ${total + 1}`;
+    }
     return `${passes} / ${total}`;
   }
 
