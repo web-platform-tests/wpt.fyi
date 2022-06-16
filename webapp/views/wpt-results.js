@@ -42,15 +42,15 @@ const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 // This is used to expand the status to its full value after being
 // abbreviated for smaller storage in summary files.
 const STATUS_ABBREVIATIONS = {
-  "P": "PASS",
-  "O": "OK",
-  "F": "FAIL",
-  "S": "SKIP",
-  "E": "ERROR",
-  "N": "NOTRUN",
-  "C": "CRASH",
-  "T": "TIMEOUT",
-  "PF": "PRECONDITION_FAILED"
+  'P': 'PASS',
+  'O': 'OK',
+  'F': 'FAIL',
+  'S': 'SKIP',
+  'E': 'ERROR',
+  'N': 'NOTRUN',
+  'C': 'CRASH',
+  'T': 'TIMEOUT',
+  'PF': 'PRECONDITION_FAILED'
 }
 
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
@@ -686,8 +686,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       for (let i = 0; i < rs.length; i++) {
         row.results[i].status = rs[i].status;
 
-        // Keep subtest total for run comparisons.
+        const passingStatus = ([rs[i].status && 'O', 'P'].includes(rs[i].status));
+        // Keep subtest total for diff and subtest views.
         if (!row.results[i].subtest_total) {
+          // Initialize count to 0.
           row.results[i].subtest_passes = 0;
           row.results[i].subtest_total = 0;
         }
@@ -698,7 +700,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         // Increment status on subtest totals specifically for diff views.
         if (rs[i].status) {
           row.results[i].subtest_total++;
-          if (rs[i].status === 'O') row.results[i].subtest_passes++
+          if (rs[i].status === 'O') row.results[i].subtest_passes++;
+
+          // If we're in subtest view and we have a test with no subtests,
+          // we should NOT ignore the test status and add it to the subtest count.
+          else if (rs[i].newScoringProcess && rs[i].total === 0) {
+            nodes.totals[i].subtest_total++;
+            if (passingStatus) nodes.totals[i].subtest_passes++;
+          }
         }
 
         // If this is an old summary, aggregate using the old scoring process.
@@ -712,7 +721,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           nodes.totals[i].passes += percentPassed;
           row.results[i].passes += percentPassed;
         // If this is a new summary, aggregate using the new scoring process.
-        } else if (["O", "P"].includes(rs[i].status) || (rs[i].total > 0
+        } else if (['O', 'P'].includes(rs[i].status) || (rs[i].total > 0
           && rs[i].total === rs[i].passes)) {
           // If we have a total of 0 subtests but the status is passing,
           // mark as 100% passing.
@@ -941,10 +950,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return status;
   }
 
+  // Formats the numbers shown on the results page for the test aggregate view.
   formatCellDisplayTestView(passes, total, isDir=true) {
     const formatPasses = parseFloat(passes.toFixed(2));
     let cellDisplay = '';    
-    // Show flat "0 / total" or "total / total" only if none or all tests/subtests pass.
+    // Show flat '0 / total' or 'total / total' only if none or all tests/subtests pass.
     if (passes === 0) {
       cellDisplay = `0 / ${total}`;
     }
@@ -957,7 +967,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       cellDisplay = `0.01 / ${total}`;
     }
     // If almost every test is passing, but there are some failures,
-    // don't round up to "total / total" so that it's clear some failure exists.
+    // don't round up to 'total / total' so that it's clear some failure exists.
     else if (formatPasses === parseFloat(total)) {
       cellDisplay = `${formatPasses - 0.01}`;
     } else {
@@ -971,6 +981,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${cellDisplay}`;
   }
 
+  // Formats the numbers shown on the results page for the percent view.
   formatCellDisplayPercentView(passes, total) {
     const formatPercent = parseFloat((passes / total * 100).toFixed(2));
     let cellDisplay = '';    
@@ -987,7 +998,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       cellDisplay = '0.1';
     }
     // If almost every test is passing, but there are some failures,
-    // don't round up to "total / total" so that it's clear some failure exists.
+    // don't round up to 'total / total' so that it's clear some failure exists.
     else if (formatPercent === 100.0) {
       cellDisplay = '99.9';
     } else {
@@ -997,12 +1008,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${cellDisplay}%`;
   }
 
+  // Formats the numbers that will be shown in each cell on the results page.
   formatCellDisplay(passes, total, status=undefined, isDir=true) {
-    // Display "MISSING" text if there are no tests or subtests.
+    // Display 'MISSING' text if there are no tests or subtests.
     if (total === 0 && !status) {
       return 'MISSING';
     }
 
+    // If the view is not the default view (subtest), then the function to
+    // obtain the selected view is called.
     if (this.view === 'test') {
       return this.formatCellDisplayTestView(passes, total, isDir);
     }
@@ -1013,22 +1027,23 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getNodeResult(node, index) {
+    const isSubtestView = this.view !== 'test' && this.view !== 'percent';
+    const useSubtestCounts = (!node.isDir || isSubtestView);
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
-    if (this.shouldDisplayHarnessTextInCell(node, index)) {
+    if (this.shouldDisplayHarnessTextInCell(node, index) && !isSubtestView) {
       return this.getHarnessWarningText(node, index);
     }
 
     const status = node.results[index].status;
-    const use_subtest_counts = (!node.isDir || (this.view !== 'test' && this.view !== 'percent'));
     // Display test numbers at directory level, but subtest numbers when showing a single test.
-    const passes_prop = use_subtest_counts ? 'subtest_passes': 'passes';
-    const total_prop = use_subtest_counts ? 'subtest_total': 'total';
+    const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
+    const totalProp = useSubtestCounts ? 'subtest_total': 'total';
     // Calculate what should be displayed in a given results row.
-    let passes = node.results[index][passes_prop];
-    let total = node.results[index][total_prop];
+    let passes = node.results[index][passesProp];
+    let total = node.results[index][totalProp];
     // Don't count the harness status toward subtest numbers.
-    if (use_subtest_counts && status) {
+    if (useSubtestCounts && status) {
       total--;
       if (status === 'O') passes--;
     }
@@ -1036,16 +1051,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return this.formatCellDisplay(passes, total, status, node.isDir);
   }
 
-  getNodeResultSubtestView(node, index) {
-    // If the cell represents a single test and it has no subtests,
-    // show the status of the test on the cell rather than a percentage.
-    if (this.shouldDisplayHarnessTextInCell(node, index)) {
-      return this.getHarnessWarningText(node, index);
-    }
-
-    return `${node.results[index].subtest_passes} / ${node.results[index].subtest_total}`;
-  }
-
+  // Format and display the information shown in the totals cells.
   getTotalDisplay(totalInfo) {
     let passes = totalInfo.passes;
     let total = totalInfo.total;
@@ -1101,8 +1107,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
     // TODO (danielrsmith): fix the query logic so that this statement isn't needed
-    // to avoid duplicate calls.
-    if (this._fetchedQuery === query || (query.includes('view') && query.split('=').length === 2)) {
+    // to avoid duplicate calls. Hacky fix here that will not reload the data if
+    // 'view is the only query string param (it shouldn't ever be).
+    if (query.includes('view') && query.split('=').length === 2) {
+      return;
+    }
+
+    if (this._fetchedQuery === query) {
       return;
     }
     this._fetchedQuery = query; // Debounce.
