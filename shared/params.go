@@ -330,6 +330,15 @@ func ParseMaxCountParamWithDefault(v url.Values, defaultValue int) (count int, e
 	return defaultValue, nil
 }
 
+// ParseMaxCountParam parses the 'max-count' parameter as an integer
+func ParseViewParam(v url.Values) (*string, error) {
+	viewParam := v.Get("view")
+	if viewParam == "test" || viewParam == "subtest" || viewParam == "percent" {
+		return &viewParam, nil
+	}
+	return nil, nil
+}
+
 // ParseDateTimeParam flexibly parses a date/time param with the given name as a time.Time.
 func ParseDateTimeParam(v url.Values, name string) (*time.Time, error) {
 	if fromParam := v.Get(name); fromParam != "" {
@@ -581,6 +590,9 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 		return filter, err
 	}
 	if filter.To, err = ParseDateTimeParam(v, "to"); err != nil {
+		return filter, err
+	}
+	if filter.View, err = ParseViewParam(v); err != nil {
 		return filter, err
 	}
 	return filter, nil

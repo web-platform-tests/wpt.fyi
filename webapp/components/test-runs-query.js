@@ -8,7 +8,7 @@ import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 
 const testRunsQueryComputer =
-  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset)';
+  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view)';
 
 const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
@@ -41,6 +41,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       master: Boolean,
       from: Date,
       to: Date,
+      view: {
+        type: String,
+        notify: true
+      },
       isLatest: {
         type: Boolean,
         computed: 'computeIsLatest(shas)'
@@ -101,7 +105,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   /**
   * Convert the UI property values into their equivalent URI query params.
   */
-  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset) {
+  computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view) {
     const params = {};
     if (!this.computeIsLatest(shas)) {
       params.sha = shas;
@@ -156,6 +160,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     // Requesting a specific SHA makes aligned redundant.
     if (aligned && this.computeIsLatest(shas)) {
       params.aligned = true;
+    }
+    if (view) {
+      params.view = view;
     }
     return params;
   }
@@ -257,6 +264,9 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if ('aligned' in params) {
       batchUpdate.aligned = params.aligned;
     }
+    if ('view' in params) {
+      batchUpdate.view = params.view;
+    }
     batchUpdate.master = batchUpdate.labels && batchUpdate.labels.includes('master');
     if (batchUpdate.master) {
       batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
@@ -302,7 +312,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
 // TODO(lukebjerring): Support to & from in the builder.
 const testRunsUIQueryComputer =
-  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds)';
+  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, view, runIds)';
 
 const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
@@ -333,8 +343,8 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     };
   }
 
-  computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, runIds) {
-    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset);
+  computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, view, runIds) {
+    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view);
     if (diff || this.diff) {
       params.diff = true;
       if (this.diffFilter) {

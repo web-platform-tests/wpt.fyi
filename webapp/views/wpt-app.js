@@ -154,7 +154,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
                      subtest-row-count={{subtestRowCount}}
-                     is-triage-mode="[[isTriageMode]]"></wpt-results>
+                     is-triage-mode="[[isTriageMode]]"
+                     view="[[view]]"></wpt-results>
 
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>

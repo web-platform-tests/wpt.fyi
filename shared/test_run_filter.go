@@ -52,6 +52,7 @@ type TestRunFilter struct {
 	MaxCount *int         `json:"maxcount,omitempty"`
 	Offset   *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
 	Products ProductSpecs `json:"products,omitempty"`
+	View     *string      `json:"view,omitempty"`
 }
 
 type testRunFilterNoCustomMarshalling TestRunFilter
@@ -88,7 +89,8 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 		(filter.Aligned == nil) &&
 		(filter.From == nil) &&
 		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
-		(len(filter.Products) < 1)
+		(len(filter.Products) < 1) &&
+		(filter.View == nil)
 }
 
 // OrDefault returns the current filter, or, if it is a default query, returns
@@ -190,6 +192,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	}
 	if filter.To != nil {
 		q.Set("to", filter.From.Format(time.RFC3339))
+	}
+	if filter.View != nil {
+		q.Set("view", *filter.View)
 	}
 	return q
 }

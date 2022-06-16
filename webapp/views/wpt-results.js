@@ -298,7 +298,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
                   <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
-                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ formatCellDisplay(columnTotal.passes, columnTotal.total) }}</span>
+                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ getTotalDisplay(columnTotal) }}</span>
                   </td>
                 </template>
               </tr>
@@ -676,21 +676,26 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const aggregateTestTotals = (nodes, row, rs) => {
       // Keep track of overall total.
       if (!nodes.hasOwnProperty('totals')) {
-        nodes['totals'] = this.testRuns.map(() => ({ passes: 0, total: 0 }));
+        nodes['totals'] = this.testRuns.map(() => {
+          return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
+        });
       }
       for (let i = 0; i < rs.length; i++) {
         row.results[i].status = rs[i].status;
 
-        // Keep total subtest total for run comparisons.
+        // Keep subtest total for run comparisons.
         if (!row.results[i].subtest_total) {
           row.results[i].subtest_passes = 0;
           row.results[i].subtest_total = 0;
         }
         row.results[i].subtest_passes += rs[i].passes;
         row.results[i].subtest_total += rs[i].total;
+        nodes.totals[i].subtest_passes += rs[i].passes;
+        nodes.totals[i].subtest_total += rs[i].total;
+        // Increment status on subtest totals specifically for diff views.
         if (rs[i].status) {
           row.results[i].subtest_total++;
-          if (rs[i].status === 'O') row.results[i].subtest_passes++;
+          if (rs[i].status === 'O') row.results[i].subtest_passes++
         }
 
         // If this is an old summary, aggregate using the old scoring process.
@@ -933,12 +938,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return status;
   }
 
-  formatCellDisplay(passes, total, status=undefined, isDir=true) {
-    // Display "MISSING" text if there are no tests or subtests.
-    if (total === 0 && !status) {
-      return 'MISSING';
-    }
-
+  formatCellDisplayTestView(passes, total, isDir=true) {
     const formatPasses = parseFloat(passes.toFixed(2));
     let cellDisplay = '';    
     // Show flat "0 / total" or "total / total" only if none or all tests/subtests pass.
@@ -968,6 +968,47 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${cellDisplay}`;
   }
 
+  formatCellDisplayPercentView(passes, total) {
+    const formatPercent = parseFloat((passes / total * 100).toFixed(2));
+    let cellDisplay = '';    
+    // Show flat 0% or 100% only if none or all tests/subtests pass.
+    if (passes === 0) {
+      cellDisplay = '0';
+    }
+    else if (passes === total) {
+      cellDisplay = '100';
+    }
+    // If there are passing tests, but only enough to round to 0.00,
+    // show 0.01 rather than 0.00 to differentiate between possible error states.
+    else if (formatPercent === 0.0) {
+      cellDisplay = '0.1';
+    }
+    // If almost every test is passing, but there are some failures,
+    // don't round up to "total / total" so that it's clear some failure exists.
+    else if (formatPercent === 100.0) {
+      cellDisplay = '99.9';
+    } else {
+      cellDisplay = `${formatPercent}`;
+    }
+
+    return `${cellDisplay}%`;
+  }
+
+  formatCellDisplay(passes, total, status=undefined, isDir=true) {
+    // Display "MISSING" text if there are no tests or subtests.
+    if (total === 0 && !status) {
+      return 'MISSING';
+    }
+
+    if (this.view === 'test') {
+      return this.formatCellDisplayTestView(passes, total, isDir);
+    }
+    if (this.view === 'percent') {
+      return this.formatCellDisplayPercentView(passes, total);
+    }
+    return `${passes} / ${total}`;
+  }
+
   getNodeResult(node, index) {
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
@@ -976,19 +1017,40 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
 
     const status = node.results[index].status;
+    const use_subtest_counts = (!node.isDir || (this.view !== 'test' && this.view !== 'percent'));
     // Display test numbers at directory level, but subtest numbers when showing a single test.
-    const passes_prop = (node.isDir) ? 'passes': 'subtest_passes';
-    const total_prop = (node.isDir) ? 'total': 'subtest_total';
+    const passes_prop = use_subtest_counts ? 'subtest_passes': 'passes';
+    const total_prop = use_subtest_counts ? 'subtest_total': 'total';
     // Calculate what should be displayed in a given results row.
     let passes = node.results[index][passes_prop];
     let total = node.results[index][total_prop];
     // Don't count the harness status toward subtest numbers.
-    if (!node.isDir && status) {
+    if (use_subtest_counts && status) {
       total--;
       if (status === 'O') passes--;
     }
 
     return this.formatCellDisplay(passes, total, status, node.isDir);
+  }
+
+  getNodeResultSubtestView(node, index) {
+    // If the cell represents a single test and it has no subtests,
+    // show the status of the test on the cell rather than a percentage.
+    if (this.shouldDisplayHarnessTextInCell(node, index)) {
+      return this.getHarnessWarningText(node, index);
+    }
+
+    return `${node.results[index].subtest_passes} / ${node.results[index].subtest_total}`;
+  }
+
+  getTotalDisplay(totalInfo) {
+    let passes = totalInfo.passes;
+    let total = totalInfo.total;
+    if (this.view !== 'test' && this.view !== 'percent') {
+      passes = totalInfo.subtest_passes;
+      total = totalInfo.subtest_total;
+    }
+    return this.formatCellDisplay(passes, total);
   }
 
   /* Function for getting total numbers.
@@ -1035,7 +1097,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
-    if (this._fetchedQuery === query) {
+    // TODO (danielrsmith): fix the query logic so that this statement isn't needed
+    // to avoid duplicate calls.
+    if (this._fetchedQuery === query || (query.includes('view') && query.split('=').length === 2)) {
       return;
     }
     this._fetchedQuery = query; // Debounce.
