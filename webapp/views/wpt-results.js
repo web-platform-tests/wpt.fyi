@@ -270,7 +270,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     <template is="dom-if" if="[[!diffRun]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
                       <template is="dom-if" if="[[ shouldDisplayHarnessWarning(node, index) ]]">
-                        <span class="pointer" title\$="Harness [[ getHarnessWarningText(node, index) ]]"> ⚠️</span>
+                        <span class="pointer" title\$="Harness [[ getStatusDisplay(node, index) ]]"> ⚠️</span>
                       </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
@@ -695,6 +695,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   aggregateTestTotals = (nodes, row, rs) => {
     for (let i = 0; i < rs.length; i++) {
+      row.results[i].status = rs[i].status;
       let passes, total = 0;
       [passes, total] = this.aggregateTotalsByTest(rs, i);
       // Add the results to the total count of tests.
@@ -963,19 +964,19 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  shouldDisplayHarnessTextInCell(node, index) {
-    const shouldShowStatus = node.results.every(testInfo => testInfo.subtest_total <= 1);
-    return !node.isDir && node.results[index].status && shouldShowStatus;
+  shouldDisplayHarnessTextInCell(node, status) {
+    return !node.isDir && status && status !== 'O'
+      && node.results.every(testInfo => testInfo.subtest_total === 1);
   }
 
   shouldDisplayHarnessWarning(node, index) {
     // Determine if a warning sign should be displayed next to subtest counts.
     const status = node.results[index].status;
-    return !node.isDir && status && status !== 'O'
-      && !this.shouldDisplayHarnessTextInCell(node, index);
+    return !node.isDir && status && !PASSING_STATUSES.includes(status)
+      && node.results.some(testInfo => testInfo.subtest_total > 1);
   }
 
-  getHarnessWarningText(node, index) {
+  getStatusDisplay(node, index) {
     let status = node.results[index].status;
     if (status in STATUS_ABBREVIATIONS) {
       status = STATUS_ABBREVIATIONS[status];
@@ -992,7 +993,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       cellDisplay = `0 / ${total}`;
     }
     else if (passes === total) {
-      cellDisplay = `${formatPasses} / ${total}`;
+      cellDisplay = `${total} / ${total}`;
     }
     // If there are passing tests, but only enough to round to 0.00,
     // show 0.01 rather than 0.00 to differentiate between possible error states.
@@ -1068,25 +1069,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   getNodeResult(node, index) {
     const isSubtestView = this.view !== 'test' && this.view !== 'percent';
     const useSubtestCounts = (!node.isDir || isSubtestView);
+    const status = node.results[index].status;
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
-    if (this.shouldDisplayHarnessTextInCell(node, index) && !isSubtestView) {
-      return this.getHarnessWarningText(node, index);
+    if (this.shouldDisplayHarnessTextInCell(node, status) && !isSubtestView) {
+      return this.getStatusDisplay(node, index);
     }
-
-    const status = node.results[index].status;
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
     const totalProp = useSubtestCounts ? 'subtest_total': 'total';
     // Calculate what should be displayed in a given results row.
     let passes = node.results[index][passesProp];
     let total = node.results[index][totalProp];
-    // Don't count the harness status toward subtest numbers.
-    if (useSubtestCounts && status) {
-      total--;
-      if (status === 'O') passes--;
-    }
-
     return this.formatCellDisplay(passes, total, status, node.isDir);
   }
 
