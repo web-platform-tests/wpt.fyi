@@ -51,7 +51,8 @@ const STATUS_ABBREVIATIONS = {
   'C': 'CRASH',
   'T': 'TIMEOUT',
   'PF': 'PRECONDITION_FAILED'
-}
+};
+const PASSING_STATUSES = ['O', 'P'];
 
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
@@ -649,6 +650,72 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
+  aggregateTotalsBySubtest = (rs, i) => {
+    const status = rs[i].status;
+    let passes = rs[i].passes;
+    let total = rs[i].total;
+    if (status) {
+      // Increment 'OK' status totals specifically for diff views.
+      // Diff views will still take harness status into account.
+      if (this.diffRun) {
+        total++;
+        if (status === 'O') passes++;
+      }
+      // If we're in subtest view and we have a test with no subtests,
+      // we should NOT ignore the test status and add it to the subtest count.
+      else if (rs[i].total === 0) {
+        total++;
+        if (status === 'P') passes++;
+      }
+    }
+    return [passes, total];
+  }
+
+  aggregateTotalsByTest = (rs, i) => {
+    const passingStatus = PASSING_STATUSES.includes(rs[i].status);
+    let passes = 0;
+    // If this is an old summary, aggregate using the old scoring process.
+    if (!rs[i].newScoringProcess) {
+      // Ignore aggregating test if there are no results.
+      if (rs[i].total === 0) {
+        return [0, 0];
+      }
+      // Take the passes / total subtests to get a percentage passing.
+      const percentPassed = rs[i].passes / rs[i].total;
+      passes += percentPassed;
+    // If this is a new summary, aggregate using the new scoring process.
+    } else if (passingStatus || (rs[i].total > 0 && rs[i].total === rs[i].passes)) {
+      // If we have a total of 0 subtests but the status is passing,
+      // mark as 100% passing.
+      passes += (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+    }
+
+    return [passes, 1];
+  }
+
+  aggregateTestTotals = (nodes, row, rs) => {
+    for (let i = 0; i < rs.length; i++) {
+      let passes, total = 0;
+      [passes, total] = this.aggregateTotalsByTest(rs, i);
+      // Add the results to the total count of tests.
+      row.results[i].passes += passes;
+      nodes.totals[i].passes += passes;
+      row.results[i].total += total;
+      nodes.totals[i].total+= total;
+
+      [passes, total] = this.aggregateTotalsBySubtest(rs, i);
+      // Initialize subtest counts to zero if not started.
+      if (!('subtest_total' in row.results[i])) {
+        row.results[i].subtest_passes = 0;
+        row.results[i].subtest_total = 0;
+      }
+      row.results[i].subtest_passes += passes;
+      nodes.totals[i].subtest_passes += passes;
+      row.results[i].subtest_total += total;
+      nodes.totals[i].subtest_total += total;
+    }
+  }
+
   refreshDisplayedNodes() {
     if (!this.searchResults || !this.searchResults.length) {
       this.displayedNodes = [];
@@ -676,65 +743,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return name;
     };
 
-    const aggregateTestTotals = (nodes, row, rs) => {
-      // Keep track of overall total.
-      if (!nodes.hasOwnProperty('totals')) {
-        nodes['totals'] = this.testRuns.map(() => {
-          return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
-        });
-      }
-      for (let i = 0; i < rs.length; i++) {
-        row.results[i].status = rs[i].status;
-
-        const passingStatus = ([rs[i].status && 'O', 'P'].includes(rs[i].status));
-        // Keep subtest total for diff and subtest views.
-        if (!row.results[i].subtest_total) {
-          // Initialize count to 0.
-          row.results[i].subtest_passes = 0;
-          row.results[i].subtest_total = 0;
-        }
-        row.results[i].subtest_passes += rs[i].passes;
-        row.results[i].subtest_total += rs[i].total;
-        nodes.totals[i].subtest_passes += rs[i].passes;
-        nodes.totals[i].subtest_total += rs[i].total;
-        // Increment status on subtest totals specifically for diff views.
-        if (rs[i].status) {
-          row.results[i].subtest_total++;
-          if (rs[i].status === 'O') row.results[i].subtest_passes++;
-
-          // If we're in subtest view and we have a test with no subtests,
-          // we should NOT ignore the test status and add it to the subtest count.
-          else if (rs[i].newScoringProcess && rs[i].total === 0) {
-            nodes.totals[i].subtest_total++;
-            if (passingStatus) nodes.totals[i].subtest_passes++;
-          }
-        }
-
-        // If this is an old summary, aggregate using the old scoring process.
-        if (!rs[i].newScoringProcess) {
-          // Ignore aggregating test if there are no results.
-          if (rs[i].total === 0) {
-            continue;
-          }
-          // Take the passes / total subtests to get a percentage passing.
-          const percentPassed = rs[i].passes / rs[i].total;
-          nodes.totals[i].passes += percentPassed;
-          row.results[i].passes += percentPassed;
-        // If this is a new summary, aggregate using the new scoring process.
-        } else if (['O', 'P'].includes(rs[i].status) || (rs[i].total > 0
-          && rs[i].total === rs[i].passes)) {
-          // If we have a total of 0 subtests but the status is passing,
-          // mark as 100% passing.
-          const percentPassed = (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
-          nodes.totals[i].passes += percentPassed;
-          row.results[i].passes += percentPassed;
-        }
-
-        // Add this test to the total count of tests.
-        row.results[i].total++;
-        nodes.totals[i].total++;
-      }
-    }
+    const aggregateTestTotals = this.aggregateTestTotals;
 
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
@@ -763,14 +772,21 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         if (!rs) {
           return nodes;
         }
+
+        // Keep track of overall total.
+        if (!nodes.hasOwnProperty('totals')) {
+          nodes['totals'] = this.testRuns.map(() => {
+            return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
+          });
+        }
         // Accumulate the sums.
         aggregateTestTotals(nodes, row, r.legacy_status);
 
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
           if (previous) {
-            row.results[0].passes += previous.legacy_status[0].passes;
-            row.results[0].total += previous.legacy_status[0].total;
+            row.results[0].subtest_passes += previous.legacy_status[0].passes;
+            row.results[0].subtest_total += previous.legacy_status[0].total;
           }
         }
         if (this.diff && rs.length === 2) {
@@ -812,18 +828,32 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   computeDifferences(before, after) {
-    const deleted = before.total > 0 && after.total === 0;
-    const added = after.total > 0 && before.total === 0;
+    // Count statuses for diff views.
+    let beforePasses = before.passes;
+    let beforeTotal = before.total;
+    if (before.status) {
+      beforeTotal++;
+      if (PASSING_STATUSES.includes(before.status)) beforePasses++; 
+    }
+    let afterPasses = after.passes;
+    let afterTotal = after.total;
+    if (after.status) {
+      afterTotal++;
+      if (PASSING_STATUSES.includes(after.status)) afterPasses++;
+    }
+
+    const deleted = beforeTotal > 0 && afterTotal === 0;
+    const added = afterTotal > 0 && beforeTotal === 0;
     if (deleted && !this.diffFilter.includes('D')
       || added && !this.diffFilter.includes('A')) {
       return;
     }
-    const failingBefore = before.total - before.passes;
-    const failingAfter = after.total - after.passes;
+    const failingBefore = beforeTotal - beforePasses;
+    const failingAfter = afterTotal - afterPasses;
     const diff = [
-      Math.max(after.passes - before.passes, 0), // passes
+      Math.max(afterPasses - beforePasses, 0), // passes
       Math.max(failingAfter - failingBefore, 0), // regressions
-      after.total - before.total // total
+      afterTotal - beforeTotal // total
     ];
     const hasChanges = diff.some(v => v !== 0);
     if ((this.diffFilter.includes('A') && added)
@@ -845,9 +875,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return !node.isDir && this.triageMetadataUI && this.isTriageMode;
     }
 
+    const failStatus = !PASSING_STATUSES.includes(this.getNodeResultDataByPropertyName(node, index, testRun, 'status'));
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriageMode;
+    return ((totalTests - passedTests) > 0 || failStatus) && this.triageMetadataUI && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -871,6 +902,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
     } else {
+      // Change prop by view.
+      const prefix = (this.view !== 'test' && this.view !== 'percent') ? 'subtest_' : '';
       // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
       // result.passes=0 && result.total=0 -> 'top';
       // otherwise -> 'passes-[colouring-by-percent]'.
@@ -880,10 +913,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       if (this.path === '/' && !this.colorHomepage) {
         return 'top';
       }
-      if (result.passes === 0 && result.total === 0) {
+      if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
         return 'top';
       }
-      return this.passRateClass(result.passes, result.total);
+      return this.passRateClass(result[`${prefix}passes`], result[`${prefix}total`]);
     }
   }
 
@@ -932,7 +965,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   shouldDisplayHarnessTextInCell(node, index) {
     const shouldShowStatus = node.results.every(testInfo => testInfo.subtest_total <= 1);
-    return !node.isDir && node.results[index].status && shouldShowStatus
+    return !node.isDir && node.results[index].status && shouldShowStatus;
   }
 
   shouldDisplayHarnessWarning(node, index) {
@@ -1059,11 +1092,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   // Format and display the information shown in the totals cells.
   getTotalDisplay(totalInfo) {
-    let passes = totalInfo.passes;
-    let total = totalInfo.total;
-    if (this.view !== 'test' && this.view !== 'percent') {
-      passes = totalInfo.subtest_passes;
-      total = totalInfo.subtest_total;
+    let passes = totalInfo.subtest_passes;
+    let total = totalInfo.subtest_total;
+    if (this.view === 'test' || this.view === 'percent') {
+      passes = totalInfo.passes;
+      total = totalInfo.total;
     }
     return this.formatCellDisplay(passes, total);
   }
