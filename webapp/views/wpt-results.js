@@ -696,7 +696,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   aggregateTestTotals = (nodes, row, rs) => {
     for (let i = 0; i < rs.length; i++) {
       const status = rs[i].status;
-      row.results[i].canDisplayStatus = rs[i].total === 0 && status && status !== 'O';
+      const isMissing = status === '' && rs[i].total === 0;
+      row.results[i].singleSubtest = (rs[i].total === 0 && status && status !== 'O') || isMissing;
       row.results[i].status = status;
       let passes, total = 0;
       [passes, total] = this.aggregateTotalsByTest(rs, i);
@@ -973,7 +974,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // Determine if a warning sign should be displayed next to subtest counts.
     const status = node.results[index].status;
     return !node.isDir && status && !PASSING_STATUSES.includes(status)
-      && !node.results.every(testInfo => testInfo.canDisplayStatus);
+      && !node.results.every(testInfo => testInfo.singleSubtest);
   }
 
   getStatusDisplay(node, index) {
