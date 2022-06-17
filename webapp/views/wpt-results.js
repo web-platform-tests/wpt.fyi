@@ -301,8 +301,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                   <code><strong>Total</strong></code>
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
-                  <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
-                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">{{ getTotalDisplay(columnTotal) }}</span>
+                  <td class\$="numbers [[ getTotalsClass(columnTotal) ]]">
+                    <span class\$="total [[ getTotalsClass(columnTotal) ]]">{{ getTotalDisplay(columnTotal) }}</span>
                   </td>
                 </template>
               </tr>
@@ -923,11 +923,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  testTotalsClass(passes, total) {
-    if ((this.path === '/' && !this.colorHomepage) || total === 0) {
+  getTotalsClass(totalInfo) {
+    if ((this.path === '/' && !this.colorHomepage) || totalInfo.subtest_total === 0) {
       return 'top';
     }
-    return this.passRateClass(passes, total);
+    if (this.view === 'test' || this.view === 'percent') {
+      return this.passRateClass(totalInfo.passes, totalInfo.total);
+    }
+    return this.passRateClass(totalInfo.subtest_passes, totalInfo.subtest_total);
   }
 
   getDiffDelta(node, prop) {
