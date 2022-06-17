@@ -695,7 +695,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   aggregateTestTotals = (nodes, row, rs) => {
     for (let i = 0; i < rs.length; i++) {
-      row.results[i].status = rs[i].status;
+      const status = rs[i].status;
+      row.results[i].canDisplayStatus = rs[i].total === 0 && status && status !== 'O';
+      row.results[i].status = status;
       let passes, total = 0;
       [passes, total] = this.aggregateTotalsByTest(rs, i);
       // Add the results to the total count of tests.
@@ -964,16 +966,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  shouldDisplayHarnessTextInCell(node, status) {
-    return !node.isDir && status && status !== 'O'
-      && node.results.every(testInfo => testInfo.subtest_total === 1);
-  }
-
   shouldDisplayHarnessWarning(node, index) {
     // Determine if a warning sign should be displayed next to subtest counts.
     const status = node.results[index].status;
     return !node.isDir && status && !PASSING_STATUSES.includes(status)
-      && node.results.some(testInfo => testInfo.subtest_total > 1);
+      && !node.results.every(testInfo => testInfo.canDisplayStatus);
   }
 
   getStatusDisplay(node, index) {
@@ -1072,7 +1069,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const status = node.results[index].status;
     // If the cell represents a single test and it has no subtests,
     // show the status of the test on the cell rather than a percentage.
-    if (this.shouldDisplayHarnessTextInCell(node, status) && !isSubtestView) {
+    if (node.results.every(testInfo => testInfo.canDisplayStatus) && !isSubtestView) {
       return this.getStatusDisplay(node, index);
     }
     // Display test numbers at directory level, but subtest numbers when showing a single test.
