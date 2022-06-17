@@ -1070,12 +1070,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const isSubtestView = this.view !== 'test' && this.view !== 'percent';
     const useSubtestCounts = (!node.isDir || isSubtestView);
     const status = node.results[index].status;
-    // If the cell represents a single test and it has no subtests,
-    // show the status of the test on the cell rather than a percentage.
-    if (!node.isDir && !isSubtestView
-      && node.results.every(testInfo => testInfo.canDisplayStatus) ) {
-      return this.getStatusDisplay(node, index);
-    }
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
     const totalProp = useSubtestCounts ? 'subtest_total': 'total';
