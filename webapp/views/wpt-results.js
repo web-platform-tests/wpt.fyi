@@ -1044,9 +1044,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   // Formats the numbers that will be shown in each cell on the results page.
   formatCellDisplay(passes, total, status=undefined, isDir=true) {
-    // Display 'MISSING' text if there are no tests or subtests.
+    // Display 'Missing' text if there are no tests or subtests.
     if (total === 0 && !status) {
-      return 'MISSING';
+      return 'Missing';
     }
 
     // If the view is not the default view (subtest), then the function to
