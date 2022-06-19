@@ -167,8 +167,20 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return params;
   }
 
+  showDefaultView(view, q) {
+    return !view || !q || !q.includes('interop-202');
+  }
+
   parseQuery(query) {
     const parsed = super.parseQuery(query);
+
+    // The 'view' query string param should only be used on 'interop-202*'
+    // results. Removing this allows special views (test, percent) to be
+    // viewed on any results page.
+    // if (this.showDefaultView(parsed.view, parsed.q)) {
+    //   parsed.view = 'subtest';
+    // }
+
     for (const repeatable of ['label', 'product', 'sha']) {
       if (repeatable in parsed
           && !(parsed[repeatable] instanceof Array)) {

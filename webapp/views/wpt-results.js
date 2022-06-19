@@ -1018,7 +1018,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   // Formats the numbers shown on the results page for the percent view.
   formatCellDisplayPercentView(passes, total) {
-    const formatPercent = parseFloat((passes / total * 100).toFixed(2));
+    const formatPercent = parseFloat((passes / total * 100).toFixed(0));
     let cellDisplay = '';    
     // Show flat 0% or 100% only if none or all tests/subtests pass.
     if (passes === 0) {
@@ -1040,7 +1040,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       cellDisplay = `${formatPercent}`;
     }
 
-    return `${cellDisplay}%`;
+    return `${this.formatCellDisplayTestView(passes, total)} (${cellDisplay}%)`;
   }
 
   // Formats the numbers that will be shown in each cell on the results page.
