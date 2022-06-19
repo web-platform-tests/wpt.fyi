@@ -650,64 +650,66 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  aggregateTotalsBySubtest = (rs, i) => {
-    const status = rs[i].status;
-    let passes = rs[i].passes;
-    let total = rs[i].total;
-    if (status) {
-      // Increment 'OK' status totals specifically for diff views.
-      // Diff views will still take harness status into account.
-      if (this.diffRun) {
-        total++;
-        if (status === 'O') passes++;
-      }
-      // If we're in subtest view and we have a test with no subtests,
-      // we should NOT ignore the test status and add it to the subtest count.
-      else if (rs[i].total === 0) {
-        total++;
-        if (status === 'P') passes++;
-      }
-    }
-    return [passes, total];
-  }
+  aggregateTestTotals(nodes, row, rs) {
 
-  aggregateTotalsByTest = (rs, i) => {
-    const passingStatus = PASSING_STATUSES.includes(rs[i].status);
-    let passes = 0;
-    // If this is an old summary, aggregate using the old scoring process.
-    if (!rs[i].newScoringProcess) {
-      // Ignore aggregating test if there are no results.
-      if (rs[i].total === 0) {
-        return [0, 0];
+    // Aggregation is done by test aggregation and subtest aggregation.
+    const aggregateTotalsBySubtest = (rs, i) => {
+      const status = rs[i].status;
+      let passes = rs[i].passes;
+      let total = rs[i].total;
+      if (status) {
+        // Increment 'OK' status totals specifically for diff views.
+        // Diff views will still take harness status into account.
+        if (this.diffRun) {
+          total++;
+          if (status === 'O') passes++;
+        }
+        // If we're in subtest view and we have a test with no subtests,
+        // we should NOT ignore the test status and add it to the subtest count.
+        else if (rs[i].total === 0) {
+          total++;
+          if (status === 'P') passes++;
+        }
       }
-      // Take the passes / total subtests to get a percentage passing.
-      const percentPassed = rs[i].passes / rs[i].total;
-      passes += percentPassed;
-    // If this is a new summary, aggregate using the new scoring process.
-    } else if (passingStatus || (rs[i].total > 0 && rs[i].total === rs[i].passes)) {
-      // If we have a total of 0 subtests but the status is passing,
-      // mark as 100% passing.
-      passes += (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+      return [passes, total];
     }
 
-    return [passes, 1];
-  }
+    const aggregateTotalsByTest = (rs, i) => {
+      const passingStatus = PASSING_STATUSES.includes(rs[i].status);
+      let passes = 0;
+      // If this is an old summary, aggregate using the old scoring process.
+      if (!rs[i].newScoringProcess) {
+        // Ignore aggregating test if there are no results.
+        if (rs[i].total === 0) {
+          return [0, 0];
+        }
+        // Take the passes / total subtests to get a percentage passing.
+        const percentPassed = rs[i].passes / rs[i].total;
+        passes += percentPassed;
+      // If this is a new summary, aggregate using the new scoring process.
+      } else if (passingStatus || (rs[i].total > 0 && rs[i].total === rs[i].passes)) {
+        // If we have a total of 0 subtests but the status is passing,
+        // mark as 100% passing.
+        passes += (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+      }
+  
+      return [passes, 1];
+    }
 
-  aggregateTestTotals = (nodes, row, rs) => {
     for (let i = 0; i < rs.length; i++) {
       const status = rs[i].status;
       const isMissing = status === '' && rs[i].total === 0;
       row.results[i].singleSubtest = (rs[i].total === 0 && status && status !== 'O') || isMissing;
       row.results[i].status = status;
       let passes, total = 0;
-      [passes, total] = this.aggregateTotalsByTest(rs, i);
+      [passes, total] = aggregateTotalsByTest(rs, i);
       // Add the results to the total count of tests.
       row.results[i].passes += passes;
       nodes.totals[i].passes += passes;
       row.results[i].total += total;
       nodes.totals[i].total+= total;
 
-      [passes, total] = this.aggregateTotalsBySubtest(rs, i);
+      [passes, total] = aggregateTotalsBySubtest(rs, i);
       // Initialize subtest counts to zero if not started.
       if (!('subtest_total' in row.results[i])) {
         row.results[i].subtest_passes = 0;
@@ -914,7 +916,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       if (typeof result === 'undefined' && prop === 'total') {
         return 'none';
       }
-      if (this.path === '/' && !this.colorHomepage) {
+      // Percent view (interop-202*) will allow the home results to be colorized.
+      if (this.path === '/' && !this.colorHomepage && this.view !== 'percent') {
         return 'top';
       }
       if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
@@ -988,36 +991,39 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   // Formats the numbers shown on the results page for the test aggregate view.
   formatCellDisplayTestView(passes, total, isDir=true) {
     const formatPasses = parseFloat(passes.toFixed(2));
-    let cellDisplay = '';    
+    let cellDisplay = '';
+
+    // To differentiate subtests from tests, a different separator is used.
+    let separator = ' / ';
+    if (!isDir) {
+      separator = ' of ';
+    }
+
     // Show flat '0 / total' or 'total / total' only if none or all tests/subtests pass.
+    // Display in parentheses if representing subtests.
     if (passes === 0) {
-      cellDisplay = `0 / ${total}`;
+      cellDisplay = `0${separator}${total}`;
     }
     else if (passes === total) {
-      cellDisplay = `${total} / ${total}`;
+      cellDisplay = `${total}${separator}${total}`;
     }
     // If there are passing tests, but only enough to round to 0.00,
     // show 0.01 rather than 0.00 to differentiate between possible error states.
     else if (formatPasses < 0.01) {
-      cellDisplay = `0.01 / ${total}`;
+      cellDisplay = `0.01${separator}${total}`;
     }
     // If almost every test is passing, but there are some failures,
     // don't round up to 'total / total' so that it's clear some failure exists.
     else if (formatPasses === parseFloat(total)) {
       cellDisplay = `${formatPasses - 0.01}`;
     } else {
-      cellDisplay = `${formatPasses} / ${total}`;
-    }
-
-    // Display in parentheses if representing subtests.
-    if (!isDir) {
-      return `(${cellDisplay})`;
+      cellDisplay = `${formatPasses}${separator}${total}`;
     }
     return `${cellDisplay}`;
   }
 
   // Formats the numbers shown on the results page for the percent view.
-  formatCellDisplayPercentView(passes, total) {
+  formatCellDisplayPercentView(passes, total, isDir) {
     const formatPercent = parseFloat((passes / total * 100).toFixed(0));
     let cellDisplay = '';    
     // Show flat 0% or 100% only if none or all tests/subtests pass.
@@ -1040,7 +1046,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       cellDisplay = `${formatPercent}`;
     }
 
-    return `${this.formatCellDisplayTestView(passes, total)} (${cellDisplay}%)`;
+    return `${this.formatCellDisplayTestView(passes, total, isDir)} (${cellDisplay}%)`;
   }
 
   // Formats the numbers that will be shown in each cell on the results page.
@@ -1056,7 +1062,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return this.formatCellDisplayTestView(passes, total, isDir);
     }
     if (this.view === 'percent') {
-      return this.formatCellDisplayPercentView(passes, total);
+      return this.formatCellDisplayPercentView(passes, total, isDir);
     }
     // If we're in the subtest view and there are no subtests but a status exists,
     // we should count the status as the test total.
@@ -1068,8 +1074,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getNodeResult(node, index) {
-    const isSubtestView = this.view !== 'test' && this.view !== 'percent';
-    const useSubtestCounts = (!node.isDir || isSubtestView);
+    const useSubtestCounts = this.view !== 'test' && this.view !== 'percent';
     const status = node.results[index].status;
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
