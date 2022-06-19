@@ -650,29 +650,27 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
-  aggregateTestTotals(nodes, row, rs) {
-
+  aggregateTestTotals(nodes, row, rs, diffRun) {
     // Aggregation is done by test aggregation and subtest aggregation.
-    const aggregateTotalsBySubtest = (rs, i) => {
+    const aggregateTotalsBySubtest = (rs, i, diffRun) => {
       const status = rs[i].status;
       let passes = rs[i].passes;
       let total = rs[i].total;
       if (status) {
         // Increment 'OK' status totals specifically for diff views.
         // Diff views will still take harness status into account.
-        if (this.diffRun) {
+        if (diffRun) {
           total++;
           if (status === 'O') passes++;
-        }
-        // If we're in subtest view and we have a test with no subtests,
-        // we should NOT ignore the test status and add it to the subtest count.
-        else if (rs[i].total === 0) {
+        } else if (rs[i].total === 0) {
+          // If we're in subtest view and we have a test with no subtests,
+          // we should NOT ignore the test status and add it to the subtest count.
           total++;
           if (status === 'P') passes++;
         }
       }
       return [passes, total];
-    }
+    };
 
     const aggregateTotalsByTest = (rs, i) => {
       const passingStatus = PASSING_STATUSES.includes(rs[i].status);
@@ -694,7 +692,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
   
       return [passes, 1];
-    }
+    };
 
     for (let i = 0; i < rs.length; i++) {
       const status = rs[i].status;
@@ -709,7 +707,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       row.results[i].total += total;
       nodes.totals[i].total+= total;
 
-      [passes, total] = aggregateTotalsBySubtest(rs, i);
+      [passes, total] = aggregateTotalsBySubtest(rs, i, diffRun);
       // Initialize subtest counts to zero if not started.
       if (!('subtest_total' in row.results[i])) {
         row.results[i].subtest_passes = 0;
@@ -750,6 +748,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     };
 
     const aggregateTestTotals = this.aggregateTestTotals;
+    const diffRun = this.diffRun
 
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
@@ -780,13 +779,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
 
         // Keep track of overall total.
-        if (!nodes.hasOwnProperty('totals')) {
+        if (!('totals' in nodes)) {
           nodes['totals'] = this.testRuns.map(() => {
             return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
           });
         }
         // Accumulate the sums.
-        aggregateTestTotals(nodes, row, r.legacy_status);
+        aggregateTestTotals(nodes, row, r.legacy_status, diffRun);
 
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
@@ -839,7 +838,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     let beforeTotal = before.total;
     if (before.status) {
       beforeTotal++;
-      if (PASSING_STATUSES.includes(before.status)) beforePasses++; 
+      if (PASSING_STATUSES.includes(before.status)) beforePasses++;
     }
     let afterPasses = after.passes;
     let afterTotal = after.total;
@@ -1003,18 +1002,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // Display in parentheses if representing subtests.
     if (passes === 0) {
       cellDisplay = `0${separator}${total}`;
-    }
-    else if (passes === total) {
+    } else if (passes === total) {
       cellDisplay = `${total}${separator}${total}`;
-    }
-    // If there are passing tests, but only enough to round to 0.00,
-    // show 0.01 rather than 0.00 to differentiate between possible error states.
-    else if (formatPasses < 0.01) {
+    } else if (formatPasses < 0.01) {
+      // If there are passing tests, but only enough to round to 0.00,
+      // show 0.01 rather than 0.00 to differentiate between possible error states.
       cellDisplay = `0.01${separator}${total}`;
-    }
-    // If almost every test is passing, but there are some failures,
-    // don't round up to 'total / total' so that it's clear some failure exists.
-    else if (formatPasses === parseFloat(total)) {
+    } else if (formatPasses === parseFloat(total)) {
+      // If almost every test is passing, but there are some failures,
+      // don't round up to 'total / total' so that it's clear some failure exists.
       cellDisplay = `${formatPasses - 0.01}`;
     } else {
       cellDisplay = `${formatPasses}${separator}${total}`;
@@ -1029,18 +1025,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // Show flat 0% or 100% only if none or all tests/subtests pass.
     if (passes === 0) {
       cellDisplay = '0';
-    }
-    else if (passes === total) {
+    } else if (passes === total) {
       cellDisplay = '100';
-    }
-    // If there are passing tests, but only enough to round to 0.00,
-    // show 0.01 rather than 0.00 to differentiate between possible error states.
-    else if (formatPercent === 0.0) {
+    } else if (formatPercent === 0.0) {
+      // If there are passing tests, but only enough to round to 0.00,
+      // show 0.01 rather than 0.00 to differentiate between possible error states.
       cellDisplay = '0.1';
-    }
-    // If almost every test is passing, but there are some failures,
-    // don't round up to 'total / total' so that it's clear some failure exists.
-    else if (formatPercent === 100.0) {
+    } else if (formatPercent === 100.0) {
+      // If almost every test is passing, but there are some failures,
+      // don't round up to 'total / total' so that it's clear some failure exists.
       cellDisplay = '99.9';
     } else {
       cellDisplay = `${formatPercent}`;
