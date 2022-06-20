@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v0.1.0
 	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.20.0
+	cloud.google.com/go/storage v1.22.1
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.8.0
@@ -30,9 +30,9 @@ require (
 	github.com/taskcluster/taskcluster/v44 v44.5.0
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	google.golang.org/api v0.66.0
-	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
+	google.golang.org/api v0.74.0
+	google.golang.org/genproto v0.0.0-20220518221133-4f43b3371335
 	google.golang.org/grpc v1.47.0
 	gopkg.in/yaml.v3 v3.0.1
 )
