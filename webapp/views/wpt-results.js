@@ -158,7 +158,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       .sort-button {
         margin-left: -15px;
-      }dcd5752 (help cursor on warning)
+      }
       .view-triage {
         margin-left: 30px;
       }
@@ -259,7 +259,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                     <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
                   </template>
                 </td>
-                
+
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
                     <template is="dom-if" if="[[diffRun]]">
@@ -771,7 +771,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         const name = collapsePathOnto(testPath, nodes);
 
-        
         const rs = r.legacy_status;
         const row = nodes[name];
         if (!rs) {
@@ -880,7 +879,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return !node.isDir && this.triageMetadataUI && this.isTriageMode;
     }
 
-    const failStatus = !PASSING_STATUSES.includes(this.getNodeResultDataByPropertyName(node, index, testRun, 'status'));
+    // Triage can occur if a status doesn't pass.
+    const status = this.getNodeResultDataByPropertyName(node, index, testRun, 'status');
+    const failStatus = status && !PASSING_STATUSES.includes(status);
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
     return ((totalTests - passedTests) > 0 || failStatus) && this.triageMetadataUI && this.isTriageMode;
@@ -1135,7 +1136,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     super.queryChanged(query, queryBefore);
     // TODO (danielrsmith): fix the query logic so that this statement isn't needed
     // to avoid duplicate calls. Hacky fix here that will not reload the data if
-    // 'view is the only query string param (it shouldn't ever be).
+    // 'view' is the only query string param.
     if (query.includes('view') && query.split('=').length === 2) {
       return;
     }
