@@ -1225,17 +1225,25 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           a = b;
           b = c;
         }
+        // Use numbers based on view.
+        let passesParam = 'passes';
+        let totalParam = 'total';
+        if (self.view !== 'view' && self.view !== 'percent') {
+          passesParam = 'subtest_passes';
+          totalParam = 'subtest_total';
+        }
+
         // Both 0/0 cases; compare test names.
-        if (a.results[index].total === 0 && b.results[index].total === 0) {
+        if (a.results[index][totalParam] === 0 && b.results[index][totalParam] === 0) {
           return self.compareTestNameDefaultOrder(a, b);
         }
 
         // One of them is 0/0; compare passes;
-        if (a.results[index].total === 0 || b.results[index].total === 0) {
-          return a.results[index].total - b.results[index].total;
+        if (a.results[index][totalParam] === 0 || b.results[index][totalParam] === 0) {
+          return a.results[index][totalParam] - b.results[index][totalParam];
         }
-        const percentageA = a.results[index].passes / a.results[index].total;
-        const percentageB = b.results[index].passes / b.results[index].total;
+        const percentageA = a.results[index][passesParam] / a.results[index][totalParam];
+        const percentageB = b.results[index][passesParam] / b.results[index][totalParam];
         if (percentageA === percentageB) {
           return self.compareTestNameDefaultOrder(a, b);
         }
