@@ -928,7 +928,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getTotalsClass(totalInfo) {
-    if ((this.path === '/' && !this.colorHomepage) || totalInfo.subtest_total === 0) {
+    if ((this.path === '/' && !this.colorHomepage && this.view !== 'percent')
+        || totalInfo.subtest_total === 0) {
       return 'top';
     }
     if (this.view === 'test' || this.view === 'percent') {
