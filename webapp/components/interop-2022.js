@@ -787,6 +787,7 @@ class Interop2022Summary extends PolymerElement {
 
         .summary-flex-item {
           position: relative;
+          min-height: 255px;
         }
 
         .summary-number {
