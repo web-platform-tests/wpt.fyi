@@ -917,7 +917,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return 'none';
       }
       // Percent view (interop-202*) will allow the home results to be colorized.
-      if (this.path === '/' && !this.colorHomepage && this.view !== 'percent') {
+      if (this.path === '/' && !this.colorHomepage && this.view !== 'interop') {
         return 'top';
       }
       if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
@@ -929,15 +929,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   isDefaultView() {
     // Checks if a special view is active.
-    return this.view !== 'test' && this.view !== 'percent';
+    return this.view !== 'interop';
   }
 
   getTotalsClass(totalInfo) {
-    if ((this.path === '/' && !this.colorHomepage && this.view !== 'percent')
+    if ((this.path === '/' && !this.colorHomepage && this.view !== 'interop')
         || totalInfo.subtest_total === 0) {
       return 'top';
     }
-    if (this.view === 'test' || this.view === 'percent') {
+    if (this.view === 'interop') {
       return this.passRateClass(totalInfo.passes, totalInfo.total);
     }
     return this.passRateClass(totalInfo.subtest_passes, totalInfo.subtest_total);
@@ -994,8 +994,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return status;
   }
 
-  // Formats the numbers shown on the results page for the test aggregate view.
-  formatCellDisplayTestView(passes, total, isDir=true) {
+  // Formats the numbers shown on the results page for test aggregation.
+  getTestNumbersDisplay(passes, total, isDir=true) {
     const formatPasses = parseFloat(passes.toFixed(2));
     let cellDisplay = '';
 
@@ -1025,8 +1025,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${cellDisplay}`;
   }
 
-  // Formats the numbers shown on the results page for the percent view.
-  formatCellDisplayPercentView(passes, total, isDir) {
+  // Formats the numbers shown on the results page for the interop view.
+  formatCellDisplayInterop(passes, total, isDir) {
+
+    // Just show subtest numbers if we're at a single test view.
+    if (!isDir) {
+      return `${this.getTestNumbersDisplay(passes, total, isDir)} subtests`;
+    }
+
     const formatPercent = parseFloat((passes / total * 100).toFixed(0));
     let cellDisplay = '';
     // Show flat 0% or 100% only if none or all tests/subtests pass.
@@ -1045,10 +1051,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     } else {
       cellDisplay = `${formatPercent}`;
     }
-    if (!isDir) {
-      return `${this.formatCellDisplayTestView(passes, total, isDir)} subtests`;
-    }
-    return `${this.formatCellDisplayTestView(passes, total, isDir)} (${cellDisplay}%)`;
+    return `${this.getTestNumbersDisplay(passes, total, isDir)} (${cellDisplay}%)`;
   }
 
   // Formats the numbers that will be shown in each cell on the results page.
@@ -1060,11 +1063,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
     // If the view is not the default view (subtest), then the function to
     // obtain the selected view is called.
-    if (this.view === 'test') {
-      return this.formatCellDisplayTestView(passes, total, isDir);
-    }
-    if (this.view === 'percent') {
-      return this.formatCellDisplayPercentView(passes, total, isDir);
+    if (this.view === 'interop') {
+      return this.formatCellDisplayInterop(passes, total, isDir);
     }
     // If we're in the subtest view and there are no subtests but a status exists,
     // we should count the status as the test total.
@@ -1091,7 +1091,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   getTotalDisplay(totalInfo) {
     let passes = totalInfo.subtest_passes;
     let total = totalInfo.subtest_total;
-    if (this.view === 'test' || this.view === 'percent') {
+    if (this.view === 'interop') {
       passes = totalInfo.passes;
       total = totalInfo.total;
     }
@@ -1242,7 +1242,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         // Use numbers based on view.
         let passesParam = 'passes';
         let totalParam = 'total';
-        if (self.view !== 'view' && self.view !== 'percent') {
+        if (this.isDefaultView()) {
           passesParam = 'subtest_passes';
           totalParam = 'subtest_total';
         }

@@ -333,7 +333,7 @@ func ParseMaxCountParamWithDefault(v url.Values, defaultValue int) (count int, e
 // ParseViewParam parses the 'view' parameter and ensures it is a valid value.
 func ParseViewParam(v url.Values) (*string, error) {
 	viewParam := v.Get("view")
-	if viewParam == "test" || viewParam == "subtest" || viewParam == "percent" {
+	if viewParam == "subtest" || viewParam == "interop" {
 		return &viewParam, nil
 	}
 	return nil, nil
