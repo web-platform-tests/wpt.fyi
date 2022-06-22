@@ -1023,7 +1023,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   // Formats the numbers shown on the results page for the percent view.
   formatCellDisplayPercentView(passes, total, isDir) {
     const formatPercent = parseFloat((passes / total * 100).toFixed(0));
-    let cellDisplay = '';    
+    let cellDisplay = '';
     // Show flat 0% or 100% only if none or all tests/subtests pass.
     if (passes === 0) {
       cellDisplay = '0';
@@ -1040,7 +1040,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     } else {
       cellDisplay = `${formatPercent}`;
     }
-
+    if (!isDir) {
+      return `${this.formatCellDisplayTestView(passes, total, isDir)} subtests`;
+    }
     return `${this.formatCellDisplayTestView(passes, total, isDir)} (${cellDisplay}%)`;
   }
 
@@ -1069,7 +1071,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getNodeResult(node, index) {
-    const useSubtestCounts = this.view !== 'test' && this.view !== 'percent';
+    const useSubtestCounts = (this.view !== 'test' && this.view !== 'percent') || !node.isDir;
     const status = node.results[index].status;
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
