@@ -298,7 +298,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[ shouldDisplayTotals(displayedTotals, diffRun) ]]">
               <tr class="totals-row">
                 <td>
-                  <code><strong>Total</strong></code>
+                  <code><strong>[[getTotalText()]]</strong></code>
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
                   <td class\$="numbers [[ getTotalsClass(columnTotal) ]]">
@@ -690,7 +690,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         // mark as 100% passing.
         passes += (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
       }
-  
+
       return [passes, 1];
     };
 
@@ -909,7 +909,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
     } else {
       // Change prop by view.
-      const prefix = (this.view !== 'test' && this.view !== 'percent') ? 'subtest_' : '';
+      const prefix = this.isDefaultView() ? 'subtest_' : '';
       // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
       // result.passes=0 && result.total=0 -> 'top';
       // otherwise -> 'passes-[colouring-by-percent]'.
@@ -925,6 +925,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       return this.passRateClass(result[`${prefix}passes`], result[`${prefix}total`]);
     }
+  }
+
+  isDefaultView() {
+    // Checks if a special view is active.
+    return this.view !== 'test' && this.view !== 'percent';
   }
 
   getTotalsClass(totalInfo) {
@@ -1071,7 +1076,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   getNodeResult(node, index) {
-    const useSubtestCounts = (this.view !== 'test' && this.view !== 'percent') || !node.isDir;
+    const useSubtestCounts = this.isDefaultView() || !node.isDir;
     const status = node.results[index].status;
     // Display test numbers at directory level, but subtest numbers when showing a single test.
     const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
@@ -1091,6 +1096,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       total = totalInfo.total;
     }
     return this.formatCellDisplay(passes, total);
+  }
+
+  getTotalText() {
+    if (this.isDefaultView()) {
+      return 'Subtest Total';
+    }
+    return 'Test Total';
   }
 
   /* Function for getting total numbers.
