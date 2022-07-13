@@ -675,8 +675,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const aggregateTotalsByTest = (rs, i) => {
       const passingStatus = PASSING_STATUSES.includes(rs[i].status);
       let passes = 0;
-      // If this is an old summary, aggregate using the old scoring process.
-      if (!rs[i].newScoringProcess) {
+      // If this is an old summary, aggregate using the old process.
+      if (!rs[i].newAggProcess) {
         // Ignore aggregating test if there are no results.
         if (rs[i].total === 0) {
           return [0, 0];
@@ -684,7 +684,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         // Take the passes / total subtests to get a percentage passing.
         const percentPassed = rs[i].passes / rs[i].total;
         passes += percentPassed;
-      // If this is a new summary, aggregate using the new scoring process.
+      // If this is a new summary, aggregate using the new process.
       } else if (passingStatus || (rs[i].total > 0 && rs[i].total === rs[i].passes)) {
         // If we have a total of 0 subtests but the status is passing,
         // mark as 100% passing.

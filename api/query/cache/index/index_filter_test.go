@@ -133,10 +133,10 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -211,10 +211,10 @@ func TestBindExecute_SubtestNamePattern(t *testing.T) {
 				Test: "/a/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
 					{
-						Passes:            testCase.Passes, // Only matches the subtest.
-						Total:             testCase.Total,
-						Status:            "",
-						NewScoringProcess: true,
+						Passes:        testCase.Passes, // Only matches the subtest.
+						Total:         testCase.Total,
+						Status:        "",
+						NewAggProcess: true,
 					},
 				},
 			}
@@ -261,10 +261,10 @@ func TestBindExecute_TestPath(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -387,17 +387,17 @@ func TestBindExecute_TestStatus(t *testing.T) {
 			LegacyStatus: []shared.LegacySearchRunResult{
 				// Run [0]: Chrome: match1Name status is FAIL: 0 / 1.
 				{
-					Passes:            0,
-					Total:             1,
-					Status:            "",
-					NewScoringProcess: true,
+					Passes:        0,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
 				},
 				// Run [1]: Safari: match1Name status is PASS: 1 / 1.
 				{
-					Passes:            1,
-					Total:             1,
-					Status:            "",
-					NewScoringProcess: true,
+					Passes:        1,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
 				},
 			},
 		},
@@ -407,19 +407,19 @@ func TestBindExecute_TestStatus(t *testing.T) {
 			//                  and no other subtests match: 0 / 1.
 			LegacyStatus: []shared.LegacySearchRunResult{
 				{
-					Passes:            0,
-					Total:             1,
-					Status:            "",
-					NewScoringProcess: true,
+					Passes:        0,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
 				},
 				// Run [1]: Safari: match1Name.match2Sub is missing;
 				//                  by logic used in legacy test summaries, result
 				//                  should be: 0 / 0.
 				{
-					Passes:            0,
-					Total:             0,
-					Status:            "",
-					NewScoringProcess: false,
+					Passes:        0,
+					Total:         0,
+					Status:        "",
+					NewAggProcess: false,
 				},
 			},
 		},
@@ -470,10 +470,10 @@ func TestBindExecute_Link(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -528,10 +528,10 @@ func TestBindExecute_LinkWithWildcards(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -583,10 +583,10 @@ func TestBindExecute_Triaged(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -639,10 +639,10 @@ func TestBindExecute_TriagedWildcards(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -696,10 +696,10 @@ func TestBindExecute_QueryAndTestLabel(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -752,10 +752,10 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -765,10 +765,10 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -822,10 +822,10 @@ func TestBindExecute_TestLabel(t *testing.T) {
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
 				// Only matching test passes.
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -885,16 +885,16 @@ func TestBindExecute_IsDifferent(t *testing.T) {
 		Test: "/d/e/f", // /a/b/c was the same, /d/e/f differed.
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            0,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        0,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -939,10 +939,10 @@ func TestBindExecute_IsTentative(t *testing.T) {
 		Test: "/a/b/c.tentative.html",
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -987,10 +987,10 @@ func TestBindExecute_IsOptional(t *testing.T) {
 		Test: "/a/b/c.optional.html",
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -1056,16 +1056,16 @@ func TestBindExecute_MoreThan(t *testing.T) {
 		Test: "/a/b/c", // /a/b/c has 2 passes.
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -1131,16 +1131,16 @@ func TestBindExecute_LessThan(t *testing.T) {
 		Test: "/d/e/f", // /a/b/c has 1 passes.
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            0,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        0,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 			{
-				Passes:            1,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -1232,10 +1232,10 @@ func TestBindExecute_NotLink(t *testing.T) {
 		Test: "/d/e/f",
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            0,
-				Total:             1,
-				Status:            "",
-				NewScoringProcess: true,
+				Passes:        0,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
 			},
 		},
 	}
@@ -1286,10 +1286,10 @@ func TestBindExecute_HandleHarness(t *testing.T) {
 		Test: "/d/e/f",
 		LegacyStatus: []shared.LegacySearchRunResult{
 			{
-				Passes:            0,
-				Total:             0,
-				Status:            "O",
-				NewScoringProcess: true,
+				Passes:        0,
+				Total:         0,
+				Status:        "O",
+				NewAggProcess: true,
 			},
 		},
 	}

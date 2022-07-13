@@ -201,10 +201,10 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 					}
 				}
 				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
-					Passes:            passAndTotal[0],
-					Total:             passAndTotal[1],
-					Status:            "",
-					NewScoringProcess: false,
+					Passes:        passAndTotal[0],
+					Total:         passAndTotal[1],
+					Status:        "",
+					NewAggProcess: false,
 				}
 			}
 		} else {
@@ -221,10 +221,10 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 					}
 				}
 				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
-					Passes:            testInfo.Counts[0],
-					Total:             testInfo.Counts[1],
-					Status:            testInfo.Status,
-					NewScoringProcess: true,
+					Passes:        testInfo.Counts[0],
+					Total:         testInfo.Counts[1],
+					Status:        testInfo.Status,
+					NewAggProcess: true,
 				}
 			}
 		}

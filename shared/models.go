@@ -483,9 +483,9 @@ type LegacySearchRunResult struct {
 	// Status represents either the test status or harness status.
 	// This will be an empty string for old summaries.
 	Status string `json:"status"`
-	// NewScoringProcess represents whether the summary was created with the old
+	// NewAggProcess represents whether the summary was created with the old
 	// or new aggregation process.
-	NewScoringProcess bool `json:"newScoringProcess"`
+	NewAggProcess bool `json:"newAggProcess"`
 }
 
 // SearchResult contains data regarding a particular test file over a collection
