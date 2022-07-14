@@ -8,6 +8,7 @@
 /webapp/static/24278ab617/
 /webdriver/
 test/
+/shared/metadata_testdata/
 
 # Configurations
 .eslintrc.json
@@ -43,3 +44,7 @@ client-secret.json
 /webapp/dynamic-components/
 /webapp/node_modules/
 /webapp/templates/
+
+# Docker files that do not belong in the image
+.dockerignore
+docker-compose.yml

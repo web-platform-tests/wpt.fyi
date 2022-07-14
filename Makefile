@@ -25,6 +25,10 @@ VERBOSE := -v
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
+# Enable static compile mode. This is useful for the distroless image because
+# it does not have the C libraries to otherwise link.
+# Learn more: https://pkg.go.dev/cmd/cgo#:~:text=The%20cgo%20tool%20is%20enabled,to%200%20to%20disable%20it.
+GO_BUILD_ENV_FLAGS := CGO_ENABLED=0
 
 build: go_build
 
@@ -44,14 +48,14 @@ go_build: git mockgen packr2
 	make webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
-	go build ./...
+	$(GO_BUILD_ENV_FLAGS) go build ./...
 	# Build the webapp.
-	go build ./webapp/web
+	$(GO_BUILD_ENV_FLAGS) go build ./webapp/web
 
 go_build_dev:
 	@ # Disable packr to always serve local node modules and dynamic components.
 	@ # There's thus no need to prune node_modules.
-	go build -tags skippackr ./webapp/web
+	$(GO_BUILD_ENV_FLAGS) go build -tags skippackr ./webapp/web
 
 go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./api/...

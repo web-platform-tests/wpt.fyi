@@ -1,0 +1,15 @@
+# Files matching the following rules won't be copied into the image for the "COPY" operation.
+# The syntax is the same as `.gitignore`; docker does not use `.gitignore` directly
+
+# Visual Code Settings
+.vscode
+# Git Index
+.git
+
+# Google App Engine configuration for webapp
+./app.yaml
+./app.staging.yaml
+
+# Dockerfile itself at the root
+# Do not want to interfere with the other Dockerfiles
+./Dockerfile
