@@ -6,10 +6,8 @@
 # Git Index
 .git
 
-# Google App Engine configuration for webapp
-./app.yaml
-./app.staging.yaml
+# Dockerfile itself does not need to be copied into the image
+Dockerfile
 
-# Dockerfile itself at the root
-# Do not want to interfere with the other Dockerfiles
-./Dockerfile
+# Packaged version of webapp
+webapp/web/wpt.fyi/

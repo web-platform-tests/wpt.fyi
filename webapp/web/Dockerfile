@@ -1,5 +1,18 @@
 # Production deployment spec for webapp.
-FROM golang:1.18-buster as builder
+# If local build, we need to simulate `make package_service`
+ARG BUILD_ENV=gcloud
+ARG GO_IMAGE=golang:1.18-buster
+FROM ${GO_IMAGE} as starter_gcloud
+WORKDIR /webapp
+ONBUILD COPY wpt.fyi .
+
+FROM ${GO_IMAGE} as starter_local
+WORKDIR /webapp-temp
+ONBUILD COPY . .
+ONBUILD RUN make package_service APP_PATH=webapp/web/
+ONBUILD RUN cp -a /webapp-temp/webapp/web/wpt.fyi/. /webapp
+
+FROM starter_${BUILD_ENV} as builder
 
 # Node LTS
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
@@ -7,7 +20,6 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
 
 WORKDIR /webapp
 # Create a build
-COPY . .
 RUN make go_build
 
 # Cleanup to make a minimal image
@@ -38,7 +50,7 @@ RUN git init && \
 # Learn more about distroless at https://github.com/GoogleContainerTools/distroless
 FROM gcr.io/distroless/static-debian11 as webapp_release
 WORKDIR /webapp
-COPY --from=webapp_build /webapp /webapp
+COPY --from=builder /webapp /webapp
 
 EXPOSE 8080
 ENTRYPOINT [ "/webapp/web" ]

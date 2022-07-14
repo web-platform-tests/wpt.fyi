@@ -6,3 +6,9 @@ packrd/
 
 # Google Cloud secret
 client-secret.json
+
+# Packaged webapp from `make package_service`
+webapp/web/wpt.fyi/
+
+# Packaged searchcache from `make package_service`
+api/query/cache/service/wpt.fyi/
