@@ -185,7 +185,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       parsed.view = 'subtest';
       parsed.canViewInteropScores = false;
     } else {
-      console.log("canViewInteropScores is becoming true.")
       parsed.canViewInteropScores = true;
     }
 
