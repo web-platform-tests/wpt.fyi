@@ -8,7 +8,7 @@ RUN apt-get install -qy --no-install-suggests git
 WORKDIR /go/src/wpt.fyi
 
 COPY wpt.fyi .
-RUN /usr/local/go/bin/go build -o ../../bin/app ./api/query/cache/service
+RUN CGO_ENABLED=0 /usr/local/go/bin/go build -o ../../bin/app ./api/query/cache/service
 
 # For debugging, you can use the debug tag, aka gcr.io/distroless/static-debian11:debug
 # Otherwise, it will produce a image without a shell.
