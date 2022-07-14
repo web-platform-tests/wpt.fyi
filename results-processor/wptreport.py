@@ -41,6 +41,8 @@ IGNORED_CONFLICTS = frozenset({'browser_build_id', 'browser_changeset'})
 
 # A map of abbreviations for test statuses. This will be used
 # to convert test statuses to smaller formats to store in summary files.
+# NOTE: If a new status abbreviation is added here, the mapping
+# at webapp/views/wpt-results.js will also require the change.
 STATUS_ABBREVIATIONS = {
     "PASS": "P",
     "OK": "O",

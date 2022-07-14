@@ -45,6 +45,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
         type: String,
         notify: true
       },
+      canViewInteropScores: {
+        type: Boolean,
+        notify: false
+      },
       isLatest: {
         type: Boolean,
         computed: 'computeIsLatest(shas)'
@@ -179,6 +183,10 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     // viewed on any results page.
     if (this.showDefaultView(parsed.view, parsed.q)) {
       parsed.view = 'subtest';
+      parsed.canViewInteropScores = false;
+    } else {
+      console.log("canViewInteropScores is becoming true.")
+      parsed.canViewInteropScores = true;
     }
 
     for (const repeatable of ['label', 'product', 'sha']) {
@@ -278,6 +286,11 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     if ('view' in params) {
       batchUpdate.view = params.view;
+    } else {
+      batchUpdate.view = 'subtest';
+    }
+    if ('canViewInteropScores' in params) {
+      batchUpdate.canViewInteropScores = params.canViewInteropScores;
     }
     batchUpdate.master = batchUpdate.labels && batchUpdate.labels.includes('master');
     if (batchUpdate.master) {

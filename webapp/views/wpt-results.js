@@ -41,6 +41,8 @@ const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 // Map of abbreviations for status values stored in summary files.
 // This is used to expand the status to its full value after being
 // abbreviated for smaller storage in summary files.
+// NOTE: If a new status abbreviation is added here, the mapping
+// at results_processor/wptreport.py will also require the change.
 const STATUS_ABBREVIATIONS = {
   'P': 'PASS',
   'O': 'OK',
@@ -165,6 +167,50 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       .pointer {
         cursor: help;
       }
+      
+      .channel-area {
+        display: flex;
+        max-width: fit-content;
+        margin-inline: auto;
+        border-radius: 3px;
+        margin-bottom:20px;
+        box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+      }
+
+      .channel-area > paper-button {
+        margin: 0;
+      }
+
+      .channel-area > paper-button:first-of-type {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      .channel-area > paper-button:last-of-type {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .unselected {
+        background-color: white;
+      }
+      .selected {
+        background-color: var(--paper-blue-700);
+        color: white;
+      }
+
+      .selected::before {
+        --_size: 1rem;
+        --_half-size: calc(var(--_size) / 2);
+
+        content: "";
+        position: absolute;
+        bottom: calc(var(--_half-size) * -1 + 1px);
+        width: var(--_size);
+        height: var(--_half-size);
+        left: calc(50% - var(--_half-size));
+        background: var(--paper-blue-700);
+        clip-path: polygon(46% 100%, 0 0, 100% 0);
+      }
     </style>
 
     <paper-toast id="selected-toast" duration="0">
@@ -207,6 +253,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            metadata-map="[[metadataMap]]">
         </test-file-results>
       </template>
+    <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
+      <div class="channel-area">
+        <paper-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</paper-button>
+        <paper-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</paper-button>
+      </div>
+    </template>
 
       <template is="dom-if" if="{{ !pathIsATestFile }}">
         <table>
@@ -440,6 +492,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
+      canViewInteropScores: {
+        type: Boolean,
+        value: false
+      },
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
@@ -451,6 +507,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return [
       'clearSelectedCells(selectedMetadata)',
       'handleTriageMode(isTriageMode)',
+      'changeView(view)'
     ];
   }
 
@@ -927,17 +984,70 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
+  shouldDisplayToggle(canViewInteropScores, pathIsATestFile) {
+    return canViewInteropScores && !pathIsATestFile;
+  }
+
+  interopButtonClass(view) {
+    return (view === 'interop') ? 'selected' : 'unselected';
+  }
+
+  defaultButtonClass(view) {
+    return (view !== 'interop') ? 'selected' : 'unselected';
+  }
+
+  clickInterop() {
+    if (!this.isDefaultView()) {
+      return;
+    }
+    this.view = 'interop';
+  }
+
+  clickDefault() {
+    if (this.isDefaultView()) {
+      return;
+    }
+    this.view = 'subtest';
+  }
+
+  changeView(view) {
+    if (!view) {
+      return;
+    }
+    // Change query string to display correct view.
+    let query = location.search;
+    if (query.length > 0) {
+      query = query.substring(1)
+    }
+    let viewStr = `view=${view}`;
+    const params = query.split('&');
+    let viewFound = false;
+    for(let i = 0; i < params.length; i++) {
+      if (params[i].includes('view=')) {
+        viewFound = true;
+        params[i] = viewStr;
+      }
+    }
+    if (!viewFound) {
+      params.push(viewStr)
+    }
+
+    let url = location.pathname;
+    url += `?${params.join('&')}`;
+    history.pushState('', '', url)
+  }
+
   isDefaultView() {
     // Checks if a special view is active.
     return this.view !== 'interop';
   }
 
   getTotalsClass(totalInfo) {
-    if ((this.path === '/' && !this.colorHomepage && this.view !== 'interop')
+    if ((this.path === '/' && !this.colorHomepage && this.isDefaultView())
         || totalInfo.subtest_total === 0) {
       return 'top';
     }
-    if (this.view === 'interop') {
+    if (!this.isDefaultView()) {
       return this.passRateClass(totalInfo.passes, totalInfo.total);
     }
     return this.passRateClass(totalInfo.subtest_passes, totalInfo.subtest_total);
