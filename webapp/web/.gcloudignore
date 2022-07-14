@@ -12,8 +12,6 @@ test/
 
 # Configurations
 .eslintrc.json
-package-lock.json
-package.json
 renovate.json
 wct.conf.json
 

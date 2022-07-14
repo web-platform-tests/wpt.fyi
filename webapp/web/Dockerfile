@@ -53,6 +53,8 @@ RUN git init && \
     # .go files - Now that it is built, can remove any Go files needed for building.
     find . -name "*.go" -type f -delete && \
     rm go.mod go.sum && \
+    # js files needed for building
+    rm webapp/package-lock.json webapp/package.json && \
     # Makefile - No longer need Makefile
     rm Makefile && \
     # webapp/.gitignore - Remove nested gitignore
