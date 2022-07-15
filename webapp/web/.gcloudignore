@@ -30,6 +30,9 @@ ISSUE_TEMPLATE/
 PULL_REQUEST_TEMPLATE.md
 README.md
 
+# Google Cloud secret
+client-secret.json
+
 # Other services
 /api/query/cache/service/
 /results-processor/

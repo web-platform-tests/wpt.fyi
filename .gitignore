@@ -3,3 +3,6 @@ debug.test
 packrd/
 *-packr.go
 /web
+
+# Google Cloud secret
+client-secret.json
