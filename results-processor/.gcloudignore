@@ -1,1 +1,4 @@
 #!include:.gitignore
+
+# Google Cloud secret
+client-secret.json
