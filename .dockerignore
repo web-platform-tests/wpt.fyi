@@ -8,6 +8,3 @@
 
 # Dockerfile itself does not need to be copied into the image
 Dockerfile
-
-# Packaged version of webapp
-webapp/web/wpt.fyi/
