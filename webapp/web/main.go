@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/samthor/nicehttp"
 
@@ -16,6 +17,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/webapp"
 )
 
+// Default relative path to app engine config path
+const defaultAppEngineConfigPath = "webapp/web/app.staging.yaml"
+
 func init() {
 	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	api.RegisterRoutes()
@@ -26,6 +30,16 @@ func init() {
 	screenshot.RegisterRoutes()
 	taskcluster.RegisterRoutes()
 	webapp.RegisterRoutes()
+}
+
+// getAppEngineConfigPath returns the path to an App Engine config if provided.
+// Users can provide a path by setting APP_ENGINE_CONFIG_PATH env var.
+// If that is empty, it will default to defaultAppEngineConfigPath
+func getAppEngineConfigPath() string {
+	if configPath := os.Getenv("APP_ENGINE_CONFIG_PATH"); configPath != "" {
+		return configPath
+	}
+	return defaultAppEngineConfigPath
 }
 
 func main() {
@@ -41,5 +55,11 @@ func main() {
 	// * Local: in addition to the prod behaviour, it also starts some
 	//   static handlers according to app.yaml, which effectively replaces
 	//   dev_appserver.py.
-	nicehttp.Serve("webapp/web/app.staging.yaml", nil)
+	// For the flexible environment, the handlers section do not work.
+	// As a result, we need to reset the GAE_DEPLOYMENT_ID environment variable so that the
+	// library takes care of serving the files.
+	// More details:
+	// https://github.com/samthor/nicehttp/blob/554bd34ba7d447848631dfc195e96f126105d8aa/gae.go#L21-L24
+	os.Setenv("GAE_DEPLOYMENT_ID", "")
+	nicehttp.Serve(getAppEngineConfigPath(), nil)
 }
