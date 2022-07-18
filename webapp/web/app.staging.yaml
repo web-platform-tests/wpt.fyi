@@ -17,7 +17,6 @@ vpc_access_connector:
 env_variables:
   REDISHOST: "10.171.142.203"
   REDISPORT: "6379"
-  APP_ENGINE_CONFIG_PATH: "webapp/web/app.staging.yaml"
 
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
