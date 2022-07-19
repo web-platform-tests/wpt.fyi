@@ -70,7 +70,7 @@ RUN git init && \
 # For debugging, you can use the debug tag, aka gcr.io/distroless/static-debian11:debug
 # Otherwise, it will produce a image without a shell.
 # Learn more about distroless at https://github.com/GoogleContainerTools/distroless
-FROM gcr.io/distroless/static-debian11 as webapp_release
+FROM gcr.io/distroless/static-debian11:debug as webapp_release
 WORKDIR /webapp
 COPY --from=builder /webapp /webapp
 
