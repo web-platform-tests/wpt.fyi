@@ -8,7 +8,7 @@ Ensure that the desired version is available. Go to the [Go standard runtime doc
 
 Once you have confirmed that:
 - Open [app.yaml](../webapp/web/app.yaml) and [app.staging.yaml](../webapp/web/app.staging.yaml)
-- Change the `runtime` line to match the new version of the Go.
+- Change the `runtime` line to match the new version of Go seen in the App Engine documentation.
 
 
 ## Step 2 - Change the version in the Dockerfiles
