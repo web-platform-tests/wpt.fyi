@@ -1,4 +1,3 @@
-//go:build small
 // +build small
 
 // Copyright 2019 The WPT Dashboard Project. All rights reserved.
