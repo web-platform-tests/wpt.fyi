@@ -27,6 +27,7 @@ type SummaryResult struct {
 // that match the old or new summary format.
 type summary struct {
 	// oldFormat This holds summary information if the data is aggregated with the old method.
+	// TODO (danielrsmith): This format should be removed once old summary files are invalidated.
 	oldFormat map[string][]int
 	// newFormat This holds summary information if the data is aggregated with the new method.
 	newFormat map[string]SummaryResult
