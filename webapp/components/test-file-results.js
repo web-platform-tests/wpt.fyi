@@ -194,7 +194,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     // Set name for test-level status entry after subtests discovered.
     // Parameter is number of subtests.
-    resultsTable[0].name = this.statusName(resultsTable.length - 1);
+    resultsTable[0].name = this.statusName(resultsTable.length - 2);
     return resultsTable;
   }
 
@@ -293,10 +293,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   computeRows(resultsTable, onlyShowDifferences) {
-    let rows;
-    if (!resultsTable || !resultsTable.length || !onlyShowDifferences) {
-      rows = resultsTable;
-    } else {
+    let rows = resultsTable;
+    if (resultsTable && resultsTable.length && onlyShowDifferences) {
       const [first, ...others] = resultsTable;
       rows = [first, ...others.filter(r => {
         return r.results[0].status !== r.results[1].status;
@@ -304,12 +302,12 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     }
 
     // If displaying subtests of a single test, the first two rows will
-    // reflect TestHarness status and duration, so we count them as 1 subtest
+    // reflect TestHarness status and duration, so we don't count them
     // when displaying the number of subtests in the blue banner.
-    if (rows.length >= 2 && rows[1].name === 'Duration') {
-      this.subtestRowCount = rows.length - 1;
+    if (rows.length > 2 && rows[1].name === 'Duration') {
+      this.subtestRowCount = rows.length - 2;
     } else {
-      this.subtestRowCount = rows.length;
+      this.subtestRowCount = 0;
     }
 
     return rows;

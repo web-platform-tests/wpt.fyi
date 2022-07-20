@@ -74,9 +74,16 @@ func (a *indexAggregator) Add(t TestID) error {
 		//
 		// Only include tests with non-UNKNOWN status for this run's total.
 		if res != shared.TestStatusUnknown {
-			results[i].Total++
-			if res.IsPassOrOK() {
+			results[i].NewAggProcess = true
+			// If we see a Harness "OK", we mark that we have seen one
+			// rather than adding it to the subtest total.
+			if res.IsHarnessStatus() {
+				results[i].Status = "O"
+			} else if res.IsPass() {
+				results[i].Total++
 				results[i].Passes++
+			} else {
+				results[i].Total++
 			}
 		}
 	}

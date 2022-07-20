@@ -37,6 +37,24 @@ import { Pluralizer } from '../components/pluralize.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
+// Map of abbreviations for status values stored in summary files.
+// This is used to expand the status to its full value after being
+// abbreviated for smaller storage in summary files.
+// NOTE: If a new status abbreviation is added here, the mapping
+// at results_processor/wptreport.py will also require the change.
+const STATUS_ABBREVIATIONS = {
+  'P': 'PASS',
+  'O': 'OK',
+  'F': 'FAIL',
+  'S': 'SKIP',
+  'E': 'ERROR',
+  'N': 'NOTRUN',
+  'C': 'CRASH',
+  'T': 'TIMEOUT',
+  'PF': 'PRECONDITION_FAILED'
+};
+const PASSING_STATUSES = ['O', 'P'];
+
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
@@ -145,6 +163,53 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       .view-triage {
         margin-left: 30px;
       }
+      .pointer {
+        cursor: help;
+      }
+      
+      .channel-area {
+        display: flex;
+        max-width: fit-content;
+        margin-inline: auto;
+        border-radius: 3px;
+        margin-bottom:20px;
+        box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+      }
+
+      .channel-area > paper-button {
+        margin: 0;
+      }
+
+      .channel-area > paper-button:first-of-type {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      .channel-area > paper-button:last-of-type {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .unselected {
+        background-color: white;
+      }
+      .selected {
+        background-color: var(--paper-blue-700);
+        color: white;
+      }
+
+      .selected::before {
+        --_size: 1rem;
+        --_half-size: calc(var(--_size) / 2);
+
+        content: "";
+        position: absolute;
+        bottom: calc(var(--_half-size) * -1 + 1px);
+        width: var(--_size);
+        height: var(--_half-size);
+        left: calc(50% - var(--_half-size));
+        background: var(--paper-blue-700);
+        clip-path: polygon(46% 100%, 0 0, 100% 0);
+      }
     </style>
 
     <paper-toast id="selected-toast" duration="0">
@@ -187,6 +252,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            metadata-map="[[metadataMap]]">
         </test-file-results>
       </template>
+    <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
+      <div class="channel-area">
+        <paper-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</paper-button>
+        <paper-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</paper-button>
+      </div>
+    </template>
 
       <template is="dom-if" if="{{ !pathIsATestFile }}">
         <table>
@@ -242,10 +313,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
                 <template is="dom-repeat" items="{{testRuns}}" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
-                    <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'passes') }}</span>
-                    /
-                    <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'total') }}</span>
-
+                    <template is="dom-if" if="[[diffRun]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_passes') }}</span>
+                      /
+                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_total') }}</span>
+                    </template>
+                    <template is="dom-if" if="[[!diffRun]]">
+                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                      <template is="dom-if" if="[[ shouldDisplayHarnessWarning(node, index) ]]">
+                        <span class="pointer" title\$="Harness [[ getStatusDisplay(node, index) ]]"> ⚠️</span>
+                      </template>
+                    </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
                       <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
                         <iron-icon class="bug" icon="bug-report"></iron-icon>
@@ -271,13 +349,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[ shouldDisplayTotals(displayedTotals, diffRun) ]]">
               <tr class="totals-row">
                 <td>
-                  <code><strong>Total</strong></code>
+                  <code><strong>[[getTotalText()]]</strong></code>
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
-                  <td class\$="numbers [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">
-                    <span class\$="passes [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.passes ]]</span>
-                    /
-                    <span class\$="total [[ testTotalsClass(columnTotal.passes, columnTotal.total) ]]">[[ columnTotal.total ]]</span>
+                  <td class\$="numbers [[ getTotalsClass(columnTotal) ]]">
+                    <span class\$="total [[ getTotalsClass(columnTotal) ]]">{{ getTotalDisplay(columnTotal) }}</span>
                   </td>
                 </template>
               </tr>
@@ -407,6 +483,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
+      canViewInteropScores: {
+        type: Boolean,
+        value: false
+      },
       onlyShowDifferences: Boolean,
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
@@ -418,6 +498,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return [
       'clearSelectedCells(selectedMetadata)',
       'handleTriageMode(isTriageMode)',
+      'changeView(view)'
     ];
   }
 
@@ -617,6 +698,76 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
   }
 
+  aggregateTestTotals(nodes, row, rs, diffRun) {
+    // Aggregation is done by test aggregation and subtest aggregation.
+    const aggregateTotalsBySubtest = (rs, i, diffRun) => {
+      const status = rs[i].status;
+      let passes = rs[i].passes;
+      let total = rs[i].total;
+      if (status) {
+        // Increment 'OK' status totals specifically for diff views.
+        // Diff views will still take harness status into account.
+        if (diffRun) {
+          total++;
+          if (status === 'O') passes++;
+        } else if (rs[i].total === 0) {
+          // If we're in subtest view and we have a test with no subtests,
+          // we should NOT ignore the test status and add it to the subtest count.
+          total++;
+          if (status === 'P') passes++;
+        }
+      }
+      return [passes, total];
+    };
+
+    const aggregateTotalsByTest = (rs, i) => {
+      const passingStatus = PASSING_STATUSES.includes(rs[i].status);
+      let passes = 0;
+      // If this is an old summary, aggregate using the old process.
+      if (!rs[i].newAggProcess) {
+        // Ignore aggregating test if there are no results.
+        if (rs[i].total === 0) {
+          return [0, 0];
+        }
+        // Take the passes / total subtests to get a percentage passing.
+        const percentPassed = rs[i].passes / rs[i].total;
+        passes += percentPassed;
+      // If this is a new summary, aggregate using the new process.
+      } else if (passingStatus || (rs[i].total > 0 && rs[i].total === rs[i].passes)) {
+        // If we have a total of 0 subtests but the status is passing,
+        // mark as 100% passing.
+        passes += (rs[i].total === 0) ? 1 : rs[i].passes / rs[i].total;
+      }
+
+      return [passes, 1];
+    };
+
+    for (let i = 0; i < rs.length; i++) {
+      const status = rs[i].status;
+      const isMissing = status === '' && rs[i].total === 0;
+      row.results[i].singleSubtest = (rs[i].total === 0 && status && status !== 'O') || isMissing;
+      row.results[i].status = status;
+      let passes, total = 0;
+      [passes, total] = aggregateTotalsByTest(rs, i);
+      // Add the results to the total count of tests.
+      row.results[i].passes += passes;
+      nodes.totals[i].passes += passes;
+      row.results[i].total += total;
+      nodes.totals[i].total+= total;
+
+      [passes, total] = aggregateTotalsBySubtest(rs, i, diffRun);
+      // Initialize subtest counts to zero if not started.
+      if (!('subtest_total' in row.results[i])) {
+        row.results[i].subtest_passes = 0;
+        row.results[i].subtest_total = 0;
+      }
+      row.results[i].subtest_passes += passes;
+      nodes.totals[i].subtest_passes += passes;
+      row.results[i].subtest_total += total;
+      nodes.totals[i].subtest_total += total;
+    }
+  }
+
   refreshDisplayedNodes() {
     if (!this.searchResults || !this.searchResults.length) {
       this.displayedNodes = [];
@@ -644,6 +795,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return name;
     };
 
+    const aggregateTestTotals = this.aggregateTestTotals;
+    const diffRun = this.diffRun
+
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
       .filter(r => r.test.startsWith(prefix))
@@ -665,28 +819,26 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         const name = collapsePathOnto(testPath, nodes);
 
-        // Accumulate the sums.
         const rs = r.legacy_status;
+        const row = nodes[name];
         if (!rs) {
           return nodes;
         }
-        const row = nodes[name];
-        
+
         // Keep track of overall total.
-        if (!nodes.hasOwnProperty('totals')) {
-          nodes['totals'] = this.testRuns.map(() => ({passes: 0, total: 0}));
+        if (!('totals' in nodes)) {
+          nodes['totals'] = this.testRuns.map(() => {
+            return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
+          });
         }
-        for (let i = 0; i < rs.length; i++) {
-          nodes.totals[i].passes += rs[i].passes;
-          nodes.totals[i].total += rs[i].total;
-          row.results[i].passes += rs[i].passes;
-          row.results[i].total += rs[i].total;
-        }
+        // Accumulate the sums.
+        aggregateTestTotals(nodes, row, r.legacy_status, diffRun);
+
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
           if (previous) {
-            row.results[0].passes += previous.legacy_status[0].passes;
-            row.results[0].total += previous.legacy_status[0].total;
+            row.results[0].subtest_passes += previous.legacy_status[0].passes;
+            row.results[0].subtest_total += previous.legacy_status[0].total;
           }
         }
         if (this.diff && rs.length === 2) {
@@ -712,7 +864,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
         return nodes;
       }, {});
-    
+
     // Take the calculated totals to be displayed at bottom of results page.
     // Delete key after reassignment.
     this.displayedTotals = resultsByPath.totals;
@@ -728,18 +880,32 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   computeDifferences(before, after) {
-    const deleted = before.total > 0 && after.total === 0;
-    const added = after.total > 0 && before.total === 0;
+    // Count statuses for diff views.
+    let beforePasses = before.passes;
+    let beforeTotal = before.total;
+    if (before.status) {
+      beforeTotal++;
+      if (PASSING_STATUSES.includes(before.status)) beforePasses++;
+    }
+    let afterPasses = after.passes;
+    let afterTotal = after.total;
+    if (after.status) {
+      afterTotal++;
+      if (PASSING_STATUSES.includes(after.status)) afterPasses++;
+    }
+
+    const deleted = beforeTotal > 0 && afterTotal === 0;
+    const added = afterTotal > 0 && beforeTotal === 0;
     if (deleted && !this.diffFilter.includes('D')
       || added && !this.diffFilter.includes('A')) {
       return;
     }
-    const failingBefore = before.total - before.passes;
-    const failingAfter = after.total - after.passes;
+    const failingBefore = beforeTotal - beforePasses;
+    const failingAfter = afterTotal - afterPasses;
     const diff = [
-      Math.max(after.passes - before.passes, 0), // passes
+      Math.max(afterPasses - beforePasses, 0), // passes
       Math.max(failingAfter - failingBefore, 0), // regressions
-      after.total - before.total // total
+      afterTotal - beforeTotal // total
     ];
     const hasChanges = diff.some(v => v !== 0);
     if ((this.diffFilter.includes('A') && added)
@@ -761,9 +927,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return !node.isDir && this.triageMetadataUI && this.isTriageMode;
     }
 
+    // Triage can occur if a status doesn't pass.
+    const status = this.getNodeResultDataByPropertyName(node, index, testRun, 'status');
+    const failStatus = status && !PASSING_STATUSES.includes(status);
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return (totalTests - passedTests) > 0 && this.triageMetadataUI && this.isTriageMode;
+    return ((totalTests - passedTests) > 0 || failStatus) && this.triageMetadataUI && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -787,27 +956,92 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
     } else {
+      // Change prop by view.
+      const prefix = this.isDefaultView() ? 'subtest_' : '';
       // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
       // result.passes=0 && result.total=0 -> 'top';
       // otherwise -> 'passes-[colouring-by-percent]'.
       if (typeof result === 'undefined' && prop === 'total') {
         return 'none';
       }
-      if (this.path === '/' && !this.colorHomepage) {
+      // Percent view (interop-202*) will allow the home results to be colorized.
+      if (this.path === '/' && !this.colorHomepage && this.view !== 'interop') {
         return 'top';
       }
-      if (result.passes === 0 && result.total === 0) {
+      if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
         return 'top';
       }
-      return this.passRateClass(result.passes, result.total);
+      return this.passRateClass(result[`${prefix}passes`], result[`${prefix}total`]);
     }
   }
 
-  testTotalsClass(passes, total) {
-    if ((this.path === '/' && !this.colorHomepage) || total === 0) {
-      return 'top'
+  shouldDisplayToggle(canViewInteropScores, pathIsATestFile) {
+    return canViewInteropScores && !pathIsATestFile;
+  }
+
+  interopButtonClass(view) {
+    return (view === 'interop') ? 'selected' : 'unselected';
+  }
+
+  defaultButtonClass(view) {
+    return (view !== 'interop') ? 'selected' : 'unselected';
+  }
+
+  clickInterop() {
+    if (!this.isDefaultView()) {
+      return;
     }
-    return this.passRateClass(passes, total);
+    this.view = 'interop';
+  }
+
+  clickDefault() {
+    if (this.isDefaultView()) {
+      return;
+    }
+    this.view = 'subtest';
+  }
+
+  changeView(view) {
+    if (!view) {
+      return;
+    }
+    // Change query string to display correct view.
+    let query = location.search;
+    if (query.length > 0) {
+      query = query.substring(1)
+    }
+    let viewStr = `view=${view}`;
+    const params = query.split('&');
+    let viewFound = false;
+    for(let i = 0; i < params.length; i++) {
+      if (params[i].includes('view=')) {
+        viewFound = true;
+        params[i] = viewStr;
+      }
+    }
+    if (!viewFound) {
+      params.push(viewStr)
+    }
+
+    let url = location.pathname;
+    url += `?${params.join('&')}`;
+    history.pushState('', '', url)
+  }
+
+  isDefaultView() {
+    // Checks if a special view is active.
+    return this.view !== 'interop';
+  }
+
+  getTotalsClass(totalInfo) {
+    if ((this.path === '/' && !this.colorHomepage && this.isDefaultView())
+        || totalInfo.subtest_total === 0) {
+      return 'top';
+    }
+    if (!this.isDefaultView()) {
+      return this.passRateClass(totalInfo.passes, totalInfo.total);
+    }
+    return this.passRateClass(totalInfo.subtest_passes, totalInfo.subtest_total);
   }
 
   getDiffDelta(node, prop) {
@@ -844,6 +1078,132 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (index >= 0 && index < node.results.length) {
       return node.results[index][property];
     }
+  }
+
+  shouldDisplayHarnessWarning(node, index) {
+    // Determine if a warning sign should be displayed next to subtest counts.
+    const status = node.results[index].status;
+    return !node.isDir && status && !PASSING_STATUSES.includes(status)
+      && !node.results.every(testInfo => testInfo.singleSubtest);
+  }
+
+  getStatusDisplay(node, index) {
+    let status = node.results[index].status;
+    if (status in STATUS_ABBREVIATIONS) {
+      status = STATUS_ABBREVIATIONS[status];
+    }
+    return status;
+  }
+
+  // Formats the numbers shown on the results page for test aggregation.
+  getTestNumbersDisplay(passes, total, isDir=true) {
+    const formatPasses = parseFloat(passes.toFixed(2));
+    let cellDisplay = '';
+
+    // To differentiate subtests from tests, a different separator is used.
+    let separator = ' / ';
+    if (!isDir) {
+      separator = ' of ';
+    }
+
+    // Show flat '0 / total' or 'total / total' only if none or all tests/subtests pass.
+    // Display in parentheses if representing subtests.
+    if (passes === 0) {
+      cellDisplay = `0${separator}${total}`;
+    } else if (passes === total) {
+      cellDisplay = `${total}${separator}${total}`;
+    } else if (formatPasses < 0.01) {
+      // If there are passing tests, but only enough to round to 0.00,
+      // show 0.01 rather than 0.00 to differentiate between possible error states.
+      cellDisplay = `0.01${separator}${total}`;
+    } else if (formatPasses === parseFloat(total)) {
+      // If almost every test is passing, but there are some failures,
+      // don't round up to 'total / total' so that it's clear some failure exists.
+      cellDisplay = `${formatPasses - 0.01}`;
+    } else {
+      cellDisplay = `${formatPasses}${separator}${total}`;
+    }
+    return `${cellDisplay}`;
+  }
+
+  // Formats the numbers shown on the results page for the interop view.
+  formatCellDisplayInterop(passes, total, isDir) {
+
+    // Just show subtest numbers if we're at a single test view.
+    if (!isDir) {
+      return `${this.getTestNumbersDisplay(passes, total, isDir)} subtests`;
+    }
+
+    const formatPercent = parseFloat((passes / total * 100).toFixed(0));
+    let cellDisplay = '';
+    // Show flat 0% or 100% only if none or all tests/subtests pass.
+    if (passes === 0) {
+      cellDisplay = '0';
+    } else if (passes === total) {
+      cellDisplay = '100';
+    } else if (formatPercent === 0.0) {
+      // If there are passing tests, but only enough to round to 0.00,
+      // show 0.01 rather than 0.00 to differentiate between possible error states.
+      cellDisplay = '0.1';
+    } else if (formatPercent === 100.0) {
+      // If almost every test is passing, but there are some failures,
+      // don't round up to 'total / total' so that it's clear some failure exists.
+      cellDisplay = '99.9';
+    } else {
+      cellDisplay = `${formatPercent}`;
+    }
+    return `${this.getTestNumbersDisplay(passes, total, isDir)} (${cellDisplay}%)`;
+  }
+
+  // Formats the numbers that will be shown in each cell on the results page.
+  formatCellDisplay(passes, total, status=undefined, isDir=true) {
+    // Display 'Missing' text if there are no tests or subtests.
+    if (total === 0 && !status) {
+      return 'Missing';
+    }
+
+    // If the view is not the default view (subtest), then the function to
+    // obtain the selected view is called.
+    if (this.view === 'interop') {
+      return this.formatCellDisplayInterop(passes, total, isDir);
+    }
+    // If we're in the subtest view and there are no subtests but a status exists,
+    // we should count the status as the test total.
+    if (total === 0) {
+      if (status === 'P') return `${passes + 1} / ${total + 1}`;
+      return `${passes} / ${total + 1}`;
+    }
+    return `${passes} / ${total}`;
+  }
+
+  getNodeResult(node, index) {
+    const useSubtestCounts = this.isDefaultView() || !node.isDir;
+    const status = node.results[index].status;
+    // Display test numbers at directory level, but subtest numbers when showing a single test.
+    const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
+    const totalProp = useSubtestCounts ? 'subtest_total': 'total';
+    // Calculate what should be displayed in a given results row.
+    let passes = node.results[index][passesProp];
+    let total = node.results[index][totalProp];
+    return this.formatCellDisplay(passes, total, status, node.isDir);
+  }
+
+  // Format and display the information shown in the totals cells.
+  getTotalDisplay(totalInfo) {
+    let passes = totalInfo.subtest_passes;
+    let total = totalInfo.subtest_total;
+    if (this.view === 'interop') {
+      passes = totalInfo.passes;
+      total = totalInfo.total;
+    }
+    return this.formatCellDisplay(passes, total);
+  }
+
+  getTotalText() {
+    if (this.isDefaultView()) {
+      return 'Subtest Total';
+    }
+    return 'Test Total';
   }
 
   /* Function for getting total numbers.
@@ -890,6 +1250,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   queryChanged(query, queryBefore) {
     super.queryChanged(query, queryBefore);
+    // TODO (danielrsmith): fix the query logic so that this statement isn't needed
+    // to avoid duplicate calls. Hacky fix here that will not reload the data if
+    // 'view' is the only query string param.
+    if (query.includes('view') && query.split('=').length === 2) {
+      return;
+    }
+
     if (this._fetchedQuery === query) {
       return;
     }
@@ -973,17 +1340,25 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           a = b;
           b = c;
         }
+        // Use numbers based on view.
+        let passesParam = 'passes';
+        let totalParam = 'total';
+        if (this.isDefaultView()) {
+          passesParam = 'subtest_passes';
+          totalParam = 'subtest_total';
+        }
+
         // Both 0/0 cases; compare test names.
-        if (a.results[index].total === 0 && b.results[index].total === 0) {
+        if (a.results[index][totalParam] === 0 && b.results[index][totalParam] === 0) {
           return self.compareTestNameDefaultOrder(a, b);
         }
 
         // One of them is 0/0; compare passes;
-        if (a.results[index].total === 0 || b.results[index].total === 0) {
-          return a.results[index].total - b.results[index].total;
+        if (a.results[index][totalParam] === 0 || b.results[index][totalParam] === 0) {
+          return a.results[index][totalParam] - b.results[index][totalParam];
         }
-        const percentageA = a.results[index].passes / a.results[index].total;
-        const percentageB = b.results[index].passes / b.results[index].total;
+        const percentageA = a.results[index][passesParam] / a.results[index][totalParam];
+        const percentageB = b.results[index][passesParam] / b.results[index][totalParam];
         if (percentageA === percentageB) {
           return self.compareTestNameDefaultOrder(a, b);
         }

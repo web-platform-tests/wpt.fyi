@@ -480,6 +480,12 @@ type LegacySearchRunResult struct {
 	Passes int `json:"passes"`
 	// Total is the total number of test results for this run/file pair.
 	Total int `json:"total"`
+	// Status represents either the test status or harness status.
+	// This will be an empty string for old summaries.
+	Status string `json:"status"`
+	// NewAggProcess represents whether the summary was created with the old
+	// or new aggregation process.
+	NewAggProcess bool `json:"newAggProcess"`
 }
 
 // SearchResult contains data regarding a particular test file over a collection

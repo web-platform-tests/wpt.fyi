@@ -187,21 +187,45 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	// Dedup visited file names via a map of results.
 	resMap := make(map[string]shared.SearchResult)
 	for i, s := range summaries {
-		for filename, passAndTotal := range s {
-			// Exclude filenames that do not match query.
-			if !strings.Contains(canonicalizeStr(filename), q) {
-				continue
-			}
-
-			if _, ok := resMap[filename]; !ok {
-				resMap[filename] = shared.SearchResult{
-					Test:         filename,
-					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+		if s.oldFormat != nil {
+			// This is an old summary. Format according to old process.
+			for filename, passAndTotal := range s.oldFormat {
+				// Exclude filenames that do not match query.
+				if !strings.Contains(canonicalizeStr(filename), q) {
+					continue
+				}
+				if _, ok := resMap[filename]; !ok {
+					resMap[filename] = shared.SearchResult{
+						Test:         filename,
+						LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+					}
+				}
+				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
+					Passes:        passAndTotal[0],
+					Total:         passAndTotal[1],
+					Status:        "",
+					NewAggProcess: false,
 				}
 			}
-			resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
-				Passes: passAndTotal[0],
-				Total:  passAndTotal[1],
+		} else {
+			// This is a new summary. Aggregate using new process.
+			for filename, testInfo := range s.newFormat {
+				// Exclude filenames that do not match query.
+				if !strings.Contains(canonicalizeStr(filename), q) {
+					continue
+				}
+				if _, ok := resMap[filename]; !ok {
+					resMap[filename] = shared.SearchResult{
+						Test:         filename,
+						LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
+					}
+				}
+				resMap[filename].LegacyStatus[i] = shared.LegacySearchRunResult{
+					Passes:        testInfo.Counts[0],
+					Total:         testInfo.Counts[1],
+					Status:        testInfo.Status,
+					NewAggProcess: true,
+				}
 			}
 		}
 	}

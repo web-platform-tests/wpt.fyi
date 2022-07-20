@@ -171,7 +171,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     </template>
     <template is="dom-if" if="[[shouldShowTotals(totals)]]">
       <tr class="totals-row">
-        <td class="sub-test-name"><code><strong>Total</strong></code></td>
+        <td class="sub-test-name"><code><strong>Subtest Total</strong></code></td>
         <template is="dom-repeat" items="[[totals]]" as="columnTotal">
           <td class$="[[ totalsColorClass(columnTotal.passes, columnTotal.total) ]]">
             <code>[[ columnTotal.passes ]]/[[ columnTotal.total ]]</code>
@@ -367,27 +367,24 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     }
 
     // Tally the number of passes and total tests.
-    rows.forEach(row => {
-      // Don't count the Harness duration row.
-      if (row.name !== 'Duration') {
-        row.results.forEach((result, index) => {
-          if (result.status === 'PASS' || result.status === 'OK') {
-            totals[index].passes++;
-          }
-          // If the test status is missing, it's not counted toward the total.
-          if (result.status) {
-            totals[index].total++;
-          }
-        });
-      }
-    });
+    for (let i = 2; i < rows.length; i++) {
+      rows[i].results.forEach((result, index) => {
+        if (result.status === 'PASS') {
+          totals[index].passes++;
+        }
+        // If the test status is missing, it's not counted toward the total.
+        if (result.status) {
+          totals[index].total++;
+        }
+      });
+    }
     return totals;
   }
 
   colorClass(status) {
-    if (['PASS', 'OK'].includes(status)) {
+    if (['PASS'].includes(status)) {
       return this.passRateClass(1, 1);
-    } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN'].includes(status)) {
+    } else if (['FAIL', 'ERROR', 'TIMEOUT', 'NOTRUN', 'CRASH'].includes(status)) {
       return this.passRateClass(0, 1);
     }
     return 'result';

@@ -30,6 +30,7 @@ type testRunUIFilter struct {
 	Search     string
 	// JSON blob of extra (arbitrary) test runs
 	TestRuns string
+	View     string
 }
 
 type homepageData struct {
@@ -124,6 +125,10 @@ func populateHomepageData(r *http.Request) (data homepageData, err error) {
 		data.DiffFilter = diffFilter.String()
 	}
 
+	if testRunFilter.View != nil {
+		data.View = *testRunFilter.View
+	}
+
 	var beforeAndAfter shared.ProductSpecs
 	if beforeAndAfter, err = shared.ParseBeforeAndAfterParams(q); err != nil {
 		return data, err
@@ -162,6 +167,9 @@ func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunU
 	}
 	if testRunFilter.To != nil {
 		filter.To = testRunFilter.To.Format(time.RFC3339)
+	}
+	if testRunFilter.View != nil {
+		filter.View = *testRunFilter.View
 	}
 	return filter
 }
