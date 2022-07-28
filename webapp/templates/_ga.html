@@ -6,7 +6,20 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
+  // TODO: Remove when ready to move away from Universal Analytics
   gtag('config', 'UA-89387706-1');
+
+  // Configure Google Analytics 4
+  // TODO: Look into using Google Tag Manager
+  // https://github.com/web-platform-tests/wpt.fyi/issues/2919
+  // Until then, determine which Google Analytics to use by examining the host
+  const host = window.location.hostname;
+  if (host == "wpt.fyi"){
+    gtag('config', 'G-Q5FRYPBBYC');
+  } else {
+    // Default to using the staging one
+    gtag('config', 'G-R9Z49K7QCN');
+  }
   window.onerror = function(message, source, lineno, colno) {
     let description;
     // https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
