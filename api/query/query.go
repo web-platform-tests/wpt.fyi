@@ -61,6 +61,30 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
+func (qh queryHandler) getVersionFiles(w http.ResponseWriter, r *http.Request) ([]string, error) {
+
+	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	}
+	testRuns, filters, err := qh.getRunsAndFilters(filters)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return nil, err
+	}
+	versionFiles := make([]string, 0, len(testRuns))
+	for _, testRun := range testRuns {
+		summaryURL := shared.GetResultsURL(testRun, "")
+		url := summaryURL[:len(summaryURL)-16] + "_version.txt"
+		mkey := getRedisKey(testRun)
+		var data []byte
+		qh.dataSource.Get(mkey, url, &data)
+		versionFiles = append(versionFiles, string(data))
+	}
+	return versionFiles, nil
+}
+
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns, shared.QueryFilter, error) {
 	filters := in
 	var testRuns shared.TestRuns

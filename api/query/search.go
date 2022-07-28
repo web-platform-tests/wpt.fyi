@@ -99,6 +99,25 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			val, _ := shared.ParseBooleanParam(q, param)
 			isSimpleQ = isSimpleQ && (val == nil || !*val)
 		}
+		r2 := *r
+		r2url := *r.URL
+		r2.URL = &r2url
+		r2.Method = "GET"
+		runIDStrs := make([]string, 0, len(rq.RunIDs))
+		for _, id := range rq.RunIDs {
+			runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+		}
+		runIDsStr := strings.Join(runIDStrs, ",")
+		r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
+		versionFiles, err := sh.getVersionFiles(w, &r2)
+		if err != nil {
+			isSimpleQ = false
+		}
+		for _, version := range versionFiles {
+			if len(version) == 0 {
+				isSimpleQ = false
+			}
+		}
 	}
 
 	if !isSimpleQ {

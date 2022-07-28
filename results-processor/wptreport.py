@@ -360,13 +360,17 @@ class WPTReport(object):
         """
         return (result for result in self.results)
 
-    def write_summary(self, filepath: str) -> None:
+    def write_summary(self, filepath: str, version_path: str=None) -> None:
         """Writes the summary JSON file to disk.
 
         Args:
             filepath: A file path to write to.
         """
         self.write_gzip_json(filepath, self.summarize())
+        # Write summary version file.
+        if version_path:
+            with open(f'{filepath}_version.txt', 'wb') as f:
+                f.write('2')
 
     def write_result_directory(self, directory: str) -> None:
         """Writes individual test results to a directory.
@@ -428,7 +432,8 @@ class WPTReport(object):
         if not output_dir:
             output_dir = tempfile.mkdtemp()
 
-        self.write_summary(os.path.join(output_dir, self.sha_summary_path))
+        self.write_summary(os.path.join(output_dir, self.sha_summary_path),
+            os.path.join(output_dir, self.sha_product_path))
         self.write_result_directory(
             os.path.join(output_dir, self.sha_product_path))
         return output_dir
