@@ -360,7 +360,7 @@ class WPTReport(object):
         """
         return (result for result in self.results)
 
-    def write_summary(self, filepath: str, version_path: str = None) -> None:
+    def write_summary(self, filepath: str, version_path: str = "") -> None:
         """Writes the summary JSON file to disk.
 
         Args:
@@ -369,7 +369,7 @@ class WPTReport(object):
         self.write_gzip_json(filepath, self.summarize())
         # Write summary version file.
         if version_path:
-            with open(f'{filepath}_version.txt', 'wb') as f:
+            with open(f'{filepath}_version.txt', 'w') as f:
                 f.write('2')
 
     def write_result_directory(self, directory: str) -> None:
