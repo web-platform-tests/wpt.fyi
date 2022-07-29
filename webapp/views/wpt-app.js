@@ -237,13 +237,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.isBSFCollapsed = !this.isBSFCollapsed;
       // Record hide/open actions on the BSF graph. Currently, we only
       // show it on the homepage.
-      if ('ga' in window) {
-        window.ga('send', {
-          hitType: 'event',
-          eventCategory: 'bsf',
-          eventAction: 'visibility change',
-          eventLabel: this.path,
-          eventValue: this.isBSFCollapsed ? 1 : 0
+      if ('gtag' in window) {
+        window.gtag('event', 'visibility change', {
+          'event_category': 'bsf',
+          'event_label': this.path,
+          'value': this.isBSFCollapsed ? 1 : 0
         });
       }
       this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
@@ -270,13 +268,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         return;
       }
 
-      if ('ga' in window) {
-        window.ga('send', {
-          hitType: 'event',
-          eventCategory: 'bsf',
-          eventAction: 'hover',
-          eventLabel: this.path,
-          eventValue: duration
+      if ('gtag' in window) {
+        window.gtag('event', 'hover', {
+          'event_category': 'bsf',
+          'event_label': this.path,
+          'value': duration
         });
       }
       this.bsfStartTime = null;

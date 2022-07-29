@@ -130,9 +130,11 @@ const SelfNavigation = (superClass) => class SelfNavigation extends PathInfo(sup
       .replace(/%3A00.000Z/g, '');
     window.history.pushState(params, '', url);
 
-    // Send Google Analytics pageview event
-    if ('ga' in window) {
-      window.ga('send', 'pageview', path);
+    // Send Google Analytics page_view event
+    if ('gtag' in window) {
+      window.gtag('event', 'page_view', {
+        page_path: path
+      });
     }
   }
 
