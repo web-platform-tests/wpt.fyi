@@ -61,28 +61,30 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) getVersionFiles(w http.ResponseWriter, r *http.Request) ([]string, error) {
-
+func (qh queryHandler) validateSummaryVersions(w http.ResponseWriter, r *http.Request) (bool, error) {
 	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return nil, err
+		return false, err
 	}
 	testRuns, filters, err := qh.getRunsAndFilters(filters)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return nil, err
+		return false, err
 	}
-	versionFiles := make([]string, 0, len(testRuns))
+
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
-		url := summaryURL[:len(summaryURL)-16] + "_version.txt"
-		mkey := getRedisKey(testRun)
+		// All summary URLs end with "-summary.json.gz". We remove this and
+		// add the correct suffix for the version file.
+		const suffixOffset = 16
+		url := summaryURL[:len(summaryURL)-suffixOffset] + "_version.txt"
+		mkey := getRedisVersionKey(testRun)
 		var data []byte
-		qh.dataSource.Get(mkey, url, &data)
-		versionFiles = append(versionFiles, string(data))
+		err := qh.dataSource.Get(mkey, url, &data)
+		if len(data) == 0 || err != nil {
+			return false, err
+		}
 	}
-	return versionFiles, nil
+	return true, nil
 }
 
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns, shared.QueryFilter, error) {
@@ -170,6 +172,10 @@ func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 
 func getRedisKey(testRun shared.TestRun) string {
 	return "RESULTS_SUMMARY-" + strconv.FormatInt(testRun.ID, 10)
+}
+
+func getRedisVersionKey(testRun shared.TestRun) string {
+	return "SUMMARY_VERSION-" + strconv.FormatInt(testRun.ID, 10)
 }
 
 func isRequestCacheable(r *http.Request) bool {

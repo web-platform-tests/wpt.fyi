@@ -85,6 +85,17 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Prepare logging.
+	ctx := sh.api.Context()
+	logger := shared.GetLogger(ctx)
+
+	// Assemble list of run IDs for later use.
+	runIDStrs := make([]string, 0, len(rq.RunIDs))
+	for _, id := range rq.RunIDs {
+		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+	}
+	runIDsStr := strings.Join(runIDStrs, ",")
+
 	// Check if the query is a simple (empty/just True, or test name only) query
 	var simpleQ TestNamePattern
 	var isSimpleQ bool
@@ -99,35 +110,30 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			val, _ := shared.ParseBooleanParam(q, param)
 			isSimpleQ = isSimpleQ && (val == nil || !*val)
 		}
-		r2 := *r
-		r2url := *r.URL
-		r2.URL = &r2url
-		r2.Method = "GET"
-		runIDStrs := make([]string, 0, len(rq.RunIDs))
+
+		// Check old summary file versions. If any are old versions, then
+		// disregard them and use the searchcache to aggregate the runs.
 		for _, id := range rq.RunIDs {
-			runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+			q.Add("run_id", strconv.FormatInt(id, 10))
 		}
-		runIDsStr := strings.Join(runIDStrs, ",")
-		r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
-		versionFiles, err := sh.getVersionFiles(w, &r2)
+		q.Add("q", url.QueryEscape(simpleQ.Pattern))
+
+		r2 := r.Clone(r.Context())
+		r2.Method = "GET"
+		r2.URL.RawQuery = q.Encode()
+		isSimpleQ, err = sh.validateSummaryVersions(w, r2)
 		if err != nil {
-			isSimpleQ = false
-		}
-		for _, version := range versionFiles {
-			if len(version) == 0 {
-				isSimpleQ = false
-			}
+			logger.Debugf("Error checking version files: %v", err)
 		}
 	}
 
+	// Use searchcache for a complex query or if old summary files exist.
 	if !isSimpleQ {
-		ctx := sh.api.Context()
 		hostname := sh.api.GetServiceHostname("searchcache")
 		// TODO: This will not work when hostname is localhost (http scheme needed).
 		fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
 		fwdURL.RawQuery = r.URL.RawQuery
 
-		logger := shared.GetLogger(ctx)
 		logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
 		client := sh.api.GetHTTPClientWithTimeout(time.Second * 15)
@@ -172,11 +178,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	r2url := *r.URL
 	r2.URL = &r2url
 	r2.Method = "GET"
-	runIDStrs := make([]string, 0, len(rq.RunIDs))
-	for _, id := range rq.RunIDs {
-		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
-	}
-	runIDsStr := strings.Join(runIDStrs, ",")
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
