@@ -28,7 +28,7 @@
     } else {
       description = `${message} at ${source}:${lineno}:${colno}`;
     }
-    // https://developers.google.com/analytics/devguides/collection/analyticsjs/exceptions
-    gtag('send', 'exception', {'description': description});
+    // https://developers.google.com/analytics/devguides/collection/gtagjs/exceptions
+    gtag('event', 'exception', {'description': description});
   };
 </script>
