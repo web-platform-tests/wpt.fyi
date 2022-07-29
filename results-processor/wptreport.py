@@ -360,7 +360,7 @@ class WPTReport(object):
         """
         return (result for result in self.results)
 
-    def write_summary(self, filepath: str, version_path: str=None) -> None:
+    def write_summary(self, filepath: str, version_path: str = None) -> None:
         """Writes the summary JSON file to disk.
 
         Args:
@@ -433,7 +433,7 @@ class WPTReport(object):
             output_dir = tempfile.mkdtemp()
 
         self.write_summary(os.path.join(output_dir, self.sha_summary_path),
-            os.path.join(output_dir, self.sha_product_path))
+                           os.path.join(output_dir, self.sha_product_path))
         self.write_result_directory(
             os.path.join(output_dir, self.sha_product_path))
         return output_dir
