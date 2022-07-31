@@ -121,7 +121,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		r2 := r.Clone(r.Context())
 		r2.Method = "GET"
 		r2.URL.RawQuery = q.Encode()
-		isSimpleQ, err = sh.validateSummaryVersions(w, r2)
+		isSimpleQ, err = sh.validateSummaryVersions(r2.URL.Query())
 		if err != nil {
 			logger.Debugf("Error checking version files: %v", err)
 		}

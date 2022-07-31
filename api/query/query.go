@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 
@@ -61,8 +62,8 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) validateSummaryVersions(w http.ResponseWriter, r *http.Request) (bool, error) {
-	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
+func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
+	filters, err := shared.ParseQueryFilterParams(v)
 	if err != nil {
 		return false, err
 	}
