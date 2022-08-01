@@ -169,15 +169,23 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 }
 
 func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
+	version_urls := []string{
+		"https://example.com/1_version.txt",
+		"https://example.com/2_version.txt",
+	}
+	versionBytes := [][]byte{
+		[]byte(`2`),
+		[]byte(`2`),
+	}
 	urls := []string{
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ResultsURL: urls[0],
 		},
-		shared.TestRun{
+		{
 			ResultsURL: urls[1],
 		},
 	}
@@ -214,12 +222,16 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	// TODO(markdittmer): Should this be hitting GCS instead?
 	store := sharedtest.NewMockReadable(mockCtrl)
 	rs := []*sharedtest.MockReadCloser{
+		sharedtest.NewMockReadCloser(t, versionBytes[0]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
+		sharedtest.NewMockReadCloser(t, versionBytes[1]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
 
-	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
-	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
+	store.EXPECT().NewReadCloser(version_urls[0]).Return(rs[0], nil)
+	store.EXPECT().NewReadCloser(urls[0]).Return(rs[1], nil)
+	store.EXPECT().NewReadCloser(version_urls[1]).Return(rs[2], nil)
+	store.EXPECT().NewReadCloser(urls[1]).Return(rs[3], nil)
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q, err := json.Marshal("/b/")
@@ -396,15 +408,23 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 }
 
 func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
+	version_urls := []string{
+		"https://example.com/1_version.txt",
+		"https://example.com/2_version.txt",
+	}
+	versionBytes := [][]byte{
+		[]byte(`2`),
+		[]byte(`2`),
+	}
 	urls := []string{
 		"https://example.com/1-summary.json.gz",
 		"https://example.com/2-summary.json.gz",
 	}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ResultsURL: urls[0],
 		},
-		shared.TestRun{
+		{
 			ResultsURL: urls[1],
 		},
 	}
@@ -441,12 +461,16 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	// TODO(markdittmer): Should this be hitting GCS instead?
 	store := sharedtest.NewMockReadable(mockCtrl)
 	rs := []*sharedtest.MockReadCloser{
+		sharedtest.NewMockReadCloser(t, versionBytes[0]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[0]),
+		sharedtest.NewMockReadCloser(t, versionBytes[1]),
 		sharedtest.NewMockReadCloser(t, summaryBytes[1]),
 	}
 
-	store.EXPECT().NewReadCloser(urls[0]).Return(rs[0], nil)
-	store.EXPECT().NewReadCloser(urls[1]).Return(rs[1], nil)
+	store.EXPECT().NewReadCloser(version_urls[0]).Return(rs[0], nil)
+	store.EXPECT().NewReadCloser(urls[0]).Return(rs[1], nil)
+	store.EXPECT().NewReadCloser(version_urls[1]).Return(rs[2], nil)
+	store.EXPECT().NewReadCloser(urls[1]).Return(rs[3], nil)
 
 	// Same params as TestGetRunsAndFilters_specificRunIDs.
 	q, err := json.Marshal("/b/")
