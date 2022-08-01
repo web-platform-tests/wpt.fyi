@@ -81,8 +81,10 @@ func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
 		mkey := getRedisVersionKey(testRun)
 		var data []byte
 		err := qh.dataSource.Get(mkey, url, &data)
-		if len(data) == 0 || err != nil {
+		if err != nil {
 			return false, err
+		} else if len(data) == 0 {
+			return false, fmt.Errorf("No version found for : %v", mkey)
 		}
 	}
 	return true, nil
