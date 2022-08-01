@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -8,12 +9,14 @@ package query
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 
@@ -174,6 +177,9 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockStore := sharedtest.NewMockDatastore(ctrl)
+	cachedStore := sharedtest.NewMockCachedStore(ctrl)
+
 	respBytes := []byte(`{}`)
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -185,15 +191,53 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 	serverURL, err := url.Parse(server.URL)
 	assert.Nil(t, err)
 	hostname := serverURL.Host
+	runIDs := []int64{1, 2}
+	urls := []string{
+		"https://example.com/1-summary.json.gz",
+		"https://example.com/2-summary.json.gz",
+	}
+	version_urls := []string{
+		"https://example.com/1_version.txt",
+		"https://example.com/2_version.txt",
+	}
+	chrome, _ := shared.ParseProductSpec("chrome")
+	edge, _ := shared.ParseProductSpec("edge")
+	testRuns := shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: chrome,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[0],
+					ResultsURL: urls[0],
+					TimeStart:  time.Now(),
+				},
+			},
+		},
+		shared.ProductTestRuns{
+			Product: edge,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[1],
+					ResultsURL: urls[1],
+					TimeStart:  time.Now().AddDate(0, 0, -1),
+				},
+			},
+		},
+	}
+	for _, id := range runIDs {
+		mockStore.EXPECT().NewIDKey("TestRun", id).Return(sharedtest.MockKey{ID: id})
+	}
+	cachedStore.EXPECT().Get("SUMMARY_VERSION-"+fmt.Sprint(runIDs[0]), version_urls[0], gomock.Any()).Return(nil)
+	mockStore.EXPECT().GetMulti(sharedtest.SameKeys(runIDs), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns.AllRuns()))
 
 	api := sharedtest.NewMockAppEngineAPI(ctrl)
-	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[1,2,3,4],"query":{"browser_name":"chrome","status":"PASS"}}`)))
+	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[1,2],"query":{"browser_name":"chrome","status":"PASS"}}`)))
 
 	api.EXPECT().Context().Return(sharedtest.NewTestContext())
 	api.EXPECT().GetServiceHostname("searchcache").Return(hostname)
 	api.EXPECT().GetHTTPClientWithTimeout(gomock.Any()).Return(server.Client())
 	w := httptest.NewRecorder()
-	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)
+	structuredSearchHandler{queryHandler{store: mockStore, dataSource: cachedStore}, api}.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, respBytes, w.Body.Bytes())
@@ -202,6 +246,9 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 func TestStructuredSearchHandler_failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+
+	mockStore := sharedtest.NewMockDatastore(ctrl)
+	cachedStore := sharedtest.NewMockCachedStore(ctrl)
 
 	respBytes := []byte(`Unknown run ID: 42`)
 
@@ -215,6 +262,38 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 	serverURL, err := url.Parse(server.URL)
 	assert.Nil(t, err)
 	hostname := serverURL.Host
+	runIDs := []int64{1, 2}
+	urls := []string{
+		"https://example.com/1-summary.json.gz",
+		"https://example.com/2-summary.json.gz",
+	}
+	chrome, _ := shared.ParseProductSpec("chrome")
+	edge, _ := shared.ParseProductSpec("edge")
+	testRuns := shared.TestRunsByProduct{
+		shared.ProductTestRuns{
+			Product: chrome,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[0],
+					ResultsURL: urls[0],
+					TimeStart:  time.Now(),
+				},
+			},
+		},
+		shared.ProductTestRuns{
+			Product: edge,
+			TestRuns: shared.TestRuns{
+				shared.TestRun{
+					ID:         runIDs[1],
+					ResultsURL: urls[1],
+					TimeStart:  time.Now().AddDate(0, 0, -1),
+				},
+			},
+		},
+	}
+	var id int64 = 42
+	mockStore.EXPECT().NewIDKey("TestRun", id).Return(sharedtest.MockKey{ID: id})
+	mockStore.EXPECT().GetMulti(sharedtest.SameKeys([]int64{id}), gomock.Any()).DoAndReturn(sharedtest.MultiRuns(testRuns.AllRuns()))
 
 	api := sharedtest.NewMockAppEngineAPI(ctrl)
 	r := httptest.NewRequest("POST", "https://example.com/api/query", bytes.NewBuffer([]byte(`{"run_ids":[42],"query":{"browser_name":"chrome","status":"PASS"}}`)))
@@ -224,7 +303,7 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 	api.EXPECT().GetHTTPClientWithTimeout(gomock.Any()).Return(server.Client())
 
 	w := httptest.NewRecorder()
-	structuredSearchHandler{queryHandler{}, api}.ServeHTTP(w, r)
+	structuredSearchHandler{queryHandler{store: mockStore, dataSource: cachedStore}, api}.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, respBytes, w.Body.Bytes())
