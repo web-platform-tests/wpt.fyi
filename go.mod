@@ -1,20 +1,16 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.16
+go 1.19
 
 require (
 	cloud.google.com/go/cloudtasks v0.1.0
 	cloud.google.com/go/datastore v1.6.0
 	cloud.google.com/go/logging v1.4.2
 	cloud.google.com/go/storage v1.24.0
-	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
-	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
-	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.3
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
 	github.com/gomodule/redigo v1.8.9
 	github.com/google/go-github/v42 v42.0.0
@@ -35,6 +31,55 @@ require (
 	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad
 	google.golang.org/grpc v1.47.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	cloud.google.com/go v0.102.1 // indirect
+	cloud.google.com/go/compute v1.7.0 // indirect
+	cloud.google.com/go/iam v0.3.0 // indirect
+	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
+	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fatih/camelcase v1.0.0 // indirect
+	github.com/felixge/httpsnoop v1.0.2 // indirect
+	github.com/gobuffalo/logger v1.0.6 // indirect
+	github.com/gobuffalo/packd v1.0.1 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/johncgriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
+	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/markbates/errx v1.1.0 // indirect
+	github.com/markbates/oncer v1.0.0 // indirect
+	github.com/markbates/safe v1.0.1 // indirect
+	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/spf13/cobra v1.5.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/taskcluster/httpbackoff/v3 v3.1.0 // indirect
+	github.com/taskcluster/slugid-go v1.1.0 // indirect
+	github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957 // indirect
+	go.opencensus.io v0.23.0 // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/tools v0.1.11 // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
