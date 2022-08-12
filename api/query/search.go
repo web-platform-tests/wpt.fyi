@@ -121,15 +121,17 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		r2 := r.Clone(r.Context())
 		r2.Method = "GET"
 		r2.URL.RawQuery = q.Encode()
-		isSimpleQ, err = sh.validateSummaryVersions(r2.URL.Query())
+		summariesValid, err := sh.validateSummaryVersions(r2.URL.Query())
 		if err != nil {
 			logger.Debugf("Error checking version files: %v", err)
 		}
+		isSimpleQ = isSimpleQ && summariesValid
 	}
 
 	// Use searchcache for a complex query or if old summary files exist.
 	if !isSimpleQ {
 		sh.useSearchcache(w, r, data, logger)
+		return
 	}
 
 	// Structured query is equivalent to unstructured query.

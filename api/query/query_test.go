@@ -21,7 +21,7 @@ import (
 )
 
 func TestGetRedisKey(t *testing.T) {
-	assert.Equal(t, "RESULTS_SUMMARY-1", getRedisKey(shared.TestRun{
+	assert.Equal(t, "RESULTS_SUMMARY-v2-1", getRedisKey(shared.TestRun{
 		ID: 1,
 	}))
 }
