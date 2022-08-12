@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -45,8 +46,8 @@ func NewShouldCache(t *testing.T, expected bool, delegate func(context.Context, 
 
 func TestUnstructuredSearchHandler(t *testing.T) {
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := shared.TestRuns{
 		shared.TestRun{
@@ -170,8 +171,8 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 
 func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
 		shared.TestRun{
@@ -302,8 +303,8 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 
 func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := shared.TestRuns{
 		shared.TestRun{
@@ -397,8 +398,8 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 
 func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
 		shared.TestRun{

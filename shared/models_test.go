@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 package shared_test
@@ -16,13 +17,13 @@ func TestTestRunIDs_LoadTestRuns(t *testing.T) {
 	testRuns[0].BrowserVersion = "63.0"
 	testRuns[0].OSName = "linux"
 	testRuns[0].Revision = "1234567890"
-	testRuns[0].ResultsURL = "/static/chrome-63.0-linux-summary.json.gz"
+	testRuns[0].ResultsURL = "/static/chrome-63.0-linux-summary_v2.json.gz"
 
 	testRuns[1].BrowserName = "firefox"
 	testRuns[1].BrowserVersion = "60.0"
 	testRuns[1].OSName = "linux"
 	testRuns[1].Revision = "0987654321"
-	testRuns[1].ResultsURL = "/static/firefox-60.0-linux-summary.json.gz"
+	testRuns[1].ResultsURL = "/static/firefox-60.0-linux-summary_v2.json.gz"
 
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)

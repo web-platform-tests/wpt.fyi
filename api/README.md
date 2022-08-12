@@ -71,7 +71,7 @@ __`pr`__ (Beta): GitHub PR number. Shows runs for commits that belong to the PR.
         "os_version": "4.4",
         "revision": "2bd11b91d4",
         "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
-        "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+        "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary_v2.json.gz",
         "created_at": "2018-06-05T08:27:30.627865Z",
         "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
       }
@@ -97,7 +97,7 @@ https://wpt.fyi/api/runs/5184362994728960
       "os_version": "4.4",
       "revision": "2bd11b91d4",
       "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
-      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary_v2.json.gz",
       "created_at": "2018-06-05T08:27:30.627865Z",
       "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
     }
@@ -128,7 +128,7 @@ https://wpt.fyi/api/run?sha=latest&product=chrome
       "os_version": "4.4",
       "revision": "2bd11b91d4",
       "full_revision_hash": "2bd11b91d490ddd5237bcb6d8149a7f25faaa101",
-      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary.json.gz",
+      "results_url": "https://storage.googleapis.com/wptd/2bd11b91d4/chrome-stable-linux-summary_v2.json.gz",
       "created_at": "2018-06-05T08:27:30.627865Z",
       "raw_results_url": "https://storage.googleapis.com/wptd-results/2bd11b91d490ddd5237bcb6d8149a7f25faaa101/chrome_67.0.3396.62_linux_4.4/report.json"
     }
@@ -196,7 +196,7 @@ __`sha`__ : SHA[0:10] of the TestRun to fetch, or the keyword `latest`. Defaults
 
 https://wpt.fyi/api/results?product=chrome
 
-<details><summary><b>Example JSON</b> (from the summary.json.gz output)</summary>
+<details><summary><b>Example JSON</b> (from the summary_v2.json.gz output)</summary>
 
     {
       "/css/css-text/i18n/css3-text-line-break-opclns-213.html": [1, 1],
@@ -406,7 +406,7 @@ NOTE: structured search queries are not supported.
       "os_version": "16.04",
       "revision": "2dda7b8c10",
       "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary.json.gz",
+      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/chrome-68.0.3440.106-linux-16.04-edf200244e-summary_v2.json.gz",
       "created_at": "2018-08-17T08:12:29.219847Z",
       "time_start": "2018-08-17T06:26:52.33Z",
       "time_end": "2018-08-17T07:50:09.155Z",
@@ -425,7 +425,7 @@ NOTE: structured search queries are not supported.
       "os_version": "16.04",
       "revision": "2dda7b8c10",
       "full_revision_hash": "2dda7b8c10c7566fa6167a32b09c85d51baf2a85",
-      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary.json.gz",
+      "results_url": "https:\/\/storage.googleapis.com\/wptd-staging\/2dda7b8c10c7566fa6167a32b09c85d51baf2a85\/firefox-61.0.2-linux-16.04-75ff911c43-summary_v2.json.gz",
       "created_at": "2018-08-17T08:31:38.580221Z",
       "time_start": "2018-08-17T06:47:29.643Z",
       "time_end": "2018-08-17T08:15:18.612Z",

@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -30,8 +31,8 @@ func TestLoadOldSummaries_success(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
 		{
@@ -86,8 +87,8 @@ func TestLoadNewSummaries_success(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
 		{
@@ -142,8 +143,8 @@ func TestLoadSummaries_fail(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
 		{
@@ -190,8 +191,8 @@ func TestGetRunsAndFilters_default(t *testing.T) {
 
 	runIDs := []int64{1, 2}
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	chrome, _ := shared.ParseProductSpec("chrome")
 	edge, _ := shared.ParseProductSpec("edge")
@@ -240,8 +241,8 @@ func TestGetRunsAndFilters_specificRunIDs(t *testing.T) {
 
 	runIDs := []int64{1, 2}
 	urls := []string{
-		"https://example.com/1-summary.json.gz",
-		"https://example.com/2-summary.json.gz",
+		"https://example.com/1-summary_v2.json.gz",
+		"https://example.com/2-summary_v2.json.gz",
 	}
 	chrome, _ := shared.ParseProductSpec("chrome")
 	edge, _ := shared.ParseProductSpec("edge")

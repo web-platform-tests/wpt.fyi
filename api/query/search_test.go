@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -25,13 +26,13 @@ import (
 func doTestIC(t *testing.T, p, q string) {
 	runIDs := []int64{1, 2}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:         runIDs[0],
-			ResultsURL: "https://example.com/1-summary.json.gz",
+			ResultsURL: "https://example.com/1-summary_v2.json.gz",
 		},
-		shared.TestRun{
+		{
 			ID:         runIDs[1],
-			ResultsURL: "https://example.com/2-summary.json.gz",
+			ResultsURL: "https://example.com/2-summary_v2.json.gz",
 		},
 	}
 	filters := shared.QueryFilter{
@@ -101,11 +102,11 @@ func doTestIC_newSummary(t *testing.T, p, q string) {
 	testRuns := []shared.TestRun{
 		{
 			ID:         runIDs[0],
-			ResultsURL: "https://example.com/1-summary.json.gz",
+			ResultsURL: "https://example.com/1-summary_v2.json.gz",
 		},
 		{
 			ID:         runIDs[1],
-			ResultsURL: "https://example.com/2-summary.json.gz",
+			ResultsURL: "https://example.com/2-summary_v2.json.gz",
 		},
 	}
 	filters := shared.QueryFilter{

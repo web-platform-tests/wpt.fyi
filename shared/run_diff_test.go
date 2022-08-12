@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -198,7 +199,7 @@ func TestRunDiffFromSearchResponse(t *testing.T) {
     "os_version": "10.13",
     "revision": "b5d4599280",
     "full_revision_hash": "b5d4599280363dc4e4e6a87f3706f0edce5bbdb6",
-    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-be2f6871ef-summary.json.gz",
+    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-be2f6871ef-summary_v2.json.gz",
     "created_at": "2019-06-18T17:30:23.755776Z",
     "time_start": "2019-06-18T17:27:54.716Z",
     "time_end": "2019-06-18T17:29:39.042Z",
@@ -212,7 +213,7 @@ func TestRunDiffFromSearchResponse(t *testing.T) {
     "os_version": "10.13",
     "revision": "b5d4599280",
     "full_revision_hash": "b5d4599280363dc4e4e6a87f3706f0edce5bbdb6",
-    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-b58260d2de-summary.json.gz",
+    "results_url": "https://storage.googleapis.com/wptd-staging/b5d4599280363dc4e4e6a87f3706f0edce5bbdb6/safari-82_preview-mac-10.13-b58260d2de-summary_v2.json.gz",
     "created_at": "2019-06-18T17:33:37.68543Z",
     "time_start": "2019-06-18T17:30:57.578Z",
     "time_end": "2019-06-18T17:32:50.741Z",
