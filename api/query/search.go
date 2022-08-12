@@ -126,12 +126,13 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		resp, err := sh.useSearchcache(w, r, data, logger)
 		if err != nil {
 			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
-		}
-		defer resp.Body.Close()
-		w.WriteHeader(resp.StatusCode)
-		_, err = io.Copy(w, resp.Body)
-		if err != nil {
-			logger.Errorf("Error forwarding response payload from search cache: %v", err)
+		} else {
+			defer resp.Body.Close()
+			w.WriteHeader(resp.StatusCode)
+			_, err = io.Copy(w, resp.Body)
+			if err != nil {
+				logger.Errorf("Error forwarding response payload from search cache: %v", err)
+			}
 		}
 		return
 	}
