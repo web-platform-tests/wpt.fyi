@@ -89,13 +89,6 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	ctx := sh.api.Context()
 	logger := shared.GetLogger(ctx)
 
-	// Assemble list of run IDs for later use.
-	runIDStrs := make([]string, 0, len(rq.RunIDs))
-	for _, id := range rq.RunIDs {
-		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
-	}
-	runIDsStr := strings.Join(runIDStrs, ",")
-
 	// Check if the query is a simple (empty/just True, or test name only) query
 	var simpleQ TestNamePattern
 	var isSimpleQ bool
@@ -111,12 +104,12 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			isSimpleQ = isSimpleQ && (val == nil || !*val)
 		}
 
+		q.Add("q", url.QueryEscape(simpleQ.Pattern))
 		// Check old summary files. If any can't be found,
 		// use the searchcache to aggregate the runs.
 		for _, id := range rq.RunIDs {
 			q.Add("run_id", strconv.FormatInt(id, 10))
 		}
-		q.Add("q", url.QueryEscape(simpleQ.Pattern))
 
 		r2 := r.Clone(r.Context())
 		r2.Method = "GET"
@@ -130,25 +123,46 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// Use searchcache for a complex query or if old summary files exist.
 	if !isSimpleQ {
-		sh.useSearchcache(w, r, data, logger)
+		resp, err := sh.useSearchcache(w, r, data, logger)
+		if err != nil {
+			http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
+		}
+		defer resp.Body.Close()
+		w.WriteHeader(resp.StatusCode)
+		_, err = io.Copy(w, resp.Body)
+		if err != nil {
+			logger.Errorf("Error forwarding response payload from search cache: %v", err)
+		}
 		return
 	}
+	sh.handleSimpleQuery(w, r, simpleQ, rq)
+}
+
+func (sh structuredSearchHandler) handleSimpleQuery(w http.ResponseWriter,
+	r *http.Request, simpleQ TestNamePattern, rq RunQuery) {
+	// Assemble list of run IDs for later use.
+	runIDStrs := make([]string, 0, len(rq.RunIDs))
+	for _, id := range rq.RunIDs {
+		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+	}
+	runIDsStr := strings.Join(runIDStrs, ",")
 
 	// Structured query is equivalent to unstructured query.
 	// Create an unstructured query request and delegate to unstructured query
 	// handler.
-	r2 := *r
+	r2 := r.Clone(r.Context())
 	r2url := *r.URL
 	r2.URL = &r2url
 	r2.Method = "GET"
-	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s", url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
+	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s",
+		url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
 	// Returns a boolean of whether there was an error getting a summary file.
 	// This usually means the summary file was old.
-	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, &r2)
+	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, r2)
 }
 
-func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.Request, data []byte, logger shared.Logger) {
+func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.Request, data []byte, logger shared.Logger) (*http.Response, error) {
 	hostname := sh.api.GetServiceHostname("searchcache")
 	// TODO: This will not work when hostname is localhost (http scheme needed).
 	fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
@@ -160,16 +174,14 @@ func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.
 	req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
 	if err != nil {
 		logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
-		http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Errorf("Error connecting to search API cache: %v", err)
-		http.Error(w, "Error connecting to search API cache", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -182,12 +194,7 @@ func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.
 		logger.Errorf(msg)
 	}
 
-	defer resp.Body.Close()
-	w.WriteHeader(resp.StatusCode)
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		logger.Errorf("Error forwarding response payload from search cache: %v", err)
-	}
+	return resp, nil
 }
 
 func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
