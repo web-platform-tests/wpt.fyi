@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -74,17 +75,9 @@ func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
 
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
-		// All summary URLs end with "-summary.json.gz". We remove this and
-		// add the correct suffix for the version file.
-		const suffixOffset = 16
-		url := summaryURL[:len(summaryURL)-suffixOffset] + "_version.txt"
-		mkey := getRedisVersionKey(testRun)
-		var data []byte
-		err := qh.dataSource.Get(mkey, url, &data)
-		if err != nil {
-			return false, err
-		} else if len(data) == 0 {
-			return false, fmt.Errorf("No version found for : %v", mkey)
+		// All new summary URLs end with "-summary_v2.json.gz".
+		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") {
+			return false, nil
 		}
 	}
 	return true, nil
@@ -174,11 +167,7 @@ func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 }
 
 func getRedisKey(testRun shared.TestRun) string {
-	return "RESULTS_SUMMARY-" + strconv.FormatInt(testRun.ID, 10)
-}
-
-func getRedisVersionKey(testRun shared.TestRun) string {
-	return "SUMMARY_VERSION-" + strconv.FormatInt(testRun.ID, 10)
+	return "RESULTS_SUMMARY-v2-" + strconv.FormatInt(testRun.ID, 10)
 }
 
 func isRequestCacheable(r *http.Request) bool {
