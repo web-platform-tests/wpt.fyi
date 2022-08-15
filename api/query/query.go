@@ -76,8 +76,7 @@ func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
 		// All new summary URLs end with "-summary_v2.json.gz".
-		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") ||
-			!strings.HasSuffix(summaryURL, "].json") {
+		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") {
 			return false, nil
 		}
 	}
