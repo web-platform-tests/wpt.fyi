@@ -158,8 +158,6 @@ func (sh structuredSearchHandler) handleSimpleQuery(w http.ResponseWriter,
 	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s",
 		url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
 
-	// Returns a boolean of whether there was an error getting a summary file.
-	// This usually means the summary file was old.
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, r2)
 }
 

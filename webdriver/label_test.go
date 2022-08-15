@@ -1,4 +1,3 @@
-//go:build large
 // +build large
 
 package webdriver

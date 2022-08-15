@@ -1,4 +1,3 @@
-//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -15,7 +14,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 
@@ -203,7 +201,6 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 				shared.TestRun{
 					ID:         runIDs[0],
 					ResultsURL: urls[0],
-					TimeStart:  time.Now(),
 				},
 			},
 		},
@@ -213,7 +210,6 @@ func TestStructuredSearchHandler_success(t *testing.T) {
 				shared.TestRun{
 					ID:         runIDs[1],
 					ResultsURL: urls[1],
-					TimeStart:  time.Now().AddDate(0, 0, -1),
 				},
 			},
 		},
@@ -267,7 +263,6 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 				shared.TestRun{
 					ID:         runIDs[0],
 					ResultsURL: urls[0],
-					TimeStart:  time.Now(),
 				},
 			},
 		},
@@ -277,7 +272,6 @@ func TestStructuredSearchHandler_failure(t *testing.T) {
 				shared.TestRun{
 					ID:         runIDs[1],
 					ResultsURL: urls[1],
-					TimeStart:  time.Now().AddDate(0, 0, -1),
 				},
 			},
 		},

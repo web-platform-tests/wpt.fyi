@@ -1,4 +1,3 @@
-//go:build medium
 // +build medium
 
 package shared_test
