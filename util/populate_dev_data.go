@@ -71,7 +71,7 @@ func main() {
 			FullRevisionHash: staticRunSHA,
 			Revision:         staticRunSHA[:10],
 		},
-		ResultsURL: fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "chrome[stable].json"),
+		ResultsURL: fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "chrome[stable]-summary_v2.json.gz"),
 		CreatedAt:  staticDataTime,
 		TimeStart:  staticDataTime,
 		Labels:     []string{"chrome", shared.StableLabel},
@@ -86,7 +86,7 @@ func main() {
 	edge.BrowserVersion = "18"
 	edge.OSName = "windows"
 	edge.OSVersion = "10"
-	edge.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "edge[stable].json")
+	edge.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "edge[stable]-summary_v2.json.gz")
 	edge.Labels = []string{"edge", shared.StableLabel}
 
 	edgeExp := edge
@@ -97,7 +97,7 @@ func main() {
 	firefox := chrome
 	firefox.BrowserName = "firefox"
 	firefox.BrowserVersion = "66"
-	firefox.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "firefox[stable].json")
+	firefox.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "firefox[stable]-summary_v2.json.gz")
 	firefox.Labels = []string{"firefox", shared.StableLabel}
 	firefoxExp := firefox
 	firefoxExp.BrowserVersion = "68.0"
@@ -109,7 +109,7 @@ func main() {
 	safari.BrowserVersion = "12.1"
 	safari.OSName = "mac"
 	safari.OSName = "10.13"
-	safari.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "safari[stable].json")
+	safari.ResultsURL = fmt.Sprintf(summaryURLFmtString, *localHost, staticRunSHA[:10], "safari[stable]-summary_v2.json.gz")
 	safari.Labels = []string{"safari", shared.StableLabel}
 	safariExp := safari
 	safariExp.BrowserVersion = "81 preview"
