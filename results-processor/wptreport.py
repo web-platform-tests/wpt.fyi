@@ -415,7 +415,7 @@ class WPTReport(object):
         The directory structure is as follows:
         [output_dir]:
             - [sha][:10]:
-                - [product]-summary.json.gz
+                - [product]-summary_v2.json.gz
                 - [product]:
                     - (per-test results produced by write_result_directory)
 
@@ -445,8 +445,8 @@ class WPTReport(object):
 
     @property
     def sha_summary_path(self) -> str:
-        """A relative path: sha/product_id-summary.json.gz"""
-        return self.sha_product_path + '-summary.json.gz'
+        """A relative path: sha/product_id-summary_v2.json.gz"""
+        return self.sha_product_path + '-summary_v2.json.gz'
 
     @property
     def test_run_metadata(self) -> Dict[str, str]:
@@ -635,7 +635,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
         uploader: The name of the uploader.
         auth: A (username, password) tuple for HTTP basic auth.
         results_url: URL of the gzipped summary file. (e.g.
-            'https://.../wptd/0123456789/chrome-62.0-linux-summary.json.gz')
+            'https://.../wptd/0123456789/chrome-62.0-linux-summary_v2.json.gz')
         raw_results_url: URL of the raw full report. (e.g.
             'https://.../wptd-results/[FullSHA]/chrome-62.0-linux/report.json')
 

@@ -204,7 +204,8 @@ class Processor(object):
         """Uploads the individual results recursively to GCS."""
         self.report.populate_upload_directory(output_dir=self._upload_dir)
 
-        # 1. Copy [ID]-summary.json.gz to gs://wptd/[SHA]/[ID]-summary.json.gz.
+        # 1. Copy [ID]-summary_v2.json.gz
+        # to gs://wptd/[SHA]/[ID]-summary_v2.json.gz.
         gsutil.copy(
             os.path.join(self._upload_dir, self.report.sha_summary_path),
             self.results_gs_url,

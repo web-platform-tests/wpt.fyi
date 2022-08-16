@@ -271,7 +271,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   resultsURL(testRun, path) {
     path = this.encodeTestPath(path);
     // This is relying on the assumption that result files end with '-summary.json.gz'.
-    const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf('-summary.json.gz'));
+    let resultsSuffix = '-summary.json.gz';
+    if (!testRun.results_url.contains('-summary')) {
+      resultsSuffix = '-summary_v2.json.gz';
+    }
+    const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf(resultsSuffix));
     return `${resultsBase}${path}`;
   }
 
