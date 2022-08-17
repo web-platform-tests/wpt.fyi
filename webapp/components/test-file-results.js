@@ -273,7 +273,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     // This is relying on the assumption that result
     // files end with '-summary.json.gz' or '-summary_v2.json.gz'.
     let resultsSuffix = '-summary.json.gz';
-    if (!testRun.results_url.contains('-summary')) {
+    if (!testRun.results_url.includes(resultsSuffix)) {
       resultsSuffix = '-summary_v2.json.gz';
     }
     const resultsBase = testRun.results_url.slice(0, testRun.results_url.lastIndexOf(resultsSuffix));
