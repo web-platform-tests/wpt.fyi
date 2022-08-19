@@ -268,6 +268,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     });
   }
 
+  // Slice summary file URL to infer the URL path to get single test data.
   resultsURL(testRun, path) {
     path = this.encodeTestPath(path);
     // This is relying on the assumption that result

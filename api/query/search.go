@@ -89,8 +89,25 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	ctx := sh.api.Context()
 	logger := shared.GetLogger(ctx)
 
-	// Check if the query is a simple (empty/just True, or test name only) query
 	var simpleQ TestNamePattern
+
+	r2 := r.Clone(r.Context())
+	r2url := *r.URL
+	r2.URL = &r2url
+	r2.Method = "GET"
+	q := r.URL.Query()
+	q.Add("q", simpleQ.Pattern)
+	// Assemble list of run IDs for later use.
+	runIDStrs := make([]string, 0, len(rq.RunIDs))
+	for _, id := range rq.RunIDs {
+		runID := strconv.FormatInt(id, 10)
+		q.Add("run_id", runID)
+		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
+	}
+	runIDsStr := strings.Join(runIDStrs, ",")
+	r2.URL.RawQuery = q.Encode()
+
+	// Check if the query is a simple (empty/just True, or test name only) query
 	var isSimpleQ bool
 	{
 		if _, isTrueQ := rq.AbstractQuery.(True); isTrueQ {
@@ -98,25 +115,16 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		} else if exists, isExists := rq.AbstractQuery.(AbstractExists); isExists && len(exists.Args) == 1 {
 			simpleQ, isSimpleQ = exists.Args[0].(TestNamePattern)
 		}
-		q := r.URL.Query()
 		for _, param := range []string{"interop", "subtests", "diff"} {
 			val, _ := shared.ParseBooleanParam(q, param)
 			isSimpleQ = isSimpleQ && (val == nil || !*val)
 		}
 
-		q.Add("q", url.QueryEscape(simpleQ.Pattern))
 		// Check old summary files. If any can't be found,
 		// use the searchcache to aggregate the runs.
-		for _, id := range rq.RunIDs {
-			q.Add("run_id", strconv.FormatInt(id, 10))
-		}
-
-		r2 := r.Clone(r.Context())
-		r2.Method = "GET"
-		r2.URL.RawQuery = q.Encode()
-		summariesValid, err := sh.validateSummaryVersions(r2.URL.Query())
+		summariesValid, err := sh.validateSummaryVersions(r2.URL.Query(), logger)
 		if err != nil {
-			logger.Debugf("Error checking version files: %v", err)
+			logger.Debugf("Error checking summary file names: %v", err)
 		}
 		isSimpleQ = isSimpleQ && summariesValid
 	}
@@ -136,35 +144,24 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		}
 		return
 	}
-	sh.handleSimpleQuery(w, r, simpleQ, rq)
-}
 
-func (sh structuredSearchHandler) handleSimpleQuery(w http.ResponseWriter,
-	r *http.Request, simpleQ TestNamePattern, rq RunQuery) {
-	// Assemble list of run IDs for later use.
-	runIDStrs := make([]string, 0, len(rq.RunIDs))
-	for _, id := range rq.RunIDs {
-		runIDStrs = append(runIDStrs, strconv.FormatInt(id, 10))
-	}
-	runIDsStr := strings.Join(runIDStrs, ",")
-
+	q = r.URL.Query()
+	q.Set("q", simpleQ.Pattern)
+	q.Set("run_ids", runIDsStr)
+	r2.URL.RawQuery = q.Encode()
 	// Structured query is equivalent to unstructured query.
-	// Create an unstructured query request and delegate to unstructured query
-	// handler.
-	r2 := r.Clone(r.Context())
-	r2url := *r.URL
-	r2.URL = &r2url
-	r2.Method = "GET"
-	r2.URL.RawQuery = fmt.Sprintf("run_ids=%s&q=%s",
-		url.QueryEscape(runIDsStr), url.QueryEscape(simpleQ.Pattern))
-
+	//delegate to unstructured query handler.
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, r2)
 }
 
-func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.Request, data []byte, logger shared.Logger) (*http.Response, error) {
+func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.Request,
+	data []byte, logger shared.Logger) (*http.Response, error) {
 	hostname := sh.api.GetServiceHostname("searchcache")
-	// TODO: This will not work when hostname is localhost (http scheme needed).
-	fwdURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
+	// TODO(Issue #2941): This will not work when hostname is localhost (http scheme needed).
+	fwdURL, err := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
+	if err != nil {
+		logger.Debugf("Error parsing hostname.")
+	}
 	fwdURL.RawQuery = r.URL.RawQuery
 
 	logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))

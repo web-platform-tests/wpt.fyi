@@ -63,12 +63,12 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
+func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logger) (bool, error) {
 	filters, err := shared.ParseQueryFilterParams(v)
 	if err != nil {
 		return false, err
 	}
-	testRuns, filters, err := qh.getRunsAndFilters(filters)
+	testRuns, _, err := qh.getRunsAndFilters(filters)
 	if err != nil {
 		return false, err
 	}
@@ -76,7 +76,8 @@ func (qh queryHandler) validateSummaryVersions(v url.Values) (bool, error) {
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
 		// All new summary URLs end with "-summary_v2.json.gz".
-		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") {
+		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") && !strings.HasSuffix(summaryURL, "-summary.json.gz") {
+			logger.Infof("summary URL has invalid suffix: %s", summaryURL)
 			return false, nil
 		}
 	}
@@ -159,15 +160,15 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 }
 
 func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
-	mkey := getRedisKey(testRun)
+	mkey := getSummaryFileRedisKey(testRun)
 	url := shared.GetResultsURL(testRun, "")
 	var data []byte
 	err := qh.dataSource.Get(mkey, url, &data)
 	return data, err
 }
 
-func getRedisKey(testRun shared.TestRun) string {
-	return "RESULTS_SUMMARY-v2-" + strconv.FormatInt(testRun.ID, 10)
+func getSummaryFileRedisKey(testRun shared.TestRun) string {
+	return "RESULTS_SUMMARY_v2-" + strconv.FormatInt(testRun.ID, 10)
 }
 
 func isRequestCacheable(r *http.Request) bool {

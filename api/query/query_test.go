@@ -20,7 +20,7 @@ import (
 )
 
 func TestGetRedisKey(t *testing.T) {
-	assert.Equal(t, "RESULTS_SUMMARY-v2-1", getRedisKey(shared.TestRun{
+	assert.Equal(t, "RESULTS_SUMMARY_v2-1", getSummaryFileRedisKey(shared.TestRun{
 		ID: 1,
 	}))
 }
@@ -44,8 +44,8 @@ func TestLoadOldSummaries_success(t *testing.T) {
 		},
 	}
 	keys := []string{
-		getRedisKey(testRuns[0]),
-		getRedisKey(testRuns[1]),
+		getSummaryFileRedisKey(testRuns[0]),
+		getSummaryFileRedisKey(testRuns[1]),
 	}
 
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
@@ -100,8 +100,8 @@ func TestLoadNewSummaries_success(t *testing.T) {
 		},
 	}
 	keys := []string{
-		getRedisKey(testRuns[0]),
-		getRedisKey(testRuns[1]),
+		getSummaryFileRedisKey(testRuns[0]),
+		getSummaryFileRedisKey(testRuns[1]),
 	}
 
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
@@ -156,8 +156,8 @@ func TestLoadSummaries_fail(t *testing.T) {
 		},
 	}
 	keys := []string{
-		getRedisKey(testRuns[0]),
-		getRedisKey(testRuns[1]),
+		getSummaryFileRedisKey(testRuns[0]),
+		getSummaryFileRedisKey(testRuns[1]),
 	}
 
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
