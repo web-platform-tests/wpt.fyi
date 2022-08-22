@@ -48,8 +48,8 @@ suite('TestFileResults', () => {
         tfr.resultsURL(
           TEST_RUNS_DATA[1],
           '/example/test/path'
-        )).to.equal('https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10/example/test/path');
-      });
+        )).to.equal('https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10-sauce/example/test/path');
+    });
     test('v2 url', () => {
       expect(
         tfr.resultsURL(
