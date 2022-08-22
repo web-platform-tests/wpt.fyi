@@ -47,15 +47,15 @@ suite('TestFileResults', () => {
       expect(
         tfr.resultsURL(
           TEST_RUNS_DATA[1],
-          "/example/test/path"
-          )).to.equal("https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10/example/test/path")
+          '/example/test/path'
+        )).to.equal('https://storage.googleapis.com/wptd/03d67ae5d9/edge-15-windows-10/example/test/path');
       });
     test('v2 url', () => {
       expect(
         tfr.resultsURL(
           TEST_RUNS_DATA[0],
-          "/example/test/path"
-          )).to.equal("https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux/example/test/path")
+          '/example/test/path'
+        )).to.equal('https://storage.googleapis.com/wptd/53c5bf648c/chrome-63.0-linux/example/test/path');
     });
   });
 
