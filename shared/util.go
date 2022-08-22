@@ -144,7 +144,7 @@ func GetResultsURL(run TestRun, testFile string) (resultsURL string) {
 		// Assumes that result files are under a directory named SHA[0:10].
 		resultsBase := strings.SplitAfter(resultsURL, "/"+run.Revision)[0]
 		resultsPieces := strings.Split(resultsURL, "/")
-		re := regexp.MustCompile("(-summary)?\\.json\\.gz$")
+		re := regexp.MustCompile("(-summary(_v2)?)?\\.json\\.gz$")
 		product := re.ReplaceAllString(resultsPieces[len(resultsPieces)-1], "")
 		resultsURL = fmt.Sprintf("%s/%s/%s", resultsBase, product, testFile)
 	}

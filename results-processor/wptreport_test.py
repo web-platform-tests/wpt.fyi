@@ -392,7 +392,7 @@ class WPTReportTest(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(os.path.join(
             self.tmp_dir, revision,
-            'firefox-59.0-linux-0123456789-summary.json.gz'
+            'firefox-59.0-linux-0123456789-summary_v2.json.gz'
         )))
         self.assertTrue(os.path.isfile(os.path.join(
             self.tmp_dir, revision,
@@ -530,7 +530,7 @@ class WPTReportTest(unittest.TestCase):
         r.hashsum = lambda: 'afa59408e1797c7091d7e89de5561612f7da440d'
         self.assertEqual(r.sha_summary_path,
                          '0bdaaf9c1622ca49eb140381af1ece6d8001c934/'
-                         'firefox-59.0-linux-afa59408e1-summary.json.gz')
+                         'firefox-59.0-linux-afa59408e1-summary_v2.json.gz')
 
     def test_normalize_version(self):
         r = WPTReport()
