@@ -101,7 +101,7 @@ func TestLoadSummaries_fail(t *testing.T) {
 	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
 	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
 	summaryBytes := [][]byte{
-		[]byte(`{"/a/b/c":[1,2]}`),
+		[]byte(`{"/a/b/c":{"s":"O","c":[1,2]}}`),
 	}
 
 	storeMiss := errors.New("No such summary file")
