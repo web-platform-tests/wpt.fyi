@@ -40,109 +40,74 @@ func doTestIC(t *testing.T, p, q string) {
 	}
 	summaries := []summary{
 		{
-			oldFormat: map[string][]int{
-				"/a" + p + "c": []int{1, 2},
-				p + "c":        []int{9, 9},
+			"/a" + p + "c": {
+				Status: "T", Counts: []int{0, 0},
 			},
-			newFormat: nil,
-		}, {
-			oldFormat: map[string][]int{
-				"/z" + p + "c": []int{0, 8},
-				"/x/y/z":       []int{3, 4},
-				p + "c":        []int{5, 9},
+			p + "c": {
+				Status: "O", Counts: []int{8, 8},
 			},
-			newFormat: nil,
+		},
+		{
+			"/z" + p + "c": {
+				Status: "F", Counts: []int{0, 7},
+			},
+			"/x/y/z": {
+				Status: "O", Counts: []int{2, 3},
+			},
+			p + "c": {
+				Status: "O", Counts: []int{4, 8},
+			},
 		},
 	}
 
 	resp := prepareSearchResponse(&filters, testRuns, summaries)
 	assert.Equal(t, testRuns, resp.Runs)
 	expectedResults := []shared.SearchResult{
-		shared.SearchResult{
+		{
 			Test: "/a" + p + "c",
 			LegacyStatus: []shared.LegacySearchRunResult{
-				shared.LegacySearchRunResult{
-					Passes: 1,
-					Total:  2,
+				{
+					Passes:        0,
+					Total:         0,
+					Status:        "T",
+					NewAggProcess: true,
 				},
-				shared.LegacySearchRunResult{},
+				{
+					Passes:        0,
+					Total:         0,
+					Status:        "",
+					NewAggProcess: false,
+				},
 			},
 		},
-		shared.SearchResult{
+		{
 			Test: p + "c",
 			LegacyStatus: []shared.LegacySearchRunResult{
-				shared.LegacySearchRunResult{
-					Passes: 9,
-					Total:  9,
+				{
+					Passes:        8,
+					Total:         8,
+					Status:        "O",
+					NewAggProcess: true,
 				},
-				shared.LegacySearchRunResult{
-					Passes: 5,
-					Total:  9,
+				{
+					Passes:        4,
+					Total:         8,
+					Status:        "O",
+					NewAggProcess: true,
 				},
 			},
 		},
-		shared.SearchResult{
+		{
 			Test: "/z" + p + "c",
 			LegacyStatus: []shared.LegacySearchRunResult{
-				shared.LegacySearchRunResult{},
-				shared.LegacySearchRunResult{
-					Passes: 0,
-					Total:  8,
+				{},
+				{
+					Passes:        0,
+					Total:         7,
+					Status:        "F",
+					NewAggProcess: true,
 				},
 			},
-		},
-	}
-	sort.Sort(byName(expectedResults))
-	assert.Equal(t, expectedResults, resp.Results)
-}
-
-func doTestIC_newSummary(t *testing.T, p, q string) {
-	runIDs := []int64{1, 2}
-	testRuns := []shared.TestRun{
-		{
-			ID:         runIDs[0],
-			ResultsURL: "https://example.com/1-summary_v2.json.gz",
-		},
-		{
-			ID:         runIDs[1],
-			ResultsURL: "https://example.com/2-summary_v2.json.gz",
-		},
-	}
-	filters := shared.QueryFilter{
-		RunIDs: runIDs,
-		Q:      q,
-	}
-	summaries := []summary{
-		{
-			oldFormat: nil,
-			newFormat: map[string]SummaryResult{
-				"/a" + p + "c": {Status: "E", Counts: []int{1, 2}},
-				p + "c":        {Status: "O", Counts: []int{9, 9}},
-			},
-		}, {
-			oldFormat: nil,
-			newFormat: map[string]SummaryResult{
-				"/z" + p + "c": {Status: "F", Counts: []int{0, 8}},
-				"/x/y/z":       {Status: "O", Counts: []int{3, 4}},
-				p + "c":        {Status: "O", Counts: []int{5, 9}},
-			},
-		},
-	}
-
-	resp := prepareSearchResponse(&filters, testRuns, summaries)
-	assert.Equal(t, testRuns, resp.Runs)
-	expectedResults := []shared.SearchResult{
-		{
-			Test:         "/a" + p + "c",
-			LegacyStatus: []shared.LegacySearchRunResult{{Passes: 1, Total: 2}, {}},
-		},
-		{
-			Test:         p + "c",
-			LegacyStatus: []shared.LegacySearchRunResult{{Passes: 9, Total: 9}, {Passes: 5, Total: 9}},
-		},
-		{
-			Test:         "/z" + p + "c",
-			LegacyStatus: []shared.LegacySearchRunResult{{}, {Passes: 0, Total: 8}},
 		},
 	}
 	sort.Sort(byName(expectedResults))

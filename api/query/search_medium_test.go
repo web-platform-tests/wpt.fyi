@@ -58,8 +58,8 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 		},
 	}
 	summaryBytes := [][]byte{
-		[]byte(`{"/a/b/c":[1,2],"/b/c":[9,9]}`),
-		[]byte(`{"/z/b/c":[0,8],"/x/y/z":[3,4],"/b/c":[5,9]}`),
+		[]byte(`{"/a/b/c": {"s":"T","c":[1,2]},"/b/c":{"s":"O","c":[9,9]}}`),
+		[]byte(`{"/z/b/c": {"s":"F","c":[0,8]},"/b/c":{"s":"O","c":[5,9]}}`),
 	}
 
 	i, err := sharedtest.NewAEInstance(true)
@@ -128,36 +128,54 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	assert.Equal(t, shared.SearchResponse{
 		Runs: testRuns,
 		Results: []shared.SearchResult{
-			shared.SearchResult{
+			{
 				Test: "/a/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{
-						Passes: 1,
-						Total:  2,
+					{
+						Passes:        1,
+						Total:         2,
+						Status:        "T",
+						NewAggProcess: true,
 					},
-					shared.LegacySearchRunResult{},
+					{
+						Passes:        0,
+						Total:         0,
+						Status:        "",
+						NewAggProcess: false,
+					},
 				},
 			},
-			shared.SearchResult{
+			{
 				Test: "/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{
-						Passes: 9,
-						Total:  9,
+					{
+						Passes:        9,
+						Total:         9,
+						Status:        "O",
+						NewAggProcess: true,
 					},
-					shared.LegacySearchRunResult{
-						Passes: 5,
-						Total:  9,
+					{
+						Passes:        5,
+						Total:         9,
+						Status:        "O",
+						NewAggProcess: true,
 					},
 				},
 			},
-			shared.SearchResult{
+			{
 				Test: "/z/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{},
-					shared.LegacySearchRunResult{
-						Passes: 0,
-						Total:  8,
+					{
+						Passes:        0,
+						Total:         0,
+						Status:        "",
+						NewAggProcess: false,
+					},
+					{
+						Passes:        0,
+						Total:         8,
+						Status:        "F",
+						NewAggProcess: true,
 					},
 				},
 			},
@@ -175,16 +193,16 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ResultsURL: urls[0],
 		},
-		shared.TestRun{
+		{
 			ResultsURL: urls[1],
 		},
 	}
 	summaryBytes := [][]byte{
-		[]byte(`{"/a/b/c":[1,2],"/b/c":[9,9]}`),
-		[]byte(`{"/z/b/c":[0,8],"/x/y/z":[3,4],"/b/c":[5,9]}`),
+		[]byte(`{"/a/b/c": {"s":"T","c":[1,2]},"/b/c":{"s":"O","c":[9,9]}}`),
+		[]byte(`{"/z/b/c": {"s":"F","c":[0,8]},"/b/c":{"s":"O","c":[5,9]}}`),
 	}
 
 	i, err := sharedtest.NewAEInstance(true)
@@ -260,36 +278,54 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	assert.Equal(t, shared.SearchResponse{
 		Runs: testRuns,
 		Results: []shared.SearchResult{
-			shared.SearchResult{
+			{
 				Test: "/a/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{
-						Passes: 1,
-						Total:  2,
+					{
+						Passes:        1,
+						Total:         2,
+						Status:        "T",
+						NewAggProcess: true,
 					},
-					shared.LegacySearchRunResult{},
+					{
+						Passes:        0,
+						Total:         0,
+						Status:        "",
+						NewAggProcess: false,
+					},
 				},
 			},
-			shared.SearchResult{
+			{
 				Test: "/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{
-						Passes: 9,
-						Total:  9,
+					{
+						Passes:        9,
+						Total:         9,
+						Status:        "O",
+						NewAggProcess: true,
 					},
-					shared.LegacySearchRunResult{
-						Passes: 5,
-						Total:  9,
+					{
+						Passes:        5,
+						Total:         9,
+						Status:        "O",
+						NewAggProcess: true,
 					},
 				},
 			},
-			shared.SearchResult{
+			{
 				Test: "/z/b/c",
 				LegacyStatus: []shared.LegacySearchRunResult{
-					shared.LegacySearchRunResult{},
-					shared.LegacySearchRunResult{
-						Passes: 0,
-						Total:  8,
+					{
+						Passes:        0,
+						Total:         0,
+						Status:        "",
+						NewAggProcess: false,
+					},
+					{
+						Passes:        0,
+						Total:         8,
+						Status:        "F",
+						NewAggProcess: true,
 					},
 				},
 			},

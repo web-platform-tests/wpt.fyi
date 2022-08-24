@@ -16,7 +16,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// SummaryResult is the format of the data from summary files generated with the newest aggregation method.
+// SummaryResult is the format of the data from summary files generated with the
+// newest aggregation method.
 type SummaryResult struct {
 	// Status represents the 1-2 character abbreviation for the status of the test.
 	Status string `json:"s"`
@@ -25,15 +26,8 @@ type SummaryResult struct {
 }
 
 // summary is the golang type for the JSON format in pass/total summary files.
-// It has an old structure and a new structure - each which represent summary files
-// that match the old or new summary format.
-type summary struct {
-	// oldFormat This holds summary information if the data is aggregated with the old method.
-	// TODO (danielrsmith): This format should be removed once old summary files are invalidated.
-	oldFormat map[string][]int
-	// newFormat This holds summary information if the data is aggregated with the new method.
-	newFormat map[string]SummaryResult
-}
+type summary map[string]SummaryResult
+
 type queryHandler struct {
 	store      shared.Datastore
 	dataSource shared.CachedStore
@@ -131,25 +125,17 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			defer wg.Done()
 
 			var data []byte
-			s := summary{
-				oldFormat: nil,
-				newFormat: nil,
-			}
+			s := summary{}
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
 				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
 				return
 			}
 			// Try to unmarshal the json using the new aggregation structure.
-			marshalErr := json.Unmarshal(data, &s.newFormat)
+			marshalErr := json.Unmarshal(data, &s)
 			if err == nil && marshalErr != nil {
-				// If that failed, this is likely an old summary format.
-				// Umarshal using the old structure.
-				oldMarshalErr := json.Unmarshal(data, &s.oldFormat)
-				if oldMarshalErr != nil {
-					err = oldMarshalErr
-					return
-				}
+				err = marshalErr
+				return
 			}
 			summaries[i] = s
 		}(i, testRun)

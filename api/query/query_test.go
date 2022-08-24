@@ -25,63 +25,7 @@ func TestGetRedisKey(t *testing.T) {
 	}))
 }
 
-func TestLoadOldSummaries_success(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	urls := []string{
-		"https://example.com/1-summary_v2.json.gz",
-		"https://example.com/2-summary_v2.json.gz",
-	}
-	testRuns := []shared.TestRun{
-		{
-			ID:         1,
-			ResultsURL: urls[0],
-		},
-		{
-			ID:         2,
-			ResultsURL: urls[1],
-		},
-	}
-	keys := []string{
-		getSummaryFileRedisKey(testRuns[0]),
-		getSummaryFileRedisKey(testRuns[1]),
-	}
-
-	cachedStore := sharedtest.NewMockCachedStore(mockCtrl)
-	sh := unstructuredSearchHandler{queryHandler{dataSource: cachedStore}}
-	summaryBytes := [][]byte{
-		[]byte(`{"/a/b/c":[1,2]}`),
-		[]byte(`{"/x/y/z":[3,4]}`),
-	}
-	summaries := []summary{
-		{
-			oldFormat: map[string][]int{"/a/b/c": {1, 2}},
-			newFormat: map[string]SummaryResult{"/a/b/c": {Status: "", Counts: []int(nil)}},
-		},
-		{
-			oldFormat: map[string][]int{"/x/y/z": {3, 4}},
-			newFormat: map[string]SummaryResult{"/x/y/z": {Status: "", Counts: []int(nil)}},
-		},
-	}
-
-	bindCopySlice := func(i int) func(_, _, _ interface{}) {
-		return func(cid, sid, iv interface{}) {
-			ptr := iv.(*[]byte)
-			*ptr = summaryBytes[i]
-		}
-	}
-	for i, key := range keys {
-		cachedStore.EXPECT().Get(key, urls[i], gomock.Any()).Do(bindCopySlice(i)).Return(nil)
-	}
-
-	ss, err := sh.loadSummaries(testRuns)
-	assert.Nil(t, err)
-	assert.Equal(t, summaries[0], ss[0])
-	assert.Equal(t, summaries[1], ss[1])
-}
-
-func TestLoadNewSummaries_success(t *testing.T) {
+func TestLoadSummaries_success(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -111,14 +55,8 @@ func TestLoadNewSummaries_success(t *testing.T) {
 		[]byte(`{"/x/y/z":{"s":"E","c":[3,4]}}`),
 	}
 	summaries := []summary{
-		{
-			oldFormat: nil,
-			newFormat: map[string]SummaryResult{"/a/b/c": {Status: "O", Counts: []int{1, 2}}},
-		},
-		{
-			oldFormat: nil,
-			newFormat: map[string]SummaryResult{"/x/y/z": {Status: "E", Counts: []int{3, 4}}},
-		},
+		map[string]SummaryResult{"/a/b/c": {Status: "O", Counts: []int{1, 2}}},
+		map[string]SummaryResult{"/x/y/z": {Status: "E", Counts: []int{3, 4}}},
 	}
 
 	bindCopySlice := func(i int) func(_, _, _ interface{}) {
