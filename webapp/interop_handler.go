@@ -6,16 +6,25 @@ package webapp
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-type interop2022Data struct {
+type interopData struct {
 	Embedded bool
+	Year     string
 }
 
-// interop2022Handler handles GET requests to /interop-2022
-func interop2022Handler(w http.ResponseWriter, r *http.Request) {
+// interopHandler handles GET requests to /interop
+func interopHandler(w http.ResponseWriter, r *http.Request) {
+	path := mux.Vars(r)["path"]
+	year, err := strconv.Atoi(path)
+	// TODO(danielrsmith): Add a check for only possible Interop years.
+	if err != nil {
+		year = 2022
+	}
 	if r.Method != "GET" {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
@@ -28,8 +37,9 @@ func interop2022Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := interop2022Data{
+	data := interopData{
 		Embedded: embedded != nil && *embedded,
+		Year:     strconv.Itoa(year),
 	}
-	RenderTemplate(w, r, "interop-2022.html", data)
+	RenderTemplate(w, r, "interop.html", data)
 }

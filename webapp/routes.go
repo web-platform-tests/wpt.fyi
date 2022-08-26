@@ -41,7 +41,7 @@ func RegisterRoutes() {
 	shared.AddRoute("/compat2021", "compat-2021", compat2021Handler)
 
 	// Dashboard for the interop-2022 effort.
-	shared.AddRoute("/interop-2022", "interop-2022", interop2022Handler)
+	shared.AddRoute("/interop/{path:.*}", "interop-dashboard", interopHandler)
 
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)

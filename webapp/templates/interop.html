@@ -3,14 +3,15 @@
 <head>
 {{ template "_head_common.html" . }}
 <!-- <meta name="color-scheme" content="dark light"> -->
-<script type="module" src="/components/interop-2022.js"></script>
+<script type="module" src="/components/interop.js"></script>
 </head>
 <body>
 <div id="content">
   {{if not .Data.Embedded}}
     <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
   {{end}}
-  <interop-2022></interop-2022>
+  <interop-dashboard
+  {{ if .Data.Year}}year="{{.Data.Year}}"{{end}}></interop-dashboard>
 </div>
 </body>
 </html>

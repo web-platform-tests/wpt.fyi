@@ -4,118 +4,33 @@
  * found in the LICENSE file.
  */
 
-import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
-import '../node_modules/@polymer/paper-input/paper-input.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
+ import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
+ import '../node_modules/@polymer/paper-button/paper-button.js';
+ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
+ import '../node_modules/@polymer/paper-input/paper-input.js';
+ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+ import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
+import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'}
 
-const GITHUB_URL_PREFIX = 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022';
-
-const SUMMARY_FEATURE_NAME = 'summary';
-
-const FEATURES = {
-  'interop-2021-aspect-ratio': {
-    description: 'Aspect Ratio',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/aspect-ratio',
-    spec: 'https://drafts.csswg.org/css-sizing/#aspect-ratio',
-    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio',
-  },
-  'interop-2021-flexbox': {
-    description: 'Flexbox',
-    mdn: 'https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox',
-    spec: 'https://drafts.csswg.org/css-flexbox/',
-    tests: '/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox',
-  },
-  'interop-2021-grid': {
-    description: 'Grid',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/grid',
-    spec: 'https://drafts.csswg.org/css-grid-1/',
-    tests: '/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid',
-  },
-  'interop-2021-position-sticky': {
-    description: 'Sticky Positioning',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/position',
-    spec: 'https://drafts.csswg.org/css-position/#position-property',
-    tests: '/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky',
-  },
-  'interop-2021-transforms': {
-    description: 'Transforms',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/transform',
-    spec: 'https://drafts.csswg.org/css-transforms/',
-    tests: '/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms',
-  },
-  'interop-2022-cascade': {
-    description: 'Cascade Layers',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/@layer',
-    spec: 'https://drafts.csswg.org/css-cascade/#layering',
-    tests: '/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade',
-  },
-  'interop-2022-color': {
-    description: 'Color Spaces and Functions',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value',
-    spec: 'https://drafts.csswg.org/css-color/',
-    tests: '/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color',
-  },
-  'interop-2022-contain': {
-    description: 'Containment',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/contain',
-    spec: 'https://drafts.csswg.org/css-contain/#contain-property',
-    tests: '/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain',
-  },
-  'interop-2022-dialog': {
-    description: 'Dialog Element',
-    mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/dialog',
-    spec: 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element',
-    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog',
-  },
-  'interop-2022-forms': {
-    description: 'Forms',
-    mdn: 'https://developer.mozilla.org/docs/Web/HTML/Element/form',
-    spec: 'https://html.spec.whatwg.org/multipage/forms.html#the-form-element',
-    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms',
-  },
-  'interop-2022-scrolling': {
-    description: 'Scrolling',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/overflow',
-    spec: 'https://drafts.csswg.org/css-overflow/#propdef-overflow',
-    tests: '/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling',
-  },
-  'interop-2022-subgrid': {
-    description: 'Subgrid',
-    mdn: 'https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid',
-    spec: 'https://drafts.csswg.org/css-grid-2/#subgrids',
-    tests: '/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid',
-  },
-  'interop-2022-text': {
-    description: 'Typography and Encodings',
-    mdn: '',
-    spec: '',
-    tests: '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text',
-  },
-  'interop-2022-viewport': {
-    description: 'Viewport Units',
-    mdn: '',
-    spec: 'https://drafts.csswg.org/css-values/#viewport-relative-units',
-    tests: '/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport',
-  },
-  'interop-2022-webcompat': {
-    description: 'Web Compat',
-    mdn: '',
-    spec: '',
-    tests: '/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat',
-  },
-};
-
-// Interop2022DataManager encapsulates the loading of the CSV data that backs
-// both the summary scores and graphs shown on the Interop 2022 dashboard. It
+// InteropDataManager encapsulates the loading of the CSV data that backs
+// both the summary scores and graphs shown on the Interop dashboard. It
 // fetches the CSV data, processes it into sets of datatables, and then caches
 // those tables for later use by the dashboard.
-class Interop2022DataManager {
-  constructor() {
+class InteropDataManager {
+  constructor(year) {
+    this.year = year;
+    const yearInfo = PARAMS_BY_YEAR[year];
+    this.focusAreas = yearInfo.focus_areas;
+    this.summaryFeatureName = yearInfo.summary_feature_name;
+    this.githubURL = yearInfo.github_url;
+    this.csvScoreFormat = yearInfo.csv_scores;
+
+  
     this._dataLoaded = load().then(() => {
+      if (this.year === '2021') {
+        return Promise.all([this._loadCsv_2021('stable'), this._loadCsv_2021('experimental')]);
+      }
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
     });
   }
@@ -140,7 +55,8 @@ class Interop2022DataManager {
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
     const scores = [{}, {}, {}];
-    for (const feature of [SUMMARY_FEATURE_NAME, ...Object.keys(FEATURES)]) {
+    for (const feature of [
+      this.summaryFeatureName, ...Object.keys(this.focusAreas)]) {
       const dataTable = dataTables.get(feature);
       // Assumption: The rows are ordered by dates with the most recent entry last.
       const lastRowIndex = dataTable.getNumberOfRows() - 1;
@@ -169,10 +85,11 @@ class Interop2022DataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = `${GITHUB_URL_PREFIX}/interop-2022-${label}.csv`;
+    const url = this.githubURL.replace('{FEATURE_LABEL}', label);
     const csvLines = await fetchCsvContents(url);
 
-    const features = [SUMMARY_FEATURE_NAME, ...Object.keys(FEATURES)];
+    const features = [this.summaryFeatureName,
+      ...Object.keys(this.focusAreas)];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
@@ -224,7 +141,7 @@ class Interop2022DataManager {
         browserVersions[browserIdx].push(version);
 
         let testScore = 0;
-        Object.keys(FEATURES).forEach((feature, j) => {
+        Object.keys(this.focusAreas).forEach((feature, j) => {
           const score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
@@ -242,8 +159,103 @@ class Interop2022DataManager {
         const summaryScore = Math.floor((0.9 * testScore) / 15 + (0.1 * investigationScore));
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
-        newRows.get(SUMMARY_FEATURE_NAME).push(summaryScore / 1000);
-        newRows.get(SUMMARY_FEATURE_NAME).push(summaryTooltip);
+        newRows.get(this.summaryFeatureName).push(summaryScore / 1000);
+        newRows.get(this.summaryFeatureName).push(summaryTooltip);
+      }
+
+      // Push the new rows onto the corresponding datatable.
+      newRows.forEach((row, feature) => {
+        dataTables.get(feature).addRow(row);
+      });
+    });
+
+    // The datatables are now complete, so assign them to the appropriate
+    // member variable.
+    if (label === 'stable') {
+      this.stableDatatables = dataTables;
+      this.stableBrowserVersions = browserVersions;
+    } else {
+      this.experimentalDatatables = dataTables;
+      this.experimentalBrowserVersions = browserVersions;
+    }
+  }
+
+  // Loads the unified CSV file for either stable or experimental, and
+  // processes it into the set of datatables provided by this class. Will
+  // ultimately set either this.stableDatatables or this.experimentalDatatables
+  // with a map of {feature name --> datatable}.
+  async _loadCsv_2021(label) {
+    const url = this.githubURL.replace('{FEATURE_LABEL}', label);
+    const csvLines = await fetchCsvContents(url);
+
+    const features = [this.summaryFeatureName, ...Object.keys(this.focusAreas)];
+    const dataTables = new Map(features.map(feature => {
+      const dataTable = new window.google.visualization.DataTable();
+      dataTable.addColumn('date', 'Date');
+      dataTable.addColumn('number', 'Chrome/Edge');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      dataTable.addColumn('number', 'Firefox');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      dataTable.addColumn('number', 'Safari');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
+      return [feature, dataTable];
+    }));
+
+    // We list Chrome/Edge on the legend, but when creating the tooltip we
+    // include the version information and so should be clear about which browser
+    // exactly gave the results.
+    const tooltipBrowserNames = [
+      'Chrome',
+      'Firefox',
+      'Safari',
+    ];
+
+    // We store a lookup table of browser versions to help with the 'show
+    // revision changelog' tooltip action.
+    const browserVersions = [[], [], []];
+
+    csvLines.forEach(line => {
+      // We control the CSV data source, so are quite lazy with parsing it.
+      //
+      // The format is:
+      //   date, [browser-version, browser-feature-a, browser-feature-b, ...]+
+      const csvValues = line.split(',');
+
+      // JavaScript Date objects use 0-indexed months whilst the CSV is
+      // 1-indexed, so adjust for that.
+      const dateParts = csvValues[0].split('-').map(x => parseInt(x));
+      const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
+      // Initialize a new row for each feature, with the date column set.
+      const newRows = new Map(features.map(feature => {
+        return [feature, [date]];
+      }));
+
+      // Now handle each of the browsers. For each there is a version column,
+      // then the scores for each of the five features.
+      for (let i = 1; i < csvValues.length; i += 6) {
+        const browserIdx = Math.floor(i / 6);
+        const browserName = tooltipBrowserNames[browserIdx];
+        const version = csvValues[i];
+        browserVersions[browserIdx].push(version);
+
+        let summaryScore = 0;
+        Object.keys(this.focusAreas).forEach((feature, j) => {
+          const score = parseFloat(csvValues[i + 1 + j]);
+          const tooltip = this.createTooltip(browserName, version, score.toFixed(3));
+          newRows.get(feature).push(score);
+          newRows.get(feature).push(tooltip);
+
+          // The summary scores are calculated as a x/100 score, where each
+          // feature is allowed to contribute up to 20 points. We use floor
+          // rather than round to avoid claiming the full 20 points until we
+          // are at 100%
+          summaryScore += Math.floor(score * 20);
+        });
+
+        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
+        newRows.get(this.summaryFeatureName).push(summaryScore / 100);
+        newRows.get(this.summaryFeatureName).push(summaryTooltip);
       }
 
       // Push the new rows onto the corresponding datatable.
@@ -270,10 +282,12 @@ class Interop2022DataManager {
   }
 }
 
-// Interop2022 is a custom element that holds the overall interop-2022 dashboard.
+
+
+// InteropDashboard is a custom element that holds the overall interop dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
 // graphs per feature, and a table of currently tracked tests.
-class Interop2022 extends PolymerElement {
+class InteropDashboard extends PolymerElement {
   static get template() {
     return html`
       <style>
@@ -468,7 +482,7 @@ class Interop2022 extends PolymerElement {
         //   }
         // }
       </style>
-      <h1>Interop 2022 Dashboard</h1>
+      <h1>Interop [[year]] Dashboard</h1>
 
       <p class="prose">
         These scores represent how browser engines are doing in 15 focus areas
@@ -479,96 +493,87 @@ class Interop2022 extends PolymerElement {
         <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
         <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
       </div>
-      <interop-2022-summary scores="[[scores]]" stable="[[stable]]"></interop-2022-summary>
+      <interop-summary year="[[year]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
 
       <div class="score-details">
         <div class="table-card">
           <table id="score-table" class="score-table">
             <caption>How are these scores calculated?</caption>
             <tbody>
-              <tr class="section-header">
-                <th>2022 Focus Areas (60%)</th>
-                <th>
-                  <template is="dom-if" if="[[stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
-                      <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
-                    </div>
+              <template is="dom-repeat" items="{{tableSections}}" as="section">
+                <tr class="section-header">
+                  <th>{{section.name}}</th>
+                  <template is="dom-if" if="[[section.score_as_group]]">
+                    <th colspan=3>Group Progress</th>
                   </template>
-                  <template is="dom-if" if="[[!stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
-                      <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
-                    </div>
+                  <template is="dom-if" if="[[showBrowserIcons(itemsIndex)]]">
+                    <th>
+                      <template is="dom-if" if="[[stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
+                          <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
+                        </div>
+                      </template>
+                      <template is="dom-if" if="[[!stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
+                          <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
+                        </div>
+                      </template>
+                    </th>
+                    <th>
+                      <template is="dom-if" if="[[stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
+                        </div>
+                      </template>
+                      <template is="dom-if" if="[[!stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
+                        </div>
+                      </template>
+                    </th>
+                    <th>
+                      <template is="dom-if" if="[[stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
+                        </div>
+                      </template>
+                      <template is="dom-if" if="[[!stable]]">
+                        <div class="browser-icons">
+                          <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
+                        </div>
+                      </template>
+                    </th>
                   </template>
-                </th>
-                <th>
-                  <template is="dom-if" if="[[stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
-                    </div>
+                  <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
+                    <th></th>
+                    <th></th>
+                    <th></th>
                   </template>
-                  <template is="dom-if" if="[[!stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
-                    </div>
-                  </template>
-                </th>
-                <th>
-                  <template is="dom-if" if="[[stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
-                    </div>
-                  </template>
-                  <template is="dom-if" if="[[!stable]]">
-                    <div class="browser-icons">
-                      <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
-                    </div>
-                  </template>
-                </th>
-              </tr>
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
-                <tr data-feature$="[[item.id]]">
-                  <td>
-                    <a href$="[[item.tests]]">[[item.description]]</a>
-                  </td>
-                  <td>[[getBrowserScoreForFeature(0, item.id, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(1, item.id, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(2, item.id, stable)]]</td>
                 </tr>
+                <template is="dom-if" if="[[!section.score_as_group]]">
+                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                    <tr data-feature$="[[rowName]]">
+                      <td>
+                        <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
+                      </td>
+                      <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
+                      <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
+                      <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
+                    </tr>
+                  </template>
+                </template>
+                <!-- TODO(danielrsmith): score as group logic? -->
+                <template is="dom-if" if="[[section.score_as_group]]">
+                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                    <tr>
+                      <td colspan=3>[[rowName]]</td>
+                      <td>0%</td>
+                    </tr>
+                  </template>
+                </template>
               </template>
-              <tr class="section-header">
-                <th>2021 Focus Areas (30%)</th>
-                <th></th>
-                <th></th>
-                <th></th>
-              </tr>
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
-                <tr data-feature$="[[item.id]]">
-                  <td>
-                    <a href$="[[item.tests]]">[[item.description]]</a>
-                  </td>
-                  <td>[[getBrowserScoreForFeature(0, item.id, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(1, item.id, stable)]]</td>
-                  <td>[[getBrowserScoreForFeature(2, item.id, stable)]]</td>
-                </tr>
-              </template>
-              <tr class="section-header">
-                <th>2022 Investigation (10%)</th>
-                <th colspan=3>Group Progress</th>
-              </tr>
-              <tr>
-                <td colspan=3>Editing, contenteditable, and execCommand</td>
-                <td>0%</td>
-              </tr>
-              <tr>
-                <td colspan=3>Pointer and Mouse Events</td>
-                <td>0%</td>
-              </tr>
-              <tr>
-                <td colspan=3>Viewport Measurement</td>
-                <td>0%</td>
-              </tr>
             </tbody>
             <tfoot>
               <tr>
@@ -593,16 +598,15 @@ class Interop2022 extends PolymerElement {
         <div class="focus-area">
           <select id="featureSelect">
             <option value="summary">Summary</option>
-            <optgroup label="2022 Focus Areas">
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2022)}}">
-                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
-              </template>
-            </optgroup>
-            <optgroup label="2021 Focus Areas">
-              <template is="dom-repeat" items="{{features}}" filter="{{computeFilter(2021)}}">
-                <option value$="[[item.id]]" selected="[[isSelected(item.id)]]">[[item.description]]</option>
-              </template>
-            </optgroup>
+            <template is="dom-repeat" items="{{tableSections}}" as="section" filter="{{filterGroupSections()}}">
+              <optgroup label="[[section.name]]">
+                <template is="dom-repeat" items={{section.rows}} as="focusArea">
+                  <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
+                    [[getRowInfo(focusArea, 'description')]]
+                  </option>
+                </template>
+              </optgroup>
+            </template>
           </select>
         </div>
 
@@ -617,10 +621,11 @@ class Interop2022 extends PolymerElement {
           </template>
         </div>
 
-        <interop-2022-feature-chart data-manager="[[dataManager]]"
-                                    stable="[[stable]]"
-                                    feature="{{feature}}">
-        </interop-2022-feature-chart>
+        <interop-feature-chart year="[[year]]"
+                               data-manager="[[dataManager]]"
+                               stable="[[stable]]"
+                               feature="{{feature}}">
+        </interop-feature-chart>
       </section>
       <footer class="compat-footer">
         <p>Focus Area scores are calculated based on test pass rates. No test
@@ -636,23 +641,19 @@ class Interop2022 extends PolymerElement {
       </footer>
 `;
   }
-
   static get is() {
-    return 'interop-2022';
+    return 'interop-dashboard';
   }
 
   static get properties() {
     return {
+      year: String,
       embedded: Boolean,
       stable: Boolean,
       feature: String,
       features: {
         type: Array,
-        value() {
-          return Object.entries(FEATURES).map(([id, info]) => {
-            return Object.assign({ id }, info);
-          });
-        }
+        notify: true
       },
       dataManager: Object,
       scores: Object,
@@ -662,6 +663,7 @@ class Interop2022 extends PolymerElement {
   static get observers() {
     return [
       'updateUrlParams(embedded, stable, feature)',
+      'updateYearInfo(year)'
     ];
   }
 
@@ -669,7 +671,7 @@ class Interop2022 extends PolymerElement {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.dataManager = new Interop2022DataManager();
+    this.dataManager = new InteropDataManager(this.year);
 
     this.scores = {};
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
@@ -680,7 +682,7 @@ class Interop2022 extends PolymerElement {
     this.embedded = params.get('embedded') !== null;
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
-    this.feature = params.get('feature') || SUMMARY_FEATURE_NAME;
+    this.feature = params.get('feature') || this.summaryFeatureName;
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', () => {
@@ -696,7 +698,7 @@ class Interop2022 extends PolymerElement {
   }
 
   featureLinks(feature) {
-    const data = FEATURES[feature];
+    const data = this.focusAreas[feature];
     return [
       { text: 'Spec', href: data?.spec },
       { text: 'MDN', href: data?.mdn },
@@ -704,9 +706,20 @@ class Interop2022 extends PolymerElement {
     ];
   }
 
-  computeFilter(year) {
-    const prefix = `interop-${year}-`;
-    return (feature) => feature.id.startsWith(prefix);
+  filterGroupSections() {
+    return (section) => !section.score_as_group;
+  }
+
+  getRowInfo(name, prop) {
+    return this.focusAreas[name][prop];
+  }
+
+  showBrowserIcons(index) {
+    return index === 0;
+  }
+
+  showNoOtherColumns(scoreAsGroup, index) {
+    return !scoreAsGroup && !this.showBrowserIcons(index);
   }
 
   getBrowserScoreForFeature(browserIndex, feature) {
@@ -716,7 +729,17 @@ class Interop2022 extends PolymerElement {
   }
 
   getBrowserScoreTotal(browserIndex) {
-    return this.getBrowserScoreForFeature(browserIndex, SUMMARY_FEATURE_NAME);
+    return this.getBrowserScoreForFeature(browserIndex, this.summaryFeatureName);
+  }
+
+  updateYearInfo(year) {
+    const yearInfo = PARAMS_BY_YEAR[year];
+    this.focusAreas = yearInfo.focus_areas;
+    this.summaryFeatureName = yearInfo.summary_feature_name;
+    this.tableSections = yearInfo.table_sections;
+    this.features = Object.entries(this.focusAreas).map(([id, info]) => {
+      return Object.assign({ id }, info);
+    });
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -726,7 +749,7 @@ class Interop2022 extends PolymerElement {
     }
 
     const params = [];
-    if (feature && feature !== SUMMARY_FEATURE_NAME) {
+    if (feature && feature !== this.summaryFeatureName) {
       params.push(`feature=${feature}`);
     }
     if (stable) {
@@ -769,9 +792,9 @@ class Interop2022 extends PolymerElement {
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 }
-window.customElements.define(Interop2022.is, Interop2022);
+window.customElements.define(InteropDashboard.is, InteropDashboard);
 
-class Interop2022Summary extends PolymerElement {
+class InteropSummary extends PolymerElement {
   static get template() {
     return html`
       <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -904,11 +927,12 @@ class Interop2022Summary extends PolymerElement {
   }
 
   static get is() {
-    return 'interop-2022-summary';
+    return 'interop-summary';
   }
 
   static get properties() {
     return {
+      year: String,
       scores: Object,
       stable: {
         type: Boolean,
@@ -917,18 +941,30 @@ class Interop2022Summary extends PolymerElement {
     };
   }
 
+  static get observers() {
+    return [
+      'updateYearInfo(year)'
+    ];
+  }
+
   _stableChanged() {
     this.updateSummaryScores();
   }
 
+  updateYearInfo(year) {
+    const yearInfo = PARAMS_BY_YEAR[year];
+    this.focusAreas = yearInfo.focus_areas;
+    this.summaryFeatureName = yearInfo.summary_feature_name; 
+  }
+
   async updateSummaryScores() {
-    let numbers = this.$.summaryContainer.querySelectorAll('.summary-number');
+    let numbers = this.shadowRoot.querySelectorAll('.summary-number');
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     if (numbers.length !== scores.length) {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < scores.length; i++) {
-      let score = Math.floor(scores[i][SUMMARY_FEATURE_NAME] / 10);
+      let score = Math.floor(scores[i][this.summaryFeatureName] / 10);
       let curScore = numbers[i].innerText;
       new CountUp(numbers[i], score, {
         startVal: curScore === '--' ? 0 : curScore
@@ -955,13 +991,13 @@ class Interop2022Summary extends PolymerElement {
     return ['#ee2b2b', '#ff050526'];
   }
 }
-window.customElements.define(Interop2022Summary.is, Interop2022Summary);
+window.customElements.define(InteropSummary.is, InteropSummary);
 
-// Interop2022FeatureChart is a wrapper around a Google Charts chart. We cannot
+// InteropFeatureChart is a wrapper around a Google Charts chart. We cannot
 // use the polymer google-chart element as it does not support setting tooltip
 // actions, which we rely on to let users load a changelog between subsequent
 // versions of the same browser.
-class Interop2022FeatureChart extends PolymerElement {
+class InteropFeatureChart extends PolymerElement {
   static get template() {
     return html`
       <style>
@@ -1027,6 +1063,7 @@ class Interop2022FeatureChart extends PolymerElement {
 
   static get properties() {
     return {
+      year: String,
       dataManager: Object,
       stable: Boolean,
       feature: String,
@@ -1036,11 +1073,12 @@ class Interop2022FeatureChart extends PolymerElement {
   static get observers() {
     return [
       'updateChart(feature, stable)',
+      'updateYearInfo(year)'
     ];
   }
 
   static get is() {
-    return 'interop-2022-feature-chart';
+    return 'interop-feature-chart';
   }
 
   ready() {
@@ -1053,6 +1091,11 @@ class Interop2022FeatureChart extends PolymerElement {
     });
   }
 
+  updateYearInfo(year) {
+    const yearInfo = PARAMS_BY_YEAR[year];
+    this.focusAreas = yearInfo.focus_areas;
+    this.summaryFeatureName = yearInfo.summary_feature_name;
+  }
   async updateChart(feature, stable) {
     // Our observer may be called before the feature is set, so debounce that.
     if (!feature) {
@@ -1136,8 +1179,11 @@ class Interop2022FeatureChart extends PolymerElement {
   }
 
   getChartOptions(containerDiv, feature) {
-    const description = feature === SUMMARY_FEATURE_NAME ?
-      'Interop 2022' : FEATURES[feature].description;
+    if (feature !== this.summaryFeatureName && !(feature in this.focusAreas)) {
+      feature = this.summaryFeatureName;
+    }
+    const description = feature === this.summaryFeatureName ?
+      `Interop ${this.year}` : this.focusAreas[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
@@ -1189,7 +1235,7 @@ class Interop2022FeatureChart extends PolymerElement {
     return options;
   }
 }
-window.customElements.define(Interop2022FeatureChart.is, Interop2022FeatureChart);
+window.customElements.define(InteropFeatureChart.is, InteropFeatureChart);
 
 async function fetchCsvContents(url) {
   const csvResp = await fetch(url);
