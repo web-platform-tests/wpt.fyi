@@ -461,33 +461,10 @@ class InteropDashboard extends PolymerElement {
           display: grid;
           place-items: center;
         }
-
-        // Can restore dark mode with color-scheme once there's no accessibility contrast issues across browsers
-        // https://bugs.webkit.org/show_bug.cgi?id=226893
-        // see also interop-2022.html line 5
-        //
-        // @media (prefers-color-scheme: dark) {
-        //   :host {
-        //     color: white;
-        //   }
-
-        //   paper-button.unselected {
-        //     color: #333;
-        //   }
-
-        //   .focus-area-section, details, .table-card {
-        //     background: hsl(0 0% 10%);
-        //     border-color: hsl(0 0% 20%);
-        //     box-shadow: none;
-        //   }
-        // }
       </style>
       <h1>Interop [[year]] Dashboard</h1>
 
-      <p class="prose">
-        These scores represent how browser engines are doing in 15 focus areas
-        and 3 joint investigation efforts.
-      </p>
+      <p class="prose">[[prose]]</p>
 
       <div class="channel-area">
         <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
@@ -578,9 +555,9 @@ class InteropDashboard extends PolymerElement {
             <tfoot>
               <tr>
                 <th><b>TOTAL</b></th>
-                <th>[[getBrowserScoreTotal(0, stable)]]</th>
-                <th>[[getBrowserScoreTotal(1, stable)]]</th>
-                <th>[[getBrowserScoreTotal(2, stable)]]</th>
+                <th>[[totalChromium]]</th>
+                <th>[[totalFirefox]]</th>
+                <th>[[totalSafari]]</th>
               </tr>
             </tfoot>
           </table>
@@ -633,7 +610,7 @@ class InteropDashboard extends PolymerElement {
         to contribute improvements to
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
-        <a href="https://github.com/web-platform-tests/interop-2022/issues/new" target="_blank">file an issue</a>
+        <a href="[[issueURL]]" target="_blank">file an issue</a>
         to request updating the set of tests used for Interop 2022. You're also
         welcome to
         <a href="https://matrix.to/#/#interop2022:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
@@ -657,13 +634,26 @@ class InteropDashboard extends PolymerElement {
       },
       dataManager: Object,
       scores: Object,
+      totalChromium: {
+        type: String,
+        value: '0%'
+      },
+      totalFirefox: {
+        type: String,
+        value: '0%'
+      },
+      totalSafari: {
+        type: String,
+        value: '0%'
+      },
     };
   }
 
   static get observers() {
     return [
       'updateUrlParams(embedded, stable, feature)',
-      'updateYearInfo(year)'
+      'updateYearInfo(year)',
+      'updateTotals(features, stable)'
     ];
   }
 
@@ -729,7 +719,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   getBrowserScoreTotal(browserIndex) {
-    return this.getBrowserScoreForFeature(browserIndex, this.summaryFeatureName);
+    return this.totals[browserIndex];
   }
 
   updateYearInfo(year) {
@@ -737,9 +727,21 @@ class InteropDashboard extends PolymerElement {
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.tableSections = yearInfo.table_sections;
+    this.prose = yearInfo.prose;
+    this.issueURL = yearInfo.issue_url;
     this.features = Object.entries(this.focusAreas).map(([id, info]) => {
       return Object.assign({ id }, info);
     });
+  }
+
+  updateTotals(features, stable) {
+    if (!features) {
+      return;
+    }
+
+    this.totalChromium = this.getBrowserScoreForFeature(0, this.summaryFeatureName);
+    this.totalFirefox = this.getBrowserScoreForFeature(1, this.summaryFeatureName);
+    this.totalSafari = this.getBrowserScoreForFeature(2, this.summaryFeatureName);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -1096,6 +1098,7 @@ class InteropFeatureChart extends PolymerElement {
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
   }
+
   async updateChart(feature, stable) {
     // Our observer may be called before the feature is set, so debounce that.
     if (!feature) {

@@ -16,6 +16,8 @@
         "github_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/compat2021/unified-scores-{FEATURE_LABEL}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
+        "prose": "These scores represent how well browser engines are doing on the 2021 Interop Focus Areas, as measured by wpt.fyi test results. Each feature contributes up to 20 points to the score, based on passing-test percentage, giving a maximum possible score of 100 for each browser.",
+        "issue_url": "https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=",
         "focus_areas": {
             "aspect-ratio": {
                 "description": "Aspect Ratio",
@@ -91,6 +93,8 @@
         "github_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{FEATURE_LABEL}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
+        "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
+        "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
         "focus_areas": {
             "interop-2021-aspect-ratio": {
                 "description": "Aspect Ratio",
