@@ -4,14 +4,14 @@
  * found in the LICENSE file.
  */
 
- import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
- import '../node_modules/@polymer/paper-button/paper-button.js';
- import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
- import '../node_modules/@polymer/paper-input/paper-input.js';
- import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
- import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
- import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
-import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'}
+import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
+import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
+import '../node_modules/@polymer/paper-input/paper-input.js';
+import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
+import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
