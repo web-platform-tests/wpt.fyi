@@ -26,7 +26,6 @@ class InteropDataManager {
     this.githubURL = yearInfo.github_url;
     this.csvScoreFormat = yearInfo.csv_scores;
 
-  
     this._dataLoaded = load().then(() => {
       if (this.year === '2021') {
         return Promise.all([this._loadCsv_2021('stable'), this._loadCsv_2021('experimental')]);
@@ -956,7 +955,7 @@ class InteropSummary extends PolymerElement {
   updateYearInfo(year) {
     const yearInfo = PARAMS_BY_YEAR[year];
     this.focusAreas = yearInfo.focus_areas;
-    this.summaryFeatureName = yearInfo.summary_feature_name; 
+    this.summaryFeatureName = yearInfo.summary_feature_name;
   }
 
   async updateSummaryScores() {
