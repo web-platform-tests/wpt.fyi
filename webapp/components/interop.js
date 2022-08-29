@@ -275,12 +275,15 @@ class InteropDataManager {
   }
 
   createTooltip(browser, version, score) {
+    // 2021 Scores were stored as a decimal rather than a 0-1000 integer.
+    if (this.year === '2021') {
+      return `${(score * 100).toPrecision(3)}% passing \n${browser} ${version}`;
+    }
     // The score is an integer in the range 0-1000, representing a percentage
     // with one decimal point.
     return `${score / 10}% passing \n${browser} ${version}`;
   }
 }
-
 
 
 // InteropDashboard is a custom element that holds the overall interop dashboard.
@@ -733,7 +736,7 @@ class InteropDashboard extends PolymerElement {
     });
   }
 
-  updateTotals(features, stable) {
+  updateTotals(features) {
     if (!features) {
       return;
     }
