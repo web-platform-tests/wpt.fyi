@@ -613,9 +613,9 @@ class InteropDashboard extends PolymerElement {
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
         <a href="[[issueURL]]" target="_blank">file an issue</a>
-        to request updating the set of tests used for Interop 2022. You're also
+        to request updating the set of tests used for scoring. You're also
         welcome to
-        <a href="https://matrix.to/#/#interop2022:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
+        <a href="[[matrixURL]]" target="_blank">join
         the conversation on Matrix</a>!</p>
       </footer>
 `;
@@ -731,6 +731,7 @@ class InteropDashboard extends PolymerElement {
     this.tableSections = yearInfo.table_sections;
     this.prose = yearInfo.prose;
     this.issueURL = yearInfo.issue_url;
+    this.matrixURL = yearInfo.maxtrix_url;
     this.features = Object.entries(this.focusAreas).map(([id, info]) => {
       return Object.assign({ id }, info);
     });
@@ -1096,6 +1097,7 @@ class InteropFeatureChart extends PolymerElement {
   }
 
   updateYearInfo(year) {
+    this.year = year;
     const yearInfo = PARAMS_BY_YEAR[year];
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
@@ -1184,6 +1186,13 @@ class InteropFeatureChart extends PolymerElement {
   }
 
   getChartOptions(containerDiv, feature) {
+    // Show only the scores from this year on the charts.
+    const endOfInteropYear = new Date(this.year, 11, 31);
+    let maxDate = new Date();
+    if (maxDate > endOfInteropYear) {
+      maxDate = endOfInteropYear;
+    }
+
     if (feature !== this.summaryFeatureName && !(feature in this.focusAreas)) {
       feature = this.summaryFeatureName;
     }
@@ -1198,6 +1207,9 @@ class InteropFeatureChart extends PolymerElement {
       hAxis: {
         title: 'Date',
         format: 'MMM-YYYY',
+        viewWindow: {
+          max: maxDate
+        }
       },
       vAxis: {
         title: `${description} Score`,
