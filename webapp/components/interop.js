@@ -731,7 +731,7 @@ class InteropDashboard extends PolymerElement {
     this.tableSections = yearInfo.table_sections;
     this.prose = yearInfo.prose;
     this.issueURL = yearInfo.issue_url;
-    this.matrixURL = yearInfo.maxtrix_url;
+    this.matrixURL = yearInfo.matrix_url;
     this.features = Object.entries(this.focusAreas).map(([id, info]) => {
       return Object.assign({ id }, info);
     });
