@@ -21,10 +21,12 @@ type interopData struct {
 func interopHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
 	year, err := strconv.Atoi(path)
-	// TODO(danielrsmith): Add a check for only possible Interop years.
+	// TODO(danielrsmith): Change this redirect for next year's interop.
 	if err != nil {
-		year = 2022
+		http.Redirect(w, r, "2022", http.StatusTemporaryRedirect)
+		return
 	}
+
 	if r.Method != "GET" {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return

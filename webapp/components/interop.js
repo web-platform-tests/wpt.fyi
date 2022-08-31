@@ -23,13 +23,10 @@ class InteropDataManager {
     const yearInfo = PARAMS_BY_YEAR[year];
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
-    this.githubURL = yearInfo.github_url;
+    this.csvURL = yearInfo.csv_url;
     this.csvScoreFormat = yearInfo.csv_scores;
 
     this._dataLoaded = load().then(() => {
-      if (this.year === '2021') {
-        return Promise.all([this._loadCsv_2021('stable'), this._loadCsv_2021('experimental')]);
-      }
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
     });
   }
@@ -84,7 +81,7 @@ class InteropDataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
-    const url = this.githubURL.replace('{FEATURE_LABEL}', label);
+    const url = this.csvURL.replace('{stable|experimental}', label);
     const csvLines = await fetchCsvContents(url);
 
     const features = [this.summaryFeatureName,
@@ -109,14 +106,25 @@ class InteropDataManager {
       'Firefox',
       'Safari',
     ];
-
+    const focusAreaLabels = Object.keys(this.focusAreas);
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], []];
 
+    const numFocusAreas = (focusAreaLabels.length);
+
+    // Extract the label headers in order.
+    const headers = csvLines[0]
+      .split(',')
+      // Ignore the date and browser version.
+      .slice(2, 2 + numFocusAreas)
+      // Remove the browser prefix (e.g. chrome-css-grid becomes css-grid).
+      .map(label => label.slice(label.indexOf('-') + 1));
+
+    // Drop the headers to prepare for aggregation.
+    csvLines.shift();
+
     csvLines.forEach(line => {
-      // We control the CSV data source, so are quite lazy with parsing it.
-      //
       // The format is:
       //   date, [browser-version, browser-feature-a, browser-feature-b, ...]+
       const csvValues = line.split(',');
@@ -133,15 +141,20 @@ class InteropDataManager {
 
       // Now handle each of the browsers. For each there is a version column,
       // then the scores for each of the features.
-      for (let i = 1; i < csvValues.length; i += 16) {
-        const browserIdx = Math.floor(i / 16);
+      for (let i = 1; i < csvValues.length; i += (numFocusAreas + 1)) {
+        const browserIdx = Math.floor(i / (numFocusAreas + 1));
         const browserName = tooltipBrowserNames[browserIdx];
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
         let testScore = 0;
-        Object.keys(this.focusAreas).forEach((feature, j) => {
-          const score = parseInt(csvValues[i + 1 + j]);
+        headers.forEach((feature, j) => {
+          let score = 0;
+          if (this.year === '2021') {
+            score = parseInt(parseFloat(csvValues[i + 1 + j]) * 1000);
+          } else {
+            score = parseInt(csvValues[i + 1 + j]);
+          }
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
@@ -152,10 +165,13 @@ class InteropDataManager {
           testScore += score;
         });
 
-        // TODO: get the investigation score at this date.
-        const investigationScore = 0;
+        let summaryScore = testScore / numFocusAreas;
 
-        const summaryScore = Math.floor((0.9 * testScore) / 15 + (0.1 * investigationScore));
+        // TODO: get the investigation score at this date.
+        if (this.year === '2022') {
+          summaryScore = summaryScore * 0.9;
+        }
+        summaryScore = Math.floor(summaryScore);
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
         newRows.get(this.summaryFeatureName).push(summaryScore / 1000);
@@ -179,106 +195,7 @@ class InteropDataManager {
     }
   }
 
-  // Loads the unified CSV file for either stable or experimental, and
-  // processes it into the set of datatables provided by this class. Will
-  // ultimately set either this.stableDatatables or this.experimentalDatatables
-  // with a map of {feature name --> datatable}.
-  async _loadCsv_2021(label) {
-    const url = this.githubURL.replace('{FEATURE_LABEL}', label);
-    const csvLines = await fetchCsvContents(url);
-
-    const features = [this.summaryFeatureName, ...Object.keys(this.focusAreas)];
-    const dataTables = new Map(features.map(feature => {
-      const dataTable = new window.google.visualization.DataTable();
-      dataTable.addColumn('date', 'Date');
-      dataTable.addColumn('number', 'Chrome/Edge');
-      dataTable.addColumn({type: 'string', role: 'tooltip'});
-      dataTable.addColumn('number', 'Firefox');
-      dataTable.addColumn({type: 'string', role: 'tooltip'});
-      dataTable.addColumn('number', 'Safari');
-      dataTable.addColumn({type: 'string', role: 'tooltip'});
-      return [feature, dataTable];
-    }));
-
-    // We list Chrome/Edge on the legend, but when creating the tooltip we
-    // include the version information and so should be clear about which browser
-    // exactly gave the results.
-    const tooltipBrowserNames = [
-      'Chrome',
-      'Firefox',
-      'Safari',
-    ];
-
-    // We store a lookup table of browser versions to help with the 'show
-    // revision changelog' tooltip action.
-    const browserVersions = [[], [], []];
-
-    csvLines.forEach(line => {
-      // We control the CSV data source, so are quite lazy with parsing it.
-      //
-      // The format is:
-      //   date, [browser-version, browser-feature-a, browser-feature-b, ...]+
-      const csvValues = line.split(',');
-
-      // JavaScript Date objects use 0-indexed months whilst the CSV is
-      // 1-indexed, so adjust for that.
-      const dateParts = csvValues[0].split('-').map(x => parseInt(x));
-      const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-
-      // Initialize a new row for each feature, with the date column set.
-      const newRows = new Map(features.map(feature => {
-        return [feature, [date]];
-      }));
-
-      // Now handle each of the browsers. For each there is a version column,
-      // then the scores for each of the five features.
-      for (let i = 1; i < csvValues.length; i += 6) {
-        const browserIdx = Math.floor(i / 6);
-        const browserName = tooltipBrowserNames[browserIdx];
-        const version = csvValues[i];
-        browserVersions[browserIdx].push(version);
-
-        let summaryScore = 0;
-        Object.keys(this.focusAreas).forEach((feature, j) => {
-          const score = parseFloat(csvValues[i + 1 + j]);
-          const tooltip = this.createTooltip(browserName, version, score.toFixed(3));
-          newRows.get(feature).push(score);
-          newRows.get(feature).push(tooltip);
-
-          // The summary scores are calculated as a x/100 score, where each
-          // feature is allowed to contribute up to 20 points. We use floor
-          // rather than round to avoid claiming the full 20 points until we
-          // are at 100%
-          summaryScore += Math.floor(score * 20);
-        });
-
-        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
-        newRows.get(this.summaryFeatureName).push(summaryScore / 100);
-        newRows.get(this.summaryFeatureName).push(summaryTooltip);
-      }
-
-      // Push the new rows onto the corresponding datatable.
-      newRows.forEach((row, feature) => {
-        dataTables.get(feature).addRow(row);
-      });
-    });
-
-    // The datatables are now complete, so assign them to the appropriate
-    // member variable.
-    if (label === 'stable') {
-      this.stableDatatables = dataTables;
-      this.stableBrowserVersions = browserVersions;
-    } else {
-      this.experimentalDatatables = dataTables;
-      this.experimentalBrowserVersions = browserVersions;
-    }
-  }
-
   createTooltip(browser, version, score) {
-    // 2021 Scores were stored as a decimal rather than a 0-1000 integer.
-    if (this.year === '2021') {
-      return `${(score * 100).toPrecision(3)}% passing \n${browser} ${version}`;
-    }
     // The score is an integer in the range 0-1000, representing a percentage
     // with one decimal point.
     return `${score / 10}% passing \n${browser} ${version}`;
@@ -445,6 +362,16 @@ class InteropDashboard extends PolymerElement {
           vertical-align: top;
         }
 
+        .prev-years {
+          padding-top: 30px;
+          text-align: center;
+        }
+
+        .prev-year-link {
+          display: inline-block;
+          padding: 0 5px;
+        }
+
         #featureSelect {
           padding: 0.5rem;
           font-size: 16px;
@@ -459,7 +386,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .compat-footer {
-          padding-block: 50px 30px;
+          padding-block: 20px 30px;
           display: grid;
           place-items: center;
         }
@@ -606,6 +533,14 @@ class InteropDashboard extends PolymerElement {
                                feature="{{feature}}">
         </interop-feature-chart>
       </section>
+      <div class="prev-years">
+        <p>View previous years:</p>
+        <template is="dom-repeat" items={{getPreviousYears()}} as="prevYear">
+          <div class="prev-year-link">
+            <a href=[[prevYear]]>[[prevYear]]</a>
+          </div>
+        </template>
+      </div>
       <footer class="compat-footer">
         <p>Focus Area scores are calculated based on test pass rates. No test
         suite is perfect and improvements are always welcome. Please feel free
@@ -722,6 +657,16 @@ class InteropDashboard extends PolymerElement {
 
   getBrowserScoreTotal(browserIndex) {
     return this.totals[browserIndex];
+  }
+
+  getPreviousYears() {
+    const firstYear = 2021;
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = firstYear; i < currentYear; i++) {
+      years.push(i.toString());
+    }
+    return years;
   }
 
   updateYearInfo(year) {
@@ -1261,6 +1206,5 @@ async function fetchCsvContents(url) {
   }
   const csvText = await csvResp.text();
   const csvLines = csvText.split('\n').filter(l => l);
-  csvLines.shift();  // We don't need the CSV header.
   return csvLines;
 }

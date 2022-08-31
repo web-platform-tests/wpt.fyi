@@ -13,7 +13,7 @@
                 "score_as_group": false
             }
         ],
-        "github_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/compat2021/unified-scores-{FEATURE_LABEL}.csv",
+        "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/compat2021/unified-scores-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
         "prose": "These scores represent how well browser engines are doing on the 2021 Interop Focus Areas, as measured by wpt.fyi test results. Each feature contributes up to 20 points to the score, based on passing-test percentage, giving a maximum possible score of 100 for each browser.",
@@ -71,7 +71,7 @@
                 "score_as_group": false
             },
             {
-                "name": "2021 Focus Areas",
+                "name": "2021 Focus Areas (30%)",
                 "rows": [
                     "interop-2021-aspect-ratio",
                     "interop-2021-flexbox",
@@ -82,7 +82,7 @@
                 "score_as_group": false
             },
             {
-                "name": "2022 Investigation",
+                "name": "2022 Investigation (10%)",
                 "rows": [
                     "Editing, contenteditable, and execCommand",
                     "Pointer and Mouse Events",
@@ -91,7 +91,7 @@
                 "score_as_group": true
             }
         ],
-        "github_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{FEATURE_LABEL}.csv",
+        "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
         "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
