@@ -1,4 +1,3 @@
-//go:build medium
 // +build medium
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
