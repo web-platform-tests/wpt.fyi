@@ -21,6 +21,7 @@ type interopData struct {
 func interopHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
 	year, err := strconv.Atoi(path)
+	// If path does not contain a number, redirect to /2022.
 	// TODO(danielrsmith): Change this redirect for next year's interop.
 	if err != nil {
 		http.Redirect(w, r, "2022", http.StatusTemporaryRedirect)

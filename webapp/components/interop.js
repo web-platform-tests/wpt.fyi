@@ -150,6 +150,7 @@ class InteropDataManager {
         let testScore = 0;
         headers.forEach((feature, j) => {
           let score = 0;
+          // 2021 scores are formatted as a decimal rather than a number 0-1000.
           if (this.year === '2021') {
             score = parseInt(parseFloat(csvValues[i + 1 + j]) * 1000);
           } else {
