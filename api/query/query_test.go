@@ -115,6 +115,20 @@ func TestLoadSummaries_fail(t *testing.T) {
 	assert.Contains(t, err.Error(), storeMiss.Error())
 }
 
+func TestValidateSummaryVersions_v1(t *testing.T) {
+	qh := queryHandler{}
+	// Summaries without the "_v2" suffix should not be used.
+	url := "https://example.com/invalid-summary.json.gz"
+	assert.False(t, qh.summaryIsValid(url))
+}
+
+func TestValidateSummaryVersions_v2(t *testing.T) {
+	qh := queryHandler{}
+	// Summaries without the "_v2" suffix should not be used.
+	url := "https://example.com/valid-summary_v2.json.gz"
+	assert.True(t, qh.summaryIsValid(url))
+}
+
 func TestGetRunsAndFilters_default(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

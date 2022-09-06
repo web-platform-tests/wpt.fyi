@@ -94,7 +94,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	r2 := r.Clone(r.Context())
 	r2url := *r.URL
 	r2.URL = &r2url
-	r2.Method = "GET"
+	r2.Method = http.MethodGet
 	q := r.URL.Query()
 	q.Add("q", simpleQ.Pattern)
 	// Assemble list of run IDs for later use.
@@ -122,11 +122,11 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 		// Check old summary files. If any can't be found,
 		// use the searchcache to aggregate the runs.
-		summariesValid, err := sh.validateSummaryVersions(r2.URL.Query(), logger)
-		if err != nil {
+		summaryErr := sh.validateSummaryVersions(r2.URL.Query(), logger)
+		if summaryErr.Err != nil {
 			logger.Debugf("Error checking summary file names: %v", err)
 		}
-		isSimpleQ = isSimpleQ && summariesValid
+		isSimpleQ = isSimpleQ && !summaryErr.BadVersion
 	}
 
 	// Use searchcache for a complex query or if old summary files exist.

@@ -35,6 +35,11 @@ type queryHandler struct {
 	logger     shared.Logger
 }
 
+type SummaryError struct {
+	BadVersion bool
+	Err        error
+}
+
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
 	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
 	if err != nil {
@@ -57,25 +62,29 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logger) (bool, error) {
+func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logger) SummaryError {
 	filters, err := shared.ParseQueryFilterParams(v)
 	if err != nil {
-		return false, err
+		return SummaryError{BadVersion: false, Err: err}
 	}
 	testRuns, _, err := qh.getRunsAndFilters(filters)
 	if err != nil {
-		return false, err
+		return SummaryError{BadVersion: false, Err: err}
 	}
 
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
-		// All new summary URLs end with "-summary_v2.json.gz".
-		if !strings.HasSuffix(summaryURL, "-summary_v2.json.gz") && !strings.HasSuffix(summaryURL, "-summary.json.gz") {
+		if !qh.summaryIsValid(summaryURL) {
 			logger.Infof("summary URL has invalid suffix: %s", summaryURL)
-			return false, nil
+			return SummaryError{BadVersion: true, Err: nil}
 		}
 	}
-	return true, nil
+	return SummaryError{BadVersion: false, Err: nil}
+}
+
+func (qh queryHandler) summaryIsValid(summaryURL string) bool {
+	// All new summary URLs end with "-summary_v2.json.gz". Any others are invalid.
+	return !strings.HasSuffix(summaryURL, "-summary_v2.json.gz")
 }
 
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns, shared.QueryFilter, error) {
