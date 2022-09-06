@@ -363,12 +363,12 @@ class InteropDashboard extends PolymerElement {
           vertical-align: top;
         }
 
-        .prev-years {
+        .interop-years {
           padding-top: 30px;
           text-align: center;
         }
 
-        .prev-year-link {
+        .interop-year-text {
           display: inline-block;
           padding: 0 5px;
         }
@@ -534,14 +534,6 @@ class InteropDashboard extends PolymerElement {
                                feature="{{feature}}">
         </interop-feature-chart>
       </section>
-      <div class="prev-years">
-        <p>View previous years:</p>
-        <template is="dom-repeat" items={{getPreviousYears()}} as="prevYear">
-          <div class="prev-year-link">
-            <a href=[[prevYear]]>[[prevYear]]</a>
-          </div>
-        </template>
-      </div>
       <footer class="compat-footer">
         <p>Focus Area scores are calculated based on test pass rates. No test
         suite is perfect and improvements are always welcome. Please feel free
@@ -553,6 +545,16 @@ class InteropDashboard extends PolymerElement {
         welcome to
         <a href="[[matrixURL]]" target="_blank">join
         the conversation on Matrix</a>!</p>
+        <div class="interop-years">
+          <div class="interop-year-text">
+            <p>View by year: </p>
+          </div>
+          <template is="dom-repeat" items={{getAllYears()}} as="interopYear">
+            <div class="interop-year-text">
+              <a href=[[interopYear]]>[[interopYear]]</a>
+            </div>
+          </template>
+        </div>
       </footer>
 `;
   }
@@ -660,11 +662,11 @@ class InteropDashboard extends PolymerElement {
     return this.totals[browserIndex];
   }
 
-  getPreviousYears() {
+  getAllYears() {
     const firstYear = 2021;
     const currentYear = new Date().getFullYear();
     const years = [];
-    for (let i = firstYear; i < currentYear; i++) {
+    for (let i = firstYear; i <= currentYear; i++) {
       years.push(i.toString());
     }
     return years;
