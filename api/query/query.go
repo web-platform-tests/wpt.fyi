@@ -84,7 +84,7 @@ func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logge
 
 func (qh queryHandler) summaryIsValid(summaryURL string) bool {
 	// All new summary URLs end with "-summary_v2.json.gz". Any others are invalid.
-	return !strings.HasSuffix(summaryURL, "-summary_v2.json.gz")
+	return strings.HasSuffix(summaryURL, "-summary_v2.json.gz")
 }
 
 func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns, shared.QueryFilter, error) {
