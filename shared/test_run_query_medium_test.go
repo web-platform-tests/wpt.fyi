@@ -25,7 +25,7 @@ func TestLoadTestRuns(t *testing.T) {
 			},
 			Revision: "1234567890",
 		},
-		ResultsURL: "/static/chrome-63.0-linux-summary.json.gz",
+		ResultsURL: "/static/chrome-63.0-linux-summary_v2.json.gz",
 		CreatedAt:  time.Now(),
 	}
 
@@ -97,7 +97,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 				},
 				Revision: "1234567890",
 			},
-			ResultsURL: "/static/chrome-63.0-linux-summary.json.gz",
+			ResultsURL: "/static/chrome-63.0-linux-summary_v2.json.gz",
 			CreatedAt:  time.Now(),
 		},
 		shared.TestRun{
@@ -111,7 +111,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 				},
 				Revision: "1234567890",
 			},
-			ResultsURL: "/static/chrome-experimental-63.0-linux-summary.json.gz",
+			ResultsURL: "/static/chrome-experimental-63.0-linux-summary_v2.json.gz",
 			CreatedAt:  time.Now(),
 		},
 		shared.TestRun{
@@ -123,7 +123,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 				},
 				Revision: "1234567890",
 			},
-			ResultsURL: "/static/chrome-64.0-linux-summary.json.gz",
+			ResultsURL: "/static/chrome-64.0-linux-summary_v2.json.gz",
 			CreatedAt:  time.Now(),
 			Labels:     []string{"experimental"},
 		},
@@ -136,7 +136,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 				},
 				Revision: "1234567890",
 			},
-			ResultsURL: "/static/chrome-experimental-65.0-linux-summary.json.gz",
+			ResultsURL: "/static/chrome-experimental-65.0-linux-summary_v2.json.gz",
 			CreatedAt:  time.Now(),
 			Labels:     []string{"experimental"},
 		},

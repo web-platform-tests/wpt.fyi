@@ -17,7 +17,7 @@ shouldn't directly consume this bucket. Please see the
 The directory schema is roughly:
 
 * `[SHA] (full or short)`
-    * `[product-id]-summary.json.gz`
+    * `[product-id]-summary_v2.json.gz`
     * `[product-id]`
         * Split JSONs with the same directory hierarchy as tests in WPT...
 

@@ -15,8 +15,7 @@ import (
 const shortSHA = "abcdef0123"
 const resultsURLBase = "https://storage.googleapis.com/wptd/" + shortSHA + "/"
 const product = "chrome-63.0-linux"
-const resultsURL = resultsURLBase + "/" + product + "-summary.json.gz"
-const resultsURLNewFormat = resultsURLBase + "/" + product + "-summary_v2.json.gz"
+const resultsURL = resultsURLBase + "/" + product + "-summary_v2.json.gz"
 
 func TestMapStringKeys(t *testing.T) {
 	m := map[string]int{"foo": 1}
@@ -63,12 +62,6 @@ func TestGetResultsURL_EmptyFile(t *testing.T) {
 	run := TestRun{ResultsURL: resultsURL}
 	run.Revision = shortSHA
 	checkResult(t, run, "", resultsURL)
-}
-
-func TestGetResultsURL_NewSummaryFormat(t *testing.T) {
-	run := TestRun{ResultsURL: resultsURLNewFormat}
-	run.Revision = shortSHA
-	checkResult(t, run, "", resultsURLNewFormat)
 }
 
 func TestGetResultsURL_TestFile(t *testing.T) {
