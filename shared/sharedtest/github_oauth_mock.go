@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v42/github"
+	github "github.com/google/go-github/v47/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	oauth2 "golang.org/x/oauth2"
 )
