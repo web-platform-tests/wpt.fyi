@@ -35,9 +35,12 @@ type queryHandler struct {
 	logger     shared.Logger
 }
 
+// SummaryError holds information on whether a summary was found as valid or not.
 type SummaryError struct {
+	// BadVersion represents whether the summary has a valid URL.
 	BadVersion bool
-	Err        error
+	// Err is the error that occurred while trying to check the summary file URL.
+	Err error
 }
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
