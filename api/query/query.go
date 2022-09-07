@@ -6,6 +6,7 @@ package query
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -35,13 +36,8 @@ type queryHandler struct {
 	logger     shared.Logger
 }
 
-// SummaryError holds information on whether a summary was found as valid or not.
-type SummaryError struct {
-	// BadVersion represents whether the summary has a valid URL.
-	BadVersion bool
-	// Err is the error that occurred while trying to check the summary file URL.
-	Err error
-}
+// ErrBadSummaryVersion occurs when the summary file URL is not the correct version.
+var ErrBadSummaryVersion = errors.New("invalid/unsupported summary version")
 
 func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
 	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
@@ -65,24 +61,24 @@ func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*sh
 	return &filters, testRuns, summaries, nil
 }
 
-func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logger) SummaryError {
+func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logger) error {
 	filters, err := shared.ParseQueryFilterParams(v)
 	if err != nil {
-		return SummaryError{BadVersion: false, Err: err}
+		return err
 	}
 	testRuns, _, err := qh.getRunsAndFilters(filters)
 	if err != nil {
-		return SummaryError{BadVersion: false, Err: err}
+		return err
 	}
 
 	for _, testRun := range testRuns {
 		summaryURL := shared.GetResultsURL(testRun, "")
 		if !qh.summaryIsValid(summaryURL) {
 			logger.Infof("summary URL has invalid suffix: %s", summaryURL)
-			return SummaryError{BadVersion: true, Err: nil}
+			return fmt.Errorf("%w for URL %s", ErrBadSummaryVersion, summaryURL)
 		}
 	}
-	return SummaryError{BadVersion: false, Err: nil}
+	return nil
 }
 
 func (qh queryHandler) summaryIsValid(summaryURL string) bool {

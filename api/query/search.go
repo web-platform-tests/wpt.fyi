@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -123,10 +124,14 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		// Check old summary files. If any can't be found,
 		// use the searchcache to aggregate the runs.
 		summaryErr := sh.validateSummaryVersions(r2.URL.Query(), logger)
-		if summaryErr.Err != nil {
-			logger.Debugf("Error checking summary file names: %v", err)
+		if summaryErr != nil {
+			isSimpleQ = false
+			if errors.Is(summaryErr, ErrBadSummaryVersion) {
+				logger.Debugf("%s yields unsupported summary version. %s", r2.URL.Query().Encode(), summaryErr.Error())
+			} else {
+				logger.Debugf("Error checking summary file names: %v", summaryErr)
+			}
 		}
-		isSimpleQ = isSimpleQ && !summaryErr.BadVersion
 	}
 
 	// Use searchcache for a complex query or if old summary files exist.
