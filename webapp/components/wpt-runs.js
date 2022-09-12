@@ -19,14 +19,13 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './info-banner.js';
 import { LoadingState } from './loading-state.js';
 import { CommitTypes } from './product-info.js';
-import { SelfNavigation } from './self-navigator.js';
 import './test-run.js';
 import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import { WPTFlags } from './wpt-flags.js';
 import { Pluralizer } from './pluralize.js';
 
-class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
+class WPTRuns extends Pluralizer(WPTFlags(LoadingState(TestRunsUIBase))) {
   static get template() {
     return html`
     <style>
