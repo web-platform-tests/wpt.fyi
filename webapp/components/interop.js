@@ -551,7 +551,7 @@ class InteropDashboard extends PolymerElement {
           </div>
           <template is="dom-repeat" items={{getAllYears()}} as="interopYear">
             <div class="interop-year-text">
-              <a href=[[interopYear]]>[[interopYear]]</a>
+              <a href="interop-[[interopYear]]">[[interopYear]]</a>
             </div>
           </template>
         </div>

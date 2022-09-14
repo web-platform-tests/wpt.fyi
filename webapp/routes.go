@@ -38,7 +38,7 @@ func RegisterRoutes() {
 	shared.AddRoute("/test-runs", "test-runs", testRunsHandler) // Legacy name
 
 	// Dashboard for the interop effort, by year.
-	shared.AddRoute("/interop/{path:.*}", "interop-dashboard", interopHandler)
+	shared.AddRoute("/{name:(?:compat|interop-)}{year:[0-9]+}", "interop-dashboard", interopHandler)
 
 	// Admin-only manual results upload.
 	shared.AddRoute("/admin/results/upload", "admin-results-upload", adminUploadHandler)

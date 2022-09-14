@@ -6,7 +6,6 @@ package webapp
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -19,12 +18,12 @@ type interopData struct {
 
 // interopHandler handles GET requests to /interop
 func interopHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
-	year, err := strconv.Atoi(path)
-	// If path does not contain a number, redirect to /2022.
+	name := mux.Vars(r)["name"]
+	year := mux.Vars(r)["year"]
+	// /compat2021 redirects to /interop-2021
 	// TODO(danielrsmith): Change this redirect for next year's interop.
-	if err != nil {
-		http.Redirect(w, r, "2022", http.StatusTemporaryRedirect)
+	if name == "compat" {
+		http.Redirect(w, r, "interop-"+year, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -42,7 +41,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := interopData{
 		Embedded: embedded != nil && *embedded,
-		Year:     strconv.Itoa(year),
+		Year:     year,
 	}
 	RenderTemplate(w, r, "interop.html", data)
 }
