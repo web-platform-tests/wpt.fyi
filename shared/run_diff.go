@@ -18,7 +18,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"github.com/google/go-github/v42/github"
+
+	"github.com/google/go-github/v47/github"
 
 	mapset "github.com/deckarep/golang-set"
 )
