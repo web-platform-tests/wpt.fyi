@@ -1,4 +1,3 @@
-//go:build small
 // +build small
 
 package webapp
@@ -34,7 +33,7 @@ func TestInteropHandler_redirect(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check if embedded param is maintained after redirect.
-	assert.NotEqual(t, loc.Path, "interop-"+defaultRedirectYear+"?embedded")
+	assert.NotEqual(t, loc.Path, "interop-2022?embedded")
 }
 
 func TestInteropHandler_compatRedirect(t *testing.T) {

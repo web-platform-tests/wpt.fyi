@@ -5,6 +5,7 @@
 package webapp
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -36,11 +37,10 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if needsRedirect {
-		params := ""
-		if r.URL.RawQuery != "" {
-			params = "?" + r.URL.RawQuery
-		}
-		http.Redirect(w, r, "interop-"+year+params, http.StatusTemporaryRedirect)
+		destination := *(r.URL)
+
+		destination.Path = fmt.Sprintf("interop-%s", year)
+		http.Redirect(w, r, destination.String(), http.StatusTemporaryRedirect)
 		return
 	}
 
