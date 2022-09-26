@@ -24,7 +24,6 @@ class InteropDataManager {
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
-    this.csvScoreFormat = yearInfo.csv_scores;
 
     this._dataLoaded = load().then(() => {
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
