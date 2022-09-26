@@ -111,7 +111,7 @@ class InteropDataManager {
     // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], []];
 
-    const numFocusAreas = (focusAreaLabels.length);
+    const numFocusAreas = focusAreaLabels.length;
 
     // Extract the label headers in order.
     const headers = csvLines[0]
