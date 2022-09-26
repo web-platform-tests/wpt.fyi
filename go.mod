@@ -3,8 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.16
 
 require (
-	cloud.google.com/go v0.104.0 // indirect
-	cloud.google.com/go/cloudtasks v1.4.0
+	cloud.google.com/go/cloudtasks v1.6.0
 	cloud.google.com/go/compute v1.9.0 // indirect
 	cloud.google.com/go/datastore v1.8.0
 	cloud.google.com/go/iam v0.4.0 // indirect
@@ -24,7 +23,6 @@ require (
 	github.com/gomodule/redigo v1.8.9
 	github.com/google/go-github/v47 v47.0.0
 	github.com/google/uuid v1.3.0
-	github.com/googleapis/gax-go/v2 v2.5.1 // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
@@ -44,7 +42,7 @@ require (
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/sys v0.0.0-20220906165534-d0df966e6959 // indirect
 	google.golang.org/api v0.96.0
-	google.golang.org/genproto v0.0.0-20220902135211-223410557253
+	google.golang.org/genproto v0.0.0-20220920201722-2b89144ce006
 	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v3 v3.0.1
 )
