@@ -19,11 +19,16 @@ import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 // those tables for later use by the dashboard.
 class InteropDataManager {
   constructor(year) {
+    // prepare all year-specific info for reference.
     this.year = year;
     const yearInfo = PARAMS_BY_YEAR[year];
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
+    this.tableSections = yearInfo.table_sections;
+    this.prose = yearInfo.prose;
+    this.matrixURL = yearInfo.matrix_url;
+    this.issueURL = yearInfo.issue_url;
 
     this._dataLoaded = load().then(() => {
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
@@ -199,6 +204,15 @@ class InteropDataManager {
     // The score is an integer in the range 0-1000, representing a percentage
     // with one decimal point.
     return `${score / 10}% passing \n${browser} ${version}`;
+  }
+
+  // Data Manager holds all year-specific properties. This method is a generic
+  // accessor for those properties.
+  getYearProp(prop) {
+    if (prop in this) {
+      return this[prop];
+    }
+    return '';
   }
 }
 
@@ -393,20 +407,20 @@ class InteropDashboard extends PolymerElement {
       </style>
       <h1>Interop [[year]] Dashboard</h1>
 
-      <p class="prose">[[prose]]</p>
+      <p class="prose">[[getYearProp('prose')]]</p>
 
       <div class="channel-area">
         <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
         <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
       </div>
-      <interop-summary year="[[year]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+      <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
 
       <div class="score-details">
         <div class="table-card">
           <table id="score-table" class="score-table">
             <caption>How are these scores calculated?</caption>
             <tbody>
-              <template is="dom-repeat" items="{{tableSections}}" as="section">
+              <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
                 <tr class="section-header">
                   <th>{{section.name}}</th>
                   <template is="dom-if" if="[[section.score_as_group]]">
@@ -504,7 +518,7 @@ class InteropDashboard extends PolymerElement {
         <div class="focus-area">
           <select id="featureSelect">
             <option value="summary">Summary</option>
-            <template is="dom-repeat" items="{{tableSections}}" as="section" filter="{{filterGroupSections()}}">
+            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
               <optgroup label="[[section.name]]">
                 <template is="dom-repeat" items={{section.rows}} as="focusArea">
                   <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
@@ -539,10 +553,10 @@ class InteropDashboard extends PolymerElement {
         to contribute improvements to
         <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
         and then
-        <a href="[[issueURL]]" target="_blank">file an issue</a>
+        <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
         to request updating the set of tests used for scoring. You're also
         welcome to
-        <a href="[[matrixURL]]" target="_blank">join
+        <a href="[[getYearProp('matrixURL')]]" target="_blank">join
         the conversation on Matrix</a>!</p>
         <div class="interop-years">
           <div class="interop-year-text">
@@ -591,7 +605,6 @@ class InteropDashboard extends PolymerElement {
   static get observers() {
     return [
       'updateUrlParams(embedded, stable, feature)',
-      'updateYearInfo(year)',
       'updateTotals(features, stable)'
     ];
   }
@@ -606,12 +619,16 @@ class InteropDashboard extends PolymerElement {
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
+
+    this.features = Object.entries(this.getYearProp('focusAreas'))
+      .map(([id, info]) => Object.assign({ id }, info));
+
     super.ready();
 
     this.embedded = params.get('embedded') !== null;
     // The default view of the page is the summary scores graph for
     // experimental releases of browsers.
-    this.feature = params.get('feature') || this.summaryFeatureName;
+    this.feature = params.get('feature') || this.getYearProp('summaryFeatureName');
 
     this.$.featureSelect.value = this.feature;
     this.$.featureSelect.addEventListener('change', () => {
@@ -627,7 +644,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   featureLinks(feature) {
-    const data = this.focusAreas[feature];
+    const data = this.getYearProp('focusAreas')[feature];
     return [
       { text: 'Spec', href: data?.spec },
       { text: 'MDN', href: data?.mdn },
@@ -640,7 +657,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   getRowInfo(name, prop) {
-    return this.focusAreas[name][prop];
+    return this.getYearProp('focusAreas')[name][prop];
   }
 
   showBrowserIcons(index) {
@@ -671,17 +688,8 @@ class InteropDashboard extends PolymerElement {
     return years;
   }
 
-  updateYearInfo(year) {
-    const yearInfo = PARAMS_BY_YEAR[year];
-    this.focusAreas = yearInfo.focus_areas;
-    this.summaryFeatureName = yearInfo.summary_feature_name;
-    this.tableSections = yearInfo.table_sections;
-    this.prose = yearInfo.prose;
-    this.issueURL = yearInfo.issue_url;
-    this.matrixURL = yearInfo.matrix_url;
-    this.features = Object.entries(this.focusAreas).map(([id, info]) => {
-      return Object.assign({ id }, info);
-    });
+  getYearProp(prop) {
+    return this.dataManager.getYearProp(prop);
   }
 
   updateTotals(features) {
@@ -689,9 +697,10 @@ class InteropDashboard extends PolymerElement {
       return;
     }
 
-    this.totalChromium = this.getBrowserScoreForFeature(0, this.summaryFeatureName);
-    this.totalFirefox = this.getBrowserScoreForFeature(1, this.summaryFeatureName);
-    this.totalSafari = this.getBrowserScoreForFeature(2, this.summaryFeatureName);
+    const summaryFeatureName = this.getYearProp('summaryFeatureName');
+    this.totalChromium = this.getBrowserScoreForFeature(0, summaryFeatureName);
+    this.totalFirefox = this.getBrowserScoreForFeature(1, summaryFeatureName);
+    this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName);
   }
 
   updateUrlParams(embedded, stable, feature) {
@@ -701,7 +710,7 @@ class InteropDashboard extends PolymerElement {
     }
 
     const params = [];
-    if (feature && feature !== this.summaryFeatureName) {
+    if (feature && feature !== this.getYearProp('summaryFeatureName')) {
       params.push(`feature=${feature}`);
     }
     if (stable) {
@@ -885,6 +894,7 @@ class InteropSummary extends PolymerElement {
   static get properties() {
     return {
       year: String,
+      dataManager: Object,
       scores: Object,
       stable: {
         type: Boolean,
@@ -893,20 +903,8 @@ class InteropSummary extends PolymerElement {
     };
   }
 
-  static get observers() {
-    return [
-      'updateYearInfo(year)'
-    ];
-  }
-
   _stableChanged() {
     this.updateSummaryScores();
-  }
-
-  updateYearInfo(year) {
-    const yearInfo = PARAMS_BY_YEAR[year];
-    this.focusAreas = yearInfo.focus_areas;
-    this.summaryFeatureName = yearInfo.summary_feature_name;
   }
 
   async updateSummaryScores() {
@@ -916,7 +914,8 @@ class InteropSummary extends PolymerElement {
       throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
     for (let i = 0; i < scores.length; i++) {
-      let score = Math.floor(scores[i][this.summaryFeatureName] / 10);
+      const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
+      let score = Math.floor(scores[i][summaryFeatureName] / 10);
       let curScore = numbers[i].innerText;
       new CountUp(numbers[i], score, {
         startVal: curScore === '--' ? 0 : curScore
@@ -1024,8 +1023,7 @@ class InteropFeatureChart extends PolymerElement {
 
   static get observers() {
     return [
-      'updateChart(feature, stable)',
-      'updateYearInfo(year)'
+      'updateChart(feature, stable)'
     ];
   }
 
@@ -1043,11 +1041,8 @@ class InteropFeatureChart extends PolymerElement {
     });
   }
 
-  updateYearInfo(year) {
-    this.year = year;
-    const yearInfo = PARAMS_BY_YEAR[year];
-    this.focusAreas = yearInfo.focus_areas;
-    this.summaryFeatureName = yearInfo.summary_feature_name;
+  getYearProp(prop) {
+    return this.dataManager.getYearProp(prop);
   }
 
   async updateChart(feature, stable) {
@@ -1140,11 +1135,13 @@ class InteropFeatureChart extends PolymerElement {
       maxDate = endOfInteropYear;
     }
 
-    if (feature !== this.summaryFeatureName && !(feature in this.focusAreas)) {
-      feature = this.summaryFeatureName;
+    const focusAreas = this.getYearProp('focusAreas');
+    const summaryFeatureName = this.getYearProp('summaryFeatureName');
+    if (feature !== summaryFeatureName && !(feature in focusAreas)) {
+      feature = summaryFeatureName;
     }
-    const description = feature === this.summaryFeatureName ?
-      `Interop ${this.year}` : this.focusAreas[feature].description;
+    const description = feature === summaryFeatureName ?
+      `Interop ${this.year}` : focusAreas[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
