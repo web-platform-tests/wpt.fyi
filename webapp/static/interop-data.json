@@ -91,6 +91,23 @@
                 "score_as_group": true
             }
         ],
+        "investigation_scores": [
+            {
+                "name": "Editing, contenteditable, and execCommand",
+                "scores_over_time": []
+            },
+            {
+                "name": "Pointer and Mouse Events",
+                "scores_over_time": []
+            },
+            {
+                "name": "Viewport Measurement",
+                "scores_over_time": [
+                    { "date": "2022-09-28", "score": 600 }
+                ]
+            }
+        ],
+        "investigation_weight": 0.1,
         "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",

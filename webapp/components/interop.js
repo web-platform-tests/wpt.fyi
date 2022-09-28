@@ -29,6 +29,8 @@ class InteropDataManager {
     this.prose = yearInfo.prose;
     this.matrixURL = yearInfo.matrix_url;
     this.issueURL = yearInfo.issue_url;
+    this.investigationScores = yearInfo.investigation_scores;
+    this.investigationWeight = yearInfo.investigation_weight;
 
     this._dataLoaded = load().then(() => {
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
@@ -172,10 +174,9 @@ class InteropDataManager {
 
         let summaryScore = testScore / numFocusAreas;
 
-        // TODO: get the investigation score at this date.
-        if (this.year === '2022') {
-          summaryScore = summaryScore * 0.9;
-        }
+        // Handle investigation scoring if applicable.
+        summaryScore = this.#addInvestigationScore(summaryScore, date);
+
         summaryScore = Math.floor(summaryScore);
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
@@ -198,6 +199,26 @@ class InteropDataManager {
       this.experimentalDatatables = dataTables;
       this.experimentalBrowserVersions = browserVersions;
     }
+  }
+
+  #addInvestigationScore(summaryScore, date) {
+    if (this.investigationScores) {
+      let totalInvestigationScore = 0;
+      this.investigationScores.forEach(info => {
+        let start = info.scores_over_time.length - 1;
+        let areaScore = 0;
+        for (let i = start; i >= 0; i--) {
+          if (date < new Date(info.scores_over_time[i].date)) continue;
+          areaScore = info.scores_over_time[i].score;
+          break;
+        }
+        totalInvestigationScore += areaScore;
+      })
+      summaryScore *= (1 - this.investigationWeight);
+      totalInvestigationScore /= this.investigationScores.length;
+      summaryScore += this.investigationWeight * totalInvestigationScore;
+    }
+    return summaryScore;
   }
 
   createTooltip(browser, version, score) {
@@ -484,12 +505,11 @@ class InteropDashboard extends PolymerElement {
                     </tr>
                   </template>
                 </template>
-                <!-- TODO(danielrsmith): score as group logic? -->
                 <template is="dom-if" if="[[section.score_as_group]]">
                   <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                     <tr>
                       <td colspan=3>[[rowName]]</td>
-                      <td>0%</td>
+                      <td>[[getInvestigationScore(rowName)]]</td>
                     </tr>
                   </template>
                 </template>
@@ -658,6 +678,19 @@ class InteropDashboard extends PolymerElement {
 
   getRowInfo(name, prop) {
     return this.getYearProp('focusAreas')[name][prop];
+  }
+
+  getInvestigationScore(rowName) {
+    const scores = this.getYearProp('investigationScores');
+    for (let i = 0; i < scores.length; i++) {
+      const area = scores[i];
+      if (area.name === rowName && area.scores_over_time.length > 0) {
+        const score = area.scores_over_time[area.scores_over_time.length - 1].score;
+        return `${Math.floor(score / 10)}%`;
+      }
+    }
+
+    return '0%';
   }
 
   showBrowserIcons(index) {
