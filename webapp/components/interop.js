@@ -208,12 +208,14 @@ class InteropDataManager {
         let start = info.scores_over_time.length - 1;
         let areaScore = 0;
         for (let i = start; i >= 0; i--) {
-          if (date < new Date(info.scores_over_time[i].date)) continue;
+          if (date < new Date(info.scores_over_time[i].date)) {
+            continue;
+          }
           areaScore = info.scores_over_time[i].score;
           break;
         }
         totalInvestigationScore += areaScore;
-      })
+      });
       summaryScore *= (1 - this.investigationWeight);
       totalInvestigationScore /= this.investigationScores.length;
       summaryScore += this.investigationWeight * totalInvestigationScore;
