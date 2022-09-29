@@ -205,17 +205,14 @@ class InteropDataManager {
     if (this.investigationScores) {
       let totalInvestigationScore = 0;
       this.investigationScores.forEach(info => {
-        let start = info.scores_over_time.length - 1;
-        let areaScore = 0;
-        for (let i = start; i >= 0; i--) {
-          if (date < new Date(info.scores_over_time[i].date)) {
-            continue;
-          }
-          areaScore = info.scores_over_time[i].score;
-          break;
+        // Find the investigation score at the given date.
+        const entry = info.scores_over_time.findLast(
+          entry => date >= new Date(entry.date));
+        if (entry) {
+          totalInvestigationScore += entry.score;
         }
-        totalInvestigationScore += areaScore;
       });
+      // Add the investigation score and weight it as specified.
       summaryScore *= (1 - this.investigationWeight);
       totalInvestigationScore /= this.investigationScores.length;
       summaryScore += this.investigationWeight * totalInvestigationScore;
@@ -391,7 +388,6 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table tbody > tr:is(:first-of-type, :last-of-type) {
-          height: 4ch;
           vertical-align: bottom;
         }
 
