@@ -179,10 +179,8 @@ class InteropDataManager {
           this.#getInvestigationScoreAndWeight(date);
 
         // Factor in the the investigation score and weight as specified.
-        let summaryScore = testScore * (1 - investigationWeight);
-        summaryScore += investigationWeight * investigationScore;
-
-        summaryScore = Math.floor(summaryScore);
+        const summaryScore = Math.floor(testScore * (1 - investigationWeight) +
+                                        investigationScore * investigationWeight);
 
         const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
         newRows.get(this.summaryFeatureName).push(summaryScore / 1000);
