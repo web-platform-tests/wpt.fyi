@@ -172,10 +172,15 @@ class InteropDataManager {
           testScore += score;
         });
 
-        let summaryScore = testScore / numFocusAreas;
+        testScore /= numFocusAreas;
 
         // Handle investigation scoring if applicable.
-        summaryScore = this.#addInvestigationScore(summaryScore, date);
+        const [investigationScore, investigationWeight] =
+          this.#getInvestigationScoreAndWeight(date);
+
+        // Factor in the the investigation score and weight as specified.
+        let summaryScore = testScore * (1 - investigationWeight);
+        summaryScore += investigationWeight * investigationScore;
 
         summaryScore = Math.floor(summaryScore);
 
@@ -201,23 +206,21 @@ class InteropDataManager {
     }
   }
 
-  #addInvestigationScore(summaryScore, date) {
-    if (this.investigationScores) {
-      let totalInvestigationScore = 0;
-      this.investigationScores.forEach(info => {
-        // Find the investigation score at the given date.
-        const entry = info.scores_over_time.findLast(
-          entry => date >= new Date(entry.date));
-        if (entry) {
-          totalInvestigationScore += entry.score;
-        }
-      });
-      // Add the investigation score and weight it as specified.
-      summaryScore *= (1 - this.investigationWeight);
-      totalInvestigationScore /= this.investigationScores.length;
-      summaryScore += this.investigationWeight * totalInvestigationScore;
+  #getInvestigationScoreAndWeight(date) {
+    if (!this.investigationScores) {
+      return [0, 0];
     }
-    return summaryScore;
+    let totalInvestigationScore = 0;
+    for (const info of this.investigationScores) {
+      // Find the investigation score at the given date.
+      const entry = info.scores_over_time.findLast(
+        entry => date >= new Date(entry.date));
+      if (entry) {
+        totalInvestigationScore += entry.score;
+      }
+    }
+    totalInvestigationScore /= this.investigationScores.length;
+    return [totalInvestigationScore, this.investigationWeight];
   }
 
   createTooltip(browser, version, score) {

@@ -102,7 +102,9 @@
             },
             {
                 "name": "Viewport Measurement",
-                "scores_over_time": []
+                "scores_over_time": [
+                    { "date": "2022-09-28", "score": 600 }
+                ]
             }
         ],
         "investigation_weight": 0.1,
