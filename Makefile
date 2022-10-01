@@ -119,7 +119,7 @@ chrome: wget
 		ARCHIVE=google-chrome-stable_current_amd64.deb; \
 		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
-		sudo apt-get install --fix-broken -qqy; \
+		sudo apt-get install --fix-broken --fix-missing -qqy; \
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
