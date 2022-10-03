@@ -41,7 +41,7 @@ class InteropDataManager {
   async fetchYearData() {
     const resp = await fetch('../static/interop-data.json');
     const yearInfo = await resp.json();
-    return yearInfo
+    return yearInfo;
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
