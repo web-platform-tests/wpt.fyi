@@ -20,13 +20,12 @@ class InteropDataManager {
   constructor(year) {
     this.year = year;
     // The data is loaded when the year data is obtained and the csv is loaded and parsed.
-    // The year data is needed for parsing the csv.
     this._dataLoaded = this.fetchYearData()
-    .then(async () => {
-      return load().then(() => {
-        return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
+    // The year data is needed for parsing the csv.
+      .then(async () => {
+        await load();
+        return await Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
       });
-    });
   }
 
   async fetchYearData() {
