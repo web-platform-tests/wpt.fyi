@@ -11,7 +11,6 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
-import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
@@ -20,21 +19,29 @@ import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 class InteropDataManager {
   constructor(year) {
     // prepare all year-specific info for reference.
-    this.year = year;
-    const yearInfo = PARAMS_BY_YEAR[year];
-    this.focusAreas = yearInfo.focus_areas;
-    this.summaryFeatureName = yearInfo.summary_feature_name;
-    this.csvURL = yearInfo.csv_url;
-    this.tableSections = yearInfo.table_sections;
-    this.prose = yearInfo.prose;
-    this.matrixURL = yearInfo.matrix_url;
-    this.issueURL = yearInfo.issue_url;
-    this.investigationScores = yearInfo.investigation_scores;
-    this.investigationWeight = yearInfo.investigation_weight;
-
+    this.fetchYearData(year)
+      .then(paramsByYear => {
+        this.year = year;
+        const yearInfo = paramsByYear[year];
+        this.focusAreas = yearInfo.focus_areas;
+        this.summaryFeatureName = yearInfo.summary_feature_name;
+        this.csvURL = yearInfo.csv_url;
+        this.tableSections = yearInfo.table_sections;
+        this.prose = yearInfo.prose;
+        this.matrixURL = yearInfo.matrix_url;
+        this.issueURL = yearInfo.issue_url;
+        this.investigationScores = yearInfo.investigation_scores;
+        this.investigationWeight = yearInfo.investigation_weight;
+      });
     this._dataLoaded = load().then(() => {
       return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
     });
+  }
+
+  async fetchYearData() {
+    const resp = await fetch('../static/interop-data.json');
+    const yearInfo = await resp.json();
+    return yearInfo
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
