@@ -18,30 +18,32 @@ import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
 // those tables for later use by the dashboard.
 class InteropDataManager {
   constructor(year) {
-    // prepare all year-specific info for reference.
-    this.fetchYearData(year)
-      .then(paramsByYear => {
-        this.year = year;
-        const yearInfo = paramsByYear[year];
-        this.focusAreas = yearInfo.focus_areas;
-        this.summaryFeatureName = yearInfo.summary_feature_name;
-        this.csvURL = yearInfo.csv_url;
-        this.tableSections = yearInfo.table_sections;
-        this.prose = yearInfo.prose;
-        this.matrixURL = yearInfo.matrix_url;
-        this.issueURL = yearInfo.issue_url;
-        this.investigationScores = yearInfo.investigation_scores;
-        this.investigationWeight = yearInfo.investigation_weight;
+    this.year = year;
+    // The data is loaded when the year data is obtained and the csv is loaded and parsed.
+    // The year data is needed for parsing the csv.
+    this._dataLoaded = this.fetchYearData()
+    .then(async () => {
+      return load().then(() => {
+        return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
       });
-    this._dataLoaded = load().then(() => {
-      return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
     });
   }
 
   async fetchYearData() {
+    // prepare all year-specific info for reference.
     const resp = await fetch('../static/interop-data.json');
-    const yearInfo = await resp.json();
-    return yearInfo;
+    const paramsByYear = await resp.json();
+
+    const yearInfo = paramsByYear[this.year];
+    this.focusAreas = yearInfo.focus_areas;
+    this.summaryFeatureName = yearInfo.summary_feature_name;
+    this.csvURL = yearInfo.csv_url;
+    this.tableSections = yearInfo.table_sections;
+    this.prose = yearInfo.prose;
+    this.matrixURL = yearInfo.matrix_url;
+    this.issueURL = yearInfo.issue_url;
+    this.investigationScores = yearInfo.investigation_scores;
+    this.investigationWeight = yearInfo.investigation_weight;
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
