@@ -30,7 +30,7 @@ class InteropDataManager {
 
   async fetchYearData() {
     // prepare all year-specific info for reference.
-    const resp = await fetch('../static/interop-data.json');
+    const resp = await fetch('/static/interop-data.json');
     const paramsByYear = await resp.json();
 
     const yearInfo = paramsByYear[this.year];
