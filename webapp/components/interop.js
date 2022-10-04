@@ -11,7 +11,6 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
-import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
@@ -19,9 +18,22 @@ import PARAMS_BY_YEAR from '../static/interop-data.json' assert {type: 'json'};
 // those tables for later use by the dashboard.
 class InteropDataManager {
   constructor(year) {
-    // prepare all year-specific info for reference.
     this.year = year;
-    const yearInfo = PARAMS_BY_YEAR[year];
+    // The data is loaded when the year data is obtained and the csv is loaded and parsed.
+    this._dataLoaded = this.fetchYearData()
+    // The year data is needed for parsing the csv.
+      .then(async() => {
+        await load();
+        return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
+      });
+  }
+
+  async fetchYearData() {
+    // prepare all year-specific info for reference.
+    const resp = await fetch('/static/interop-data.json');
+    const paramsByYear = await resp.json();
+
+    const yearInfo = paramsByYear[this.year];
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
@@ -31,10 +43,6 @@ class InteropDataManager {
     this.issueURL = yearInfo.issue_url;
     this.investigationScores = yearInfo.investigation_scores;
     this.investigationWeight = yearInfo.investigation_weight;
-
-    this._dataLoaded = load().then(() => {
-      return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
-    });
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
