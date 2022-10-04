@@ -24,7 +24,7 @@ class InteropDataManager {
     // The year data is needed for parsing the csv.
       .then(async() => {
         await load();
-        return await Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
+        return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
       });
   }
 
