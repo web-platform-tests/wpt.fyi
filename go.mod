@@ -34,7 +34,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v44 v44.20.4
+	github.com/taskcluster/taskcluster/v44 v44.21.0
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
