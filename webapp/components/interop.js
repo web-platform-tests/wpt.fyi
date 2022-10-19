@@ -396,6 +396,11 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
+        .subtotal-row {
+          border-top: 1px solid GrayText;
+          background: hsl(0 0% 0% / 5%);
+        }
+
         .score-table tbody > tr:is(:first-of-type, :last-of-type) {
           vertical-align: bottom;
         }
@@ -511,6 +516,14 @@ class InteropDashboard extends PolymerElement {
                       <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
                     </tr>
                   </template>
+                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
+                    <tr class="subtotal-row">
+                      <td><strong>SUBTOTAL</strong></td>
+                      <td>[[getSubtotalScore(0, section, stable)]]</td>
+                      <td>[[getSubtotalScore(1, section, stable)]]</td>
+                      <td>[[getSubtotalScore(2, section, stable)]]</td>
+                    </tr>
+                  </template>
                 </template>
                 <template is="dom-if" if="[[section.score_as_group]]">
                   <template is="dom-repeat" items="{{section.rows}}" as="rowName">
@@ -519,12 +532,18 @@ class InteropDashboard extends PolymerElement {
                       <td>[[getInvestigationScore(rowName)]]</td>
                     </tr>
                   </template>
+                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
+                    <tr class="subtotal-row">
+                      <td colspan=3><strong>SUBTOTAL</strong></td>
+                      <td>[[getInvestigationScoreSubtotal()]]</td>
+                    </tr>
+                  </template>
                 </template>
               </template>
             </tbody>
             <tfoot>
               <tr>
-                <th><b>TOTAL</b></th>
+                <th><b>GRAND TOTAL</b></th>
                 <th>[[totalChromium]]</th>
                 <th>[[totalFirefox]]</th>
                 <th>[[totalSafari]]</th>
@@ -698,6 +717,34 @@ class InteropDashboard extends PolymerElement {
     }
 
     return '0%';
+  }
+
+  getInvestigationScoreSubtotal() {
+    const scores = this.getYearProp('investigationScores');
+    if (!scores) {
+      return '0%';
+    }
+    let totalScore = scores.reduce((sum, area) => {
+      if (area.scores_over_time.length > 0) {
+        return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
+      }
+      return sum;
+    }, 0);
+
+    return `${Math.floor((totalScore / 10) / scores.length)}%`;
+  }
+
+  getSubtotalScore(browserIndex, section, stable) {
+    const scores = stable ? this.scores.stable : this.scores.experimental;
+    let totalScore = section.rows.reduce((sum, rowName) => {
+      return sum + scores[browserIndex][rowName];
+    }, 0)
+    return `${Math.floor((totalScore / 10) / section.rows.length)}%`;
+  }
+
+  shouldShowSubtotals() {
+    // Subtotals should only be shown if there is more than 1 section.
+    return this.getYearProp('tableSections').length > 1;
   }
 
   showBrowserIcons(index) {
