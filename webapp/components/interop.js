@@ -736,7 +736,7 @@ class InteropDashboard extends PolymerElement {
 
   getSubtotalScore(browserIndex, section, stable) {
     const scores = stable ? this.scores.stable : this.scores.experimental;
-    let totalScore = section.rows.reduce((sum, rowName) => {
+    const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
     return `${Math.floor((totalScore / 10) / section.rows.length)}%`;
