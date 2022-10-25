@@ -724,7 +724,7 @@ class InteropDashboard extends PolymerElement {
     if (!scores) {
       return '0%';
     }
-    let totalScore = scores.reduce((sum, area) => {
+    const totalScore = scores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
         return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
       }
