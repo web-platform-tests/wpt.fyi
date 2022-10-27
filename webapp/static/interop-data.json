@@ -94,7 +94,9 @@
         "investigation_scores": [
             {
                 "name": "Editing, contenteditable, and execCommand",
-                "scores_over_time": []
+                "scores_over_time": [
+                    { "date": "2022-10-22", "score": 360 }
+                ]
             },
             {
                 "name": "Pointer and Mouse Events",
