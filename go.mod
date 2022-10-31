@@ -32,7 +32,7 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/samthor/nicehttp v1.0.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v44 v44.21.0
 	github.com/tebeka/selenium v0.9.9
