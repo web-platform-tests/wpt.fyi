@@ -19,6 +19,7 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	gclog "cloud.google.com/go/logging"
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v47/github"
 	apps "google.golang.org/api/appengine/v1"
@@ -30,12 +31,13 @@ import (
 )
 
 type clientsImpl struct {
-	cloudtasks   *cloudtasks.Client
-	datastore    *datastore.Client
-	gclogClient  *gclog.Client
-	childLogger  *gclog.Logger
-	parentLogger *gclog.Logger
-	redisPool    *redis.Pool
+	cloudtasks    *cloudtasks.Client
+	datastore     *datastore.Client
+	gclogClient   *gclog.Client
+	childLogger   *gclog.Logger
+	parentLogger  *gclog.Logger
+	redisPool     *redis.Pool
+	secretManager *secretmanager.Client
 }
 
 // Clients is a singleton containing heavyweight (e.g. with connection pools)
@@ -76,6 +78,13 @@ func (c *clientsImpl) Init(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
+	// Cloud Secret Manager
+	c.secretManager, err = secretmanager.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+
 	monitoredResource := mrpb.MonitoredResource{
 		Type: "gae_app",
 		Labels: map[string]string{
@@ -140,6 +149,14 @@ func (c *clientsImpl) Close() {
 		c.redisPool = nil
 		if err := client.Close(); err != nil {
 			log.Printf("Error closing redis client: %s", err.Error())
+		}
+	}
+
+	if c.secretManager != nil {
+		client := c.secretManager
+		c.secretManager = nil
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing secret manager client: %s", err.Error())
 		}
 	}
 }
@@ -281,8 +298,8 @@ func (a appEngineAPIImpl) IsFeatureEnabled(featureName string) bool {
 }
 
 func (a appEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
-	ds := NewAppEngineDatastore(a.ctx, false)
-	return GetUploader(ds, uploader)
+	m := NewAppEngineSecretManager(a.ctx, runtimeIdentity.AppID)
+	return GetUploader(m, uploader)
 }
 
 func (a appEngineAPIImpl) GetHostname() string {
