@@ -22,9 +22,6 @@ import (
 // TestCloudSecretManagerGetSecret in
 // shared/secret_manager_cloud_cloud_test.go
 func TestAuthenticateUploader(t *testing.T) {
-	// ctx, done, err := sharedtest.NewAEContext(true)
-	// assert.Nil(t, err)
-	// defer done()
 	ctx := context.Background()
 	err := shared.Clients.Init(ctx)
 	require.NoError(t, err)
