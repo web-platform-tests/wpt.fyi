@@ -1,4 +1,4 @@
-//go:build cloud
+// +build cloud
 
 package shared
 
