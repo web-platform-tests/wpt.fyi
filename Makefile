@@ -62,7 +62,7 @@ go_lint: golint go_test_tag_lint
 
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
-	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
+	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
 
 go_test: go_small_test go_medium_test
