@@ -85,6 +85,10 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
+go_cloud_test: gcloud_login
+	gcloud config set project wptdashboard-staging
+	GOOGLE_CLOUD_PROJECT=wptdashboard-staging GAE_SERVICE=test GAE_VERSION=1 go test -tags=cloud $(VERBOSE) $(FLAGS) ./...
+
 puppeteer_chrome_test: go_build dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
 

@@ -47,3 +47,34 @@ jobs:
       - uses: ./.github/actions/make-in-docker
         with:
           target: go_firefox_test
+  go_cloud_test:
+    # This job uses real Cloud resources.
+    # This means this CI job will have access to the service account.
+    # In that case, similar to deploy.yml, trust only pull requests that are
+    # made within web-platform-tests and exclude forks.
+    if: ${{ github.repository == 'web-platform-tests/wpt.fyi' }}
+    needs: [go_test, go_chrome_test, go_firefox_test]
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: secrets
+        run: echo "$GCLOUD_KEY_FILE_JSON" > client-secret.json
+        env:
+         GCLOUD_KEY_FILE_JSON: ${{ secrets.GCLOUD_KEY_FILE_JSON }}
+
+      - name: Set DOCKER_INSTANCE
+        run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
+
+      - name: pre-installation
+        run: |
+          docker pull "${DOCKER_IMAGE}"
+          bash ./util/docker-dev/run.sh -d -q
+
+      - name: run tests with "cloud" build tag
+        run: docker exec -t "${DOCKER_INSTANCE}" make go_cloud_test;
