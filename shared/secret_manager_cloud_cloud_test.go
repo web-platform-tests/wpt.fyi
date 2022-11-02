@@ -17,6 +17,7 @@ import (
 	If it needs to be setup again, run the following:
 	gcloud secrets create test-secret --replication-policy="automatic"
 	echo -n "test-secret-value" | gcloud secrets versions add test-secret --data-file=-
+	gcloud secrets add-iam-policy-binding test-secret --member='serviceAccount:github-cicd@wptdashboard-staging.iam.gserviceaccount.com' --role='roles/secretmanager.secretAccessor'
 */
 func TestCloudSecretManagerGetSecret(t *testing.T) {
 	require.NotEmpty(t, runtimeIdentity.AppID, "Unable to find project ID")
