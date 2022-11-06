@@ -243,24 +243,3 @@ func TestUpdatePendingTestRun(t *testing.T) {
 	assert.EqualError(t, a.UpdatePendingTestRun(run),
 		"cannot transition from VALID to WPTFYI_PROCESSING")
 }
-
-func TestAuthenticateUploader(t *testing.T) {
-	ctx, done, err := sharedtest.NewAEContext(true)
-	assert.Nil(t, err)
-	defer done()
-	a := NewAPI(ctx)
-
-	req := httptest.NewRequest("", "/api/foo", &bytes.Buffer{})
-	assert.Equal(t, "", AuthenticateUploader(a, req))
-
-	req.SetBasicAuth(InternalUsername, "123")
-	assert.Equal(t, "", AuthenticateUploader(a, req))
-
-	store := shared.NewAppEngineDatastore(ctx, false)
-	key := store.NewNameKey("Uploader", InternalUsername)
-	store.Put(key, &shared.Uploader{Username: InternalUsername, Password: "123"})
-	assert.Equal(t, InternalUsername, AuthenticateUploader(a, req))
-
-	req.SetBasicAuth(InternalUsername, "456")
-	assert.Equal(t, "", AuthenticateUploader(a, req))
-}

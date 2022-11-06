@@ -21,7 +21,7 @@ import (
 // gcsPattern is the pattern for gs:// URI.
 var gcsPattern = regexp.MustCompile(`^gs://([^/]+)/(.+)$`)
 
-// AuthenticateUploader checks the HTTP basic auth against Datastore, and returns the username if
+// AuthenticateUploader checks the HTTP basic auth against SecretManager, and returns the username if
 // it's valid or "" otherwise.
 //
 // This function is not defined on API interface for easier reuse in other packages.

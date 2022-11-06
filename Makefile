@@ -62,8 +62,8 @@ go_lint: golint go_test_tag_lint
 
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
-	@TAGLESS=$$(grep -PL '\/\/\s?\+build !?(small|medium|large)' $(GO_TEST_FILES)); \
-	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing +build tags:\n$$TAGLESS" && exit 1; fi
+	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
+	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing '// +build TAG' or '//go:build TAG' tags:\n$$TAGLESS" && exit 1; fi
 
 go_test: go_small_test go_medium_test
 
@@ -84,6 +84,14 @@ go_firefox_test: firefox geckodriver
 
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
+
+go_cloud_test: gcloud_login
+	gcloud config set project wptdashboard-staging; \
+	if [[ -f "$(WPTD_PATH)client-secret.json" ]]; then \
+		echo "Running with client-secret.json credentials instead of possible system credentials. This should happen for CI runs."; \
+		export GOOGLE_APPLICATION_CREDENTIALS="$(WPTD_PATH)client-secret.json"; \
+	fi ; \
+	GOOGLE_CLOUD_PROJECT=wptdashboard-staging GAE_SERVICE=test GAE_VERSION=1 go test -tags=cloud $(VERBOSE) $(FLAGS) ./...
 
 puppeteer_chrome_test: go_build dev_appserver_deps webdriver_node_deps
 	cd webdriver; npm test
