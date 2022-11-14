@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v1.8.0
 	cloud.google.com/go/datastore v1.9.0
 	cloud.google.com/go/logging v1.5.0
-	cloud.google.com/go/secretmanager v1.8.0
+	cloud.google.com/go/secretmanager v1.9.0
 	cloud.google.com/go/storage v1.27.0
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
