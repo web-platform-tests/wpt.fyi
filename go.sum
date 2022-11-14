@@ -117,8 +117,8 @@ cloud.google.com/go/dataqna v0.5.0/go.mod h1:90Hyk596ft3zUQ8NkFfvICSIfHFh1Bc7C4c
 cloud.google.com/go/dataqna v0.6.0/go.mod h1:1lqNpM7rqNLVgWBJyk5NF6Uen2PHym0jtVJonplVsDA=
 cloud.google.com/go/datastore v1.0.0/go.mod h1:LXYbyblFSglQ5pkeyhO+Qmw7ukd3C+pD7TKLgZqpHYE=
 cloud.google.com/go/datastore v1.1.0/go.mod h1:umbIZjpQpHh4hmRpGhH4tLFup+FVzqBi1b3c64qFpCk=
-cloud.google.com/go/datastore v1.8.0 h1:2qo2G7hABSeqswa+5Ga3+QB8/ZwKOJmDsCISM9scmsU=
-cloud.google.com/go/datastore v1.8.0/go.mod h1:q1CpHVByTlXppdqTcu4LIhCsTn3fhtZ5R7+TajciO+M=
+cloud.google.com/go/datastore v1.9.0 h1:s3Gy1QRIwKxcMCCwJJq/4c64VjROZu6tq1DC632hZuo=
+cloud.google.com/go/datastore v1.9.0/go.mod h1:yKk5PbPPCtuObGXNWvpQGEyWe+kiMQlTnpMjtltPNTc=
 cloud.google.com/go/datastream v1.2.0/go.mod h1:i/uTP8/fZwgATHS/XFu0TcNUhuA0twZxxQ3EyCUQMwo=
 cloud.google.com/go/datastream v1.3.0/go.mod h1:cqlOX8xlyYF/uxhiKn6Hbv6WjwPPuI9W2M9SAXwaLLQ=
 cloud.google.com/go/datastream v1.4.0/go.mod h1:h9dpzScPhDTs5noEMQVWP8Wx8AFBRyS0s8KWPx/9r0g=
