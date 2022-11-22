@@ -10,7 +10,7 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import {CountUp} from 'https://unpkg.com/countup.js@2.0.8/dist/countUp.js';
+import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
