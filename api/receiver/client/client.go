@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -67,8 +68,10 @@ func (c client) CreateRun(
 		payload.Add("labels", strings.Join(labels, ","))
 	}
 	// Ensure we call back to this appengine version instance.
-	host := c.aeAPI.GetVersionedHostname()
-	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
+	u := c.aeAPI.GetVersionedOrigin()
+	u.Path = path.Join(u.Path, "/api/results/create")
+
+	payload.Add("callback_url", u.String())
 
 	uploadURL := c.aeAPI.GetResultsUploadURL()
 	req, err := http.NewRequest("POST", uploadURL.String(), strings.NewReader(payload.Encode()))

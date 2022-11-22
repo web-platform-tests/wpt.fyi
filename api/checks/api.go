@@ -166,7 +166,7 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 
 func (s checksAPIImpl) GetWPTRepoAppInstallationIDs() (appID, installationID int64) {
 	// Production
-	if s.GetHostname() == "wpt.fyi" {
+	if s.GetOrigin().Hostname() == "wpt.fyi" {
 		return wptfyiCheckAppID, wptRepoInstallationID
 	}
 	// Default to staging

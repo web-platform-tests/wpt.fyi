@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -48,7 +49,8 @@ func NewDiffAPI(ctx context.Context) DiffAPI {
 }
 
 func (d diffAPIImpl) GetDiffURL(before, after TestRun, diffFilter *DiffFilterParam) *url.URL {
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s/results/", d.aeAPI.GetHostname()))
+	detailsURL := d.aeAPI.GetOrigin()
+	detailsURL.Path = path.Join(detailsURL.Path, "/results/")
 	query := detailsURL.Query()
 	query.Add("run_id", fmt.Sprintf("%v", before.ID))
 	query.Add("run_id", fmt.Sprintf("%v", after.ID))
@@ -380,7 +382,8 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 }
 
 func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
-	diffURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search", d.aeAPI.GetVersionedHostname()))
+	diffURL := d.aeAPI.GetVersionedOrigin()
+	diffURL.Path = path.Join(diffURL.Path, "/api/search")
 	query := diffURL.Query()
 	query.Set("diff", "")
 	query.Set("filter", filter.String())

@@ -96,18 +96,18 @@ func (mr *MockAppEngineAPIMockRecorder) GetHTTPClientWithTimeout(arg0 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClientWithTimeout", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHTTPClientWithTimeout), arg0)
 }
 
-// GetHostname mocks base method.
-func (m *MockAppEngineAPI) GetHostname() string {
+// GetOrigin mocks base method.
+func (m *MockAppEngineAPI) GetOrigin() *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHostname")
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GetOrigin")
+	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
-// GetHostname indicates an expected call of GetHostname.
-func (mr *MockAppEngineAPIMockRecorder) GetHostname() *gomock.Call {
+// GetOrigin indicates an expected call of GetOrigin.
+func (mr *MockAppEngineAPIMockRecorder) GetOrigin() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetHostname))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrigin", reflect.TypeOf((*MockAppEngineAPI)(nil).GetOrigin))
 }
 
 // GetResultsURL mocks base method.
@@ -195,18 +195,18 @@ func (mr *MockAppEngineAPIMockRecorder) GetVersion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersion))
 }
 
-// GetVersionedHostname mocks base method.
-func (m *MockAppEngineAPI) GetVersionedHostname() string {
+// GetVersionedOrigin mocks base method.
+func (m *MockAppEngineAPI) GetVersionedOrigin() *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVersionedHostname")
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GetVersionedOrigin")
+	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
-// GetVersionedHostname indicates an expected call of GetVersionedHostname.
-func (mr *MockAppEngineAPIMockRecorder) GetVersionedHostname() *gomock.Call {
+// GetVersionedOrigin indicates an expected call of GetVersionedOrigin.
+func (mr *MockAppEngineAPIMockRecorder) GetVersionedOrigin() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersionedHostname))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedOrigin", reflect.TypeOf((*MockAppEngineAPI)(nil).GetVersionedOrigin))
 }
 
 // IsFeatureEnabled mocks base method.

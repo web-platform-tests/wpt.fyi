@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -51,10 +52,13 @@ func showAdminUploadForm(a shared.AppEngineAPI, acl shared.GitHubAccessControl, 
 		return
 	}
 
+	u := a.GetVersionedOrigin()
+	u.Path = path.Join(u.Path, "/api/results/create")
+
 	data := struct {
 		CallbackURL string
 	}{
-		CallbackURL: fmt.Sprintf("https://%s/api/results/create", a.GetVersionedHostname()),
+		CallbackURL: u.String(),
 	}
 	// We don't need user info in this template.
 	RenderTemplate(w, nil, "admin_upload.html", data)
@@ -84,7 +88,7 @@ func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.Git
 		data := struct {
 			Host string
 		}{
-			Host: a.GetHostname(),
+			Host: a.GetOrigin().Host,
 		}
 		// We don't need user info in this template.
 		RenderTemplate(w, nil, "admin_flags.html", data)

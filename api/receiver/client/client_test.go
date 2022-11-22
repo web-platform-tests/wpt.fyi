@@ -29,6 +29,7 @@ func TestCreateRun(t *testing.T) {
 		assert.Nil(t, r.ParseForm())
 		assert.Equal(t, []string{"https://wpt.fyi/results.json.gz"}, r.PostForm["result_url"])
 		assert.Equal(t, []string{"https://wpt.fyi/screenshots.db.gz"}, r.PostForm["screenshot_url"])
+		assert.Equal(t, []string{"http://localhost:8080/api/results/create"}, r.PostForm["callback_url"])
 		assert.Equal(t, "foo,bar", r.PostForm.Get("labels"))
 		w.Write([]byte("OK"))
 		visited = true
@@ -41,7 +42,9 @@ func TestCreateRun(t *testing.T) {
 	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
 	gomock.InOrder(
-		aeAPI.EXPECT().GetVersionedHostname().Return("localhost:8080"),
+		aeAPI.EXPECT().GetVersionedOrigin().Return(&url.URL{
+			Scheme: "http",
+			Host:   "localhost:8080"}),
 		aeAPI.EXPECT().GetResultsUploadURL().Return(serverURL),
 		aeAPI.EXPECT().GetHTTPClientWithTimeout(UploadTimeout).Return(server.Client()),
 	)
