@@ -15,6 +15,11 @@ updates:
   directory: "/webapp"
   schedule:
     interval: "weekly"
+  ignore:
+  # https://github.com/web-platform-tests/wpt.fyi/commit/9b99cfd70568dc8d991d2b13ad9c5aec53c390a6
+  - dependency-name: "@vaadin/vaadin-grid"
+  - dependency-name: "@vaadin/vaadin-date-picker"
+  - dependency-name: "@vaadin/vaadin-context-menu"
 - package-ecosystem: "npm"
   directory: "/webdriver"
   schedule:
