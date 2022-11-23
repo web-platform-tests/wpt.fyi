@@ -6,7 +6,7 @@ on:
   pull_request:
 jobs:
   deploy-staging:
-    if: ${{ github.repository == 'web-platform-tests/wpt.fyi' }}
+    if: ${{ github.repository == 'web-platform-tests/wpt.fyi' && github.actor != 'dependabot[bot]' }}
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:

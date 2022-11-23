@@ -1,6 +1,40 @@
 version: 2
 updates:
-- package-ecosystem: pip
-  directory: results-processor/
+- package-ecosystem: "pip"
+  directory: "/results-processor"
   schedule:
-    interval: monthly
+    interval: "weekly"
+- package-ecosystem: "gomod"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+  ignore:
+  # https://github.com/web-platform-tests/wpt.fyi/commit/e52c7487ac4257ba39f8f081782a6443e9fd6a79
+  - dependency-name: "google.golang.org/genproto"
+- package-ecosystem: "npm"
+  directory: "/webapp"
+  schedule:
+    interval: "weekly"
+- package-ecosystem: "npm"
+  directory: "/webdriver"
+  schedule:
+    interval: "weekly"
+  ignore:
+  # https://github.com/web-platform-tests/wpt.fyi/commit/9b99cfd70568dc8d991d2b13ad9c5aec53c390a6
+  - dependency-name: "@vaadin/vaadin-grid"
+  - dependency-name: "@vaadin/vaadin-date-picker"
+  - dependency-name: "@vaadin/vaadin-context-menu"
+# Can uncomment the docker section once
+# https://github.com/web-platform-tests/wpt.fyi/issues/3033 is resolved.
+# - package-ecosystem: "docker"
+#   directory: "/results-processor"
+#   schedule:
+#     interval: "weekly"
+# - package-ecosystem: "docker"
+#   directory: "/"
+#   schedule:
+#     interval: "weekly"
+# - package-ecosystem: "docker"
+#   directory: "/api/query/cache/service"
+#   schedule:
+#     interval: "weekly"
