@@ -72,7 +72,7 @@
     "@polymer/paper-tooltip": "3.0.1",
     "@polymer/polymer": "3.5.1",
     "@vaadin/vaadin-context-menu": "4.5.0",
-    "@vaadin/vaadin-date-picker": "4.4.1",
+    "@vaadin/vaadin-date-picker": "23.2.10",
     "@vaadin/vaadin-grid": "5.7.13",
     "@webcomponents/webcomponentsjs": "2.7.0",
     "countup.js": "2.3.2",
