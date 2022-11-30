@@ -10,7 +10,7 @@
     "@babel/eslint-parser": "7.19.1",
     "@babel/plugin-syntax-import-assertions": "7.20.0",
     "@browser-logos/chrome": "2.0.0",
-    "@browser-logos/chrome-beta": "2.1.10",
+    "@browser-logos/chrome-beta": "3.0.0",
     "@browser-logos/chrome-canary": "2.0.0",
     "@browser-logos/chrome-dev": "2.1.11",
     "@browser-logos/chromium": "2.0.0",
