@@ -100,7 +100,9 @@
             },
             {
                 "name": "Pointer and Mouse Events",
-                "scores_over_time": []
+                "scores_over_time": [
+                    { "date": "2022-12-01", "score": 580 }
+                ]
             },
             {
                 "name": "Viewport Measurement",
