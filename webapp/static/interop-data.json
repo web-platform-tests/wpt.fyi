@@ -95,7 +95,8 @@
             {
                 "name": "Editing, contenteditable, and execCommand",
                 "scores_over_time": [
-                    { "date": "2022-10-22", "score": 360 }
+                    { "date": "2022-10-22", "score": 360 },
+                    { "date": "2022-11-25", "score": 460 }
                 ]
             },
             {
