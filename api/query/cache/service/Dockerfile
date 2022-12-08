@@ -1,7 +1,7 @@
 # Production deployment spec for query cache service.
 
-# Base golang 1.16 image.
-FROM golang:1.16-buster as builder
+# Base golang 1.19 image.
+FROM golang:1.19-buster as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
