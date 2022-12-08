@@ -5,7 +5,7 @@ go 1.19
 require (
 	cloud.google.com/go/cloudtasks v1.8.0
 	cloud.google.com/go/datastore v1.10.0
-	cloud.google.com/go/logging v1.5.0
+	cloud.google.com/go/logging v1.6.1
 	cloud.google.com/go/secretmanager v1.9.0
 	cloud.google.com/go/storage v1.28.1
 	github.com/deckarep/golang-set v1.8.0
