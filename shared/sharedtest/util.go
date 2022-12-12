@@ -83,7 +83,7 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	select {
 	case <-started:
 		break
-	case <-time.After(time.Second * 10):
+	case <-time.After(time.Second * 20):
 		i.stop()
 		return errors.New("timed out starting Datastore emulator")
 	}
