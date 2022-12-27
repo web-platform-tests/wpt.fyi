@@ -38,20 +38,29 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	tox -c results-processor/
 
+# Contains setup necessary only for github actions.
+github_action_go_setup:
+	# https://github.com/web-platform-tests/wpt.fyi/issues/3089
+	if [ -d "/github/workspace" ]; then \
+		echo "Avoiding buildvcs error for Go 1.18+ by marking github workspace safe."; \
+		git config --global --add safe.directory /github/workspace ; \
+	else \
+		echo "Did not detect github workspace. Skipping." ; \
+	fi
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
-go_build: git mockgen packr2
+go_build: git mockgen packr2 github_action_go_setup
 	make webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
-	go build ./...
+	go build -v ./...
 	# Build the webapp.
-	go build ./webapp/web
+	go build -v ./webapp/web
 
 go_build_dev:
 	@ # Disable packr to always serve local node modules and dynamic components.
 	@ # There's thus no need to prune node_modules.
-	go build -tags skippackr ./webapp/web
+	go build -v -tags skippackr ./webapp/web
 
 go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./api/...
