@@ -41,6 +41,9 @@ python_test: python3 tox
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
 go_build: git mockgen packr2
+	# Checking to see if .git is owned by the runner
+	# More details: https://github.com/golang/go/issues/53532
+	ls -al .git; whoami
 	make webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
