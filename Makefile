@@ -41,12 +41,15 @@ python_test: python3 tox
 # Contains setup necessary only for github actions.
 github_action_go_setup:
 	# https://github.com/web-platform-tests/wpt.fyi/issues/3089
-	[ -d "/github/workspace" ] && \
-		echo "Avoiding buildvcs error for Go 1.18 by marking directory." && \
-		git config --global --add safe.directory /github/workspace
+	if [ -d "/github/workspace" ]; then \
+		echo "Avoiding buildvcs error for Go 1.18 by marking directory."; \
+		git config --global --add safe.directory /github/workspace ; \
+	else \
+		echo "Did not detect github workspace. Skipping." ; \
+	fi
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
-go_build: git mockgen packr2
+go_build: git mockgen packr2 github_action_go_setup
 	# Checking to see if .git is owned by the runner
 	# More details: https://github.com/golang/go/issues/53532
 	ls -al .git; whoami
