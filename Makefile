@@ -38,6 +38,12 @@ prepush: go_build go_test lint
 python_test: python3 tox
 	tox -c results-processor/
 
+# Contains setup necessary only for github actions.
+github_action_go_setup:
+	# https://github.com/web-platform-tests/wpt.fyi/issues/3089
+	[ -d "/github/workspace" ] && \
+		echo "Avoiding buildvcs error for Go 1.18 by marking directory." && \
+		git config --global --add safe.directory /github/workspace
 # NOTE: We prune before generate, because node_modules are packr'd into the
 # binary (and part of the build).
 go_build: git mockgen packr2
