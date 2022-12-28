@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -59,7 +58,7 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	if err != nil {
 		return err
 	}
-	dir, err := ioutil.TempDir("wpt_fyi", "datastore")
+	dir, err := os.MkdirTemp("", "wpt_fyi_datastore")
 	if err != nil {
 		fmt.Println("unable to create temporary datastore data directory")
 		return err
