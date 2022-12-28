@@ -136,8 +136,7 @@ func (i aeInstance) stop() error {
 		fmt.Printf("removing data dir: %s\n", i.dataDir)
 		err := os.RemoveAll(i.dataDir)
 		if err != nil {
-			// Do not need to return error.
-			// In case the emulator failed to
+			// Do not need to return error. Just warn.
 			fmt.Printf("warning: unable to delete temporary data directory. %s\n",
 				err.Error())
 		}
