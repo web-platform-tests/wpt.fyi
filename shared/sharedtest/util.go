@@ -5,6 +5,7 @@
 package sharedtest
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -62,6 +63,10 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 		"--consistency="+consistency,
 		"--project="+project,
 		"--host-port="+i.hostPort)
+	// Store the output to use in case it fails to start
+	var stdoutBuffer, stderrBuffer bytes.Buffer
+	i.gcd.Stdout = &stdoutBuffer
+	i.gcd.Stderr = &stderrBuffer
 	if err := i.gcd.Start(); err != nil {
 		return err
 	}
@@ -85,11 +90,9 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 		break
 	case <-time.After(time.Second * 30):
 		i.stop()
-		stdoutStderr, err := i.gcd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("unable to get output for the datastore emulator. it may be empty. %s\n", err)
-		}
-		fmt.Printf("output for datastore emulator command unable to start in time:\n%s\n", stdoutStderr)
+		fmt.Printf("datastore emulator unable to start in time:\nstdout:\n%s\nstderr:\n%s",
+			stdoutBuffer.String(),
+			stderrBuffer.String())
 		return errors.New("timed out starting Datastore emulator")
 	}
 
