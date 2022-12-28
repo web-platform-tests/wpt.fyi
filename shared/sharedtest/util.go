@@ -5,6 +5,7 @@
 package sharedtest
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ type aeInstance struct {
 	// Google Cloud Datastore emulator
 	gcd      *exec.Cmd
 	hostPort string
+	dataDir  string
 }
 
 func (i aeInstance) Close() error {
@@ -56,12 +58,22 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	if err != nil {
 		return err
 	}
+	dir, err := os.MkdirTemp("", "wpt_fyi_datastore")
+	if err != nil {
+		fmt.Println("unable to create temporary datastore data directory")
+		return err
+	}
+	i.dataDir = dir
 	i.hostPort = fmt.Sprintf("127.0.0.1:%d", port)
 	i.gcd = exec.Command("gcloud", "beta", "emulators", "datastore", "start",
-		"--no-store-on-disk",
+		"--data-dir="+i.dataDir,
 		"--consistency="+consistency,
 		"--project="+project,
 		"--host-port="+i.hostPort)
+	// Store the output to use in case it fails to start
+	var stdoutBuffer, stderrBuffer bytes.Buffer
+	i.gcd.Stdout = &stdoutBuffer
+	i.gcd.Stderr = &stderrBuffer
 	if err := i.gcd.Start(); err != nil {
 		return err
 	}
@@ -83,8 +95,11 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	select {
 	case <-started:
 		break
-	case <-time.After(time.Second * 30):
+	case <-time.After(time.Second * 10):
 		i.stop()
+		fmt.Printf("datastore emulator unable to start in time:\nstdout:\n%s\nstderr:\n%s\n",
+			stdoutBuffer.String(),
+			stderrBuffer.String())
 		return errors.New("timed out starting Datastore emulator")
 	}
 
@@ -116,6 +131,18 @@ func (i aeInstance) stop() error {
 		}
 	}()
 	stopped <- i.gcd.Wait()
+
+	if i.dataDir != "" {
+		err := os.RemoveAll(i.dataDir)
+		if err != nil {
+			// Do not need to return error. Just warn.
+			fmt.Printf("warning: unable to delete temporary data directory %s. %s\n",
+				i.dataDir,
+				err.Error())
+		}
+		i.dataDir = ""
+	}
+
 	return nil
 }
 
