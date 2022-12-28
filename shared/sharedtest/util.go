@@ -90,7 +90,7 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 		break
 	case <-time.After(time.Second * 30):
 		i.stop()
-		fmt.Printf("datastore emulator unable to start in time:\nstdout:\n%s\nstderr:\n%s",
+		fmt.Printf("datastore emulator unable to start in time:\nstdout:\n%s\nstderr:\n%s\n",
 			stdoutBuffer.String(),
 			stderrBuffer.String())
 		return errors.New("timed out starting Datastore emulator")
