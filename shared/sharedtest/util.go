@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,6 +35,7 @@ type aeInstance struct {
 	// Google Cloud Datastore emulator
 	gcd      *exec.Cmd
 	hostPort string
+	dataDir  string
 }
 
 func (i aeInstance) Close() error {
@@ -57,9 +59,15 @@ func (i *aeInstance) start(stronglyConsistentDatastore bool) error {
 	if err != nil {
 		return err
 	}
+	dir, err := ioutil.TempDir("wpt_fyi", "datastore")
+	if err != nil {
+		fmt.Println("unable to create temporary datastore data directory")
+		return err
+	}
+	i.dataDir = dir
 	i.hostPort = fmt.Sprintf("127.0.0.1:%d", port)
 	i.gcd = exec.Command("gcloud", "beta", "emulators", "datastore", "start",
-		"--no-store-on-disk",
+		"--data-dir="+i.dataDir,
 		"--consistency="+consistency,
 		"--project="+project,
 		"--host-port="+i.hostPort)
@@ -124,6 +132,19 @@ func (i aeInstance) stop() error {
 		}
 	}()
 	stopped <- i.gcd.Wait()
+
+	if i.dataDir != "" {
+		fmt.Printf("removing data dir: %s\n", i.dataDir)
+		err := os.RemoveAll(i.dataDir)
+		if err != nil {
+			// Do not need to return error.
+			// In case the emulator failed to
+			fmt.Printf("warning: unable to delete temporary data directory. %s\n",
+				err.Error())
+		}
+		i.dataDir = ""
+	}
+
 	return nil
 }
 
