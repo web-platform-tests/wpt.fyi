@@ -133,11 +133,11 @@ func (i aeInstance) stop() error {
 	stopped <- i.gcd.Wait()
 
 	if i.dataDir != "" {
-		fmt.Printf("removing data dir: %s\n", i.dataDir)
 		err := os.RemoveAll(i.dataDir)
 		if err != nil {
 			// Do not need to return error. Just warn.
-			fmt.Printf("warning: unable to delete temporary data directory. %s\n",
+			fmt.Printf("warning: unable to delete temporary data directory %s. %s\n",
+				i.dataDir,
 				err.Error())
 		}
 		i.dataDir = ""
