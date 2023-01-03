@@ -43,6 +43,7 @@ class InteropDataManager {
     this.issueURL = yearInfo.issue_url;
     this.investigationScores = yearInfo.investigation_scores;
     this.investigationWeight = yearInfo.investigation_weight;
+    this.validYears = Object.keys(paramsByYear);
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
@@ -766,13 +767,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   getAllYears() {
-    const firstYear = 2021;
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = firstYear; i <= currentYear; i++) {
-      years.push(i.toString());
-    }
-    return years;
+    return this.dataManager.getYearProp('validYears').sort();
   }
 
   getYearProp(prop) {
