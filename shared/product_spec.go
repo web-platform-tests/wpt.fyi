@@ -74,6 +74,8 @@ func (p ProductSpec) DisplayName() string {
 		return "Chrome"
 	case "chrome_android":
 		return "ChromeAndroid"
+	case "chrome_ios":
+		return "ChromeIOS"
 	case "android_webview":
 		return "WebView"
 	case "deno":
