@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.19
 
 require (
-	cloud.google.com/go/cloudtasks v1.8.0
+	cloud.google.com/go/cloudtasks v1.9.0
 	cloud.google.com/go/datastore v1.10.0
 	cloud.google.com/go/logging v1.6.1
 	cloud.google.com/go/secretmanager v1.10.0
