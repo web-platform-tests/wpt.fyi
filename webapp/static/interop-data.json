@@ -116,7 +116,7 @@
             }
         ],
         "investigation_weight": 0.1,
-        "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{stable|experimental}.csv",
+        "csv_url": "http://localhost:8080/static/interop-2022-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
         "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
@@ -212,6 +212,263 @@
                 "mdn": "",
                 "spec": "",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat"
+            }
+        }
+    },
+    "2023": {
+        "table_sections": [
+            {
+                "name": "Active Focus Areas",
+                "rows": [
+                    "interop-2023-cssborderimage",
+                    "interop-2023-color",
+                    "interop-2023-container",
+                    "interop-2023-contain",
+                    "interop-2023-pseudos",
+                    "interop-2023-property",
+                    "interop-2023-flexbox",
+                    "interop-2023-fonts",
+                    "interop-2023-forms",
+                    "interop-2023-grid",
+                    "interop-2023-has",
+                    "interop-2023-inert",
+                    "interop-2023-mathfunctions",
+                    "interop-2023-mediaqueries",
+                    "interop-2023-motion",
+                    "interop-2023-offscreencanvas",
+                    "interop-2023-url",
+                    "interop-2023-webcomponents"
+                ],
+                "weight": 1.0,
+                "score_as_group": false
+            },
+            {
+                "name": "Active Investigations",
+                "rows": [
+                    "Accessibility Tree",
+                    "Mobile Testing"
+                ],
+                "weight": 0.0,
+                "score_as_group": true
+            },
+            {
+                "name": "Previous Focus Areas",
+                "rows": [
+                    "interop-2021-aspect-ratio",
+                    "interop-2022-cascade",
+                    "interop-2022-dialog",
+                    "interop-2021-position-sticky",
+                    "interop-2022-text",
+                    "interop-2022-viewport",
+                    "interop-2022-webcompat"
+                ],
+                "weight": 0.0,
+                "score_as_group": false
+            },
+            {
+                "name": "Previous Investigations",
+                "rows": [
+                    "Editing, contenteditable, and execCommand",
+                    "Pointer and Mouse Events",
+                    "Viewport Measurement"
+                ],
+                "weight": 0.0,
+                "previous_investigation": true,
+                "score_as_group": true
+            }
+        ],
+        "investigation_scores": [
+            {
+                "name": "Accessibility Tree",
+                "scores_over_time": []
+            },
+            {
+                "name": "Mobile Testing",
+                "scores_over_time": []
+            }
+        ],
+        "investigation_weight": 0.0,
+        "csv_url": "http://localhost:8080/static/interop-2023-{stable|experimental}.csv",
+        "data_branch": "gh-pages",
+        "summary_feature_name": "summary",
+        "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
+        "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
+        "matrix_url": "https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io",
+        "focus_areas": {
+            "interop-2021-aspect-ratio": {
+                "description": "Aspect Ratio",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
+                "spec": "https://drafts.csswg.org/css-sizing/#aspect-ratio",
+                "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio",
+                "countsTowardScore": false
+            },
+            "interop-2021-position-sticky": {
+                "description": "Sticky Positioning",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/position",
+                "spec": "https://drafts.csswg.org/css-position/#position-property",
+                "tests": "/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky",
+                "countsTowardScore": false
+            },
+            "interop-2022-cascade": {
+                "description": "Cascade Layers",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/@layer",
+                "spec": "https://drafts.csswg.org/css-cascade/#layering",
+                "tests": "/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade", 
+                "countsTowardScore": false
+            },
+            "interop-2022-dialog": {
+                "description": "Dialog Element",
+                "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
+                "spec": "https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element",
+                "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog", 
+                "countsTowardScore": false
+            },
+            "interop-2022-text": {
+                "description": "Typography and Encodings",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text", 
+                "countsTowardScore": false
+            },
+            "interop-2022-viewport": {
+                "description": "Viewport Units",
+                "mdn": "",
+                "spec": "https://drafts.csswg.org/css-values/#viewport-relative-units",
+                "tests": "/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport", 
+                "countsTowardScore": false
+            },
+            "interop-2022-webcompat": {
+                "description": "Web Compat",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat", 
+                "countsTowardScore": false
+            },
+            "interop-2023-cssborderimage": {
+                "description": "Border Image",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage", 
+                "countsTowardScore": true
+            },
+            "interop-2023-color": {
+                "description": "Color Spaces and Functions",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-color", 
+                "countsTowardScore": true
+            },
+            "interop-2023-container": {
+                "description": "Container Queries",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-container", 
+                "countsTowardScore": true
+            },
+            "interop-2023-contain": {
+                "description": "Containment",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-contain", 
+                "countsTowardScore": true
+            },
+            "interop-2023-pseudos": {
+                "description": "CSS Pseudo-classes",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-pseudos", 
+                "countsTowardScore": true
+            },
+            "interop-2023-property": {
+                "description": "Custom Properties",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-property", 
+                "countsTowardScore": true
+            },
+            "interop-2023-flexbox": {
+                "description": "Flexbox",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-flexbox", 
+                "countsTowardScore": true
+            },
+            "interop-2023-fonts": {
+                "description": "Font Feature Detection and Palettes",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-fonts", 
+                "countsTowardScore": true
+            },
+            "interop-2023-forms": {
+                "description": "Forms",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-forms", 
+                "countsTowardScore": true
+            },
+            "interop-2023-grid": {
+                "description": "Grid",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-grid", 
+                "countsTowardScore": true
+            },
+            "interop-2023-has": {
+                "description": ":has()",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-has", 
+                "countsTowardScore": true
+            },
+            "interop-2023-inert": {
+                "description": "Inert",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert", 
+                "countsTowardScore": true
+            },
+            "interop-2023-mathfunctions": {
+                "description": "Math Functions",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions", 
+                "countsTowardScore": true
+            },
+            "interop-2023-mediaqueries": {
+                "description": "Media Queries 4",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries", 
+                "countsTowardScore": true
+            },
+            "interop-2023-motion": {
+                "description": "Motion Path",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion", 
+                "countsTowardScore": true
+            },
+            "interop-2023-offscreencanvas": {
+                "description": "Offscreen Canvas",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas", 
+                "countsTowardScore": true
+            },
+            "interop-2023-url": {
+                "description": "URL",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url", 
+                "countsTowardScore": true
+            },
+            "interop-2023-webcomponents": {
+                "description": "Web Components",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcomponents", 
+                "countsTowardScore": true
             }
         }
     }
