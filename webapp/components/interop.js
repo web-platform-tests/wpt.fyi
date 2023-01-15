@@ -34,10 +34,6 @@ class InteropDataManager {
     const paramsByYear = await resp.json();
 
     const yearInfo = paramsByYear[this.year];
-    const previousYear = String(parseInt(this.year) - 1);
-    if (paramsByYear[parseInt(this.year) - 1]) {
-      yearInfo.previous_investigation_scores = paramsByYear[previousYear].investigation_scores;
-    }
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
@@ -69,7 +65,7 @@ class InteropDataManager {
     // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
-    const scores = [{}, {}, {}, {}];
+    const scores = [{}, {}, {}];
     for (const feature of [
       this.summaryFeatureName, ...Object.keys(this.focusAreas)]) {
       const dataTable = dataTables.get(feature);
@@ -80,8 +76,8 @@ class InteropDataManager {
       scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge')) * 1000;
       scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox')) * 1000;
       scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari')) * 1000;
-      scores[3][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Interop')) * 1000;
     }
+
     return scores;
   }
 
@@ -114,8 +110,6 @@ class InteropDataManager {
       dataTable.addColumn({ type: 'string', role: 'tooltip' });
       dataTable.addColumn('number', 'Safari');
       dataTable.addColumn({ type: 'string', role: 'tooltip' });
-      dataTable.addColumn('number', 'Interop');
-      dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
 
@@ -126,12 +120,11 @@ class InteropDataManager {
       'Chrome',
       'Firefox',
       'Safari',
-      'Interop',
     ];
     const focusAreaLabels = Object.keys(this.focusAreas);
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
-    const browserVersions = [[], [], [], []];
+    const browserVersions = [[], [], []];
 
     const numFocusAreas = focusAreaLabels.length;
 
@@ -185,14 +178,10 @@ class InteropDataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
-          if (this.focusAreas[feature].countsTowardScore) {
-            testScore += score;
-          }
+          testScore += score;
         });
 
-        const numCountedFocusAreas = Object.keys(this.focusAreas).reduce(
-            (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
-        testScore /= numCountedFocusAreas;
+        testScore /= numFocusAreas;
 
         // Handle investigation scoring if applicable.
         const [investigationScore, investigationWeight] =
@@ -238,7 +227,6 @@ class InteropDataManager {
       }
     }
     totalInvestigationScore /= this.investigationScores.length;
-    this.investigationScore = totalInvestigationScore;
     return [totalInvestigationScore, this.investigationWeight];
   }
 
@@ -288,7 +276,6 @@ class InteropDashboard extends PolymerElement {
           max-width: fit-content;
           margin-inline: auto;
           margin-block-start: 75px;
-          margin-bottom: 30px;
           border-radius: 3px;
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
@@ -374,13 +361,9 @@ class InteropDashboard extends PolymerElement {
 
         .score-table tbody th {
           text-align: left;
-          border-bottom: 3px solid GrayText;
+          border-bottom: 1px solid GrayText;
           padding-top: 1.5em;
           padding-bottom: .25em;
-        }
-
-        .score-table tbody th:not(:last-of-type) {
-          padding-right: .5em;
         }
 
         .score-table .browser-icons {
@@ -397,14 +380,8 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table td {
-          min-width: 10ch;
+          min-width: 7ch;
           font-variant-numeric: tabular-nums;
-        }
-
-        @media only screen and (max-width: 600px) {
-          .score-table td {
-            min-width: 7ch;
-          }
         }
 
         .score-table :is(tfoot,thead) {
@@ -481,7 +458,7 @@ class InteropDashboard extends PolymerElement {
                 <tr class="section-header">
                   <th>{{section.name}}</th>
                   <template is="dom-if" if="[[section.score_as_group]]">
-                    <th colspan=4>Group Progress</th>
+                    <th colspan=3>Group Progress</th>
                   </template>
                   <template is="dom-if" if="[[showBrowserIcons(itemsIndex)]]">
                     <th>
@@ -522,10 +499,8 @@ class InteropDashboard extends PolymerElement {
                         </div>
                       </template>
                     </th>
-                    <th>INTEROP</th>
                   </template>
                   <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
-                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -540,35 +515,41 @@ class InteropDashboard extends PolymerElement {
                       <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
                       <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
                       <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
                     </tr>
                   </template>
                   <template is="dom-if" if="[[shouldShowSubtotals()]]">
                     <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
+                      <td><strong>SUBTOTAL</strong></td>
                       <td>[[getSubtotalScore(0, section, stable)]]</td>
                       <td>[[getSubtotalScore(1, section, stable)]]</td>
                       <td>[[getSubtotalScore(2, section, stable)]]</td>
-                      <td>[[getSubtotalScore(3, section, stable)]]</td>
                     </tr>
                   </template>
                 </template>
                 <template is="dom-if" if="[[section.score_as_group]]">
                   <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                     <tr>
-                      <td colspan=4>[[rowName]]</td>
+                      <td colspan=3>[[rowName]]</td>
                       <td>[[getInvestigationScore(rowName)]]</td>
                     </tr>
                   </template>
                   <template is="dom-if" if="[[shouldShowSubtotals()]]">
                     <tr class="subtotal-row">
-                      <td colspan=4><strong>TOTAL</strong></td>
+                      <td colspan=3><strong>SUBTOTAL</strong></td>
                       <td>[[getInvestigationScoreSubtotal()]]</td>
                     </tr>
                   </template>
                 </template>
               </template>
             </tbody>
+            <tfoot>
+              <tr>
+                <th><b>GRAND TOTAL</b></th>
+                <th>[[totalChromium]]</th>
+                <th>[[totalFirefox]]</th>
+                <th>[[totalSafari]]</th>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -732,17 +713,17 @@ class InteropDashboard extends PolymerElement {
       const area = scores[i];
       if (area.name === rowName && area.scores_over_time.length > 0) {
         const score = area.scores_over_time[area.scores_over_time.length - 1].score;
-        return `${(score / 10).toFixed(1)}%`;
+        return `${Math.floor(score / 10)}%`;
       }
     }
 
-    return '0.0%';
+    return '0%';
   }
 
   getInvestigationScoreSubtotal() {
     const scores = this.getYearProp('investigationScores');
     if (!scores) {
-      return '0.0%';
+      return '0%';
     }
     const totalScore = scores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
@@ -751,7 +732,7 @@ class InteropDashboard extends PolymerElement {
       return sum;
     }, 0);
 
-    return `${(totalScore / 10 / scores.length).toFixed(1)}%`;
+    return `${Math.floor((totalScore / 10) / scores.length)}%`;
   }
 
   getSubtotalScore(browserIndex, section, stable) {
@@ -759,11 +740,7 @@ class InteropDashboard extends PolymerElement {
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    const avg = totalScore / 10 / section.rows.length;
-    if (avg >= 100) {
-      return '100%';
-    }
-    return `${avg.toFixed(1)}%`;
+    return `${Math.floor((totalScore / 10) / section.rows.length)}%`;
   }
 
   shouldShowSubtotals() {
@@ -782,10 +759,7 @@ class InteropDashboard extends PolymerElement {
   getBrowserScoreForFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
-    if (score / 10 >= 100) {
-      return '100%';
-    }
-    return `${(score / 10).toFixed(1)}%`;
+    return `${Math.floor(score / 10)}%`;
   }
 
   getBrowserScoreTotal(browserIndex) {
@@ -870,18 +844,16 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
-        #summaryNumberRow {
+        #summaryContainer {
+          padding-block: 30px;
           display: flex;
           justify-content: center;
           gap: 30px;
         }
 
-        .summary-container {
-          min-height: 500px;
-        }
-
         .summary-flex-item {
           position: relative;
+          min-height: 255px;
         }
 
         .summary-number {
@@ -906,10 +878,6 @@ class InteropSummary extends PolymerElement {
           gap: 2ch;
         }
 
-        .summary-title {
-          text-align: center;
-        }
-
         .summary-browser-name > figure {
           margin: 0;
           flex: 1;
@@ -927,88 +895,75 @@ class InteropSummary extends PolymerElement {
           display: none;
         }
       </style>
-      <div class="summary-container">
-        <div id="summaryNumberRow">
-          <!-- Interop -->
-          <div class="summary-flex-item" tabindex="0">
-            <h3 class="summary-title">INTEROP</h3>
-            <div class="summary-number">--</div>
-          </div>
-          <!-- Investigations -->
-          <div class="summary-flex-item" tabindex="0">
-            <h3 class="summary-title">INVESTIGATIONS</h3>
-            <div class="summary-number">--</div>
-          </div>
+
+      <div id="summaryContainer">
+        <!-- Chrome/Edge -->
+        <div class="summary-flex-item" tabindex="0">
+          <div class="summary-number">--</div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
+                <figcaption>Chrome</figcaption>
+              </figure>
+              <figure>
+                <img src="/static/edge_64x64.png" width="36" alt="Edge" />
+                <figcaption>Edge</figcaption>
+              </figure>
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
+                <figcaption>Chrome<br>Dev</figcaption>
+              </figure>
+              <figure>
+                <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
+                <figcaption>Edge<br>Dev</figcaption>
+              </figure>
+            </div>
+          </template>
         </div>
-        <div id="summaryNumberRow">
-          <!-- Chrome/Edge -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
-                  <figcaption>Chrome</figcaption>
-                </figure>
-                <figure>
-                  <img src="/static/edge_64x64.png" width="36" alt="Edge" />
-                  <figcaption>Edge</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
-                  <figcaption>Chrome<br>Dev</figcaption>
-                </figure>
-                <figure>
-                  <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
-                  <figcaption>Edge<br>Dev</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
-          <!-- Firefox -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
-                  <figcaption>Firefox</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
-                  <figcaption>Firefox<br>Nightly</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
-          <!-- Safari -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/safari_64x64.png" width="36" alt="Safari" />
-                  <figcaption>Safari</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
-                  <figcaption>Safari<br>Technology Preview</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
+        <!-- Firefox -->
+        <div class="summary-flex-item" tabindex="0">
+          <div class="summary-number">--</div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
+                <figcaption>Firefox</figcaption>
+              </figure>
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
+                <figcaption>Firefox<br>Nightly</figcaption>
+              </figure>
+            </div>
+          </template>
+        </div>
+        <!-- Safari -->
+        <div class="summary-flex-item" tabindex="0">
+          <div class="summary-number">--</div>
+          <template is="dom-if" if="[[stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/safari_64x64.png" width="36" alt="Safari" />
+                <figcaption>Safari</figcaption>
+              </figure>
+            </div>
+          </template>
+          <template is="dom-if" if="[[!stable]]">
+            <div class="summary-browser-name">
+              <figure>
+                <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
+                <figcaption>Safari<br>Technology Preview</figcaption>
+              </figure>
+            </div>
+          </template>
         </div>
       </div>
 `;
@@ -1034,28 +989,22 @@ class InteropSummary extends PolymerElement {
     this.updateSummaryScores();
   }
 
-  updateSummaryScore(number, score) {
-    score = Math.floor(score / 10);
-    let curScore = number.innerText;
-    new CountUp(number, score, {
-      startVal: curScore === '--' ? 0 : curScore
-    }).start();
-    const colors = this.calculateColor(score);
-    number.style.color = colors[0];
-    number.style.backgroundColor = colors[1];
-  }
-
   async updateSummaryScores() {
     let numbers = this.shadowRoot.querySelectorAll('.summary-number');
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    if (!scores.length || numbers.length !== (scores.length + 1)) {
-      throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${scores.length}`);
+    if (numbers.length !== scores.length) {
+      throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
     }
-    const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-    this.updateSummaryScore(numbers[0], scores[scores.length - 1][summaryFeatureName]);
-    this.updateSummaryScore(numbers[1], this.totalInvestigationScore)
-    for (let i = 2; i < numbers.length; i++) {
-      this.updateSummaryScore(numbers[i], scores[i - 2][summaryFeatureName]);
+    for (let i = 0; i < scores.length; i++) {
+      const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
+      let score = Math.floor(scores[i][summaryFeatureName] / 10);
+      let curScore = numbers[i].innerText;
+      new CountUp(numbers[i], score, {
+        startVal: curScore === '--' ? 0 : curScore
+      }).start();
+      const colors = this.calculateColor(score);
+      numbers[i].style.color = colors[0];
+      numbers[i].style.backgroundColor = colors[1];
     }
   }
 
