@@ -18,10 +18,11 @@ type interopData struct {
 }
 
 // Set of years that are valid for Interop 20XX.
-var validYears = map[string]bool{"2021": true, "2022": true}
+var validYears = map[string]bool{"2021": true, "2022": true, "2023": true}
 
 // Year that any invalid year will redirect to.
-const defaultRedirectYear = "2022"
+// TODO(danielrsmith): Change this redirect for next year's interop page.
+const defaultRedirectYear = "2023"
 
 // interopHandler handles GET requests to /interop-20XX and /compat20XX
 func interopHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,6 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 
 	// /compat20XX redirects to /interop-20XX
 	needsRedirect := name == "compat"
-	// TODO(danielrsmith): Change this redirect for next year's interop page.
 	if _, ok := validYears[year]; !ok {
 		year = defaultRedirectYear
 		needsRedirect = true
