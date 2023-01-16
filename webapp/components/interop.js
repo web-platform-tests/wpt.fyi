@@ -287,7 +287,7 @@ class InteropDashboard extends PolymerElement {
           display: grid;
           grid-template-columns: 1fr 1fr;
           grid-auto-rows: 50px;
-          grid-template-rows: 150px 500px 350px 450px;
+          grid-template-rows: 175px 525px 375px 470px;
           column-gap: 50px;
           grid-template-areas:
             "header scores"
