@@ -586,7 +586,8 @@ class InteropDashboard extends PolymerElement {
                     </template>
                     <template is="dom-if" if="[[shouldShowSubtotals()]]">
                       <tr class="subtotal-row">
-                        <td colspan=4><strong>TOTAL</strong></td>
+                        <td><strong>TOTAL</strong></td>
+                        <td colspan=3></td>
                         <td>[[getInvestigationScoreSubtotal()]]</td>
                       </tr>
                     </template>
