@@ -286,14 +286,13 @@ class InteropDashboard extends PolymerElement {
         .grid-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          grid-auto-rows: 50px;
           grid-template-rows: 175px 525px 375px 470px;
           column-gap: 50px;
           grid-template-areas:
             "header scores"
             "summary scores"
             "description scores"
-            "graph scores"
+            "graph scores";
         }
 
         .grid-item-header {
@@ -376,16 +375,15 @@ class InteropDashboard extends PolymerElement {
 
         .table-card {
           height: 100%;
-          
           display: flex;
           justify-content: center;
-          padding: 0 30px;
           border-radius: 3px;
           background: white;
         }
 
         .score-table {
           height: 100%;
+          width: 100%;
           border-collapse: collapse;
         }
 
@@ -426,12 +424,6 @@ class InteropDashboard extends PolymerElement {
           font-variant-numeric: tabular-nums;
         }
 
-        @media only screen and (max-width: 600px) {
-          .score-table td {
-            min-width: 7ch;
-          }
-        }
-
         .score-table :is(tfoot,thead) {
           height: 5ch;
           vertical-align: middle;
@@ -459,7 +451,6 @@ class InteropDashboard extends PolymerElement {
         }
 
         .interop-years {
-          padding-top: 30px;
           text-align: center;
         }
 
@@ -481,10 +472,33 @@ class InteropDashboard extends PolymerElement {
         }
 
         .compat-footer {
-          padding-block: 20px 30px;
           display: grid;
           place-items: center;
         }
+
+
+
+        @media only screen and (max-width: 1400px) {
+          .grid-container {
+            column-gap: 20px;
+            display: grid;
+            grid-auto-columns: minmax(auto, 600px);
+          }
+          .grid-item-graph {
+            max-width: 600px;
+          }
+        }
+
+        @media only screen and (max-width: 1200px) {
+          .grid-container {
+            display: block;
+          }
+          .grid-item-graph {
+            max-width: none;
+          }
+        }
+
+
       </style>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
@@ -496,6 +510,24 @@ class InteropDashboard extends PolymerElement {
         </div>
         <div class="grid-item grid-item-summary">
           <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+        </div>
+        <div class="grid-item grid-item-description">
+          <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
+          to reach a state where each technology works exactly the same in every browser.</p>
+          <p>This is accomplished by encouraging browsers to precisely match the web standards for
+          <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+          <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+          <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+          <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+          and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+          The results of those tests are listed in the table, linked to the list of specific tests.
+          The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+          </p>
+          <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+          They involve doing the work of moving the web standards or web platform tests community
+          forward regarding a particularly tricky issue. The percentage represents the amount of
+          progress made towards project goals. Project titles link to Git repos where work is happening.
+          Read the issues for details.</p>
         </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
@@ -596,24 +628,6 @@ class InteropDashboard extends PolymerElement {
               </tbody>
             </table>
           </div>
-        </div>
-        <div class="grid-item grid-item-description">
-          <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
-          to reach a state where each technology works exactly the same in every browser.</p>
-          <p>This is accomplished by encouraging browsers to precisely match the web standards for
-          <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
-          <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
-          <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
-          <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
-          and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
-          The results of those tests are listed in the table, linked to the list of specific tests.
-          The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
-          </p>
-          <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
-          They involve doing the work of moving the web standards or web platform tests community
-          forward regarding a particularly tricky issue. The percentage represents the amount of
-          progress made towards project goals. Project titles link to Git repos where work is happening.
-          Read the issues for details.</p>
         </div>
         <div class="grid-item grid-item-graph">
           <section class="focus-area-section">
