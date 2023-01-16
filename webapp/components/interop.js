@@ -191,7 +191,7 @@ class InteropDataManager {
         });
 
         const numCountedFocusAreas = Object.keys(this.focusAreas).reduce(
-            (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
+          (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
         testScore /= numCountedFocusAreas;
 
         // Handle investigation scoring if applicable.
@@ -1091,7 +1091,7 @@ class InteropSummary extends PolymerElement {
     }
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     this.updateSummaryScore(numbers[0], scores[scores.length - 1][summaryFeatureName]);
-    this.updateSummaryScore(numbers[1], this.totalInvestigationScore)
+    this.updateSummaryScore(numbers[1], this.totalInvestigationScore);
     for (let i = 2; i < numbers.length; i++) {
       this.updateSummaryScore(numbers[i], scores[i - 2][summaryFeatureName]);
     }
