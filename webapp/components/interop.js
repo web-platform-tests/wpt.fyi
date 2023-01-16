@@ -268,7 +268,7 @@ class InteropDashboard extends PolymerElement {
       <style>
         :host {
           display: block;
-          max-width: 700px;
+          max-width: 1400px;
           /* Override wpt.fyi's automatically injected common.css */
           margin: 0 auto !important;
           font-family: system-ui, sans-serif;
@@ -283,12 +283,41 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
+        .grid-container {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          grid-auto-rows: 50px;
+          grid-template-rows: 150px 500px 350px 450px;
+          column-gap: 50px;
+          grid-template-areas:
+            "header scores"
+            "summary scores"
+            "description scores"
+            "graph scores"
+        }
+
+        .grid-item-header {
+          grid-area: header;
+        }
+
+        .grid-item-scores {
+          grid-area: scores;
+        }
+
+        .grid-item-description {
+          grid-area: description;
+        }
+
+        .grid-item-graph {
+          grid-area: graph;
+        }
+
         .channel-area {
           display: flex;
           max-width: fit-content;
           margin-inline: auto;
-          margin-block-start: 75px;
-          margin-bottom: 30px;
+          margin-block-start: 25px;
+          margin-bottom: 35px;
           border-radius: 3px;
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
@@ -330,17 +359,13 @@ class InteropDashboard extends PolymerElement {
         }
 
         .focus-area-section {
-          margin-block-start: 50px;
-          padding: 30px;
-          border-radius: 3px;
-          border: 1px solid #eee;
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+          padding: 15px;
         }
 
         .focus-area {
           font-size: 24px;
           text-align: center;
-          margin-block: 40px 10px;
+          margin-block: 0 10px;
         }
 
         .prose {
@@ -349,21 +374,18 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
-        .score-details {
+        .table-card {
+          height: 100%;
+          
           display: flex;
           justify-content: center;
-        }
-
-        .table-card {
-          margin-top: 30px;
-          padding: 30px;
+          padding: 0 30px;
           border-radius: 3px;
           background: white;
-          border: 1px solid #eee;
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
         .score-table {
+          height: 100%;
           border-collapse: collapse;
         }
 
@@ -379,6 +401,9 @@ class InteropDashboard extends PolymerElement {
           padding-bottom: .25em;
         }
 
+        .score-table tbody td {
+          padding: .25em .5em;
+        }
         .score-table tbody th:not(:last-of-type) {
           padding-right: .5em;
         }
@@ -397,7 +422,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table td {
-          min-width: 10ch;
+          min-width: 7ch;
           font-variant-numeric: tabular-nums;
         }
 
@@ -452,7 +477,6 @@ class InteropDashboard extends PolymerElement {
           display: flex;
           gap: 2ch;
           place-content: center;
-          margin-block-end: 20px;
           color: GrayText;
         }
 
@@ -462,157 +486,170 @@ class InteropDashboard extends PolymerElement {
           place-items: center;
         }
       </style>
-      <h1>Interop [[year]] Dashboard</h1>
-
-      <p class="prose">[[getYearProp('prose')]]</p>
-
-      <div class="channel-area">
-        <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
-        <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
-      </div>
-      <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
-
-      <div class="score-details">
-        <div class="table-card">
-          <table id="score-table" class="score-table">
-            <caption>How are these scores calculated?</caption>
-            <tbody>
-              <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
-                <tr class="section-header">
-                  <th>{{section.name}}</th>
+      <div class="grid-container">
+        <div class="grid-item grid-item-header">
+          <h1>Interop [[year]] Dashboard</h1>
+          <div class="channel-area">
+            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
+          </div>
+        </div>
+        <div class="grid-item grid-item-summary">
+          <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+        </div>
+        <div class="grid-item grid-item-scores">
+          <div class="table-card">
+            <table id="score-table" class="score-table">
+              <tbody>
+                <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+                  <tr class="section-header">
+                    <th>{{section.name}}</th>
+                    <template is="dom-if" if="[[section.score_as_group]]">
+                      <th colspan=4>Group Progress</th>
+                    </template>
+                    <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
+                            <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
+                            <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>INTEROP</th>
+                    </template>
+                    <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                    </template>
+                  </tr>
+                  <template is="dom-if" if="[[!section.score_as_group]]">
+                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                      <tr data-feature$="[[rowName]]">
+                        <td>
+                          <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
+                        </td>
+                        <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
+                      </tr>
+                    </template>
+                    <template is="dom-if" if="[[shouldShowSubtotals()]]">
+                      <tr class="subtotal-row">
+                        <td><strong>TOTAL</strong></td>
+                        <td>[[getSubtotalScore(0, section, stable)]]</td>
+                        <td>[[getSubtotalScore(1, section, stable)]]</td>
+                        <td>[[getSubtotalScore(2, section, stable)]]</td>
+                        <td>[[getSubtotalScore(3, section, stable)]]</td>
+                      </tr>
+                    </template>
+                  </template>
                   <template is="dom-if" if="[[section.score_as_group]]">
-                    <th colspan=4>Group Progress</th>
-                  </template>
-                  <template is="dom-if" if="[[showBrowserIcons(itemsIndex)]]">
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
-                          <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
-                          <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
-                        </div>
-                      </template>
-                    </th>
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
-                        </div>
-                      </template>
-                    </th>
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
-                        </div>
-                      </template>
-                    </th>
-                    <th>INTEROP</th>
-                  </template>
-                  <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                  </template>
-                </tr>
-                <template is="dom-if" if="[[!section.score_as_group]]">
-                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
-                    <tr data-feature$="[[rowName]]">
-                      <td>
-                        <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
-                      </td>
-                      <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
-                    </tr>
-                  </template>
-                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
-                    <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
-                      <td>[[getSubtotalScore(0, section, stable)]]</td>
-                      <td>[[getSubtotalScore(1, section, stable)]]</td>
-                      <td>[[getSubtotalScore(2, section, stable)]]</td>
-                      <td>[[getSubtotalScore(3, section, stable)]]</td>
-                    </tr>
+                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                      <tr>
+                        <td colspan=4>[[rowName]]</td>
+                        <td>[[getInvestigationScore(rowName)]]</td>
+                      </tr>
+                    </template>
+                    <template is="dom-if" if="[[shouldShowSubtotals()]]">
+                      <tr class="subtotal-row">
+                        <td colspan=4><strong>TOTAL</strong></td>
+                        <td>[[getInvestigationScoreSubtotal()]]</td>
+                      </tr>
+                    </template>
                   </template>
                 </template>
-                <template is="dom-if" if="[[section.score_as_group]]">
-                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
-                    <tr>
-                      <td colspan=4>[[rowName]]</td>
-                      <td>[[getInvestigationScore(rowName)]]</td>
-                    </tr>
-                  </template>
-                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
-                    <tr class="subtotal-row">
-                      <td colspan=4><strong>TOTAL</strong></td>
-                      <td>[[getInvestigationScoreSubtotal()]]</td>
-                    </tr>
-                  </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="grid-item grid-item-description">
+          <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
+          to reach a state where each technology works exactly the same in every browser.</p>
+          <p>This is accomplished by encouraging browsers to precisely match the web standards for
+          <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+          <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+          <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+          <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+          and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+          The results of those tests are listed in the table, linked to the list of specific tests.
+          The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+          </p>
+          <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+          They involve doing the work of moving the web standards or web platform tests community
+          forward regarding a particularly tricky issue. The percentage represents the amount of
+          progress made towards project goals. Project titles link to Git repos where work is happening.
+          Read the issues for details.</p>
+        </div>
+        <div class="grid-item grid-item-graph">
+          <section class="focus-area-section">
+            <div class="focus-area">
+              <select id="featureSelect">
+                <option value="summary">Summary</option>
+                <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
+                  <optgroup label="[[section.name]]">
+                    <template is="dom-repeat" items={{section.rows}} as="focusArea">
+                      <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
+                        [[getRowInfo(focusArea, 'description')]]
+                      </option>
+                    </template>
+                  </optgroup>
+                </template>
+              </select>
+            </div>
+
+            <div id="featureReferenceList">
+              <template is="dom-repeat" items="[[featureLinks(feature)]]">
+                <template is="dom-if" if="[[item.href]]">
+                  <a href$="[[item.href]]">[[item.text]]</a>
+                </template>
+                <template is="dom-if" if="[[!item.href]]">
+                  <span>[[item.text]]</span>
                 </template>
               </template>
-            </tbody>
-          </table>
+            </div>
+
+            <interop-feature-chart year="[[year]]"
+                                  data-manager="[[dataManager]]"
+                                  stable="[[stable]]"
+                                  feature="{{feature}}">
+            </interop-feature-chart>
+          </section>
         </div>
       </div>
-
-      <section class="focus-area-section">
-        <h2 class="focus-area-header">Scores over time</h2>
-
-        <p class="prose">
-          Here you can see how focus areas are improving over time.
-          The more tests that pass, the higher the score.
-        </p>
-
-        <div class="focus-area">
-          <select id="featureSelect">
-            <option value="summary">Summary</option>
-            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
-              <optgroup label="[[section.name]]">
-                <template is="dom-repeat" items={{section.rows}} as="focusArea">
-                  <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
-                    [[getRowInfo(focusArea, 'description')]]
-                  </option>
-                </template>
-              </optgroup>
-            </template>
-          </select>
-        </div>
-
-        <div id="featureReferenceList">
-          <template is="dom-repeat" items="[[featureLinks(feature)]]">
-            <template is="dom-if" if="[[item.href]]">
-              <a href$="[[item.href]]">[[item.text]]</a>
-            </template>
-            <template is="dom-if" if="[[!item.href]]">
-              <span>[[item.text]]</span>
-            </template>
-          </template>
-        </div>
-
-        <interop-feature-chart year="[[year]]"
-                               data-manager="[[dataManager]]"
-                               stable="[[stable]]"
-                               feature="{{feature}}">
-        </interop-feature-chart>
-      </section>
       <footer class="compat-footer">
         <p>Focus Area scores are calculated based on test pass rates. No test
         suite is perfect and improvements are always welcome. Please feel free
@@ -622,7 +659,7 @@ class InteropDashboard extends PolymerElement {
         <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
         to request updating the set of tests used for scoring. You're also
         welcome to
-        <a href="[[getYearProp('matrixURL')]]" target="_blank">join
+        <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
         the conversation on Matrix</a>!</p>
         <div class="interop-years">
           <div class="interop-year-text">
@@ -771,8 +808,8 @@ class InteropDashboard extends PolymerElement {
     return this.getYearProp('tableSections').length > 1;
   }
 
-  showBrowserIcons(index) {
-    return index === 0;
+  showBrowserIcons(index, scoreAsGroup) {
+    return index === 0 || !scoreAsGroup;
   }
 
   showNoOtherColumns(scoreAsGroup, index) {
@@ -1232,7 +1269,6 @@ class InteropFeatureChart extends PolymerElement {
         this.$.safariDialog.open();
       },
     });
-
     chart.draw(dataTable, this.getChartOptions(div, feature));
   }
 
@@ -1262,19 +1298,18 @@ class InteropFeatureChart extends PolymerElement {
 
   getChartOptions(containerDiv, feature) {
     // Show only the scores from this year on the charts.
-    const endOfInteropYear = new Date(this.year, 11, 31);
-    let maxDate = new Date();
-    if (maxDate > endOfInteropYear) {
-      maxDate = endOfInteropYear;
+    // The max date shown on the X-axis is the end of this year.
+    const year = parseInt(this.year);
+    const maxDate = new Date(year + 1, 0, 1);
+    const ticks = [];
+    for (let month = 0; month < 12; month++) {
+      ticks.push(new Date(year, month, 15));
     }
-
     const focusAreas = this.getYearProp('focusAreas');
     const summaryFeatureName = this.getYearProp('summaryFeatureName');
     if (feature !== summaryFeatureName && !(feature in focusAreas)) {
       feature = summaryFeatureName;
     }
-    const description = feature === summaryFeatureName ?
-      `Interop ${this.year}` : focusAreas[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
@@ -1282,14 +1317,19 @@ class InteropFeatureChart extends PolymerElement {
         trigger: 'both',
       },
       hAxis: {
-        title: 'Date',
-        format: 'MMM-YYYY',
+        format: 'MMM',
         viewWindow: {
           max: maxDate
+        },
+        ticks: ticks,
+        slantedText: true,
+        slantedTextAngle: 90,
+        showTextEvery: 1,
+        gridlines: {
+          count: 13,
         }
       },
       vAxis: {
-        title: `${description} Score`,
         format: 'percent',
         viewWindow: {
           min: 0,
@@ -1302,7 +1342,7 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      colors: ['#4285f4', '#ea4335', '#fbbc04'],
+      colors: ['red', '#F57400', '#0095F0', '#7BE73E'],
     };
 
     // We draw the chart in two ways, depending on the viewport width. In

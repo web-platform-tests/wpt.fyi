@@ -17,7 +17,6 @@
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
         "prose": "These scores represent how well browser engines are doing on the 2021 Interop Focus Areas, as measured by wpt.fyi test results. Each feature contributes up to 20 points to the score, based on passing-test percentage, giving a maximum possible score of 100 for each browser.",
-        "issue_url": "https://github.com/web-platform-tests/wpt.fyi/issues/new?title=[compat2021]%20Add%20new%20tests%20to%20dashboard&body=",
         "matrix_url": "https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io",
         "focus_areas": {
             "aspect-ratio": {
@@ -116,12 +115,11 @@
             }
         ],
         "investigation_weight": 0.1,
-        "csv_url": "http://localhost:8080/static/interop-2022-{stable|experimental}.csv",
+        "csv_url": "https://storage.googleapis.com/interop-data/interop-2022-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
-        "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
+        "prose": "",
         "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
-        "matrix_url": "https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io",
         "focus_areas": {
             "interop-2021-aspect-ratio": {
                 "description": "Aspect Ratio",
@@ -288,12 +286,11 @@
             }
         ],
         "investigation_weight": 0.0,
-        "csv_url": "http://localhost:8080/static/interop-2023-{stable|experimental}.csv",
+        "csv_url": "https://storage.googleapis.com/interop-data/interop-2023-{stable|experimental}.csv",
         "data_branch": "gh-pages",
         "summary_feature_name": "summary",
         "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
         "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
-        "matrix_url": "https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io",
         "focus_areas": {
             "interop-2021-aspect-ratio": {
                 "description": "Aspect Ratio",
