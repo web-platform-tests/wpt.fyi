@@ -518,7 +518,12 @@ class InteropDashboard extends PolymerElement {
           text-size-adjust: none;
         }
         @media only screen and (max-width: 1000px) {
-          .grid-container {
+          .grid-item-description, .grid-item-scores, .grid-item-graph {
+            font-size: 20px;
+          }
+        }
+        @media only screen and (max-width: 600px) {
+          .grid-item-description, .grid-item-scores, .grid-item-graph {
             font-size: 24px;
           }
         }
@@ -1383,7 +1388,7 @@ class InteropFeatureChart extends PolymerElement {
     // 700px wide. In 'mobile' mode the legend is on the top and we use all the
     // space we can get for the chart.
     if (containerDiv.clientWidth >= 700) {
-      options.width = 700;
+      options.width = '100%';
       options.chartArea = {
         height: '80%'
       };
