@@ -36,7 +36,10 @@ class InteropDataManager {
     const yearInfo = paramsByYear[this.year];
     const previousYear = String(parseInt(this.year) - 1);
     if (paramsByYear[parseInt(this.year) - 1]) {
-      yearInfo.previous_investigation_scores = paramsByYear[previousYear].investigation_scores;
+      this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
+    }
+    if (this.previousInvestigationScores) {
+      this.calcInvestigationTotalScore(this.previousInvestigationScores, true);
     }
     this.focusAreas = yearInfo.focus_areas;
     this.summaryFeatureName = yearInfo.summary_feature_name;
@@ -46,6 +49,9 @@ class InteropDataManager {
     this.matrixURL = yearInfo.matrix_url;
     this.issueURL = yearInfo.issue_url;
     this.investigationScores = yearInfo.investigation_scores;
+    if (this.investigationScores) {
+      this.calcInvestigationTotalScore(this.investigationScores, false);
+    }
     this.investigationWeight = yearInfo.investigation_weight;
     this.validYears = Object.keys(paramsByYear);
   }
@@ -60,6 +66,20 @@ class InteropDataManager {
       this.experimentalDatatables.get(feature);
   }
 
+
+  calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+    const totalScore = investigationScores.reduce((sum, area) => {
+      if (area.scores_over_time.length > 0) {
+        return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
+      }
+      return sum;
+    }, 0);
+    if (isPreviousYear) {
+      this.previousInvestigationTotalScore = totalScore / investigationScores.length;
+    } else {
+      this.investigationTotalScore = totalScore / investigationScores.length;
+    }
+  }
   // Fetches the most recent scores from the datatables for display as summary
   // numbers and tables. Scores are represented as an array of objects, where
   // the object is a feature->score mapping.
@@ -442,7 +462,7 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
-        .score-table tbody > tr:is(:first-of-type, :last-of-type) {
+        .score-table tbody > .section-header {
           vertical-align: bottom;
         }
 
@@ -613,14 +633,14 @@ class InteropDashboard extends PolymerElement {
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr>
                         <td colspan=4>[[rowName]]</td>
-                        <td>[[getInvestigationScore(rowName)]]</td>
+                        <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
                     <template is="dom-if" if="[[shouldShowSubtotals()]]">
                       <tr class="subtotal-row">
                         <td><strong>TOTAL</strong></td>
                         <td colspan=3></td>
-                        <td>[[getInvestigationScoreSubtotal()]]</td>
+                        <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
                       </tr>
                     </template>
                   </template>
@@ -633,7 +653,7 @@ class InteropDashboard extends PolymerElement {
           <section class="focus-area-section">
             <div class="focus-area">
               <select id="featureSelect">
-                <option value="summary">Summary</option>
+                <option value="summary">{{getSummaryOptionText()}}</option>
                 <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
                   <optgroup label="[[section.name]]">
                     <template is="dom-repeat" items={{section.rows}} as="focusArea">
@@ -778,8 +798,9 @@ class InteropDashboard extends PolymerElement {
     return this.getYearProp('focusAreas')[name][prop];
   }
 
-  getInvestigationScore(rowName) {
-    const scores = this.getYearProp('investigationScores');
+  getInvestigationScore(rowName, isPreviousYear) {
+    const yearProp = (isPreviousYear) ? 'previousInvestigationScores' : 'investigationScores';
+    const scores = this.getYearProp(yearProp);
     for (let i = 0; i < scores.length; i++) {
       const area = scores[i];
       if (area.name === rowName && area.scores_over_time.length > 0) {
@@ -791,19 +812,13 @@ class InteropDashboard extends PolymerElement {
     return '0.0%';
   }
 
-  getInvestigationScoreSubtotal() {
-    const scores = this.getYearProp('investigationScores');
-    if (!scores) {
+  getInvestigationScoreSubtotal(isPreviousYear) {
+    const yearProp = (isPreviousYear) ? 'previousInvestigationTotalScore' : 'investigationTotalScore';
+    const total = this.getYearProp(yearProp);
+    if (!total) {
       return '0.0%';
     }
-    const totalScore = scores.reduce((sum, area) => {
-      if (area.scores_over_time.length > 0) {
-        return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
-      }
-      return sum;
-    }, 0);
-
-    return `${(totalScore / 10 / scores.length).toFixed(1)}%`;
+    return `${(total / 10).toFixed(1)}%`;
   }
 
   getSubtotalScore(browserIndex, section, stable) {
@@ -816,6 +831,13 @@ class InteropDashboard extends PolymerElement {
       return '100%';
     }
     return `${avg.toFixed(1)}%`;
+  }
+
+  getSummaryOptionText() {
+    if (parseInt(this.year) === new Date().getFullYear()) {
+      return "All Active Focus Areas";
+    }
+    return "All Focus Areas";
   }
 
   shouldShowSubtotals() {
@@ -1105,7 +1127,7 @@ class InteropSummary extends PolymerElement {
     }
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     this.updateSummaryScore(numbers[0], scores[scores.length - 1][summaryFeatureName]);
-    this.updateSummaryScore(numbers[1], this.totalInvestigationScore);
+    this.updateSummaryScore(numbers[1], this.dataManager.getYearProp('investigationTotalScore'));
     for (let i = 2; i < numbers.length; i++) {
       this.updateSummaryScore(numbers[i], scores[i - 2][summaryFeatureName]);
     }
