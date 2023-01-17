@@ -305,8 +305,8 @@ class InteropDashboard extends PolymerElement {
 
         .grid-container {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          column-gap: 50px;
+          grid-template-columns: 9fr 11fr;
+          column-gap: 75px;
           grid-template-areas:
             "header scores"
             "summary scores"
@@ -429,6 +429,10 @@ class InteropDashboard extends PolymerElement {
           justify-content: flex-end;
         }
 
+        .score-table .single-browser-icon {
+          padding-right: .5em;
+        }
+
         .score-table tr > th:first-of-type {
           width: 20ch;
         }
@@ -486,7 +490,9 @@ class InteropDashboard extends PolymerElement {
         }
 
         .compat-footer {
-          display: grid;
+          width: 50%;
+          transform: translateX(50%);
+          text-align: center;
           place-items: center;
         }
 
@@ -509,6 +515,10 @@ class InteropDashboard extends PolymerElement {
           }
           .grid-item-graph {
             max-width: none;
+          }
+          .compat-footer {
+            width: 100%;
+            transform: none;
           }
         }
 
@@ -572,38 +582,38 @@ class InteropDashboard extends PolymerElement {
                       <th>
                         <template is="dom-if" if="[[stable]]">
                           <div class="browser-icons">
-                            <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
-                            <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
+                            <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
+                            <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
                           </div>
                         </template>
                         <template is="dom-if" if="[[!stable]]">
                           <div class="browser-icons">
-                            <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
-                            <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
+                            <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
+                            <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
                           </div>
                         </template>
                       </th>
                       <th>
                         <template is="dom-if" if="[[stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
                           </div>
                         </template>
                         <template is="dom-if" if="[[!stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
                           </div>
                         </template>
                       </th>
                       <th>
                         <template is="dom-if" if="[[stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
                           </div>
                         </template>
                         <template is="dom-if" if="[[!stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
                           </div>
                         </template>
                       </th>
@@ -982,6 +992,7 @@ class InteropSummary extends PolymerElement {
         }
 
         .summary-title {
+          margin: 10px 0;
           text-align: center;
         }
 
