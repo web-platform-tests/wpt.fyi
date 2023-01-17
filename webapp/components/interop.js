@@ -306,7 +306,6 @@ class InteropDashboard extends PolymerElement {
         .grid-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          grid-template-rows: 175px 525px 375px 470px;
           column-gap: 50px;
           grid-template-areas:
             "header scores"
@@ -396,7 +395,6 @@ class InteropDashboard extends PolymerElement {
         .table-card {
           height: 100%;
           display: flex;
-          justify-content: center;
           border-radius: 3px;
           background: white;
         }
@@ -466,10 +464,6 @@ class InteropDashboard extends PolymerElement {
           vertical-align: bottom;
         }
 
-        .score-table tbody > tr:last-of-type {
-          vertical-align: top;
-        }
-
         .interop-years {
           text-align: center;
         }
@@ -518,6 +512,16 @@ class InteropDashboard extends PolymerElement {
           }
         }
 
+        /* TODO(danielrsmith): These definitions are a workaround to make the mobile version
+        Look more like the desktop version. This should be removed with new mobile compatibility. */
+        p {
+          text-size-adjust: none;
+        }
+        @media only screen and (max-width: 1000px) {
+          .grid-container {
+            font-size: 24px;
+          }
+        }
 
       </style>
       <div class="grid-container">
@@ -835,9 +839,9 @@ class InteropDashboard extends PolymerElement {
 
   getSummaryOptionText() {
     if (parseInt(this.year) === new Date().getFullYear()) {
-      return "All Active Focus Areas";
+      return 'All Active Focus Areas';
     }
-    return "All Focus Areas";
+    return 'All Focus Areas';
   }
 
   shouldShowSubtotals() {
@@ -948,14 +952,6 @@ class InteropSummary extends PolymerElement {
           display: flex;
           justify-content: center;
           gap: 30px;
-        }
-
-        .summary-container {
-          min-height: 500px;
-        }
-
-        .summary-flex-item {
-          position: relative;
         }
 
         .summary-number {
@@ -1379,7 +1375,7 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      colors: ['red', '#F57400', '#0095F0', '#7BE73E'],
+      colors: ['#279A47', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
     // We draw the chart in two ways, depending on the viewport width. In
