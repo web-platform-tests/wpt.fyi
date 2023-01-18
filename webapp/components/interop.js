@@ -814,7 +814,7 @@ class InteropDashboard extends PolymerElement {
   getDefaultDescription() {
     const numFocusAreas = this.dataManager.getYearProp('focusAreasList').length;
     return `These scores represent the interoperability between browser engines in
-${numFocusAreas} major focus areas.`
+${numFocusAreas} major focus areas.`;
   }
 
   featureLinks(feature) {
@@ -1137,7 +1137,7 @@ class InteropSummary extends PolymerElement {
   }
 
   ready() {
-    super.ready()
+    super.ready();
     // Hide the investigation score if there is no value for it this year.
     if (!this.shouldDisplayInvestigationNumber()) {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
@@ -1146,7 +1146,8 @@ class InteropSummary extends PolymerElement {
   }
 
   shouldDisplayInvestigationNumber() {
-    return this.dataManager.getYearProp('investigationScores') != null;
+    const scores = this.dataManager.getYearProp('investigationScores');
+    return scores !== null && scores !== undefined;
   }
 
   updateSummaryScore(number, score) {
