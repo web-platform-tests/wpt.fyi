@@ -1312,49 +1312,6 @@ class InteropFeatureChart extends PolymerElement {
 
     const div = this.$.failuresChart;
     const chart = new window.google.visualization.LineChart(div);
-
-    // We define a tooltip action that can quickly show users the changelog
-    // between two subsequent versions of a browser. The goal is to help users
-    // understand why an improvement or regression may have happened - though
-    // this only exposes browser changes and not test suite changes.
-    const browserVersions = await this.dataManager.getBrowserVersions(stable);
-    chart.setAction({
-      id: 'revisionChangelog',
-      text: 'Show browser changelog',
-      action: () => {
-        let selection = chart.getSelection();
-        let row = selection[0].row;
-        let column = selection[0].column;
-
-        // Map from the selected column to the browser index. In the datatable
-        // Chrome is 1, Firefox is 3, Safari is 5 => these must map to [0, 1, 2].
-        let browserIdx = Math.floor(column / 2);
-
-        let version = browserVersions[browserIdx][row];
-        let lastVersion = version;
-        while (row > 0 && lastVersion === version) {
-          row -= 1;
-          lastVersion = browserVersions[browserIdx][row];
-        }
-        // TODO: If row == -1 here then we've failed.
-
-        if (browserIdx === 0) {
-          window.open(this.getChromeChangelogUrl(lastVersion, version));
-          return;
-        }
-
-        if (browserIdx === 1) {
-          if (stable) {
-            window.open(this.getFirefoxStableChangelogUrl(lastVersion, version));
-          } else {
-            this.$.firefoxNightlyDialog.open();
-          }
-          return;
-        }
-
-        this.$.safariDialog.open();
-      },
-    });
     chart.draw(dataTable, this.getChartOptions(div, feature));
   }
 
