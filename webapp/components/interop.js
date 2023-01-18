@@ -42,6 +42,7 @@ class InteropDataManager {
       this.calcInvestigationTotalScore(this.previousInvestigationScores, true);
     }
     this.focusAreas = yearInfo.focus_areas;
+    this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
     this.tableSections = yearInfo.table_sections;
@@ -91,7 +92,7 @@ class InteropDataManager {
 
     const scores = [{}, {}, {}, {}];
     for (const feature of [
-      this.summaryFeatureName, ...Object.keys(this.focusAreas)]) {
+      this.summaryFeatureName, ...this.focusAreasList]) {
       const dataTable = dataTables.get(feature);
       // Assumption: The rows are ordered by dates with the most recent entry last.
       const lastRowIndex = dataTable.getNumberOfRows() - 1;
@@ -124,7 +125,7 @@ class InteropDataManager {
     const csvLines = await fetchCsvContents(url);
 
     const features = [this.summaryFeatureName,
-      ...Object.keys(this.focusAreas)];
+      ...this.focusAreasList];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
@@ -148,7 +149,7 @@ class InteropDataManager {
       'Safari',
       'Interop',
     ];
-    const focusAreaLabels = Object.keys(this.focusAreas);
+    const focusAreaLabels = this.focusAreasList;
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], [], []];
@@ -210,7 +211,7 @@ class InteropDataManager {
           }
         });
 
-        const numCountedFocusAreas = Object.keys(this.focusAreas).reduce(
+        const numCountedFocusAreas = this.focusAreasList.reduce(
           (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
         testScore /= numCountedFocusAreas;
 
@@ -459,6 +460,10 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
+        .score-table tbody > tr:is(:first-of-type) {
+          height: 50px;
+        }
+
         .subtotal-row {
           border-top: 1px solid GrayText;
           background: hsl(0 0% 0% / 5%);
@@ -550,24 +555,29 @@ class InteropDashboard extends PolymerElement {
         <div class="grid-item grid-item-summary">
           <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
         </div>
-        <div class="grid-item grid-item-description">
-          <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
-          to reach a state where each technology works exactly the same in every browser.</p>
-          <p>This is accomplished by encouraging browsers to precisely match the web standards for
-          <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
-          <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
-          <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
-          <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
-          and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
-          The results of those tests are listed in the table, linked to the list of specific tests.
-          The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
-          </p>
-          <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
-          They involve doing the work of moving the web standards or web platform tests community
-          forward regarding a particularly tricky issue. The percentage represents the amount of
-          progress made towards project goals. Project titles link to Git repos where work is happening.
-          Read the issues for details.</p>
-        </div>
+          <div class="grid-item grid-item-description">
+            <template is="dom-if" if="[[!shouldDisplayDefaultDescription(year)]]">
+              <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
+              to reach a state where each technology works exactly the same in every browser.</p>
+              <p>This is accomplished by encouraging browsers to precisely match the web standards for
+              <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+              <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+              <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+              <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+              and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+              The results of those tests are listed in the table, linked to the list of specific tests.
+              The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+              </p>
+              <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+              They involve doing the work of moving the web standards or web platform tests community
+              forward regarding a particularly tricky issue. The percentage represents the amount of
+              progress made towards project goals. Project titles link to Git repos where work is happening.
+              Read the issues for details.</p>
+            </template>
+            <template is="dom-if" if="[[shouldDisplayDefaultDescription(year)]]">
+              <p>[[getDefaultDescription()]]</p>
+            </template>
+          </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <table id="score-table" class="score-table">
@@ -800,6 +810,17 @@ class InteropDashboard extends PolymerElement {
     return feature === this.feature;
   }
 
+  shouldDisplayDefaultDescription(year) {
+    // 2023 has a special description with links and explainers.
+    return year !== '2023';
+  }
+
+  getDefaultDescription() {
+    const numFocusAreas = this.dataManager.getYearProp('focusAreasList').length;
+    return `These scores represent the interoperability between browser engines in
+${numFocusAreas} major focus areas.`
+  }
+
   featureLinks(feature) {
     const data = this.getYearProp('focusAreas')[feature];
     return [
@@ -886,7 +907,9 @@ class InteropDashboard extends PolymerElement {
   }
 
   getAllYears() {
-    return this.dataManager.getYearProp('validYears').sort();
+    // TODO(danielrsmith): revert this to the line below when interop 2021 is supported.
+    // return this.dataManager.getYearProp('validYears').sort();
+    return [2022, 2023];
   }
 
   getYearProp(prop) {
@@ -967,6 +990,10 @@ class InteropSummary extends PolymerElement {
           display: flex;
           justify-content: center;
           gap: 30px;
+        }
+
+        .summary-container {
+          min-height: 500px;
         }
 
         .summary-number {

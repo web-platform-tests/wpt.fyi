@@ -18,7 +18,7 @@ type interopData struct {
 }
 
 // Set of years that are valid for Interop 20XX.
-var validYears = map[string]bool{"2021": true, "2022": true, "2023": true}
+var validYears = map[string]bool{"2022": true, "2023": true}
 
 // Year that any invalid year will redirect to.
 // TODO(danielrsmith): Change this redirect for next year's interop page.

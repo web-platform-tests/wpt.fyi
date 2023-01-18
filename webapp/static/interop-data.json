@@ -110,10 +110,8 @@
         ],
         "investigation_weight": 0.0,
         "csv_url": "https://storage.googleapis.com/interop-data/interop-2022-{stable|experimental}.csv",
-        "data_branch": "gh-pages",
         "summary_feature_name": "summary",
-        "prose": "",
-        "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
+        "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
         "focus_areas": {
             "interop-2021-aspect-ratio": {
                 "countsTowardScore": true,
@@ -246,7 +244,6 @@
                     "interop-2023-url",
                     "interop-2023-webcomponents"
                 ],
-                "weight": 1.0,
                 "score_as_group": false
             },
             {
@@ -255,7 +252,6 @@
                     "Accessibility Tree",
                     "Mobile Testing"
                 ],
-                "weight": 0.0,
                 "score_as_group": true
             },
             {
@@ -269,7 +265,6 @@
                     "interop-2022-viewport",
                     "interop-2022-webcompat"
                 ],
-                "weight": 0.0,
                 "score_as_group": false
             },
             {
@@ -279,7 +274,6 @@
                     "Pointer and Mouse Events",
                     "Viewport Measurement"
                 ],
-                "weight": 0.0,
                 "previous_investigation": true,
                 "score_as_group": true
             }
@@ -296,10 +290,8 @@
         ],
         "investigation_weight": 0.0,
         "csv_url": "https://storage.googleapis.com/interop-data/interop-2023-{stable|experimental}.csv",
-        "data_branch": "gh-pages",
         "summary_feature_name": "summary",
-        "prose": "These scores represent how browser engines are doing in 15 focus area and 3 joint investigation efforts.",
-        "issue_url": "https://github.com/web-platform-tests/interop-2022/issues/new",
+        "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
         "focus_areas": {
             "interop-2021-aspect-ratio": {
                 "description": "Aspect Ratio",
