@@ -193,12 +193,7 @@ class InteropDataManager {
         let testScore = 0;
         headers.forEach((feature, j) => {
           let score = 0;
-          // 2021 scores are formatted as a decimal rather than a number 0-1000.
-          if (this.year === '2021') {
-            score = parseInt(parseFloat(csvValues[i + 1 + j]) * 1000);
-          } else {
-            score = parseInt(csvValues[i + 1 + j]);
-          }
+          score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
@@ -648,15 +643,13 @@ class InteropDashboard extends PolymerElement {
                         <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
                       </tr>
                     </template>
-                    <template is="dom-if" if="[[shouldShowSubtotals()]]">
-                      <tr class="subtotal-row">
-                        <td><strong>TOTAL</strong></td>
-                        <td>[[getSubtotalScore(0, section, stable)]]</td>
-                        <td>[[getSubtotalScore(1, section, stable)]]</td>
-                        <td>[[getSubtotalScore(2, section, stable)]]</td>
-                        <td>[[getSubtotalScore(3, section, stable)]]</td>
-                      </tr>
-                    </template>
+                    <tr class="subtotal-row">
+                      <td><strong>TOTAL</strong></td>
+                      <td>[[getSubtotalScore(0, section, stable)]]</td>
+                      <td>[[getSubtotalScore(1, section, stable)]]</td>
+                      <td>[[getSubtotalScore(2, section, stable)]]</td>
+                      <td>[[getSubtotalScore(3, section, stable)]]</td>
+                    </tr>
                   </template>
                   <template is="dom-if" if="[[section.score_as_group]]">
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
@@ -665,13 +658,11 @@ class InteropDashboard extends PolymerElement {
                         <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
-                    <template is="dom-if" if="[[shouldShowSubtotals()]]">
-                      <tr class="subtotal-row">
-                        <td><strong>TOTAL</strong></td>
-                        <td colspan=3></td>
-                        <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
-                      </tr>
-                    </template>
+                    <tr class="subtotal-row">
+                      <td><strong>TOTAL</strong></td>
+                      <td colspan=3></td>
+                      <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
+                    </tr>
                   </template>
                 </template>
               </tbody>
@@ -786,7 +777,6 @@ class InteropDashboard extends PolymerElement {
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
-
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
 
@@ -804,6 +794,12 @@ class InteropDashboard extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
+    if (this.dataManager.getYearProp('focusAreasList').length <= 10) {
+      const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
+      gridContainerDiv.style.display = 'block';
+      gridContainerDiv.style.width = '700px';
+      gridContainerDiv.style.margin = 'auto';
+    }
   }
 
   isSelected(feature) {
@@ -880,11 +876,6 @@ ${numFocusAreas} major focus areas.`
     return 'All Focus Areas';
   }
 
-  shouldShowSubtotals() {
-    // Subtotals should only be shown if there is more than 1 section.
-    return this.getYearProp('tableSections').length > 1;
-  }
-
   showBrowserIcons(index, scoreAsGroup) {
     return index === 0 || !scoreAsGroup;
   }
@@ -907,9 +898,7 @@ ${numFocusAreas} major focus areas.`
   }
 
   getAllYears() {
-    // TODO(danielrsmith): revert this to the line below when interop 2021 is supported.
-    // return this.dataManager.getYearProp('validYears').sort();
-    return [2022, 2023];
+    return this.dataManager.getYearProp('validYears').sort();
   }
 
   getYearProp(prop) {
@@ -1045,18 +1034,18 @@ class InteropSummary extends PolymerElement {
           <!-- Interop -->
           <div class="summary-flex-item" tabindex="0">
             <h3 class="summary-title">INTEROP</h3>
-            <div class="summary-number">--</div>
+            <div class="summary-number score-number">--</div>
           </div>
           <!-- Investigations -->
-          <div class="summary-flex-item" tabindex="0">
+          <div id="investigationSummary" class="summary-flex-item" tabindex="0">
             <h3 class="summary-title">INVESTIGATIONS</h3>
-            <div class="summary-number">--</div>
+            <div id="investigationNumber" class="summary-number">--</div>
           </div>
         </div>
         <div id="summaryNumberRow">
           <!-- Chrome/Edge -->
           <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
+            <div class="summary-number score-number">--</div>
             <template is="dom-if" if="[[stable]]">
               <div class="summary-browser-name">
                 <figure>
@@ -1084,7 +1073,7 @@ class InteropSummary extends PolymerElement {
           </div>
           <!-- Firefox -->
           <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
+            <div class="summary-number score-number">--</div>
             <template is="dom-if" if="[[stable]]">
               <div class="summary-browser-name">
                 <figure>
@@ -1104,7 +1093,7 @@ class InteropSummary extends PolymerElement {
           </div>
           <!-- Safari -->
           <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number">--</div>
+            <div class="summary-number score-number">--</div>
             <template is="dom-if" if="[[stable]]">
               <div class="summary-browser-name">
                 <figure>
@@ -1147,6 +1136,19 @@ class InteropSummary extends PolymerElement {
     this.updateSummaryScores();
   }
 
+  ready() {
+    super.ready()
+    // Hide the investigation score if there is no value for it this year.
+    if (!this.shouldDisplayInvestigationNumber()) {
+      const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
+      investigationDiv.style.display = 'none';
+    }
+  }
+
+  shouldDisplayInvestigationNumber() {
+    return this.dataManager.getYearProp('investigationScores') != null;
+  }
+
   updateSummaryScore(number, score) {
     score = Math.floor(score / 10);
     let curScore = number.innerText;
@@ -1159,16 +1161,24 @@ class InteropSummary extends PolymerElement {
   }
 
   async updateSummaryScores() {
-    let numbers = this.shadowRoot.querySelectorAll('.summary-number');
+    const scoreNumbers = this.shadowRoot.querySelectorAll('.score-number');
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    if (!scores.length || numbers.length !== (scores.length + 1)) {
-      throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${scores.length}`);
-    }
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-    this.updateSummaryScore(numbers[0], scores[scores.length - 1][summaryFeatureName]);
-    this.updateSummaryScore(numbers[1], this.dataManager.getYearProp('investigationTotalScore'));
-    for (let i = 2; i < numbers.length; i++) {
-      this.updateSummaryScore(numbers[i], scores[i - 2][summaryFeatureName]);
+    if (!scores.length || scoreNumbers.length !== scores.length) {
+      throw new Error(`Mismatched number of browsers/scores:
+${scoreNumbers.length} vs. ${scores.length}`);
+    }
+    // Update interop summary number first.
+    this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
+    for (let i = 1; i < scoreNumbers.length; i++) {
+      this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
+    }
+
+    // Update investigation summary separately.
+    if (this.shouldDisplayInvestigationNumber()) {
+      const investigationNumber = this.shadowRoot.querySelector('#investigationNumber');
+      this.updateSummaryScore(
+        investigationNumber, this.dataManager.getYearProp('investigationTotalScore'));
     }
   }
 
