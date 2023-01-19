@@ -443,6 +443,13 @@
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries", 
                 "countsTowardScore": true
             },
+            "interop-2023-modules": {
+                "description": "Modules",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules", 
+                "countsTowardScore": true
+            },
             "interop-2023-motion": {
                 "description": "Motion Path",
                 "mdn": "",
@@ -457,11 +464,25 @@
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas", 
                 "countsTowardScore": true
             },
+            "interop-2023-events": {
+                "description": "Pointer & Mouse Events",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events", 
+                "countsTowardScore": true
+            },
             "interop-2023-url": {
                 "description": "URL",
                 "mdn": "",
                 "spec": "",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url", 
+                "countsTowardScore": true
+            },
+            "interop-2023-webcompat": {
+                "description": "Web Compat 2023",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat", 
                 "countsTowardScore": true
             },
             "interop-2023-webcomponents": {
