@@ -414,7 +414,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table tbody td {
-          padding: .25em .5em;
+          padding: 0 .5em;
         }
         .score-table tbody th:not(:last-of-type) {
           padding-right: .5em;
@@ -430,7 +430,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table tr > th:first-of-type {
-          width: 20ch;
+          width: 30ch;
         }
 
         .score-table tr > :is(td,th):not(:first-of-type) {
@@ -438,7 +438,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table td {
-          min-width: 7ch;
+          min-width: 6ch;
           font-variant-numeric: tabular-nums;
         }
 
@@ -496,7 +496,9 @@ class InteropDashboard extends PolymerElement {
           place-items: center;
         }
 
-
+        .grid-container {
+          margin: 0 2em;
+        }
 
         @media only screen and (max-width: 1400px) {
           .grid-container {
@@ -526,16 +528,6 @@ class InteropDashboard extends PolymerElement {
         Look more like the desktop version. This should be removed with new mobile compatibility. */
         p {
           text-size-adjust: none;
-        }
-        @media only screen and (max-width: 1000px) {
-          .grid-item-description, .grid-item-scores, .grid-item-graph {
-            font-size: 20px;
-          }
-        }
-        @media only screen and (max-width: 600px) {
-          .grid-item-description, .grid-item-scores, .grid-item-graph {
-            font-size: 24px;
-          }
         }
 
       </style>

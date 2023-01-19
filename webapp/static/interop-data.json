@@ -241,12 +241,17 @@
                     "interop-2023-has",
                     "interop-2023-inert",
                     "interop-2023-mathfunctions",
+                    "interop-2023-cssmasking",
                     "interop-2023-mediaqueries",
                     "interop-2023-modules",
                     "interop-2023-motion",
                     "interop-2023-offscreencanvas",
                     "interop-2023-events",
+                    "interop-2022-scrolling",
+                    "interop-2022-subgrid",
+                    "interop-2021-transforms",
                     "interop-2023-url",
+                    "interop-2023-webcodecs",
                     "interop-2023-webcompat",
                     "interop-2023-webcomponents"
                 ],
@@ -255,7 +260,7 @@
             {
                 "name": "Active Investigations",
                 "rows": [
-                    "Accessibility Tree",
+                    "Accessibility Testing",
                     "Mobile Testing"
                 ],
                 "score_as_group": true
@@ -432,6 +437,13 @@
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert", 
                 "countsTowardScore": true
             },
+            "interop-2023-cssmasking": {
+                "description": "Masking",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssmasking",
+                "countsTowardScore": true
+            },
             "interop-2023-mathfunctions": {
                 "description": "Math Functions",
                 "mdn": "",
@@ -474,18 +486,46 @@
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events", 
                 "countsTowardScore": true
             },
+            "interop-2022-scrolling": {
+                "description": "Scrolling",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/overflow",
+                "spec": "https://drafts.csswg.org/css-overflow/#propdef-overflow",
+                "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling",
+                "countsTowardScore": true
+            },
+            "interop-2022-subgrid": {
+                "description": "Subgrid",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid",
+                "spec": "https://drafts.csswg.org/css-grid-2/#subgrids",
+                "tests": "/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid",
+                "countsTowardScore": true
+            },
+            "interop-2021-transforms": {
+                "description": "Transforms",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/transform",
+                "spec": "https://drafts.csswg.org/css-transforms/",
+                "tests": "/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms",
+                "countsTowardScore": true
+            },
             "interop-2023-url": {
                 "description": "URL",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url", 
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
                 "countsTowardScore": true
             },
             "interop-2023-webcompat": {
                 "description": "Web Compat 2023",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat", 
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
+                "countsTowardScore": true
+            },
+            "interop-2023-webcodecs": {
+                "description": "Web Codecs (video)",
+                "mdn": "",
+                "spec": "",
+                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
                 "countsTowardScore": true
             },
             "interop-2023-webcomponents": {
