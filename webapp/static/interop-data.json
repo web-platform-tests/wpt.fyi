@@ -508,13 +508,8 @@
             },
             "interop-2023-url": {
                 "description": "URL",
-<<<<<<< HEAD
-                "mdn": "",
-                "spec": "",
-=======
                 "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/URL",
                 "spec": "https://url.spec.whatwg.org",
->>>>>>> 1cb97f3 (add mdn and spec links to interop focus areas)
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
                 "countsTowardScore": true
             },
@@ -523,7 +518,6 @@
                 "mdn": "",
                 "spec": "",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
-<<<<<<< HEAD
                 "countsTowardScore": true
             },
             "interop-2023-webcodecs": {
@@ -531,8 +525,6 @@
                 "mdn": "",
                 "spec": "",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
-=======
->>>>>>> 1cb97f3 (add mdn and spec links to interop focus areas)
                 "countsTowardScore": true
             },
             "interop-2023-webcomponents": {
