@@ -242,9 +242,12 @@
                     "interop-2023-inert",
                     "interop-2023-mathfunctions",
                     "interop-2023-mediaqueries",
+                    "interop-2023-modules",
                     "interop-2023-motion",
                     "interop-2023-offscreencanvas",
+                    "interop-2023-events",
                     "interop-2023-url",
+                    "interop-2023-webcompat",
                     "interop-2023-webcomponents"
                 ],
                 "score_as_group": false
