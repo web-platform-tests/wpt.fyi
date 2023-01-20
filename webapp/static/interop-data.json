@@ -364,7 +364,7 @@
                 "description": "Color Spaces and Functions",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-color", 
+                "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color", 
                 "countsTowardScore": true
             },
             "interop-2023-container": {
@@ -378,7 +378,7 @@
                 "description": "Containment",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-contain", 
+                "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain", 
                 "countsTowardScore": true
             },
             "interop-2023-pseudos": {
@@ -399,7 +399,7 @@
                 "description": "Flexbox",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-flexbox", 
+                "tests": "/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox", 
                 "countsTowardScore": true
             },
             "interop-2023-fonts": {
@@ -420,7 +420,7 @@
                 "description": "Grid",
                 "mdn": "",
                 "spec": "",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-grid", 
+                "tests": "/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid", 
                 "countsTowardScore": true
             },
             "interop-2023-has": {
