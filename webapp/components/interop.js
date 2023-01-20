@@ -807,7 +807,7 @@ class InteropDashboard extends PolymerElement {
       // 2023 also displays a special description which is not displayed in previous years.
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
-    }   
+    }
   }
 
   isSelected(feature) {
