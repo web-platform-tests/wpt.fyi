@@ -308,7 +308,8 @@ class InteropDashboard extends PolymerElement {
             "header scores"
             "summary scores"
             "description scores"
-            "graph scores";
+            "graph scores"
+            "bottom-desc scores";
         }
 
         .grid-item-header {
@@ -325,6 +326,10 @@ class InteropDashboard extends PolymerElement {
 
         .grid-item-graph {
           grid-area: graph;
+        }
+
+        .grid-item-bottom-desc {
+          grid-area: bottom-desc;
         }
 
         .channel-area {
@@ -410,12 +415,12 @@ class InteropDashboard extends PolymerElement {
         .score-table tbody th {
           text-align: left;
           border-bottom: 3px solid GrayText;
-          padding-top: 1.5em;
+          padding-top: 3em;
           padding-bottom: .25em;
         }
 
         .score-table tbody td {
-          padding: 0 .5em;
+          padding: .125em .5em;
         }
         .score-table tbody th:not(:last-of-type) {
           padding-right: .5em;
@@ -545,29 +550,38 @@ class InteropDashboard extends PolymerElement {
         <div class="grid-item grid-item-summary">
           <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
         </div>
-          <div class="grid-item grid-item-description">
-            <template is="dom-if" if="[[!shouldDisplayDefaultDescription(year)]]">
-              <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
-              to reach a state where each technology works exactly the same in every browser.</p>
-              <p>This is accomplished by encouraging browsers to precisely match the web standards for
-              <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
-              <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
-              <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
-              <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
-              and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
-              The results of those tests are listed in the table, linked to the list of specific tests.
-              The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
-              </p>
-              <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
-              They involve doing the work of moving the web standards or web platform tests community
-              forward regarding a particularly tricky issue. The percentage represents the amount of
-              progress made towards project goals. Project titles link to Git repos where work is happening.
-              Read the issues for details.</p>
-            </template>
-            <template is="dom-if" if="[[shouldDisplayDefaultDescription(year)]]">
-              <p>[[getDefaultDescription()]]</p>
-            </template>
+        <div class="grid-item grid-item-description">
+          <p>Interop [[year]] is a cross-browser effort to improve the interoperability of the web —
+          to reach a state where each technology works exactly the same in every browser.</p>
+        </div>
+        <div class="grid-item-bottom-desc">
+          <div class="extra-description">
+            <p>This is accomplished by encouraging browsers to precisely match the web standards for
+            <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+            <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+            <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+            <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+            and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+            The results of those tests are listed in the table, linked to the list of specific tests.
+            The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+            </p>
+            <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+            They involve doing the work of moving the web standards or web platform tests community
+            forward regarding a particularly tricky issue. The percentage represents the amount of
+            progress made towards project goals. Project titles link to Git repos where work is happening.
+            Read the issues for details.</p>
           </div>
+          <p>Focus Area scores are calculated based on test pass rates. No test
+          suite is perfect and improvements are always welcome. Please feel free
+          to contribute improvements to
+          <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+          and then
+          <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
+          to request updating the set of tests used for scoring. You're also
+          welcome to
+          <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
+          the conversation on Matrix</a>!</p>
+        </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <table id="score-table" class="score-table">
@@ -701,16 +715,6 @@ class InteropDashboard extends PolymerElement {
         </div>
       </div>
       <footer class="compat-footer">
-        <p>Focus Area scores are calculated based on test pass rates. No test
-        suite is perfect and improvements are always welcome. Please feel free
-        to contribute improvements to
-        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-        and then
-        <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
-        to request updating the set of tests used for scoring. You're also
-        welcome to
-        <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
-        the conversation on Matrix</a>!</p>
         <div class="interop-years">
           <div class="interop-year-text">
             <p>View by year: </p>
@@ -789,22 +793,20 @@ class InteropDashboard extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
-    // Keep the page small for interop 2021.
-    if (this.dataManager.getYearProp('focusAreasList').length <= 10) {
+    // Keep the block-level design for interop 2021-2022
+    if (this.year !== '2023') {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
       gridContainerDiv.style.margin = 'auto';
-    }
+      // 2023 also displays a special description which is not displayed in previous years.
+      const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
+      extraDescriptionDiv.style.display = 'none';
+    }   
   }
 
   isSelected(feature) {
     return feature === this.feature;
-  }
-
-  shouldDisplayDefaultDescription(year) {
-    // 2023 has a special description with links and explainers.
-    return year !== '2023';
   }
 
   getDefaultDescription() {
@@ -1024,11 +1026,25 @@ class InteropSummary extends PolymerElement {
         .summary-browser-name:not([data-stable-browsers]) > .stable {
           display: none;
         }
+
+        @media only screen and (max-width: 700px) {
+          .summary-browser-name > figure > figcaption {
+            display: none;
+          }
+          .summary-number {
+            font-size: 3.33em;
+            width: 2ch;
+            height: 2ch;
+          }
+          .summary-container {
+            min-height: 270px;
+          }
+        }
       </style>
       <div class="summary-container">
         <div id="summaryNumberRow">
           <!-- Interop -->
-          <div class="summary-flex-item" tabindex="0">
+          <div id="interopSummary" class="summary-flex-item" tabindex="0">
             <h3 class="summary-title">INTEROP</h3>
             <div class="summary-number score-number">--</div>
           </div>
@@ -1134,10 +1150,14 @@ class InteropSummary extends PolymerElement {
 
   ready() {
     super.ready();
-    // Hide the investigation score if there is no value for it this year.
+    // Hide the top summaries if there is no investigation value.
     if (!this.shouldDisplayInvestigationNumber()) {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
       investigationDiv.style.display = 'none';
+      const interopDiv = this.shadowRoot.querySelector('#interopSummary');
+      interopDiv.style.display = 'none';
+      const summaryDiv = this.shadowRoot.querySelector('.summary-container');
+      summaryDiv.style.minHeight = '275px';
     }
   }
 
