@@ -1028,20 +1028,6 @@ class InteropSummary extends PolymerElement {
         .summary-browser-name:not([data-stable-browsers]) > .stable {
           display: none;
         }
-
-        @media only screen and (max-width: 700px) {
-          .summary-browser-name > figure > figcaption {
-            display: none;
-          }
-          .summary-number {
-            font-size: 3.33em;
-            width: 2ch;
-            height: 2ch;
-          }
-          .summary-container {
-            min-height: 270px;
-          }
-        }
       </style>
       <div class="summary-container">
         <div id="summaryNumberRow">
