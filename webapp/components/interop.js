@@ -300,6 +300,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .grid-container {
+          margin: 0 2em;
           display: grid;
           grid-template-columns: 9fr 11fr;
           column-gap: 75px;
@@ -496,10 +497,6 @@ class InteropDashboard extends PolymerElement {
           place-items: center;
         }
 
-        .grid-container {
-          margin: 0 2em;
-        }
-
         @media only screen and (max-width: 1400px) {
           .grid-container {
             column-gap: 20px;
@@ -521,6 +518,12 @@ class InteropDashboard extends PolymerElement {
           .compat-footer {
             width: 100%;
             transform: none;
+          }
+        }
+
+        @media only screen and (max-width: 800px) {
+          .grid-container {
+            margin: 0 1em;
           }
         }
 
@@ -786,6 +789,7 @@ class InteropDashboard extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
+    // Keep the page small for interop 2021.
     if (this.dataManager.getYearProp('focusAreasList').length <= 10) {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
