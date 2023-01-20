@@ -39,7 +39,7 @@ class InteropDataManager {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
     }
     if (this.previousInvestigationScores) {
-      this.calcInvestigationTotalScore(this.previousInvestigationScores, true);
+      this.#calcInvestigationTotalScore(this.previousInvestigationScores, true);
     }
     this.focusAreas = yearInfo.focus_areas;
     this.focusAreasList = Object.keys(this.focusAreas);
@@ -51,7 +51,7 @@ class InteropDataManager {
     this.issueURL = yearInfo.issue_url;
     this.investigationScores = yearInfo.investigation_scores;
     if (this.investigationScores) {
-      this.calcInvestigationTotalScore(this.investigationScores, false);
+      this.#calcInvestigationTotalScore(this.investigationScores, false);
     }
     this.investigationWeight = yearInfo.investigation_weight;
     this.validYears = Object.keys(paramsByYear);
@@ -67,8 +67,9 @@ class InteropDataManager {
       this.experimentalDatatables.get(feature);
   }
 
-
-  calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+  // Calculates the over investigation score to be displayed in the summary bubble
+  // and saves it as an instance variable for easy reference.
+  #calcInvestigationTotalScore(investigationScores, isPreviousYear) {
     const totalScore = investigationScores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
         return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
@@ -81,6 +82,7 @@ class InteropDataManager {
       this.investigationTotalScore = totalScore / investigationScores.length;
     }
   }
+
   // Fetches the most recent scores from the datatables for display as summary
   // numbers and tables. Scores are represented as an array of objects, where
   // the object is a feature->score mapping.
@@ -201,11 +203,15 @@ class InteropDataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
+          // Only aggregate the score to the total score if it's a category that
+          // counts toward the total browser score.
           if (this.focusAreas[feature].countsTowardScore) {
             testScore += score;
           }
         });
 
+        // Count up the number of focus areas that count toward the browser score
+        // to handle averaging.
         const numCountedFocusAreas = this.focusAreasList.reduce(
           (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
         testScore /= numCountedFocusAreas;
@@ -496,8 +502,6 @@ class InteropDashboard extends PolymerElement {
         }
 
         .compat-footer {
-          width: 50%;
-          transform: translateX(50%);
           text-align: center;
           place-items: center;
         }
@@ -532,8 +536,9 @@ class InteropDashboard extends PolymerElement {
           }
         }
 
-        /* TODO(danielrsmith): These definitions are a workaround to make the mobile version
-        Look more like the desktop version. This should be removed with new mobile compatibility. */
+        /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
+         * happens for p tags on mobile, but not for any text (like in the table).
+         * Remove this when the mobile functionality has been handled. */
         p {
           text-size-adjust: none;
         }
@@ -809,12 +814,6 @@ class InteropDashboard extends PolymerElement {
     return feature === this.feature;
   }
 
-  getDefaultDescription() {
-    const numFocusAreas = this.dataManager.getYearProp('focusAreasList').length;
-    return `These scores represent the interoperability between browser engines in
-${numFocusAreas} major focus areas.`;
-  }
-
   featureLinks(feature) {
     const data = this.getYearProp('focusAreas')[feature];
     return [
@@ -861,6 +860,7 @@ ${numFocusAreas} major focus areas.`;
       return sum + scores[browserIndex][rowName];
     }, 0);
     const avg = totalScore / 10 / section.rows.length;
+    // Don't display decimal places for a 100% score.
     if (avg >= 100) {
       return '100%';
     }
@@ -868,6 +868,7 @@ ${numFocusAreas} major focus areas.`;
   }
 
   getSummaryOptionText() {
+    // Show "Active" in graph summary text if it is the current interop year.
     if (parseInt(this.year) === new Date().getFullYear()) {
       return 'All Active Focus Areas';
     }
@@ -885,6 +886,7 @@ ${numFocusAreas} major focus areas.`;
   getBrowserScoreForFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
+    // Don't display decimal places for a 100% score.
     if (score / 10 >= 100) {
       return '100%';
     }
@@ -1150,7 +1152,7 @@ class InteropSummary extends PolymerElement {
 
   ready() {
     super.ready();
-    // Hide the top summaries if there is no investigation value.
+    // Hide the top summary numbers if there is no investigation value.
     if (!this.shouldDisplayInvestigationNumber()) {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
       investigationDiv.style.display = 'none';
@@ -1166,6 +1168,7 @@ class InteropSummary extends PolymerElement {
     return scores !== null && scores !== undefined;
   }
 
+  // Takes a summary number div and changes the value to match the score (with CountUp).
   updateSummaryScore(number, score) {
     score = Math.floor(score / 10);
     let curScore = number.innerText;
@@ -1182,11 +1185,12 @@ class InteropSummary extends PolymerElement {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     if (!scores.length || scoreNumbers.length !== scores.length) {
-      throw new Error(`Mismatched number of browsers/scores:
+      throw new Error(`Mismatched number of browsers/scores: 
 ${scoreNumbers.length} vs. ${scores.length}`);
     }
     // Update interop summary number first.
     this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
+    // Update the rest of the browser scores.
     for (let i = 1; i < scoreNumbers.length; i++) {
       this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
     }
@@ -1363,6 +1367,7 @@ class InteropFeatureChart extends PolymerElement {
     const maxDate = new Date(year + 1, 0, 1);
     const ticks = [];
     for (let month = 0; month < 12; month++) {
+      // Show month ticks in the middle of the month on the graph (15th day).
       ticks.push(new Date(year, month, 15));
     }
     const focusAreas = this.getYearProp('focusAreas');
@@ -1402,6 +1407,7 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
+      // Browser line color definitions.
       colors: ['#279A47', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
