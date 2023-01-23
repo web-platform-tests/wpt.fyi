@@ -35,25 +35,28 @@ class InteropDataManager {
 
     const yearInfo = paramsByYear[this.year];
     const previousYear = String(parseInt(this.year) - 1);
+
+    // Calc and save investigation scores.
+    this.investigationScores = yearInfo.investigation_scores;
+    this.investigationWeight = yearInfo.investigation_weight;
+    // If the previous year has an investigation score, save it for later reference.
     if (paramsByYear[parseInt(this.year) - 1]) {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
     }
     if (this.previousInvestigationScores) {
-      this.calcInvestigationTotalScore(this.previousInvestigationScores, true);
+      this.#calcInvestigationTotalScore(this.previousInvestigationScores, true);
     }
+    if (this.investigationScores) {
+      this.#calcInvestigationTotalScore(this.investigationScores, false);
+    }
+
     this.focusAreas = yearInfo.focus_areas;
+    // Focus areas are iterated through often, so keep a list of all of them.
     this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
     this.tableSections = yearInfo.table_sections;
-    this.prose = yearInfo.prose;
-    this.matrixURL = yearInfo.matrix_url;
-    this.issueURL = yearInfo.issue_url;
-    this.investigationScores = yearInfo.investigation_scores;
-    if (this.investigationScores) {
-      this.calcInvestigationTotalScore(this.investigationScores, false);
-    }
-    this.investigationWeight = yearInfo.investigation_weight;
+    // Keep a list of years we have interop data prepared for.
     this.validYears = Object.keys(paramsByYear);
   }
 
@@ -67,20 +70,24 @@ class InteropDataManager {
       this.experimentalDatatables.get(feature);
   }
 
-
-  calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+  // Calculates the over investigation score to be displayed in the summary bubble
+  // and saves it as an instance variable for easy reference.
+  #calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+    // Get the last listed score for each category and sum them.
     const totalScore = investigationScores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
         return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
       }
       return sum;
     }, 0);
+    // Save the sum as the current or previous year, whichever is being summed.
     if (isPreviousYear) {
       this.previousInvestigationTotalScore = totalScore / investigationScores.length;
     } else {
       this.investigationTotalScore = totalScore / investigationScores.length;
     }
   }
+
   // Fetches the most recent scores from the datatables for display as summary
   // numbers and tables. Scores are represented as an array of objects, where
   // the object is a feature->score mapping.
@@ -201,11 +208,15 @@ class InteropDataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
+          // Only aggregate the score to the total score if it's a category that
+          // counts toward the total browser score.
           if (this.focusAreas[feature].countsTowardScore) {
             testScore += score;
           }
         });
 
+        // Count up the number of focus areas that count toward the browser score
+        // to handle averaging.
         const numCountedFocusAreas = this.focusAreasList.reduce(
           (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
         testScore /= numCountedFocusAreas;
@@ -254,7 +265,6 @@ class InteropDataManager {
       }
     }
     totalInvestigationScore /= this.investigationScores.length;
-    this.investigationScore = totalInvestigationScore;
     return [totalInvestigationScore, this.investigationWeight];
   }
 
@@ -300,6 +310,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .grid-container {
+          margin: 0 2em;
           display: grid;
           grid-template-columns: 9fr 11fr;
           column-gap: 75px;
@@ -307,7 +318,8 @@ class InteropDashboard extends PolymerElement {
             "header scores"
             "summary scores"
             "description scores"
-            "graph scores";
+            "graph scores"
+            "bottom-desc scores";
         }
 
         .grid-item-header {
@@ -324,6 +336,10 @@ class InteropDashboard extends PolymerElement {
 
         .grid-item-graph {
           grid-area: graph;
+        }
+
+        .grid-item-bottom-desc {
+          grid-area: bottom-desc;
         }
 
         .channel-area {
@@ -409,12 +425,12 @@ class InteropDashboard extends PolymerElement {
         .score-table tbody th {
           text-align: left;
           border-bottom: 3px solid GrayText;
-          padding-top: 1.5em;
+          padding-top: 3em;
           padding-bottom: .25em;
         }
 
         .score-table tbody td {
-          padding: 0 .5em;
+          padding: .125em .5em;
         }
         .score-table tbody th:not(:last-of-type) {
           padding-right: .5em;
@@ -490,14 +506,8 @@ class InteropDashboard extends PolymerElement {
         }
 
         .compat-footer {
-          width: 50%;
-          transform: translateX(50%);
           text-align: center;
           place-items: center;
-        }
-
-        .grid-container {
-          margin: 0 2em;
         }
 
         @media only screen and (max-width: 1400px) {
@@ -524,8 +534,15 @@ class InteropDashboard extends PolymerElement {
           }
         }
 
-        /* TODO(danielrsmith): These definitions are a workaround to make the mobile version
-        Look more like the desktop version. This should be removed with new mobile compatibility. */
+        @media only screen and (max-width: 800px) {
+          .grid-container {
+            margin: 0 1em;
+          }
+        }
+
+        /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
+         * happens for p tags on mobile, but not for any other text (like the focus area table).
+         * Remove this when deeper mobile functionality has been added. */
         p {
           text-size-adjust: none;
         }
@@ -542,29 +559,38 @@ class InteropDashboard extends PolymerElement {
         <div class="grid-item grid-item-summary">
           <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
         </div>
-          <div class="grid-item grid-item-description">
-            <template is="dom-if" if="[[!shouldDisplayDefaultDescription(year)]]">
-              <p>Interop 2023 is a cross-browser effort to improve the interoperability of the web —
-              to reach a state where each technology works exactly the same in every browser.</p>
-              <p>This is accomplished by encouraging browsers to precisely match the web standards for
-              <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
-              <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
-              <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
-              <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
-              and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
-              The results of those tests are listed in the table, linked to the list of specific tests.
-              The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
-              </p>
-              <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
-              They involve doing the work of moving the web standards or web platform tests community
-              forward regarding a particularly tricky issue. The percentage represents the amount of
-              progress made towards project goals. Project titles link to Git repos where work is happening.
-              Read the issues for details.</p>
-            </template>
-            <template is="dom-if" if="[[shouldDisplayDefaultDescription(year)]]">
-              <p>[[getDefaultDescription()]]</p>
-            </template>
+        <div class="grid-item grid-item-description">
+          <p>Interop [[year]] is a cross-browser effort to improve the interoperability of the web —
+          to reach a state where each technology works exactly the same in every browser.</p>
+        </div>
+        <div class="grid-item-bottom-desc">
+          <div class="extra-description">
+            <p>This is accomplished by encouraging browsers to precisely match the web standards for
+            <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+            <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+            <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+            <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+            and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+            The results of those tests are listed in the table, linked to the list of specific tests.
+            The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+            </p>
+            <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+            They involve doing the work of moving the web standards or web platform tests community
+            forward regarding a particularly tricky issue. The percentage represents the amount of
+            progress made towards project goals. Project titles link to Git repos where work is happening.
+            Read the issues for details.</p>
           </div>
+          <p>Focus Area scores are calculated based on test pass rates. No test
+          suite is perfect and improvements are always welcome. Please feel free
+          to contribute improvements to
+          <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+          and then
+          <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
+          to request updating the set of tests used for scoring. You're also
+          welcome to
+          <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
+          the conversation on Matrix</a>!</p>
+        </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <table id="score-table" class="score-table">
@@ -698,16 +724,6 @@ class InteropDashboard extends PolymerElement {
         </div>
       </div>
       <footer class="compat-footer">
-        <p>Focus Area scores are calculated based on test pass rates. No test
-        suite is perfect and improvements are always welcome. Please feel free
-        to contribute improvements to
-        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-        and then
-        <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
-        to request updating the set of tests used for scoring. You're also
-        welcome to
-        <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
-        the conversation on Matrix</a>!</p>
         <div class="interop-years">
           <div class="interop-year-text">
             <p>View by year: </p>
@@ -786,27 +802,20 @@ class InteropDashboard extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
-    if (this.dataManager.getYearProp('focusAreasList').length <= 10) {
+    // Keep the block-level design for interop 2021-2022
+    if (this.year !== '2023') {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
       gridContainerDiv.style.margin = 'auto';
+      // 2023 also displays a special description which is not displayed in previous years.
+      const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
+      extraDescriptionDiv.style.display = 'none';
     }
   }
 
   isSelected(feature) {
     return feature === this.feature;
-  }
-
-  shouldDisplayDefaultDescription(year) {
-    // 2023 has a special description with links and explainers.
-    return year !== '2023';
-  }
-
-  getDefaultDescription() {
-    const numFocusAreas = this.dataManager.getYearProp('focusAreasList').length;
-    return `These scores represent the interoperability between browser engines in
-${numFocusAreas} major focus areas.`;
   }
 
   featureLinks(feature) {
@@ -854,7 +863,8 @@ ${numFocusAreas} major focus areas.`;
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    const avg = totalScore / 10 / section.rows.length;
+    const avg = Math.floor(totalScore / 10) / section.rows.length;
+    // Don't display decimal places for a 100% score.
     if (avg >= 100) {
       return '100%';
     }
@@ -862,6 +872,7 @@ ${numFocusAreas} major focus areas.`;
   }
 
   getSummaryOptionText() {
+    // Show "Active" in graph summary text if it is the current interop year.
     if (parseInt(this.year) === new Date().getFullYear()) {
       return 'All Active Focus Areas';
     }
@@ -879,6 +890,7 @@ ${numFocusAreas} major focus areas.`;
   getBrowserScoreForFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
+    // Don't display decimal places for a 100% score.
     if (score / 10 >= 100) {
       return '100%';
     }
@@ -1024,7 +1036,7 @@ class InteropSummary extends PolymerElement {
       <div class="summary-container">
         <div id="summaryNumberRow">
           <!-- Interop -->
-          <div class="summary-flex-item" tabindex="0">
+          <div id="interopSummary" class="summary-flex-item" tabindex="0">
             <h3 class="summary-title">INTEROP</h3>
             <div class="summary-number score-number">--</div>
           </div>
@@ -1130,10 +1142,14 @@ class InteropSummary extends PolymerElement {
 
   ready() {
     super.ready();
-    // Hide the investigation score if there is no value for it this year.
+    // Hide the top summary numbers if there is no investigation value.
     if (!this.shouldDisplayInvestigationNumber()) {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
       investigationDiv.style.display = 'none';
+      const interopDiv = this.shadowRoot.querySelector('#interopSummary');
+      interopDiv.style.display = 'none';
+      const summaryDiv = this.shadowRoot.querySelector('.summary-container');
+      summaryDiv.style.minHeight = '275px';
     }
   }
 
@@ -1142,6 +1158,7 @@ class InteropSummary extends PolymerElement {
     return scores !== null && scores !== undefined;
   }
 
+  // Takes a summary number div and changes the value to match the score (with CountUp).
   updateSummaryScore(number, score) {
     score = Math.floor(score / 10);
     let curScore = number.innerText;
@@ -1158,11 +1175,12 @@ class InteropSummary extends PolymerElement {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     if (!scores.length || scoreNumbers.length !== scores.length) {
-      throw new Error(`Mismatched number of browsers/scores:
+      throw new Error(`Mismatched number of browsers/scores: 
 ${scoreNumbers.length} vs. ${scores.length}`);
     }
     // Update interop summary number first.
     this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
+    // Update the rest of the browser scores.
     for (let i = 1; i < scoreNumbers.length; i++) {
       this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
     }
@@ -1339,6 +1357,7 @@ class InteropFeatureChart extends PolymerElement {
     const maxDate = new Date(year + 1, 0, 1);
     const ticks = [];
     for (let month = 0; month < 12; month++) {
+      // Show month ticks in the middle of the month on the graph (15th day).
       ticks.push(new Date(year, month, 15));
     }
     const focusAreas = this.getYearProp('focusAreas');
@@ -1378,6 +1397,7 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
+      // Line chart color definitions for [Chrome, Firefox, Safari, Interop].
       colors: ['#279A47', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
