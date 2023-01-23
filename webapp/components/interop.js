@@ -35,25 +35,28 @@ class InteropDataManager {
 
     const yearInfo = paramsByYear[this.year];
     const previousYear = String(parseInt(this.year) - 1);
+
+    // Calc and save investigation scores.
+    this.investigationScores = yearInfo.investigation_scores;
+    this.investigationWeight = yearInfo.investigation_weight;
+    // If the previous year has an investigation score, save it for later reference.
     if (paramsByYear[parseInt(this.year) - 1]) {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
     }
     if (this.previousInvestigationScores) {
       this.#calcInvestigationTotalScore(this.previousInvestigationScores, true);
     }
+    if (this.investigationScores) {
+      this.#calcInvestigationTotalScore(this.investigationScores, false);
+    }
+
     this.focusAreas = yearInfo.focus_areas;
+    // Focus areas are iterated through often, so keep a list of all of them.
     this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
     this.tableSections = yearInfo.table_sections;
-    this.prose = yearInfo.prose;
-    this.matrixURL = yearInfo.matrix_url;
-    this.issueURL = yearInfo.issue_url;
-    this.investigationScores = yearInfo.investigation_scores;
-    if (this.investigationScores) {
-      this.#calcInvestigationTotalScore(this.investigationScores, false);
-    }
-    this.investigationWeight = yearInfo.investigation_weight;
+    // Keep a list of years we have interop data prepared for.
     this.validYears = Object.keys(paramsByYear);
   }
 
@@ -70,12 +73,14 @@ class InteropDataManager {
   // Calculates the over investigation score to be displayed in the summary bubble
   // and saves it as an instance variable for easy reference.
   #calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+    // Get the last listed score for each category and sum them.
     const totalScore = investigationScores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
         return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
       }
       return sum;
     }, 0);
+    // Save the sum as the current or previous year, whichever is being summed.
     if (isPreviousYear) {
       this.previousInvestigationTotalScore = totalScore / investigationScores.length;
     } else {
@@ -260,7 +265,6 @@ class InteropDataManager {
       }
     }
     totalInvestigationScore /= this.investigationScores.length;
-    this.investigationScore = totalInvestigationScore;
     return [totalInvestigationScore, this.investigationWeight];
   }
 
@@ -537,8 +541,8 @@ class InteropDashboard extends PolymerElement {
         }
 
         /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
-         * happens for p tags on mobile, but not for any text (like in the table).
-         * Remove this when the mobile functionality has been handled. */
+         * happens for p tags on mobile, but not for any other text (like the focus area table).
+         * Remove this when deeper mobile functionality has been added. */
         p {
           text-size-adjust: none;
         }
@@ -859,7 +863,7 @@ class InteropDashboard extends PolymerElement {
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    const avg = totalScore / 10 / section.rows.length;
+    const avg = Math.floor(totalScore / 10) / section.rows.length;
     // Don't display decimal places for a 100% score.
     if (avg >= 100) {
       return '100%';
@@ -1393,7 +1397,7 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      // Browser line color definitions.
+      // Line chart color definitions for [Chrome, Firefox, Safari, Interop].
       colors: ['#279A47', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
