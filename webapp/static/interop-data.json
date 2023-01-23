@@ -362,15 +362,9 @@
             },
             "interop-2023-color": {
                 "description": "Color Spaces and Functions",
-<<<<<<< HEAD
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/color_value",
                 "spec": "https://w3c.github.io/csswg-drafts/css-color/#color-syntax",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-color",
-=======
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/color_value",
-                "spec": "https://w3c.github.io/csswg-drafts/css-color/#color-syntax",
-                "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color", 
->>>>>>> 7ed554680989d53b65ee6b225450f71f61b62ba5
                 "countsTowardScore": true
             },
             "interop-2023-container": {
@@ -384,11 +378,7 @@
                 "description": "Containment",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/contain",
                 "spec": "https://drafts.csswg.org/css-contain/#contain-property",
-<<<<<<< HEAD
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-contain",
-=======
-                "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain", 
->>>>>>> 7ed554680989d53b65ee6b225450f71f61b62ba5
                 "countsTowardScore": true
             },
             "interop-2023-pseudos": {
@@ -409,11 +399,7 @@
                 "description": "Flexbox",
                 "mdn": "https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox",
                 "spec": "https://drafts.csswg.org/css-flexbox/",
-<<<<<<< HEAD
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-flexbox",
-=======
-                "tests": "/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox", 
->>>>>>> 7ed554680989d53b65ee6b225450f71f61b62ba5
                 "countsTowardScore": true
             },
             "interop-2023-fonts": {
@@ -431,15 +417,9 @@
             },
             "interop-2023-grid": {
                 "description": "Grid",
-<<<<<<< HEAD
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout",
                 "spec": "https://drafts.csswg.org/css-grid/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-grid",
-=======
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout",
-                "spec": "https://drafts.csswg.org/css-grid/",
-                "tests": "/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid", 
->>>>>>> 7ed554680989d53b65ee6b225450f71f61b62ba5
                 "countsTowardScore": true
             },
             "interop-2023-has": {
@@ -467,14 +447,14 @@
                 "description": "Math Functions",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Functions#math_functions",
                 "spec": "https://drafts.csswg.org/css-values-4/#math",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
+                "tests": "/results/css/css-values?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
                 "countsTowardScore": true
             },
             "interop-2023-mediaqueries": {
                 "description": "Media Queries 4",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/Media_Queries/Using_media_queries",
                 "spec": "https://www.w3.org/TR/mediaqueries-4/",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
+                "tests": "/results/css/mediaqueries?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
                 "countsTowardScore": true
             },
             "interop-2023-modules": {
@@ -488,7 +468,7 @@
                 "description": "Motion Path",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Motion_Path",
                 "spec": "https://drafts.fxtf.org/motion-1/",
-                "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
+                "tests": "/results/css/motion?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
                 "countsTowardScore": true
             },
             "interop-2023-offscreencanvas": {
