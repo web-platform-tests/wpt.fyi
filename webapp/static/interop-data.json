@@ -334,7 +334,7 @@
             },
             "interop-2022-text": {
                 "description": "Typography and Encodings",
-                "mdn": "",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/length#relative_length_units_based_on_viewport",
                 "spec": "",
                 "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text",
                 "countsTowardScore": false
@@ -355,22 +355,22 @@
             },
             "interop-2023-cssborderimage": {
                 "description": "Border Image",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/border-image",
-                "spec": "https://w3c.github.io/csswg-drafts/css-backgrounds/#the-border-image",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/border-image",
+                "spec": "https://www.w3.org/TR/css-backgrounds-3/#the-border-image",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage",
                 "countsTowardScore": true
             },
             "interop-2023-color": {
                 "description": "Color Spaces and Functions",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/color_value",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/color_value",
                 "spec": "https://w3c.github.io/csswg-drafts/css-color/#color-syntax",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-color",
                 "countsTowardScore": true
             },
             "interop-2023-container": {
                 "description": "Container Queries",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Container_Queries",
-                "spec": "https://www.w3.org/TR/css-contain-3/#container-queries",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Container_Queries",
+                "spec": "https://drafts.csswg.org/css-contain-3/#container-queries",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-container",
                 "countsTowardScore": true
             },
@@ -383,14 +383,14 @@
             },
             "interop-2023-pseudos": {
                 "description": "CSS Pseudo-classes",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes",
-                "spec": "https://html.spec.whatwg.org/multipage/semantics-other.html#pseudo-classes",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/Pseudo-classes",
+                "spec": "https://drafts.csswg.org/selectors/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-pseudos",
                 "countsTowardScore": true
             },
             "interop-2023-property": {
                 "description": "Custom Properties",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/@property",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/@property",
                 "spec": "https://drafts.css-houdini.org/css-properties-values-api/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-property",
                 "countsTowardScore": true
@@ -404,34 +404,34 @@
             },
             "interop-2023-fonts": {
                 "description": "Font Feature Detection and Palettes",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/font-palette",
-                "spec": "https://w3c.github.io/csswg-drafts/css-fonts/#font-palette-prop",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/font-palette",
+                "spec": "https://drafts.csswg.org/css-fonts-4/#font-palette-prop",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-fonts",
                 "countsTowardScore": true
             },
             "interop-2023-forms": {
                 "description": "Forms",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form",
+                "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/form",
                 "spec": "https://html.spec.whatwg.org/multipage/forms.html#the-form-element",
                 "countsTowardScore": true
             },
             "interop-2023-grid": {
                 "description": "Grid",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout",
                 "spec": "https://drafts.csswg.org/css-grid/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-grid",
                 "countsTowardScore": true
             },
             "interop-2023-has": {
                 "description": ":has()",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/:has",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/:has",
                 "spec": "https://drafts.csswg.org/selectors-4/#relational",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-has",
                 "countsTowardScore": true
             },
             "interop-2023-inert": {
                 "description": "Inert",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/inert",
+                "mdn": "https://developer.mozilla.org/docs/Web/API/HTMLElement/inert",
                 "spec": "https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert",
                 "countsTowardScore": true
@@ -445,42 +445,42 @@
             },
             "interop-2023-mathfunctions": {
                 "description": "Math Functions",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Functions#math_functions",
-                "spec": "https://w3c.github.io/csswg-drafts/css-values-4/#math",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Functions#math_functions",
+                "spec": "https://drafts.csswg.org/css-values-4/#math",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
                 "countsTowardScore": true
             },
             "interop-2023-mediaqueries": {
                 "description": "Media Queries 4",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/Media_Queries/Using_media_queries",
                 "spec": "https://www.w3.org/TR/mediaqueries-4/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
                 "countsTowardScore": true
             },
             "interop-2023-modules": {
                 "description": "Modules",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers",
-                "spec": "https://html.spec.whatwg.org/multipage/workers.html#module-worker-example",
+                "mdn": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules",
+                "spec": "https://tc39.es/proposal-import-assertions/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules",
                 "countsTowardScore": true
             },
             "interop-2023-motion": {
                 "description": "Motion Path",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Motion_Path",
+                "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Motion_Path",
                 "spec": "https://drafts.fxtf.org/motion-1/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
                 "countsTowardScore": true
             },
             "interop-2023-offscreencanvas": {
                 "description": "Offscreen Canvas",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas",
+                "mdn": "https://developer.mozilla.org/docs/Web/API/OffscreenCanvas",
                 "spec": "https://html.spec.whatwg.org/multipage/canvas.html#the-offscreencanvas-interface",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas",
                 "countsTowardScore": true
             },
             "interop-2023-events": {
                 "description": "Pointer & Mouse Events",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events",
+                "mdn": "https://developer.mozilla.org/docs/Web/API/Pointer_events",
                 "spec": "https://w3c.github.io/pointerevents/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events",
                 "countsTowardScore": true
@@ -508,7 +508,7 @@
             },
             "interop-2023-url": {
                 "description": "URL",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/URL",
+                "mdn": "https://developer.mozilla.org/docs/Web/API/URL",
                 "spec": "https://url.spec.whatwg.org",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
                 "countsTowardScore": true
@@ -529,7 +529,7 @@
             },
             "interop-2023-webcomponents": {
                 "description": "Web Components",
-                "mdn": "https://developer.mozilla.org/en-US/docs/Web/Web_Components",
+                "mdn": "https://developer.mozilla.org/docs/Web/Web_Components",
                 "spec": "https://www.w3.org/wiki/WebComponents/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcomponents",
                 "countsTowardScore": true
