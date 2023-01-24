@@ -48,7 +48,7 @@ class InteropDataManager {
         this.#calcInvestigationTotalScore(this.previousInvestigationScores);
     }
     if (this.investigationScores) {
-      this.investigationTotalScore = 
+      this.investigationTotalScore =
         this.#calcInvestigationTotalScore(this.investigationScores);
     }
 
