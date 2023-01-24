@@ -40,7 +40,7 @@ class InteropDataManager {
     this.investigationScores = yearInfo.investigation_scores;
     this.investigationWeight = yearInfo.investigation_weight;
     // If the previous year has an investigation score, save it for later reference.
-    if (paramsByYear[parseInt(this.year) - 1]) {
+    if (paramsByYear[previousYear]) {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
     }
     if (this.previousInvestigationScores) {
