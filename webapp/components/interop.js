@@ -44,10 +44,12 @@ class InteropDataManager {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
     }
     if (this.previousInvestigationScores) {
-      this.#calcInvestigationTotalScore(this.previousInvestigationScores, true);
+      this.previousInvestigationTotalScore =
+        this.#calcInvestigationTotalScore(this.previousInvestigationScores);
     }
     if (this.investigationScores) {
-      this.#calcInvestigationTotalScore(this.investigationScores, false);
+      this.investigationTotalScore = 
+        this.#calcInvestigationTotalScore(this.investigationScores);
     }
 
     this.focusAreas = yearInfo.focus_areas;
@@ -72,7 +74,10 @@ class InteropDataManager {
 
   // Calculates the over investigation score to be displayed in the summary bubble
   // and saves it as an instance variable for easy reference.
-  #calcInvestigationTotalScore(investigationScores, isPreviousYear) {
+  #calcInvestigationTotalScore(investigationScores) {
+    if (!investigationScores) {
+      return undefined;
+    }
     // Get the last listed score for each category and sum them.
     const totalScore = investigationScores.reduce((sum, area) => {
       if (area.scores_over_time.length > 0) {
@@ -80,12 +85,7 @@ class InteropDataManager {
       }
       return sum;
     }, 0);
-    // Save the sum as the current or previous year, whichever is being summed.
-    if (isPreviousYear) {
-      this.previousInvestigationTotalScore = totalScore / investigationScores.length;
-    } else {
-      this.investigationTotalScore = totalScore / investigationScores.length;
-    }
+    return totalScore / investigationScores.length;
   }
 
   // Fetches the most recent scores from the datatables for display as summary
@@ -156,12 +156,11 @@ class InteropDataManager {
       'Safari',
       'Interop',
     ];
-    const focusAreaLabels = this.focusAreasList;
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
     const browserVersions = [[], [], [], []];
 
-    const numFocusAreas = focusAreaLabels.length;
+    const numFocusAreas = this.focusAreasList.length;
 
     // Extract the label headers in order.
     const headers = csvLines[0]
@@ -197,7 +196,7 @@ class InteropDataManager {
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
-        let testScore = 0;
+        let testScore = 0.0;
         headers.forEach((feature, j) => {
           let score = 0;
           score = parseInt(csvValues[i + 1 + j]);
@@ -1161,7 +1160,7 @@ class InteropSummary extends PolymerElement {
   // Takes a summary number div and changes the value to match the score (with CountUp).
   updateSummaryScore(number, score) {
     score = Math.floor(score / 10);
-    let curScore = number.innerText;
+    const curScore = number.innerText;
     new CountUp(number, score, {
       startVal: curScore === '--' ? 0 : curScore
     }).start();
@@ -1174,7 +1173,7 @@ class InteropSummary extends PolymerElement {
     const scoreNumbers = this.shadowRoot.querySelectorAll('.score-number');
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-    if (!scores.length || scoreNumbers.length !== scores.length) {
+    if (scoreNumbers.length !== scores.length) {
       throw new Error(`Mismatched number of browsers/scores: 
 ${scoreNumbers.length} vs. ${scores.length}`);
     }
