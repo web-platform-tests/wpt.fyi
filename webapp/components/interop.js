@@ -216,8 +216,8 @@ class InteropDataManager {
 
         // Count up the number of focus areas that count toward the browser score
         // to handle averaging.
-        const numCountedFocusAreas = this.focusAreasList.reduce(
-          (sum, k) => (this.focusAreas[k].countsTowardScore) ? sum + 1 : sum, 0);
+        const numCountedFocusAreas = this.focusAreasList.filter(
+          k => this.focusAreas[k].countsTowardScore).length;
         testScore /= numCountedFocusAreas;
 
         // Handle investigation scoring if applicable.
