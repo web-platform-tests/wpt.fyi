@@ -420,7 +420,7 @@
                 "description": "Grid",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout",
                 "spec": "https://drafts.csswg.org/css-grid/",
-                "tests": "/results/css/css-grid?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-grid",
+                "tests": "/results/css/css-grid?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid",
                 "countsTowardScore": true
             },
             "interop-2023-has": {
