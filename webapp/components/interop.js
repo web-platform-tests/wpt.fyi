@@ -1397,7 +1397,7 @@ class InteropFeatureChart extends PolymerElement {
         maxZoomIn: 4.0,
       },
       // Line chart color definitions for [Chrome, Firefox, Safari, Interop].
-      colors: ['#279A47', '#F57400', '#0095F0', '#FCBA2F'],
+      colors: ['#7be83f', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
     // We draw the chart in two ways, depending on the viewport width. In
