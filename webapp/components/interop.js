@@ -34,15 +34,31 @@ class InteropDataManager {
     const paramsByYear = await resp.json();
 
     const yearInfo = paramsByYear[this.year];
+    const previousYear = String(parseInt(this.year) - 1);
+
+    // Calc and save investigation scores.
+    this.investigationScores = yearInfo.investigation_scores;
+    this.investigationWeight = yearInfo.investigation_weight;
+    // If the previous year has an investigation score, save it for later reference.
+    if (paramsByYear[previousYear]) {
+      this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
+    }
+    if (this.previousInvestigationScores) {
+      this.previousInvestigationTotalScore =
+        this.#calcInvestigationTotalScore(this.previousInvestigationScores);
+    }
+    if (this.investigationScores) {
+      this.investigationTotalScore =
+        this.#calcInvestigationTotalScore(this.investigationScores);
+    }
+
     this.focusAreas = yearInfo.focus_areas;
+    // Focus areas are iterated through often, so keep a list of all of them.
+    this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
     this.tableSections = yearInfo.table_sections;
-    this.prose = yearInfo.prose;
-    this.matrixURL = yearInfo.matrix_url;
-    this.issueURL = yearInfo.issue_url;
-    this.investigationScores = yearInfo.investigation_scores;
-    this.investigationWeight = yearInfo.investigation_weight;
+    // Keep a list of years we have interop data prepared for.
     this.validYears = Object.keys(paramsByYear);
   }
 
@@ -56,6 +72,22 @@ class InteropDataManager {
       this.experimentalDatatables.get(feature);
   }
 
+  // Calculates the investigation score to be displayed in the summary bubble
+  // and saves it as an instance variable for easy reference.
+  #calcInvestigationTotalScore(investigationScores) {
+    if (!investigationScores) {
+      return undefined;
+    }
+    // Get the last listed score for each category and sum them.
+    const totalScore = investigationScores.reduce((sum, area) => {
+      if (area.scores_over_time.length > 0) {
+        return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
+      }
+      return sum;
+    }, 0.0);
+    return totalScore / investigationScores.length;
+  }
+
   // Fetches the most recent scores from the datatables for display as summary
   // numbers and tables. Scores are represented as an array of objects, where
   // the object is a feature->score mapping.
@@ -65,9 +97,9 @@ class InteropDataManager {
     // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
-    const scores = [{}, {}, {}];
+    const scores = [{}, {}, {}, {}];
     for (const feature of [
-      this.summaryFeatureName, ...Object.keys(this.focusAreas)]) {
+      this.summaryFeatureName, ...this.focusAreasList]) {
       const dataTable = dataTables.get(feature);
       // Assumption: The rows are ordered by dates with the most recent entry last.
       const lastRowIndex = dataTable.getNumberOfRows() - 1;
@@ -76,8 +108,8 @@ class InteropDataManager {
       scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge')) * 1000;
       scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox')) * 1000;
       scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari')) * 1000;
+      scores[3][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Interop')) * 1000;
     }
-
     return scores;
   }
 
@@ -100,7 +132,7 @@ class InteropDataManager {
     const csvLines = await fetchCsvContents(url);
 
     const features = [this.summaryFeatureName,
-      ...Object.keys(this.focusAreas)];
+      ...this.focusAreasList];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
@@ -110,6 +142,8 @@ class InteropDataManager {
       dataTable.addColumn({ type: 'string', role: 'tooltip' });
       dataTable.addColumn('number', 'Safari');
       dataTable.addColumn({ type: 'string', role: 'tooltip' });
+      dataTable.addColumn('number', 'Interop');
+      dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
 
@@ -120,13 +154,13 @@ class InteropDataManager {
       'Chrome',
       'Firefox',
       'Safari',
+      'Interop',
     ];
-    const focusAreaLabels = Object.keys(this.focusAreas);
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
-    const browserVersions = [[], [], []];
+    const browserVersions = [[], [], [], []];
 
-    const numFocusAreas = focusAreaLabels.length;
+    const numFocusAreas = this.focusAreasList.length;
 
     // Extract the label headers in order.
     const headers = csvLines[0]
@@ -162,15 +196,10 @@ class InteropDataManager {
         const version = csvValues[i];
         browserVersions[browserIdx].push(version);
 
-        let testScore = 0;
+        let testScore = 0.0;
         headers.forEach((feature, j) => {
           let score = 0;
-          // 2021 scores are formatted as a decimal rather than a number 0-1000.
-          if (this.year === '2021') {
-            score = parseInt(parseFloat(csvValues[i + 1 + j]) * 1000);
-          } else {
-            score = parseInt(csvValues[i + 1 + j]);
-          }
+          score = parseInt(csvValues[i + 1 + j]);
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
@@ -178,10 +207,18 @@ class InteropDataManager {
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
-          testScore += score;
+          // Only aggregate the score to the total score if it's a category that
+          // counts toward the total browser score.
+          if (this.focusAreas[feature].countsTowardScore) {
+            testScore += score;
+          }
         });
 
-        testScore /= numFocusAreas;
+        // Count up the number of focus areas that count toward the browser score
+        // to handle averaging.
+        const numCountedFocusAreas = this.focusAreasList.filter(
+          k => this.focusAreas[k].countsTowardScore).length;
+        testScore /= numCountedFocusAreas;
 
         // Handle investigation scoring if applicable.
         const [investigationScore, investigationWeight] =
@@ -256,7 +293,7 @@ class InteropDashboard extends PolymerElement {
       <style>
         :host {
           display: block;
-          max-width: 700px;
+          max-width: 1400px;
           /* Override wpt.fyi's automatically injected common.css */
           margin: 0 auto !important;
           font-family: system-ui, sans-serif;
@@ -271,11 +308,45 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
+        .grid-container {
+          margin: 0 2em;
+          display: grid;
+          grid-template-columns: 9fr 11fr;
+          column-gap: 75px;
+          grid-template-areas:
+            "header scores"
+            "summary scores"
+            "description scores"
+            "graph scores"
+            "bottom-desc scores";
+        }
+
+        .grid-item-header {
+          grid-area: header;
+        }
+
+        .grid-item-scores {
+          grid-area: scores;
+        }
+
+        .grid-item-description {
+          grid-area: description;
+        }
+
+        .grid-item-graph {
+          grid-area: graph;
+        }
+
+        .grid-item-bottom-desc {
+          grid-area: bottom-desc;
+        }
+
         .channel-area {
           display: flex;
           max-width: fit-content;
           margin-inline: auto;
-          margin-block-start: 75px;
+          margin-block-start: 25px;
+          margin-bottom: 35px;
           border-radius: 3px;
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
@@ -317,17 +388,13 @@ class InteropDashboard extends PolymerElement {
         }
 
         .focus-area-section {
-          margin-block-start: 50px;
-          padding: 30px;
-          border-radius: 3px;
-          border: 1px solid #eee;
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+          padding: 15px;
         }
 
         .focus-area {
           font-size: 24px;
           text-align: center;
-          margin-block: 40px 10px;
+          margin-block: 0 10px;
         }
 
         .prose {
@@ -336,21 +403,16 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
-        .score-details {
-          display: flex;
-          justify-content: center;
-        }
-
         .table-card {
-          margin-top: 30px;
-          padding: 30px;
+          height: 100%;
+          display: flex;
           border-radius: 3px;
           background: white;
-          border: 1px solid #eee;
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
         .score-table {
+          height: 100%;
+          width: 100%;
           border-collapse: collapse;
         }
 
@@ -361,9 +423,16 @@ class InteropDashboard extends PolymerElement {
 
         .score-table tbody th {
           text-align: left;
-          border-bottom: 1px solid GrayText;
-          padding-top: 1.5em;
+          border-bottom: 3px solid GrayText;
+          padding-top: 3em;
           padding-bottom: .25em;
+        }
+
+        .score-table tbody td {
+          padding: .125em .5em;
+        }
+        .score-table tbody th:not(:last-of-type) {
+          padding-right: .5em;
         }
 
         .score-table .browser-icons {
@@ -371,8 +440,12 @@ class InteropDashboard extends PolymerElement {
           justify-content: flex-end;
         }
 
+        .score-table .single-browser-icon {
+          padding-right: .5em;
+        }
+
         .score-table tr > th:first-of-type {
-          width: 20ch;
+          width: 30ch;
         }
 
         .score-table tr > :is(td,th):not(:first-of-type) {
@@ -380,7 +453,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         .score-table td {
-          min-width: 7ch;
+          min-width: 6ch;
           font-variant-numeric: tabular-nums;
         }
 
@@ -397,21 +470,20 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
+        .score-table tbody > tr:is(:first-of-type) {
+          height: 50px;
+        }
+
         .subtotal-row {
           border-top: 1px solid GrayText;
           background: hsl(0 0% 0% / 5%);
         }
 
-        .score-table tbody > tr:is(:first-of-type, :last-of-type) {
+        .score-table tbody > .section-header {
           vertical-align: bottom;
         }
 
-        .score-table tbody > tr:last-of-type {
-          vertical-align: top;
-        }
-
         .interop-years {
-          padding-top: 30px;
           text-align: center;
         }
 
@@ -429,182 +501,228 @@ class InteropDashboard extends PolymerElement {
           display: flex;
           gap: 2ch;
           place-content: center;
-          margin-block-end: 20px;
           color: GrayText;
         }
 
         .compat-footer {
-          padding-block: 20px 30px;
-          display: grid;
+          text-align: center;
           place-items: center;
         }
+
+        @media only screen and (max-width: 1400px) {
+          .grid-container {
+            column-gap: 20px;
+            display: grid;
+            grid-auto-columns: minmax(auto, 600px);
+          }
+          .grid-item-graph {
+            max-width: 600px;
+          }
+        }
+
+        @media only screen and (max-width: 1200px) {
+          .grid-container {
+            display: block;
+          }
+          .grid-item-graph {
+            max-width: none;
+          }
+          .compat-footer {
+            width: 100%;
+            transform: none;
+          }
+        }
+
+        @media only screen and (max-width: 800px) {
+          .grid-container {
+            margin: 0 1em;
+          }
+        }
+
+        /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
+         * happens for p tags on mobile, but not for any other text (like the focus area table).
+         * Remove this when deeper mobile functionality has been added. */
+        p {
+          text-size-adjust: none;
+        }
+
       </style>
-      <h1>Interop [[year]] Dashboard</h1>
-
-      <p class="prose">[[getYearProp('prose')]]</p>
-
-      <div class="channel-area">
-        <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
-        <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
-      </div>
-      <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
-
-      <div class="score-details">
-        <div class="table-card">
-          <table id="score-table" class="score-table">
-            <caption>How are these scores calculated?</caption>
-            <tbody>
-              <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
-                <tr class="section-header">
-                  <th>{{section.name}}</th>
-                  <template is="dom-if" if="[[section.score_as_group]]">
-                    <th colspan=3>Group Progress</th>
-                  </template>
-                  <template is="dom-if" if="[[showBrowserIcons(itemsIndex)]]">
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/chrome_64x64.png" width="20" alt="Chrome" title="Chrome" />
-                          <img src="/static/edge_64x64.png" width="20" alt="Edge" title="Edge" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/chrome-dev_64x64.png" width="20" alt="Chrome Dev" title="Chrome Dev" />
-                          <img src="/static/edge-dev_64x64.png" width="20" alt="Edge Dev" title="Edge Dev" />
-                        </div>
-                      </template>
-                    </th>
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/firefox_64x64.png" width="20" alt="Firefox" title="Firefox" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/firefox-nightly_64x64.png" width="20" alt="Firefox Nightly" title="Firefox Nightly" />
-                        </div>
-                      </template>
-                    </th>
-                    <th>
-                      <template is="dom-if" if="[[stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/safari_64x64.png" width="20" alt="Safari" title="Safari" />
-                        </div>
-                      </template>
-                      <template is="dom-if" if="[[!stable]]">
-                        <div class="browser-icons">
-                          <img src="/static/safari-preview_64x64.png" width="20" alt="Safari Technology Preview" title="Safari Technology Preview" />
-                        </div>
-                      </template>
-                    </th>
-                  </template>
-                  <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                  </template>
-                </tr>
-                <template is="dom-if" if="[[!section.score_as_group]]">
-                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
-                    <tr data-feature$="[[rowName]]">
-                      <td>
-                        <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
-                      </td>
-                      <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
-                      <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
-                    </tr>
-                  </template>
-                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
+      <div class="grid-container">
+        <div class="grid-item grid-item-header">
+          <h1>Interop [[year]] Dashboard</h1>
+          <div class="channel-area">
+            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
+          </div>
+        </div>
+        <div class="grid-item grid-item-summary">
+          <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+        </div>
+        <div class="grid-item grid-item-description">
+          <p>Interop [[year]] is a cross-browser effort to improve the interoperability of the web —
+          to reach a state where each technology works exactly the same in every browser.</p>
+        </div>
+        <div class="grid-item-bottom-desc">
+          <div class="extra-description">
+            <p>This is accomplished by encouraging browsers to precisely match the web standards for
+            <a href="https://www.w3.org/Style/CSS/Overview.en.html" target="_blank" rel="noreferrer noopener">CSS</a>,
+            <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
+            <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
+            <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
+            and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+            The results of those tests are listed in the table, linked to the list of specific tests.
+            The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
+            </p>
+            <p>Investigation Projects are group projects chosen by the Interop team to be taken on this year.
+            They involve doing the work of moving the web standards or web platform tests community
+            forward regarding a particularly tricky issue. The percentage represents the amount of
+            progress made towards project goals. Project titles link to Git repos where work is happening.
+            Read the issues for details.</p>
+          </div>
+          <p>Focus Area scores are calculated based on test pass rates. No test
+          suite is perfect and improvements are always welcome. Please feel free
+          to contribute improvements to
+          <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
+          and then
+          <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
+          to request updating the set of tests used for scoring. You're also
+          welcome to
+          <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
+          the conversation on Matrix</a>!</p>
+        </div>
+        <div class="grid-item grid-item-scores">
+          <div class="table-card">
+            <table id="score-table" class="score-table">
+              <tbody>
+                <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+                  <tr class="section-header">
+                    <th>{{section.name}}</th>
+                    <template is="dom-if" if="[[section.score_as_group]]">
+                      <th colspan=4>Group Progress</th>
+                    </template>
+                    <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
+                            <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons">
+                            <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
+                            <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>
+                        <template is="dom-if" if="[[stable]]">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
+                          </div>
+                        </template>
+                        <template is="dom-if" if="[[!stable]]">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
+                          </div>
+                        </template>
+                      </th>
+                      <th>INTEROP</th>
+                    </template>
+                    <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                    </template>
+                  </tr>
+                  <template is="dom-if" if="[[!section.score_as_group]]">
+                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                      <tr data-feature$="[[rowName]]">
+                        <td>
+                          <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
+                        </td>
+                        <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
+                        <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
+                      </tr>
+                    </template>
                     <tr class="subtotal-row">
-                      <td><strong>SUBTOTAL</strong></td>
+                      <td><strong>TOTAL</strong></td>
                       <td>[[getSubtotalScore(0, section, stable)]]</td>
                       <td>[[getSubtotalScore(1, section, stable)]]</td>
                       <td>[[getSubtotalScore(2, section, stable)]]</td>
+                      <td>[[getSubtotalScore(3, section, stable)]]</td>
+                    </tr>
+                  </template>
+                  <template is="dom-if" if="[[section.score_as_group]]">
+                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                      <tr>
+                        <td colspan=4>[[rowName]]</td>
+                        <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
+                      </tr>
+                    </template>
+                    <tr class="subtotal-row">
+                      <td><strong>TOTAL</strong></td>
+                      <td colspan=3></td>
+                      <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
                     </tr>
                   </template>
                 </template>
-                <template is="dom-if" if="[[section.score_as_group]]">
-                  <template is="dom-repeat" items="{{section.rows}}" as="rowName">
-                    <tr>
-                      <td colspan=3>[[rowName]]</td>
-                      <td>[[getInvestigationScore(rowName)]]</td>
-                    </tr>
-                  </template>
-                  <template is="dom-if" if="[[shouldShowSubtotals()]]">
-                    <tr class="subtotal-row">
-                      <td colspan=3><strong>SUBTOTAL</strong></td>
-                      <td>[[getInvestigationScoreSubtotal()]]</td>
-                    </tr>
-                  </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="grid-item grid-item-graph">
+          <section class="focus-area-section">
+            <div class="focus-area">
+              <select id="featureSelect">
+                <option value="summary">{{getSummaryOptionText()}}</option>
+                <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
+                  <optgroup label="[[section.name]]">
+                    <template is="dom-repeat" items={{section.rows}} as="focusArea">
+                      <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
+                        [[getRowInfo(focusArea, 'description')]]
+                      </option>
+                    </template>
+                  </optgroup>
+                </template>
+              </select>
+            </div>
+
+            <div id="featureReferenceList">
+              <template is="dom-repeat" items="[[featureLinks(feature)]]">
+                <template is="dom-if" if="[[item.href]]">
+                  <a href$="[[item.href]]">[[item.text]]</a>
+                </template>
+                <template is="dom-if" if="[[!item.href]]">
+                  <span>[[item.text]]</span>
                 </template>
               </template>
-            </tbody>
-            <tfoot>
-              <tr>
-                <th><b>GRAND TOTAL</b></th>
-                <th>[[totalChromium]]</th>
-                <th>[[totalFirefox]]</th>
-                <th>[[totalSafari]]</th>
-              </tr>
-            </tfoot>
-          </table>
+            </div>
+
+            <interop-feature-chart year="[[year]]"
+                                  data-manager="[[dataManager]]"
+                                  stable="[[stable]]"
+                                  feature="{{feature}}">
+            </interop-feature-chart>
+          </section>
         </div>
       </div>
-
-      <section class="focus-area-section">
-        <h2 class="focus-area-header">Scores over time</h2>
-
-        <p class="prose">
-          Here you can see how focus areas are improving over time.
-          The more tests that pass, the higher the score.
-        </p>
-
-        <div class="focus-area">
-          <select id="featureSelect">
-            <option value="summary">Summary</option>
-            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section" filter="{{filterGroupSections()}}">
-              <optgroup label="[[section.name]]">
-                <template is="dom-repeat" items={{section.rows}} as="focusArea">
-                  <option value$="[[focusArea]]" selected="[[isSelected(focusArea)]]">
-                    [[getRowInfo(focusArea, 'description')]]
-                  </option>
-                </template>
-              </optgroup>
-            </template>
-          </select>
-        </div>
-
-        <div id="featureReferenceList">
-          <template is="dom-repeat" items="[[featureLinks(feature)]]">
-            <template is="dom-if" if="[[item.href]]">
-              <a href$="[[item.href]]">[[item.text]]</a>
-            </template>
-            <template is="dom-if" if="[[!item.href]]">
-              <span>[[item.text]]</span>
-            </template>
-          </template>
-        </div>
-
-        <interop-feature-chart year="[[year]]"
-                               data-manager="[[dataManager]]"
-                               stable="[[stable]]"
-                               feature="{{feature}}">
-        </interop-feature-chart>
-      </section>
       <footer class="compat-footer">
-        <p>Focus Area scores are calculated based on test pass rates. No test
-        suite is perfect and improvements are always welcome. Please feel free
-        to contribute improvements to
-        <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
-        and then
-        <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
-        to request updating the set of tests used for scoring. You're also
-        welcome to
-        <a href="[[getYearProp('matrixURL')]]" target="_blank">join
-        the conversation on Matrix</a>!</p>
         <div class="interop-years">
           <div class="interop-year-text">
             <p>View by year: </p>
@@ -666,7 +784,6 @@ class InteropDashboard extends PolymerElement {
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
-
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
 
@@ -684,6 +801,16 @@ class InteropDashboard extends PolymerElement {
 
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
+    // Keep the block-level design for interop 2021-2022
+    if (this.year !== '2023') {
+      const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
+      gridContainerDiv.style.display = 'block';
+      gridContainerDiv.style.width = '700px';
+      gridContainerDiv.style.margin = 'auto';
+      // 2023 also displays a special description which is not displayed in previous years.
+      const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
+      extraDescriptionDiv.style.display = 'none';
+    }
   }
 
   isSelected(feature) {
@@ -707,32 +834,27 @@ class InteropDashboard extends PolymerElement {
     return this.getYearProp('focusAreas')[name][prop];
   }
 
-  getInvestigationScore(rowName) {
-    const scores = this.getYearProp('investigationScores');
+  getInvestigationScore(rowName, isPreviousYear) {
+    const yearProp = (isPreviousYear) ? 'previousInvestigationScores' : 'investigationScores';
+    const scores = this.getYearProp(yearProp);
     for (let i = 0; i < scores.length; i++) {
       const area = scores[i];
       if (area.name === rowName && area.scores_over_time.length > 0) {
         const score = area.scores_over_time[area.scores_over_time.length - 1].score;
-        return `${Math.floor(score / 10)}%`;
+        return `${(score / 10).toFixed(1)}%`;
       }
     }
 
-    return '0%';
+    return '0.0%';
   }
 
-  getInvestigationScoreSubtotal() {
-    const scores = this.getYearProp('investigationScores');
-    if (!scores) {
-      return '0%';
+  getInvestigationScoreSubtotal(isPreviousYear) {
+    const yearProp = (isPreviousYear) ? 'previousInvestigationTotalScore' : 'investigationTotalScore';
+    const total = this.getYearProp(yearProp);
+    if (!total) {
+      return '0.0%';
     }
-    const totalScore = scores.reduce((sum, area) => {
-      if (area.scores_over_time.length > 0) {
-        return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
-      }
-      return sum;
-    }, 0);
-
-    return `${Math.floor((totalScore / 10) / scores.length)}%`;
+    return `${(total / 10).toFixed(1)}%`;
   }
 
   getSubtotalScore(browserIndex, section, stable) {
@@ -740,16 +862,24 @@ class InteropDashboard extends PolymerElement {
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    return `${Math.floor((totalScore / 10) / section.rows.length)}%`;
+    const avg = Math.floor(totalScore / 10) / section.rows.length;
+    // Don't display decimal places for a 100% score.
+    if (avg >= 100) {
+      return '100%';
+    }
+    return `${avg.toFixed(1)}%`;
   }
 
-  shouldShowSubtotals() {
-    // Subtotals should only be shown if there is more than 1 section.
-    return this.getYearProp('tableSections').length > 1;
+  getSummaryOptionText() {
+    // Show "Active" in graph summary text if it is the current interop year.
+    if (parseInt(this.year) === new Date().getFullYear()) {
+      return 'All Active Focus Areas';
+    }
+    return 'All Focus Areas';
   }
 
-  showBrowserIcons(index) {
-    return index === 0;
+  showBrowserIcons(index, scoreAsGroup) {
+    return index === 0 || !scoreAsGroup;
   }
 
   showNoOtherColumns(scoreAsGroup, index) {
@@ -759,7 +889,11 @@ class InteropDashboard extends PolymerElement {
   getBrowserScoreForFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
-    return `${Math.floor(score / 10)}%`;
+    // Don't display decimal places for a 100% score.
+    if (score / 10 >= 100) {
+      return '100%';
+    }
+    return `${(score / 10).toFixed(1)}%`;
   }
 
   getBrowserScoreTotal(browserIndex) {
@@ -844,16 +978,14 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
-        #summaryContainer {
-          padding-block: 30px;
+        #summaryNumberRow {
           display: flex;
           justify-content: center;
           gap: 30px;
         }
 
-        .summary-flex-item {
-          position: relative;
-          min-height: 255px;
+        .summary-container {
+          min-height: 500px;
         }
 
         .summary-number {
@@ -878,6 +1010,11 @@ class InteropSummary extends PolymerElement {
           gap: 2ch;
         }
 
+        .summary-title {
+          margin: 10px 0;
+          text-align: center;
+        }
+
         .summary-browser-name > figure {
           margin: 0;
           flex: 1;
@@ -895,75 +1032,88 @@ class InteropSummary extends PolymerElement {
           display: none;
         }
       </style>
-
-      <div id="summaryContainer">
-        <!-- Chrome/Edge -->
-        <div class="summary-flex-item" tabindex="0">
-          <div class="summary-number">--</div>
-          <template is="dom-if" if="[[stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
-                <figcaption>Chrome</figcaption>
-              </figure>
-              <figure>
-                <img src="/static/edge_64x64.png" width="36" alt="Edge" />
-                <figcaption>Edge</figcaption>
-              </figure>
-            </div>
-          </template>
-          <template is="dom-if" if="[[!stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
-                <figcaption>Chrome<br>Dev</figcaption>
-              </figure>
-              <figure>
-                <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
-                <figcaption>Edge<br>Dev</figcaption>
-              </figure>
-            </div>
-          </template>
+      <div class="summary-container">
+        <div id="summaryNumberRow">
+          <!-- Interop -->
+          <div id="interopSummary" class="summary-flex-item" tabindex="0">
+            <h3 class="summary-title">INTEROP</h3>
+            <div class="summary-number score-number">--</div>
+          </div>
+          <!-- Investigations -->
+          <div id="investigationSummary" class="summary-flex-item" tabindex="0">
+            <h3 class="summary-title">INVESTIGATIONS</h3>
+            <div id="investigationNumber" class="summary-number">--</div>
+          </div>
         </div>
-        <!-- Firefox -->
-        <div class="summary-flex-item" tabindex="0">
-          <div class="summary-number">--</div>
-          <template is="dom-if" if="[[stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
-                <figcaption>Firefox</figcaption>
-              </figure>
-            </div>
-          </template>
-          <template is="dom-if" if="[[!stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
-                <figcaption>Firefox<br>Nightly</figcaption>
-              </figure>
-            </div>
-          </template>
-        </div>
-        <!-- Safari -->
-        <div class="summary-flex-item" tabindex="0">
-          <div class="summary-number">--</div>
-          <template is="dom-if" if="[[stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/safari_64x64.png" width="36" alt="Safari" />
-                <figcaption>Safari</figcaption>
-              </figure>
-            </div>
-          </template>
-          <template is="dom-if" if="[[!stable]]">
-            <div class="summary-browser-name">
-              <figure>
-                <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
-                <figcaption>Safari<br>Technology Preview</figcaption>
-              </figure>
-            </div>
-          </template>
+        <div id="summaryNumberRow">
+          <!-- Chrome/Edge -->
+          <div class="summary-flex-item" tabindex="0">
+            <div class="summary-number score-number">--</div>
+            <template is="dom-if" if="[[stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
+                  <figcaption>Chrome</figcaption>
+                </figure>
+                <figure>
+                  <img src="/static/edge_64x64.png" width="36" alt="Edge" />
+                  <figcaption>Edge</figcaption>
+                </figure>
+              </div>
+            </template>
+            <template is="dom-if" if="[[!stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
+                  <figcaption>Chrome<br>Dev</figcaption>
+                </figure>
+                <figure>
+                  <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
+                  <figcaption>Edge<br>Dev</figcaption>
+                </figure>
+              </div>
+            </template>
+          </div>
+          <!-- Firefox -->
+          <div class="summary-flex-item" tabindex="0">
+            <div class="summary-number score-number">--</div>
+            <template is="dom-if" if="[[stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
+                  <figcaption>Firefox</figcaption>
+                </figure>
+              </div>
+            </template>
+            <template is="dom-if" if="[[!stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
+                  <figcaption>Firefox<br>Nightly</figcaption>
+                </figure>
+              </div>
+            </template>
+          </div>
+          <!-- Safari -->
+          <div class="summary-flex-item" tabindex="0">
+            <div class="summary-number score-number">--</div>
+            <template is="dom-if" if="[[stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/safari_64x64.png" width="36" alt="Safari" />
+                  <figcaption>Safari</figcaption>
+                </figure>
+              </div>
+            </template>
+            <template is="dom-if" if="[[!stable]]">
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
+                  <figcaption>Safari<br>Technology Preview</figcaption>
+                </figure>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
 `;
@@ -989,22 +1139,56 @@ class InteropSummary extends PolymerElement {
     this.updateSummaryScores();
   }
 
-  async updateSummaryScores() {
-    let numbers = this.shadowRoot.querySelectorAll('.summary-number');
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    if (numbers.length !== scores.length) {
-      throw new Error(`Mismatched number of browsers/scores: ${numbers.length} vs. ${this.scores.length}`);
+  ready() {
+    super.ready();
+    // Hide the top summary numbers if there is no investigation value.
+    if (!this.shouldDisplayInvestigationNumber()) {
+      const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
+      investigationDiv.style.display = 'none';
+      const interopDiv = this.shadowRoot.querySelector('#interopSummary');
+      interopDiv.style.display = 'none';
+      const summaryDiv = this.shadowRoot.querySelector('.summary-container');
+      summaryDiv.style.minHeight = '275px';
     }
-    for (let i = 0; i < scores.length; i++) {
-      const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-      let score = Math.floor(scores[i][summaryFeatureName] / 10);
-      let curScore = numbers[i].innerText;
-      new CountUp(numbers[i], score, {
-        startVal: curScore === '--' ? 0 : curScore
-      }).start();
-      const colors = this.calculateColor(score);
-      numbers[i].style.color = colors[0];
-      numbers[i].style.backgroundColor = colors[1];
+  }
+
+  shouldDisplayInvestigationNumber() {
+    const scores = this.dataManager.getYearProp('investigationScores');
+    return scores !== null && scores !== undefined;
+  }
+
+  // Takes a summary number div and changes the value to match the score (with CountUp).
+  updateSummaryScore(number, score) {
+    score = Math.floor(score / 10);
+    const curScore = number.innerText;
+    new CountUp(number, score, {
+      startVal: curScore === '--' ? 0 : curScore
+    }).start();
+    const colors = this.calculateColor(score);
+    number.style.color = colors[0];
+    number.style.backgroundColor = colors[1];
+  }
+
+  async updateSummaryScores() {
+    const scoreNumbers = this.shadowRoot.querySelectorAll('.score-number');
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
+    if (scoreNumbers.length !== scores.length) {
+      throw new Error(
+        `Mismatched number of browsers/scores:  ${scoreNumbers.length} vs. ${scores.length}`);
+    }
+    // Update interop summary number first.
+    this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
+    // Update the rest of the browser scores.
+    for (let i = 1; i < scoreNumbers.length; i++) {
+      this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
+    }
+
+    // Update investigation summary separately.
+    if (this.shouldDisplayInvestigationNumber()) {
+      const investigationNumber = this.shadowRoot.querySelector('#investigationNumber');
+      this.updateSummaryScore(
+        investigationNumber, this.dataManager.getYearProp('investigationTotalScore'));
     }
   }
 
@@ -1138,50 +1322,6 @@ class InteropFeatureChart extends PolymerElement {
 
     const div = this.$.failuresChart;
     const chart = new window.google.visualization.LineChart(div);
-
-    // We define a tooltip action that can quickly show users the changelog
-    // between two subsequent versions of a browser. The goal is to help users
-    // understand why an improvement or regression may have happened - though
-    // this only exposes browser changes and not test suite changes.
-    const browserVersions = await this.dataManager.getBrowserVersions(stable);
-    chart.setAction({
-      id: 'revisionChangelog',
-      text: 'Show browser changelog',
-      action: () => {
-        let selection = chart.getSelection();
-        let row = selection[0].row;
-        let column = selection[0].column;
-
-        // Map from the selected column to the browser index. In the datatable
-        // Chrome is 1, Firefox is 3, Safari is 5 => these must map to [0, 1, 2].
-        let browserIdx = Math.floor(column / 2);
-
-        let version = browserVersions[browserIdx][row];
-        let lastVersion = version;
-        while (row > 0 && lastVersion === version) {
-          row -= 1;
-          lastVersion = browserVersions[browserIdx][row];
-        }
-        // TODO: If row == -1 here then we've failed.
-
-        if (browserIdx === 0) {
-          window.open(this.getChromeChangelogUrl(lastVersion, version));
-          return;
-        }
-
-        if (browserIdx === 1) {
-          if (stable) {
-            window.open(this.getFirefoxStableChangelogUrl(lastVersion, version));
-          } else {
-            this.$.firefoxNightlyDialog.open();
-          }
-          return;
-        }
-
-        this.$.safariDialog.open();
-      },
-    });
-
     chart.draw(dataTable, this.getChartOptions(div, feature));
   }
 
@@ -1211,19 +1351,19 @@ class InteropFeatureChart extends PolymerElement {
 
   getChartOptions(containerDiv, feature) {
     // Show only the scores from this year on the charts.
-    const endOfInteropYear = new Date(this.year, 11, 31);
-    let maxDate = new Date();
-    if (maxDate > endOfInteropYear) {
-      maxDate = endOfInteropYear;
+    // The max date shown on the X-axis is the end of this year.
+    const year = parseInt(this.year);
+    const maxDate = new Date(year + 1, 0, 1);
+    const ticks = [];
+    for (let month = 0; month < 12; month++) {
+      // Show month ticks in the middle of the month on the graph (15th day).
+      ticks.push(new Date(year, month, 15));
     }
-
     const focusAreas = this.getYearProp('focusAreas');
     const summaryFeatureName = this.getYearProp('summaryFeatureName');
     if (feature !== summaryFeatureName && !(feature in focusAreas)) {
       feature = summaryFeatureName;
     }
-    const description = feature === summaryFeatureName ?
-      `Interop ${this.year}` : focusAreas[feature].description;
     const options = {
       height: 350,
       fontSize: 14,
@@ -1231,14 +1371,19 @@ class InteropFeatureChart extends PolymerElement {
         trigger: 'both',
       },
       hAxis: {
-        title: 'Date',
-        format: 'MMM-YYYY',
+        format: 'MMM',
         viewWindow: {
           max: maxDate
+        },
+        ticks: ticks,
+        slantedText: true,
+        slantedTextAngle: 90,
+        showTextEvery: 1,
+        gridlines: {
+          count: 13,
         }
       },
       vAxis: {
-        title: `${description} Score`,
         format: 'percent',
         viewWindow: {
           min: 0,
@@ -1251,29 +1396,19 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      colors: ['#4285f4', '#ea4335', '#fbbc04'],
+      // Line chart color definitions for [Chrome, Firefox, Safari, Interop].
+      colors: ['#7be83f', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
-    // We draw the chart in two ways, depending on the viewport width. In
-    // 'full' mode the legend is on the right and we limit the chart size to
-    // 700px wide. In 'mobile' mode the legend is on the top and we use all the
-    // space we can get for the chart.
-    if (containerDiv.clientWidth >= 700) {
-      options.width = 700;
-      options.chartArea = {
-        height: '80%'
-      };
-    } else {
-      options.width = '100%';
-      options.legend = {
-        position: 'top',
-        alignment: 'center',
-      };
-      options.chartArea = {
-        left: 75,
-        width: '80%',
-      };
-    }
+    options.width = '100%';
+    options.legend = {
+      position: 'top',
+      alignment: 'center',
+    };
+    options.chartArea = {
+      left: 75,
+      width: '80%',
+    };
 
     return options;
   }
