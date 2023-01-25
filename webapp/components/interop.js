@@ -72,7 +72,7 @@ class InteropDataManager {
       this.experimentalDatatables.get(feature);
   }
 
-  // Calculates the over investigation score to be displayed in the summary bubble
+  // Calculates the investigation score to be displayed in the summary bubble
   // and saves it as an instance variable for easy reference.
   #calcInvestigationTotalScore(investigationScores) {
     if (!investigationScores) {
@@ -84,7 +84,7 @@ class InteropDataManager {
         return sum + area.scores_over_time[area.scores_over_time.length - 1].score;
       }
       return sum;
-    }, 0);
+    }, 0.0);
     return totalScore / investigationScores.length;
   }
 
@@ -1174,8 +1174,8 @@ class InteropSummary extends PolymerElement {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     if (scoreNumbers.length !== scores.length) {
-      throw new Error(`Mismatched number of browsers/scores: 
-${scoreNumbers.length} vs. ${scores.length}`);
+      throw new Error(
+        `Mismatched number of browsers/scores:  ${scoreNumbers.length} vs. ${scores.length}`);
     }
     // Update interop summary number first.
     this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
@@ -1400,26 +1400,15 @@ class InteropFeatureChart extends PolymerElement {
       colors: ['#7be83f', '#F57400', '#0095F0', '#FCBA2F'],
     };
 
-    // We draw the chart in two ways, depending on the viewport width. In
-    // 'full' mode the legend is on the right and we limit the chart size to
-    // 700px wide. In 'mobile' mode the legend is on the top and we use all the
-    // space we can get for the chart.
-    if (containerDiv.clientWidth >= 700) {
-      options.width = '100%';
-      options.chartArea = {
-        height: '80%'
-      };
-    } else {
-      options.width = '100%';
-      options.legend = {
-        position: 'top',
-        alignment: 'center',
-      };
-      options.chartArea = {
-        left: 75,
-        width: '80%',
-      };
-    }
+    options.width = '100%';
+    options.legend = {
+      position: 'top',
+      alignment: 'center',
+    };
+    options.chartArea = {
+      left: 75,
+      width: '80%',
+    };
 
     return options;
   }
