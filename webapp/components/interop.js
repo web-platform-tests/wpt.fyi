@@ -569,7 +569,7 @@ class InteropDashboard extends PolymerElement {
             <a href="https://html.spec.whatwg.org/multipage/" target="_blank" rel="noreferrer noopener">HTML</a>,
             <a href="https://tc39.es" target="_blank" rel="noreferrer noopener">JS</a>,
             <a href="https://www.w3.org/standards/" target="_blank" rel="noreferrer noopener">Web API</a>,
-            and more. A suite of automated tests evaluate conformance to web standards in 25 Focus Areas.
+            and more. A suite of automated tests evaluate conformance to web standards in 26 Focus Areas.
             The results of those tests are listed in the table, linked to the list of specific tests.
             The “Interop” column represents the percentage of tests that pass in all browsers, to assess overall interoperability.
             </p>
