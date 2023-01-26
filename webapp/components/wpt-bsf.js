@@ -128,7 +128,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
             keepInBounds: true,
             maxZoomIn: 4.0,
           },
-          colors: ['#7be83f', '#F57400', '#0095F0'],
+          colors: ['#fbc013', '#fc7a3a', '#148cda'],
         }
       },
     };
