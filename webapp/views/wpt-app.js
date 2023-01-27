@@ -36,6 +36,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           top: 0;
           right: 0;
         }
+        a {
+          color: #0d5de6;
+          text-decoration: none;
+        }
         .separator {
           border-bottom: solid 1px var(--paper-grey-300);
           padding-bottom: 1em;
