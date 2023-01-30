@@ -406,15 +406,12 @@ class InteropDashboard extends PolymerElement {
 
         .table-card {
           height: 100%;
-          display: flex;
-          border-radius: 3px;
-          background: white;
         }
 
         .score-table {
-          height: 100%;
           width: 100%;
           border-collapse: collapse;
+          margin-top: 2.5em;
         }
 
         .score-table caption {
@@ -422,18 +419,26 @@ class InteropDashboard extends PolymerElement {
           font-weight: bold;
         }
 
-        .score-table tbody th {
+        .score-table thead > .section-header {
+          vertical-align: bottom;
+          height: 50px;
+        }
+
+        .score-table thead th {
           text-align: left;
           border-bottom: 3px solid GrayText;
-          padding-top: 3em;
           padding-bottom: .25em;
         }
 
-        .score-table tbody td {
-          padding: .125em .5em;
-        }
-        .score-table tbody th:not(:last-of-type) {
+        .score-table thead th:not(:last-of-type) {
           padding-right: .5em;
+        }
+
+        .score-table td {
+          padding: .125em .5em;
+          line-height: 28px;
+          min-width: 6ch;
+          font-variant-numeric: tabular-nums;
         }
 
         .score-table .browser-icons {
@@ -453,35 +458,13 @@ class InteropDashboard extends PolymerElement {
           text-align: right;
         }
 
-        .score-table td {
-          min-width: 6ch;
-          font-variant-numeric: tabular-nums;
-        }
-
-        .score-table :is(tfoot,thead) {
-          height: 5ch;
-          vertical-align: middle;
-        }
-
-        .score-table tfoot th {
-          text-align: right;
-        }
-
-        .score-table tbody > tr:not(.section-header):nth-child(even) {
+        .score-table tbody > tr:nth-child(odd) {
           background: hsl(0 0% 0% / 5%);
-        }
-
-        .score-table tbody > tr:is(:first-of-type) {
-          height: 50px;
         }
 
         .subtotal-row {
           border-top: 1px solid GrayText;
           background: hsl(0 0% 0% / 5%);
-        }
-
-        .score-table tbody > .section-header {
-          vertical-align: bottom;
         }
 
         .interop-years {
@@ -593,9 +576,9 @@ class InteropDashboard extends PolymerElement {
         </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
-            <table id="score-table" class="score-table">
-              <tbody>
-                <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+              <table class="score-table">
+                <thead>
                   <tr class="section-header">
                     <th>{{section.name}}</th>
                     <template is="dom-if" if="[[section.score_as_group]]">
@@ -649,7 +632,9 @@ class InteropDashboard extends PolymerElement {
                       <th></th>
                     </template>
                   </tr>
-                  <template is="dom-if" if="[[!section.score_as_group]]">
+                </thead>
+                <template is="dom-if" if="[[!section.score_as_group]]">
+                  <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
@@ -661,6 +646,8 @@ class InteropDashboard extends PolymerElement {
                         <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
                       </tr>
                     </template>
+                  </tbody>
+                  <tfoot>
                     <tr class="subtotal-row">
                       <td><strong>TOTAL</strong></td>
                       <td>[[getSubtotalScore(0, section, stable)]]</td>
@@ -668,23 +655,27 @@ class InteropDashboard extends PolymerElement {
                       <td>[[getSubtotalScore(2, section, stable)]]</td>
                       <td>[[getSubtotalScore(3, section, stable)]]</td>
                     </tr>
-                  </template>
-                  <template is="dom-if" if="[[section.score_as_group]]">
+                  </tfoot>
+                </template>
+                <template is="dom-if" if="[[section.score_as_group]]">
+                  <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr>
                         <td colspan=4>[[rowName]]</td>
                         <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
+                  </tbody>
+                  <tfoot>
                     <tr class="subtotal-row">
                       <td><strong>TOTAL</strong></td>
                       <td colspan=3></td>
                       <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
                     </tr>
-                  </template>
+                  </tfoot>
                 </template>
-              </tbody>
-            </table>
+              </table>
+            </template>
           </div>
         </div>
         <div class="grid-item grid-item-graph">
