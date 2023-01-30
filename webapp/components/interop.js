@@ -301,6 +301,7 @@ class InteropDashboard extends PolymerElement {
         }
 
         a {
+          color: #0d5de6;
           text-decoration: none;
         }
 
