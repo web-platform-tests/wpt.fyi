@@ -411,7 +411,7 @@ class InteropDashboard extends PolymerElement {
         .score-table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 3em;
+          margin-top: 2.5em;
         }
 
         .score-table caption {
