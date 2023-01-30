@@ -480,7 +480,7 @@
                 "countsTowardScore": true
             },
             "interop-2023-events": {
-                "description": "Pointer & Mouse Events",
+                "description": "Pointer and Mouse Events",
                 "mdn": "https://developer.mozilla.org/docs/Web/API/Pointer_events",
                 "spec": "https://w3c.github.io/pointerevents/",
                 "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events",
