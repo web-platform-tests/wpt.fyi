@@ -854,7 +854,7 @@ class InteropDashboard extends PolymerElement {
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    const avg = Math.floor(totalScore / 10) / section.rows.length;
+    const avg = Math.floor(totalScore / section.rows.length) / 10;
     // Don't display decimal places for a 100% score.
     if (avg >= 100) {
       return '100%';
