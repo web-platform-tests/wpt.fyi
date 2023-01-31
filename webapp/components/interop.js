@@ -974,6 +974,7 @@ class InteropSummary extends PolymerElement {
           display: flex;
           justify-content: center;
           gap: 30px;
+          margin-bottom: 20px;
         }
 
         .summary-container {
@@ -1028,13 +1029,13 @@ class InteropSummary extends PolymerElement {
         <div id="summaryNumberRow">
           <!-- Interop -->
           <div id="interopSummary" class="summary-flex-item" tabindex="0">
-            <h3 class="summary-title">INTEROP</h3>
             <div class="summary-number score-number">--</div>
+            <h3 class="summary-title">INTEROP</h3>
           </div>
           <!-- Investigations -->
           <div id="investigationSummary" class="summary-flex-item" tabindex="0">
-            <h3 class="summary-title">INVESTIGATIONS</h3>
             <div id="investigationNumber" class="summary-number">--</div>
+            <h3 class="summary-title">INVESTIGATIONS</h3>
           </div>
         </div>
         <div id="summaryNumberRow">
