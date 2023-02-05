@@ -978,11 +978,11 @@ class InteropSummary extends PolymerElement {
         }
 
         .summary-container {
-          min-height: 500px;
+          min-height: 470px;
         }
 
         .summary-number {
-          font-size: 5em;
+          font-size: 4.5em;
           width: 3ch;
           height: 3ch;
           padding: 10px;
@@ -992,7 +992,8 @@ class InteropSummary extends PolymerElement {
           aspect-ratio: 1;
           border-radius: 50%;
           margin-bottom: 10px;
-          /*cursor: help;*/
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .summary-browser-name {
@@ -1006,6 +1007,7 @@ class InteropSummary extends PolymerElement {
         .summary-title {
           margin: 10px 0;
           text-align: center;
+          font-size: 1em;
         }
 
         .summary-browser-name > figure {
