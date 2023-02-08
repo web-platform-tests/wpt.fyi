@@ -131,6 +131,7 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
+# TODO: pinning Chrome to 109 due to https://github.com/web-platform-tests/wpt.fyi/issues/3152
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_109.0.5414.119-1_amd64.deb; \
