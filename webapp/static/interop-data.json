@@ -378,7 +378,7 @@
                 "description": "Containment",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/contain",
                 "spec": "https://drafts.csswg.org/css-contain/#contain-property",
-                "tests": "/results/css?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-contain",
+                "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain",
                 "countsTowardScore": true
             },
             "interop-2023-pseudos": {
