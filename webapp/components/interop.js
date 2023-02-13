@@ -369,23 +369,10 @@ class InteropDashboard extends PolymerElement {
         .unselected {
           background-color: white;
         }
+
         .selected {
-          background-color: var(--paper-blue-700);
+          background-color: #1D79F2;
           color: white;
-        }
-
-        .selected::before {
-          --_size: 1rem;
-          --_half-size: calc(var(--_size) / 2);
-
-          content: "";
-          position: absolute;
-          bottom: calc(var(--_half-size) * -1 + 1px);
-          width: var(--_size);
-          height: var(--_half-size);
-          left: calc(50% - var(--_half-size));
-          background: var(--paper-blue-700);
-          clip-path: polygon(46% 100%, 0 0, 100% 0);
         }
 
         .focus-area-section {
@@ -978,11 +965,11 @@ class InteropSummary extends PolymerElement {
         }
 
         .summary-container {
-          min-height: 500px;
+          min-height: 470px;
         }
 
         .summary-number {
-          font-size: 5em;
+          font-size: 4.5em;
           width: 3ch;
           height: 3ch;
           padding: 10px;
@@ -992,7 +979,8 @@ class InteropSummary extends PolymerElement {
           aspect-ratio: 1;
           border-radius: 50%;
           margin-bottom: 10px;
-          /*cursor: help;*/
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .summary-browser-name {
@@ -1006,6 +994,7 @@ class InteropSummary extends PolymerElement {
         .summary-title {
           margin: 10px 0;
           text-align: center;
+          font-size: 1em;
         }
 
         .summary-browser-name > figure {
