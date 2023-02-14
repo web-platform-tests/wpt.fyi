@@ -445,7 +445,7 @@
                 "countsTowardScore": true
             },
             "interop-2023-mathfunctions": {
-                "description": "Math Functions",
+                "description": "CSS Math Functions",
                 "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Functions#math_functions",
                 "spec": "https://drafts.csswg.org/css-values-4/#math",
                 "tests": "/results/css/css-values?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
