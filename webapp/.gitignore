@@ -8,6 +8,7 @@ static/chromium_64x64.png
 static/deno_64x64.png
 static/edge*_64x64.png
 static/firefox*_64x64.png
+static/node.js_64x64.png
 static/safari*_64x64.png
 static/servo_64x64.png
 static/uc_64x64.png
