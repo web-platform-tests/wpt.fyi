@@ -40,6 +40,7 @@ const DisplayNames = (() => {
 const versionPatterns = Object.freeze({
   Major: /(\d+)/,
   MajorAndMinor: /(\d+\.\d+)/,
+  Node: /(\d+\.\d+\.\d+(?:-[a-zA-Z]+)?)/,
 });
 
 // The set of all browsers known to the wpt.fyi UI.
@@ -206,9 +207,14 @@ const ProductInfo = (superClass) => class extends superClass {
    * salient information for the specified browser.
    */
   shortVersion(browserName, browserVersion) {
-    const pattern = this.minorIsSignificant(browserName)
-      ? versionPatterns.MajorAndMinor
-      : versionPatterns.Major;
+    let pattern;
+    if (browserName === 'node.js') {
+      pattern = versionPatterns.Node;
+    } else {
+      pattern = this.minorIsSignificant(browserName)
+        ? versionPatterns.MajorAndMinor
+        : versionPatterns.Major;
+    }
     const match = pattern.exec(browserVersion);
 
     if (!match) {
