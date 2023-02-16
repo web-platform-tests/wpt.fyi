@@ -63,8 +63,10 @@ itsdangerous==2.1.1
     # via flask
 jinja2==3.0.3
     # via flask
-markupsafe==2.1.0
-    # via jinja2
+markupsafe==2.1.2
+    # via
+    #   jinja2
+    #   werkzeug
 mccabe==0.6.1
     # via flake8
 mypy==1.0.0
@@ -111,7 +113,7 @@ typing-extensions==4.1.1
     #   mypy
 urllib3==1.26.8
     # via requests
-werkzeug==2.0.3
+werkzeug==2.2.3
     # via flask
 zipp==3.7.0
     # via importlib-metadata
