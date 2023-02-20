@@ -14,21 +14,17 @@ By default, a search query will be implicitly treated as an `exists` query (a di
 across each of the runs separately). However, there are several other root query types that
 can be invoked by wrapping the query(s), including explicitly wrapping with `exists`.
 
-If multiple root queries are used, they are implicitly combined with `AND`, i.e. each query
-must separately be true. e.g.
+If multiple root queries are used, then each query must separately be true. e.g.
 
     count>1(status:!pass) none(status:missing)
 
 Requires that more than one non-pass result is present, and none of the results are missing.
-You can also explicitly combine the root queries with `and`, e.g.
-
-    count<3(status:pass) and none(status:missing)
 
 Alternatively, root queries can be combined using `or`, e.g.
 
     none(status:pass) or all(status:pass)
 
-Note that the `and` conjunction takes precedence over the `or` conjunction.
+Note that the and-conjunction (no keyword) takes precedence over the `or` conjunction.
 
 #### Exists
 
@@ -178,11 +174,11 @@ are not supported.
 
 #### And-conjuction
 
-    [query1] and [query2] [and ...]
+    [query1] [query2] [...]
 
 Combines filters, such that they must all apply, e.g.
 
-    chrome:pass and firefox:!pass
+    chrome:pass firefox:!pass
 
 #### Or-conjuction
 
@@ -192,8 +188,8 @@ Combines filters, such that any must apply, e.g.
 
     chrome:pass or chrome:ok
 
-> NOTE: Or-conjuction takes less precedence than `and`. Precedence can be modified
-> using parens, e.g. `chrome:pass and (firefox:!pass or safari:!pass)`
+> NOTE: Or-conjuction takes less precedence than and-conjuction. Precedence can be modified
+> using parens, e.g. `chrome:pass (firefox:!pass or safari:!pass)`
 
 ## /api/search
 
@@ -313,11 +309,11 @@ Same as satuts, but with a specific product-spec.
 
 Search untriaged issues -
 
-    chrome:fail and !link:bugs.chromium.org
+    chrome:fail !link:bugs.chromium.org
 
 Search triaged issues -
 
-    chrome:pass and link:bugs.chromium.org
+    chrome:pass link:bugs.chromium.org
 
 #### triaged
 
@@ -331,11 +327,11 @@ Where [browsername] is a browser specification (e.g. safari, chrome).
 
 Search untriaged Chrome failures -
 
-    chrome:fail and none(triaged:chrome)
+    chrome:fail none(triaged:chrome)
 
 Search triaged Chrome tests -
 
-    chrome:pass and triaged:chrome
+    chrome:pass triaged:chrome
 
 #### label
 
