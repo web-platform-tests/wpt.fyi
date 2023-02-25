@@ -42,6 +42,7 @@ Once the instance is running, run:
 ```sh
 git checkout main
 git pull
+source util/commands.sh
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
