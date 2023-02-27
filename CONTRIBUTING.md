@@ -17,7 +17,8 @@ information on using pull requests.
 There is a `make` rule for linting. Requirements for it are included in the docker image.
 
 ```sh
-docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make lint
+source util/commands.sh
+wptd_exec_it make lint
 ```
 
 To run outside docker, you'll need to install `golint` and `eslint`.
@@ -39,7 +40,8 @@ npm test
 There is a number of `make` rule for testing. To run tests in docker:
 
 ```sh
-docker exec -t -u $(id -u $USER):$(id -g $USER) wptd-dev-instance make test
+source util/commands.sh
+wptd_exec_it make test
 ```
 
 See [`Makefile`](/Makefile) for more fine grained targets which take less time to run.

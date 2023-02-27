@@ -50,6 +50,7 @@ Once the instance is running, run:
 # Ensure you have the latest code
 git checkout main
 git pull
+source util/commands.sh
 
 # Login to gcloud if not already logged in.
 # To check if you are already logged in, run `wptd_exec_it make gcloud_login`. It will fail if it cannot find a logged in profile.
