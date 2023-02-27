@@ -24,8 +24,15 @@ at least Editor privileges. Then from the project root directory:
 If you are running on Linux:
 
 ```sh
+# Ensure you have the latest code
 git checkout main
 git pull
+
+# Login to gcloud if not already logged in.
+# To check if you are already logged in, run `make gcloud_login`. It will fail if it cannot find a logged in profile.
+gcloud auth login
+
+# Deploy the services
 make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
 make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
 make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
@@ -40,9 +47,16 @@ If you are running on non-Linux, first start a Docker instance:
 Once the instance is running, run:
 
 ```sh
+# Ensure you have the latest code
 git checkout main
 git pull
 source util/commands.sh
+
+# Login to gcloud if not already logged in.
+# To check if you are already logged in, run `wptd_exec_it make gcloud_login`. It will fail if it cannot find a logged in profile.
+wptd_exec_it gcloud auth login
+
+# Deploy the services
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
 wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
