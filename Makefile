@@ -205,8 +205,7 @@ curl: apt-get-curl
 gcc: apt-get-gcc
 git: apt-get-git
 psmisc: apt-get-psmisc
-python3: apt-get-python3.7
-python: apt-get-python
+python3: apt-get-python3.9
 tox: apt-get-tox
 unzip: apt-get-unzip
 wget: apt-get-wget
@@ -235,7 +234,7 @@ node: curl gpg
 		sudo apt-get install -qqy nodejs; \
 	fi
 
-gcloud: python curl gpg
+gcloud: python3 curl gpg
 	if [[ "$$(which gcloud)" == "" ]]; then \
 		curl -s https://sdk.cloud.google.com > ./install-gcloud.sh; \
 		bash ./install-gcloud.sh --disable-prompts --install-dir=$(HOME) > /dev/null; \
