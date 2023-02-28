@@ -77,8 +77,14 @@ gcloud app deploy --project=wptdashboard index.yaml queue.yaml dispatch.yaml
 `index.yaml`, `queue.yaml` or `dispatch.yaml`.)
 
 To deploy manually, follow the same instructions as production but replace
-`wptdashboard` with `wptdashboard-staging`, and use `make deploy_staging`
-instead of `make deploy_production`.
+`wptdashboard` with `wptdashboard-staging`, use `make deploy_staging`
+instead of `make deploy_production` and use `app.staging.yaml` instead of `app.yaml`:
+
+```sh
+wptd_exec_it make deploy_staging PROJECT=wptdashboard-staging APP_PATH=webapp/web/app.staging.yaml
+wptd_exec_it make deploy_staging PROJECT=wptdashboard-staging APP_PATH=results-processor/app.staging.yaml
+wptd_exec_it make deploy_staging PROJECT=wptdashboard-staging APP_PATH=api/query/cache/service/app.staging.yaml
+```
 
 ## Out-of-repo configurations
 
