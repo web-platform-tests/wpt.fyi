@@ -1,6 +1,6 @@
 # Maintenance: Upgrading Golang
 
-This document details the files to change and the necessary steps when upgrading Golang. At the time of the writing, we only upgrade on minor version changes to Golang, not patch changes. If that changes, please update this document.
+This document details the files to change and the necessary steps when upgrading Golang.
 
 ## Step 1 - Change the Runtime Version in webapp's app.staging.yaml and app.yaml files
 
@@ -15,7 +15,7 @@ Once you have confirmed that the desired version is available:
 - tooling [Dockerfile](../Dockerfile) at the root of the repo
 - searchcache [Dockerfile](../api/query/cache/service/Dockerfile)
 
-The tooling image and the first stage of searchcache use the same Golang image. Check out the Golang [page](https://hub.docker.com/_/golang?tab=tags) on Docker Hub for the latest tags. Currently, we are using the `buster` [release](https://wiki.debian.org/DebianReleases) of Debian. As a result pick the `golang:<latest stable version>-buster` tag. If buster is superseded by a new version, you should change that as well.
+The tooling image and the first stage of searchcache use the same Golang image. Check out the Golang [page](https://hub.docker.com/_/golang?tab=tags) on Docker Hub for the latest tags. Currently, we are using the `bullseye` [release](https://wiki.debian.org/DebianReleases) of Debian. As a result pick the `golang:<latest stable version>-bullseye` tag. If bullseye is superseded by a new version, you should change that as well.
 
 ## Step 3 - Change the version in go.mod
 
