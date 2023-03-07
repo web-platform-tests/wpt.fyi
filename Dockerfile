@@ -15,6 +15,7 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         lsb-release \
         openjdk-11-jdk \
         python3.9 \
+        python3-crcmod \
         sudo \
         tox \
         wget \
