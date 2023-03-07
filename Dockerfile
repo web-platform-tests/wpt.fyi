@@ -1,5 +1,5 @@
 # vim: set expandtab sw=4
-FROM golang:1.19-buster
+FROM golang:1.20.1-bullseye
 
 # Create a non-priviledged user to run browsers as (Firefox and Chrome do not
 # like to run as root).
@@ -14,8 +14,7 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         firefox-esr \
         lsb-release \
         openjdk-11-jdk \
-        python-crcmod \
-        python3.7 \
+        python3.9 \
         sudo \
         tox \
         wget \

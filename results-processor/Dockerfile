@@ -1,4 +1,4 @@
-FROM gcr.io/google-appengine/python
+FROM python:3.9.16-bullseye
 
 # Default WORKDIR: /home/vmagent/app (/app symlinks to this)
 
@@ -18,7 +18,7 @@ RUN gcloud config set disable_usage_reporting false
 RUN rm -f $HOME/.config/gcloud/gce
 
 # Setup and activate virtualenv.
-RUN virtualenv -p python3.7 /env
+RUN virtualenv -p python3.9 /env
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
