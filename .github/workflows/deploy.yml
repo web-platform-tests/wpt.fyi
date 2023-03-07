@@ -10,7 +10,7 @@ jobs:
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE: webplatformtests/wpt.fyi:latest
+      DOCKER_IMAGE: webplatformtests/wpt.fyi:past-update-docker-python
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
