@@ -1,11 +1,10 @@
 FROM python:3.9.16-bullseye
 
-# Default WORKDIR: /home/vmagent/app (/app symlinks to this)
-
 # Install runtime dependencies.
-# python-crcmod for faster gsutil checksum
+# python3-crcmod for faster gsutil checksum
+# python3-virtualenv for virtualenv
 # https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
-RUN apt-get update -q && apt-get install -qy python3-crcmod && apt-get clean
+RUN apt-get update -q && apt-get install -qy python3-crcmod python3-virtualenv  && apt-get clean
 # gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
@@ -21,6 +20,9 @@ RUN rm -f $HOME/.config/gcloud/gce
 RUN virtualenv -p python3.9 /env
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
+
+# WORKDIR needs to be set explicitly to /app
+WORKDIR /app
 
 # Install Python dependencies.
 ADD requirements.txt /app/
