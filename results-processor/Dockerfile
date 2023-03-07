@@ -5,7 +5,7 @@ FROM python:3.9.16-bullseye
 # Install runtime dependencies.
 # python-crcmod for faster gsutil checksum
 # https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
-RUN apt-get update -q && apt-get install -qy python-crcmod && apt-get clean
+RUN apt-get update -q && apt-get install -qy python3-crcmod && apt-get clean
 # gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
