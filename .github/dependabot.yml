@@ -29,17 +29,15 @@ updates:
   - dependency-name: "@vaadin/vaadin-grid"
   - dependency-name: "@vaadin/vaadin-date-picker"
   - dependency-name: "@vaadin/vaadin-context-menu"
-# Can uncomment the docker section once
-# https://github.com/web-platform-tests/wpt.fyi/issues/3033 is resolved.
-# - package-ecosystem: "docker"
-#   directory: "/results-processor"
-#   schedule:
-#     interval: "weekly"
-# - package-ecosystem: "docker"
-#   directory: "/"
-#   schedule:
-#     interval: "weekly"
-# - package-ecosystem: "docker"
-#   directory: "/api/query/cache/service"
-#   schedule:
-#     interval: "weekly"
+- package-ecosystem: "docker"
+  directory: "/results-processor"
+  schedule:
+    interval: "weekly"
+- package-ecosystem: "docker"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+- package-ecosystem: "docker"
+  directory: "/api/query/cache/service"
+  schedule:
+    interval: "weekly"
