@@ -11,6 +11,7 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
+import { interopData } from './interop-data.js';
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
@@ -30,8 +31,7 @@ class InteropDataManager {
 
   async fetchYearData() {
     // prepare all year-specific info for reference.
-    const resp = await fetch('/static/interop-data_v2.json');
-    const paramsByYear = await resp.json();
+    const paramsByYear = interopData;
 
     const yearInfo = paramsByYear[this.year];
     const previousYear = String(parseInt(this.year) - 1);
