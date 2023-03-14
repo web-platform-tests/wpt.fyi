@@ -69,9 +69,9 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.6.1
     # via flake8
-mypy==1.0.1
+mypy==1.1.1
     # via -r requirements.in
-mypy-extensions==0.4.3
+mypy-extensions==1.0.0
     # via mypy
 proto-plus==1.20.3
     # via google-cloud-datastore
