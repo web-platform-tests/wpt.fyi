@@ -291,8 +291,10 @@ export const interopData = {
     ],
     'investigation_scores': [
       {
-        'name': 'Accessibility Tree',
-        'scores_over_time': []
+        'name': 'Accessibility Testing',
+        'scores_over_time': [
+          { 'date': '2023-03-08', 'score': 600 }
+        ]
       },
       {
         'name': 'Mobile Testing',
