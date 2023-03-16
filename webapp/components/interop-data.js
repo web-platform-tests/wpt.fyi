@@ -291,9 +291,9 @@ export const interopData = {
     ],
     'investigation_scores': [
       {
-        "name": "Accessibility Testing",
-        "scores_over_time": [
-            { "date": "2023-03-08", "score": 600 }
+        'name': 'Accessibility Testing',
+        'scores_over_time': [
+            { 'date': '2023-03-08', 'score': 600 }
         ]
       },
       {
