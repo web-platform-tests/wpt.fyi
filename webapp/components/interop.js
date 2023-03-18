@@ -9,9 +9,12 @@ import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import { interopData } from './interop-data.js';
+
+
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
@@ -563,7 +566,7 @@ class InteropDashboard extends PolymerElement {
         </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
-            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+            <template is="dom-repeat" items="{{getTestSection()}}" as="section">
               <table class="score-table">
                 <thead>
                   <tr class="section-header">
@@ -619,10 +622,20 @@ class InteropDashboard extends PolymerElement {
                       <th></th>
                     </template>
                   </tr>
+                    <tr>
+                      <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
+                        <td><paper-icon-button class="sort-button" id="col-activeFocusAreas" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-0" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-1" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-2" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-3" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                      </template>
+                    </tr>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody>
-                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                    <!-- change section.rows to sortRows(section.rows)? -->   
+                    <template is="dom-repeat" items="{{sortRows(section.rows)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -731,6 +744,10 @@ class InteropDashboard extends PolymerElement {
       },
       dataManager: Object,
       scores: Object,
+      sortColumn: {
+        type: Number,
+        value: 0
+      },
       totalChromium: {
         type: String,
         value: '0%'
@@ -763,6 +780,12 @@ class InteropDashboard extends PolymerElement {
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
+    this.testSection = this.getYearProp('tableSections')
+
+    this.sectionMappings = {
+      activeFocusAreas: "Active Focus Areas"
+    }
+
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
 
@@ -790,6 +813,10 @@ class InteropDashboard extends PolymerElement {
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
     }
+  }
+
+  getTestSection() {
+    return this.testSection
   }
 
   isSelected(feature) {
@@ -947,6 +974,40 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleStable.setAttribute('aria-pressed', true);
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
+
+  sortRows(rows) {
+    return rows;
+  }
+  
+
+  clickSort(e) {
+    // console.log(e)
+    const i = parseInt(e.target.id.split('-')[1]);
+    console.log((this.scores.stable)[i])
+    console.log(this.getBrowserScoreForFeature(i, 'interop-2023-url'))
+
+    this.sortColumn = i
+
+    // console.log(this.getYearProp('tableSections'))
+    // const id = e.target.id.split("-")[1]
+    // const name = this.columnMappings[id]
+
+    // console.log(name)
+    // console.log(this.testSection)
+    
+    // console.log(this.features)
+    // console.log(e.targetf.id)
+    // console.log(first, second, third)
+    // let sortRow = [...e.target.closest("thead > tr").querySelectorAll("td")];
+
+    // let tBody = e.target.closest("table").querySelector('tbody')
+    // console.log(tBody)
+    // this.getYearProp('tableSections')
+
+    // const data = this.getYearProp('tableSections')[0];
+    // console.log(sortRow)
+  }
+
 }
 window.customElements.define(InteropDashboard.is, InteropDashboard);
 
