@@ -624,17 +624,18 @@ class InteropDashboard extends PolymerElement {
                   </tr>
                     <tr>
                       <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
-                        <td><paper-icon-button class="sort-button" id="colSort-activeFocusAreas" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="chromeColSort" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" on-click="clickSort(section, 'firefox')" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" on-click="clickSort(section, 'safari')" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" on-click="clickSort(section, 'interop')" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-activeFocusAreas" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-0" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-1" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-2" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-3" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
                       </template>
                     </tr>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
-                  <tbody>   
-                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                  <tbody>
+                    <!-- change section.rows to sortRows(section.rows)? -->   
+                    <template is="dom-repeat" items="{{sortRows(section.rows)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -743,6 +744,10 @@ class InteropDashboard extends PolymerElement {
       },
       dataManager: Object,
       scores: Object,
+      sortColumn: {
+        type: Number,
+        value: 0
+      },
       totalChromium: {
         type: String,
         value: '0%'
@@ -777,9 +782,9 @@ class InteropDashboard extends PolymerElement {
 
     this.testSection = this.getYearProp('tableSections')
 
-    this.columnMappings = {
-      activeFocusAreas: 'Active Focus Areas'
-    };
+    this.sectionMappings = {
+      activeFocusAreas: "Active Focus Areas"
+    }
 
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
@@ -970,14 +975,26 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 
+  sortRows(rows) {
+    return rows;
+  }
+  
+
   clickSort(e) {
-    console.log(this.scores.stable)
+    // console.log(e)
+    const i = parseInt(e.target.id.split('-')[1]);
+    console.log((this.scores.stable)[i])
+    console.log(this.getBrowserScoreForFeature(i, 'interop-2023-url'))
+
+    this.sortColumn = i
+
     // console.log(this.getYearProp('tableSections'))
     // const id = e.target.id.split("-")[1]
     // const name = this.columnMappings[id]
 
     // console.log(name)
-    console.log(this.testSection)
+    // console.log(this.testSection)
+    
     // console.log(this.features)
     // console.log(e.targetf.id)
     // console.log(first, second, third)
