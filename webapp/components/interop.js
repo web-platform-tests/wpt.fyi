@@ -996,9 +996,22 @@ class InteropDashboard extends PolymerElement {
 
       for(let i = 0; i < rows.length; i++) {
         const feature = rows[i]
-        individualScores[i] = [feature, this.getBrowserScoreForFeature(this.sortColumn, feature)]
+        individualScores[i] = [feature, parseFloat(this.getBrowserScoreForFeature(this.sortColumn, feature))]
+      }
+
+      individualScores.sort((a, b) => {
+        return a[1] - b[1]
+      })
+
+      const sortedFeatureOrder = []
+      for(let i = 0; i < individualScores.length; i++) {
+        sortedFeatureOrder[i] = individualScores[i][0]
       }
       console.log(individualScores)
+      // console.log(sortedFeatureOrder)
+      rows = sortedFeatureOrder
+      console.log({rows})
+      // return sortedFeatureOrder
     }
     return rows;
   }
