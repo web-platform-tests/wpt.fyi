@@ -624,17 +624,16 @@ class InteropDashboard extends PolymerElement {
                   </tr>
                     <tr>
                       <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
-                        <td><paper-icon-button class="sort-button" id="col-activeFocusAreas" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-0" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-1" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-2" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-3" on-click="clickSort" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-0" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-1" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-2" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-3" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
+                        <td><paper-icon-button class="sort-button" id="col-4" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
                       </template>
                     </tr>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
-                  <tbody>
-                    <!-- change section.rows to sortRows(section.rows)? -->   
+                  <tbody> 
                     <template is="dom-repeat" items="{{sortRows(section.rows)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
@@ -746,7 +745,7 @@ class InteropDashboard extends PolymerElement {
       scores: Object,
       sortColumn: {
         type: Number,
-        value: 0
+        value: -1
       },
       totalChromium: {
         type: String,
@@ -783,7 +782,8 @@ class InteropDashboard extends PolymerElement {
     this.testSection = this.getYearProp('tableSections')
 
     this.sectionMappings = {
-      activeFocusAreas: "Active Focus Areas"
+      activeFocusAreas: "Active Focus Areas",
+      previousFocusAreas: "Previous Focus Areas"
     }
 
     this.features = Object.entries(this.getYearProp('focusAreas'))
@@ -976,28 +976,55 @@ class InteropDashboard extends PolymerElement {
   }
 
   sortRows(rows) {
+    // console.log(this.sortColumn);
+    // console.log(rows);
+
+    // Alphabetize by focus area column
+    if(this.sortColumn === -1) {
+
+      // rows.sort((a, b) => {
+      //   let aWordArray = a.split('-')
+      //   let bWordArray = b.split('-')
+      //   return aWordArray[aWordArray.length - 1] - bWordArray[bWordArray.length - 1]
+      // })
+      // rows.forEach(n => {
+      //   let nameArray = n.split('-')
+      //   console.log(nameArray[nameArray.length - 1]);
+      // });
+    } else if (this.sortColumn >= 0) {
+      const individualScores = []
+
+      for(let i = 0; i < rows.length; i++) {
+        const feature = rows[i]
+        individualScores[i] = [feature, this.getBrowserScoreForFeature(this.sortColumn, feature)]
+      }
+      console.log(individualScores)
+    }
     return rows;
   }
   
 
-  clickSort(e) {
+handleSortClick(e) {
     // console.log(e)
-    const i = parseInt(e.target.id.split('-')[1]);
-    console.log((this.scores.stable)[i])
-    console.log(this.getBrowserScoreForFeature(i, 'interop-2023-url'))
+    const i = parseInt(e.target.id.split('-')[1]) - 1;
+    // console.log((this.scores.stable)[i])
+    // console.log(this.getBrowserScoreForFeature(i, 'interop-2023-url'))
 
-    this.sortColumn = i
+    if (Number.isInteger(i)) {
+      this.sortColumn = i
+    } else {
+      this.sortColumn = -1
+    }
+    // console.log(this.testSection[0])
+    this.sortRows(this.testSection[0].rows)
 
-    // console.log(this.getYearProp('tableSections'))
-    // const id = e.target.id.split("-")[1]
+    // console.log(this.dataManager)
     // const name = this.columnMappings[id]
 
     // console.log(name)
     // console.log(this.testSection)
     
     // console.log(this.features)
-    // console.log(e.targetf.id)
-    // console.log(first, second, third)
     // let sortRow = [...e.target.closest("thead > tr").querySelectorAll("td")];
 
     // let tBody = e.target.closest("table").querySelector('tbody')
