@@ -15,7 +15,7 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
-        #summaryNumberRow {C
+        #summaryNumberRow {
           display: flex;
           justify-content: center;
           gap: 30px;
