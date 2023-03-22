@@ -182,7 +182,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     // results. Removing this allows special views (interop) to be
     // viewed on any results page.
     if (this.showDefaultView(parsed.view, parsed.q)) {
-      parsed.view = 'subtest';
       parsed.canViewInteropScores = false;
     } else {
       parsed.canViewInteropScores = true;
@@ -285,8 +284,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     if ('view' in params) {
       batchUpdate.view = params.view;
-    } else {
-      batchUpdate.view = 'subtest';
     }
     if ('canViewInteropScores' in params) {
       batchUpdate.canViewInteropScores = params.canViewInteropScores;
