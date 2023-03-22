@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-import { InteropDataManager } from './interop-data-manager';
+import { InteropDataManager } from './interop-data-manager.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -673,4 +673,4 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 }
-window.customElements.define(InteropDashboard.is, InteropDashboard);
+export { InteropDashboard };

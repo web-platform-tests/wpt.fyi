@@ -248,4 +248,4 @@ class InteropSummary extends PolymerElement {
     return ['#ee2b2b', '#ff050526'];
   }
 }
-window.customElements.define(InteropSummary.is, InteropSummary);
+export { InteropSummary };

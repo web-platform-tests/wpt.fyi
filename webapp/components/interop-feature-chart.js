@@ -212,4 +212,4 @@ class InteropFeatureChart extends PolymerElement {
     return options;
   }
 }
-window.customElements.define(InteropFeatureChart.is, InteropFeatureChart);
+export { InteropFeatureChart };
