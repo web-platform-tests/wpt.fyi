@@ -634,7 +634,7 @@ class InteropDashboard extends PolymerElement {
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody> 
-                    <template is="dom-repeat" items="{{sortRows(section.rows)}}" as="rowName">
+                    <template is="dom-repeat" items="{{sortRows(section.rows, sortColumn)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -976,25 +976,27 @@ class InteropDashboard extends PolymerElement {
   }
 
   sortRows(rows) {
-    // console.log(this.sortColumn);
-    // console.log(rows);
-
+    
+    const sortedFeatureOrder = []
     // Alphabetize by focus area column
     if(this.sortColumn === -1) {
+      const rowNames = []
+      for(let i = 0; i < rows.length; i++) {
+        const feature = rows[i]
+        rowNames[i] = [feature, this.getRowInfo(feature, 'description')]
+      }
 
-      // rows.sort((a, b) => {
-      //   let aWordArray = a.split('-')
-      //   let bWordArray = b.split('-')
-      //   return aWordArray[aWordArray.length - 1] - bWordArray[bWordArray.length - 1]
-      // })
-      // rows.forEach(n => {
-      //   let nameArray = n.split('-')
-      //   console.log(nameArray[nameArray.length - 1]);
-      // });
+      rowNames.sort((a, b) => {
+        return a[1] - b[1]
+      })
+
+      for (let i = 0; i < rowNames.length; i++) {
+        sortedFeatureOrder[i] = rowNames[i][0]
+      }
+    // List in ascending order by score
     } else if (this.sortColumn >= 0) {
       const individualScores = []
-
-      for(let i = 0; i < rows.length; i++) {
+      for (let i = 0; i < rows.length; i++) {
         const feature = rows[i]
         individualScores[i] = [feature, parseFloat(this.getBrowserScoreForFeature(this.sortColumn, feature))]
       }
@@ -1003,49 +1005,22 @@ class InteropDashboard extends PolymerElement {
         return a[1] - b[1]
       })
 
-      const sortedFeatureOrder = []
-      for(let i = 0; i < individualScores.length; i++) {
+      for (let i = 0; i < individualScores.length; i++) {
         sortedFeatureOrder[i] = individualScores[i][0]
       }
-      console.log(individualScores)
-      // console.log(sortedFeatureOrder)
-      rows = sortedFeatureOrder
-      console.log({rows})
-      // return sortedFeatureOrder
     }
-    return rows;
+    return sortedFeatureOrder;
   }
   
 
 handleSortClick(e) {
-    // console.log(e)
     const i = parseInt(e.target.id.split('-')[1]) - 1;
-    // console.log((this.scores.stable)[i])
-    // console.log(this.getBrowserScoreForFeature(i, 'interop-2023-url'))
 
     if (Number.isInteger(i)) {
       this.sortColumn = i
     } else {
       this.sortColumn = -1
     }
-    // console.log(this.testSection[0])
-    this.sortRows(this.testSection[0].rows)
-
-    // console.log(this.dataManager)
-    // const name = this.columnMappings[id]
-
-    // console.log(name)
-    // console.log(this.testSection)
-    
-    // console.log(this.features)
-    // let sortRow = [...e.target.closest("thead > tr").querySelectorAll("td")];
-
-    // let tBody = e.target.closest("table").querySelector('tbody')
-    // console.log(tBody)
-    // this.getYearProp('tableSections')
-
-    // const data = this.getYearProp('tableSections')[0];
-    // console.log(sortRow)
   }
 
 }
