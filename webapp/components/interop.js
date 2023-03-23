@@ -622,19 +622,19 @@ class InteropDashboard extends PolymerElement {
                       <th></th>
                     </template>
                   </tr>
-                    <tr>
-                      <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
-                        <td><paper-icon-button class="sort-button" id="col-0" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-1" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-2" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-3" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
-                        <td><paper-icon-button class="sort-button" id="col-4" on-click="handleSortClick" src="/static/expand_more.svg"></paper-icon-button></td>
-                      </template>
-                    </tr>
+                    <template is="dom-if" if="[[showSortArrows(itemsIndex)]]">
+                      <tr>
+                          <td><paper-icon-button class="sort-button" id="col-0" on-click="handleSortClick" src="[[getArrowImage(-1, sortColumn, isSortedAscending)]]"></paper-icon-button></td>
+                          <td><paper-icon-button class="sort-button" id="col-1" on-click="handleSortClick" src="[[getArrowImage(0, sortColumn, isSortedAscending)]]"></paper-icon-button></td>
+                          <td><paper-icon-button class="sort-button" id="col-2" on-click="handleSortClick" src="[[getArrowImage(1, sortColumn, isSortedAscending)]]"></paper-icon-button></td>
+                          <td><paper-icon-button class="sort-button" id="col-3" on-click="handleSortClick" src="[[getArrowImage(2, sortColumn, isSortedAscending)]]"></paper-icon-button></td>
+                          <td><paper-icon-button class="sort-button" id="col-4" on-click="handleSortClick" src="[[getArrowImage(3, sortColumn, isSortedAscending)]]"></paper-icon-button></td>
+                      </tr>
+                    </template>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody> 
-                    <template is="dom-repeat" items="{{sortRows(section.rows, sortColumn)}}" as="rowName">
+                    <template is="dom-repeat" items="{{sortRows(section.rows, sortColumn, isSortedAscending, itemsIndex)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -746,6 +746,10 @@ class InteropDashboard extends PolymerElement {
       sortColumn: {
         type: Number,
         value: -1
+      },
+      isSortedAscending: {
+        type: Boolean,
+        value: true
       },
       totalChromium: {
         type: String,
@@ -975,52 +979,77 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 
-  sortRows(rows) {
-    
-    const sortedFeatureOrder = []
-    // Alphabetize by focus area column
-    if(this.sortColumn === -1) {
-      const rowNames = []
-      for(let i = 0; i < rows.length; i++) {
-        const feature = rows[i]
-        rowNames[i] = [feature, this.getRowInfo(feature, 'description')]
-      }
+  showSortArrows = (tableIndex) => {
+    return tableIndex === 0;
+  }
 
-      rowNames.sort((a, b) => {
-        return a[1] - b[1]
-      })
-
-      for (let i = 0; i < rowNames.length; i++) {
-        sortedFeatureOrder[i] = rowNames[i][0]
-      }
-    // List in ascending order by score
-    } else if (this.sortColumn >= 0) {
-      const individualScores = []
-      for (let i = 0; i < rows.length; i++) {
-        const feature = rows[i]
-        individualScores[i] = [feature, parseFloat(this.getBrowserScoreForFeature(this.sortColumn, feature))]
-      }
-
-      individualScores.sort((a, b) => {
-        return a[1] - b[1]
-      })
-
-      for (let i = 0; i < individualScores.length; i++) {
-        sortedFeatureOrder[i] = individualScores[i][0]
-      }
+  // Update the arrow image based on whether or not the order of the col
+  // is ascending or descending.
+  getArrowImage = (colNum, sortColumn, isSortedAscending) => {
+    if (sortColumn === colNum && !isSortedAscending) {
+      return '/static/expand_less.svg';
     }
-    return sortedFeatureOrder;
+    return '/static/expand_more.svg';
+  }
+
+  // Function to sort score rows alphabetically.
+  #sortByName = (a, b) => {
+    // Get display name and strip non-alphanumeric characters out of string.
+    const aName = this.getRowInfo(a, 'description').replace(/\W/g, '');
+    const bName = this.getRowInfo(b, 'description').replace(/\W/g, '');
+    // Reverse sorting based on ascending or descending setting.
+    if (this.isSortedAscending) {
+      return aName.localeCompare(bName);
+    }
+    return bName.localeCompare(aName);
+  }
+
+  // Function to sort score rows based on the selected column's scores.
+  #sortByScore = (a, b) => {
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const aScore = scores[this.sortColumn][a];
+    const bScore = scores[this.sortColumn][b];
+    // Reverse sorting based on ascending or descending setting.
+    if (this.isSortedAscending) {
+      return aScore - bScore;
+    }
+    return bScore - aScore;
+  }
+
+  // Sort the score table rows before rendering them.
+  sortRows = (rows, sortColumn, isSortedAscending, itemsIndex) => {
+    // Only the first table can change its sort.
+    if (itemsIndex !== 0) {
+      return rows;
+    }
+
+    // Sort alphabetically if the names column was chosen.
+    if (this.sortColumn === -1) {
+      return Array.from(rows).sort(this.#sortByName);
+    }
+    // Otherwise, sort by browser score.
+    return Array.from(rows).sort(this.#sortByScore);
   }
   
-
-handleSortClick(e) {
+  // Set the column to sort and the direction to sort by on user click.
+  handleSortClick = (e) => {
+    // Check the element id to get the column that was clicked.
     const i = parseInt(e.target.id.split('-')[1]) - 1;
 
+    let newSortColumn = 0;
     if (Number.isInteger(i)) {
-      this.sortColumn = i
+      newSortColumn = i;
     } else {
-      this.sortColumn = -1
+      newSortColumn = -1;
     }
+
+    // If the sort column is the same as before, switch the sort direction.
+    if (newSortColumn === this.sortColumn) {
+      this.isSortedAscending = !this.isSortedAscending;
+    } else {
+      this.isSortedAscending = true;
+    }
+    this.sortColumn = newSortColumn;
   }
 
 }
