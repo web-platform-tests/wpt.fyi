@@ -966,6 +966,7 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
 
+  // Determine whether arrows should be displayed to handle sorting.
   showSortArrows = (tableIndex) => {
     return tableIndex === 0;
   }
