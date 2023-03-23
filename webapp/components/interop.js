@@ -14,8 +14,6 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import { interopData } from './interop-data.js';
 
-
-
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
 // fetches the CSV data, processes it into sets of datatables, and then caches
@@ -566,7 +564,7 @@ class InteropDashboard extends PolymerElement {
         </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
-            <template is="dom-repeat" items="{{getTestSection()}}" as="section">
+            <template is="dom-repeat" items="{{getYearProp('tableSections)}}" as="section">
               <table class="score-table">
                 <thead>
                   <tr class="section-header">
@@ -633,7 +631,7 @@ class InteropDashboard extends PolymerElement {
                     </template>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
-                  <tbody> 
+                  <tbody>
                     <template is="dom-repeat" items="{{sortRows(section.rows, sortColumn, isSortedAscending, itemsIndex)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
@@ -783,13 +781,6 @@ class InteropDashboard extends PolymerElement {
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
     this.scores.stable = await this.dataManager.getMostRecentScores(true);
 
-    this.testSection = this.getYearProp('tableSections')
-
-    this.sectionMappings = {
-      activeFocusAreas: "Active Focus Areas",
-      previousFocusAreas: "Previous Focus Areas"
-    }
-
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
 
@@ -817,10 +808,6 @@ class InteropDashboard extends PolymerElement {
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
     }
-  }
-
-  getTestSection() {
-    return this.testSection
   }
 
   isSelected(feature) {
