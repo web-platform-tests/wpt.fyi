@@ -564,7 +564,7 @@ class InteropDashboard extends PolymerElement {
         </div>
         <div class="grid-item grid-item-scores">
           <div class="table-card">
-            <template is="dom-repeat" items="{{getYearProp('tableSections)}}" as="section">
+            <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
               <table class="score-table">
                 <thead>
                   <tr class="section-header">
