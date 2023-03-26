@@ -29,12 +29,14 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	year := mux.Vars(r)["year"]
 
-	// /compat20XX redirects to /interop-20XX
+	// /compat20XX redirects to /interop-20XX 
+    // If the year is not valid, render the 404 page instead.
+
 	needsRedirect := name == "compat"
 	if _, ok := validYears[year]; !ok {
-		year = defaultRedirectYear
-		needsRedirect = true
-	}
+        http.ServeFile(w, r, "components/interop-404.js")
+        return
+    }
 
 	if needsRedirect {
 		destination := *(r.URL)
@@ -60,5 +62,8 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		Embedded: embedded != nil && *embedded,
 		Year:     year,
 	}
+
+    
+
 	RenderTemplate(w, r, "interop.html", data)
 }
