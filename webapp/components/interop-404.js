@@ -23,7 +23,7 @@ class Interop404 extends PolymerElement {
     </style>
     <div>
       <iron-icon icon="error"></iron-icon>
-      <h1>Sorry, data is not available for this year 🥲</h1>
+      <h1>Interop data is not available for this year</h1>
     </div>
     <a href="/">
       <paper-button>Go to the home page</paper-button>
