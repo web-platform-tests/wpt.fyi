@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/datastore v1.10.0
 	cloud.google.com/go/logging v1.7.0
 	cloud.google.com/go/secretmanager v1.10.0
-	cloud.google.com/go/storage v1.30.0
+	cloud.google.com/go/storage v1.30.1
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.3
@@ -29,7 +29,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/api v0.114.0
-	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4
+	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683
 	google.golang.org/grpc v1.54.0
 	gopkg.in/yaml.v3 v3.0.1
 )
