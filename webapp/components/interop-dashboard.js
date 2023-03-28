@@ -7,6 +7,7 @@
 import { InteropDataManager } from './interop-data-manager.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 // InteropDashboard is a custom element that holds the overall interop dashboard.
@@ -344,10 +345,19 @@ class InteropDashboard extends PolymerElement {
                       <th></th>
                     </template>
                   </tr>
+                  <template is="dom-if" if="[[showSortToggle(itemsIndex)]]">
+                  <tr>
+                    <td><paper-icon-button class="sort-button" id="col-0" on-click="handleSortClick" src="[[getSortIcon(0, sortColumn, isSortedAsc)]]"></paper-icon-button></td>
+                    <td><paper-icon-button class="sort-button" id="col-1" on-click="handleSortClick" src="[[getSortIcon(1, sortColumn, isSortedAsc)]]"></paper-icon-button></td>
+                    <td><paper-icon-button class="sort-button" id="col-2" on-click="handleSortClick" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]"></paper-icon-button></td>
+                    <td><paper-icon-button class="sort-button" id="col-3" on-click="handleSortClick" src="[[getSortIcon(3, sortColumn, isSortedAsc)]]"></paper-icon-button></td>
+                    <td><paper-icon-button class="sort-button" id="col-4" on-click="handleSortClick" src="[[getSortIcon(4, sortColumn, isSortedAsc)]]"></paper-icon-button></td>
+                    </tr>
+                  </template>
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody>
-                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                    <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -456,6 +466,14 @@ class InteropDashboard extends PolymerElement {
       },
       dataManager: Object,
       scores: Object,
+      sortColumn: {
+        type: Number,
+        value: -1
+      },
+      isSortedAsc: {
+        type: Boolean,
+        value: true
+      },
       totalChromium: {
         type: String,
         value: '0%'
@@ -586,6 +604,10 @@ class InteropDashboard extends PolymerElement {
     return index === 0 || !scoreAsGroup;
   }
 
+  showSortToggle(index) {
+    return index === 0;
+  }
+
   showNoOtherColumns(scoreAsGroup, index) {
     return !scoreAsGroup && !this.showBrowserIcons(index);
   }
@@ -598,6 +620,15 @@ class InteropDashboard extends PolymerElement {
       return '100%';
     }
     return `${(score / 10).toFixed(1)}%`;
+  }
+
+  // getNumericalBrowserScoreByFeature returns the same score as
+  // getBrowserScoreForFeature but as a number instead of a string
+  getNumericalBrowserScoreByFeature(browserIndex, feature) {
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const score = scores[browserIndex][feature];
+    const roundedScore = Math.round(score * 100) / 100;
+    return roundedScore / 10;
   }
 
   getBrowserScoreTotal(browserIndex) {
@@ -671,6 +702,76 @@ class InteropDashboard extends PolymerElement {
     this.stable = true;
     this.$.toggleStable.setAttribute('aria-pressed', true);
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
+  }
+
+  getSortIcon(index) {
+    index = index - 1;
+    if (this.sortColumn !== index && this.isSortedAsc) {
+      return '/static/expand_less.svg';
+    } else if (this.sortColumn === index && this.isSortedAsc) {
+      return '/static/expand_more.svg';
+    } else if (this.sortColumn === index && !this.isSortedAsc) {
+      return '/static/expand_less.svg';
+    }
+    return '/static/expand_less.svg';
+
+  }
+
+  alphabeticalSort(rows, featureOrder) {
+    const rowNames = [];
+    for(let i = 0; i < rows.length; i++) {
+      const feature = rows[i];
+      rowNames[i] = [feature, this.getRowInfo(feature, 'description').replace(/\W/g, '')];
+    }
+    rowNames.sort((a, b) => a[1].localeCompare(b[1]));
+    for (let i = 0; i < rowNames.length; i++) {
+      featureOrder[i] = rowNames[i][0];
+    }
+  }
+
+  numericalSort(rows, featureOrder, sortColumn) {
+    const individualScores = [];
+    for (let i = 0; i < rows.length; i++) {
+      const feature = rows[i];
+      individualScores[i] = [feature, this.getNumericalBrowserScoreByFeature(sortColumn, feature)];
+    }
+    individualScores.sort((a, b) => a[1] - b[1]);
+    for (let i = 0; i < individualScores.length; i++) {
+      featureOrder[i] = individualScores[i][0];
+    }
+  }
+
+  sortRows(rows, index, sortColumn, isSortedAsc) {
+    if(index !== 0) {
+      return rows;
+    }
+    const sortedFeatureOrder = [];
+    // For the first column, sort alphabetically by name
+    if(sortColumn === -1) {
+      this.alphabeticalSort(rows, sortedFeatureOrder);
+      // For the other columns, sort numerically by score
+    } else if (sortColumn >= 0) {
+      this.numericalSort(rows, sortedFeatureOrder, sortColumn);
+    }
+    // Reverse current sort order
+    if (!isSortedAsc) {
+      sortedFeatureOrder.reverse();
+    }
+    return sortedFeatureOrder;
+  }
+
+  handleSortClick(e) {
+    const i = parseInt(e.target.id.split('-')[1]) - 1;
+
+    if (this.sortColumn !== i) {
+      this.sortColumn = i;
+      this.isSortedAsc = true;
+    } else if (this.sortColumn === i && this.isSortedAsc) {
+      this.isSortedAsc = false;
+    } else if (this.sortColumn === i && !this.isSortedAsc) {
+      this.isSortedAsc = true;
+    }
+    this.sortColumn = i;
   }
 }
 export { InteropDashboard };
