@@ -112,7 +112,7 @@ class InteropDashboard extends PolymerElement {
           top: 4px;
           right: -4px;
           float: right;
-          width: 24px;
+          width: 20px;
         }
 
         .interop-header {
@@ -311,7 +311,7 @@ class InteropDashboard extends PolymerElement {
               <table class="score-table">
                 <thead>
 
-                  <!-- First score table -->
+                  <!-- First score table header with sort functionality -->
                   <template is="dom-if" if="[[isFirstTable(itemsIndex)]]">
                     <tr class="section-header">
                       <th class="sortable-header" on-click="sortByName">
@@ -376,7 +376,7 @@ class InteropDashboard extends PolymerElement {
                     </tr>
                   </template>
 
-                  <!-- Any score table after the first -->
+                  <!-- All other score table headers after the first -->
                   <template is="dom-if" if="[[!isFirstTable(itemsIndex)]]">
                     <tr class="section-header">
                       <th>{{section.name}}</th>
@@ -432,6 +432,7 @@ class InteropDashboard extends PolymerElement {
                       </template>
                     </tr>
                   </template>
+
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody>
@@ -839,9 +840,12 @@ class InteropDashboard extends PolymerElement {
     return sortedFeatureOrder;
   }
 
-  // TODO(danielrsmith): There are surely better ways to this pass this on-click.
-  // Polymer makes it hard to pass arguments through event handlers.
-  // Find a way to pass the column as an argument to avoid these calls.
+  /** 
+   * Column sort handlers.
+   * TODO(danielrsmith): There are surely better ways to this pass this on-click.
+   * Polymer makes it hard to pass arguments through event handlers.
+   * Find a way to pass the column as an argument to avoid these calls.
+   **/
   sortByName = () => {
     this.handleSortClick(0);
   }
@@ -862,13 +866,13 @@ class InteropDashboard extends PolymerElement {
     this.handleSortClick(4);
   }
 
+  // Handle the table header click to sort a column.
   handleSortClick = (i) => {
-    if (this.sortColumn !== i) {
-      this.sortColumn = i;
-      this.isSortedAsc = true;
-    } else if (this.sortColumn === i && this.isSortedAsc) {
-      this.isSortedAsc = false;
-    } else if (this.sortColumn === i && !this.isSortedAsc) {
+    // Reverse the sort order if the same column is clicked again.
+    if (this.sortColumn === i) {
+      this.isSortedAsc = !this.isSortedAsc;
+    } else  {
+      // Otherwise, sort in ascending order.
       this.isSortedAsc = true;
     }
     this.sortColumn = i;
