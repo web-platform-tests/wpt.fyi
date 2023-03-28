@@ -872,8 +872,8 @@ class InteropDashboard extends PolymerElement {
     if (this.sortColumn === i) {
       this.isSortedAsc = !this.isSortedAsc;
     } else  {
-      // Otherwise, sort in ascending order.
-      this.isSortedAsc = true;
+      // Otherwise, sort in descending order.
+      this.isSortedAsc = false;
     }
     this.sortColumn = i;
   }
