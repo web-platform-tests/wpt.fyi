@@ -302,9 +302,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       is-triage-mode=[[isTriageMode]]>
                   </path-part>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
-                    <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank">
-                      <iron-icon class="bug" icon="bug-report"></iron-icon>
-                    </a>
+                    <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
                   </template>
                   <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
                     <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
@@ -325,9 +323,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
-                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank">
-                        <iron-icon class="bug" icon="bug-report"></iron-icon>
-                      </a>
+                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
                     </template>
                   </td>
                 </template>
