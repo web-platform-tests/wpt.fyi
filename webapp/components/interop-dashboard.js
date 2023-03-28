@@ -805,7 +805,7 @@ class InteropDashboard extends PolymerElement {
     for (let i = 0; i < rowNames.length; i++) {
       featureOrder[i] = rowNames[i][0];
     }
-  }
+  };
 
   numericalSort = (rows, featureOrder, sortColumn) => {
     const browserIndex = sortColumn - 1;
@@ -818,7 +818,7 @@ class InteropDashboard extends PolymerElement {
     for (let i = 0; i < individualScores.length; i++) {
       featureOrder[i] = individualScores[i][0];
     }
-  }
+  };
 
   sortRows = (rows, index, sortColumn, isSortedAsc) => {
     if(index !== 0) {
@@ -838,9 +838,9 @@ class InteropDashboard extends PolymerElement {
       sortedFeatureOrder.reverse();
     }
     return sortedFeatureOrder;
-  }
+  };
 
-  /** 
+  /**
    * Column sort handlers.
    * TODO(danielrsmith): There are surely better ways to this pass this on-click.
    * Polymer makes it hard to pass arguments through event handlers.
@@ -848,23 +848,23 @@ class InteropDashboard extends PolymerElement {
    **/
   sortByName = () => {
     this.handleSortClick(0);
-  }
+  };
 
   sortByChrome = () => {
     this.handleSortClick(1);
-  }
+  };
 
   sortByFF = () => {
     this.handleSortClick(2);
-  }
+  };
 
   sortBySafari = () => {
     this.handleSortClick(3);
-  }
+  };
 
   sortByInterop = () => {
     this.handleSortClick(4);
-  }
+  };
 
   // Handle the table header click to sort a column.
   handleSortClick = (i) => {
@@ -876,6 +876,6 @@ class InteropDashboard extends PolymerElement {
       this.isSortedAsc = false;
     }
     this.sortColumn = i;
-  }
+  };
 }
 export { InteropDashboard };
