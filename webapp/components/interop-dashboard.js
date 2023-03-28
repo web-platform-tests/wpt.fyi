@@ -622,6 +622,13 @@ class InteropDashboard extends PolymerElement {
     return `${(score / 10).toFixed(1)}%`;
   }
 
+  getNumericalBrowserScoreByFeature(browserIndex, feature) {
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const score = scores[browserIndex][feature];
+    const roundedScore = Math.round(score * 100) / 100;
+    return roundedScore / 10;
+  }
+
   getBrowserScoreTotal(browserIndex) {
     return this.totals[browserIndex];
   }
@@ -696,7 +703,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   getSortIcon(index) {
-    index = index - 1
+    index = index - 1;
     if (this.sortColumn !== index && this.isSortedAsc === true) {
       return '/static/expand_less.svg';
     } else if (this.sortColumn === index && this.isSortedAsc === true) {
@@ -704,7 +711,7 @@ class InteropDashboard extends PolymerElement {
     } else if (this.sortColumn === index && this.isSortedAsc === false) {
       return '/static/expand_less.svg';
     }
-      return '/static/expand_less.svg';
+    return '/static/expand_less.svg';
 
   }
 
@@ -724,7 +731,7 @@ class InteropDashboard extends PolymerElement {
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
-      individualScores[i] = [feature, parseFloat(this.getBrowserScoreForFeature(sortColumn, feature))];
+      individualScores[i] = [feature, this.getNumericalBrowserScoreByFeature(sortColumn, feature)];
     }
     individualScores.sort((a, b) => a[1] - b[1]);
     for (let i = 0; i < individualScores.length; i++) {
@@ -733,20 +740,22 @@ class InteropDashboard extends PolymerElement {
   }
 
   sortRows(rows, index, sortColumn, isSortedAsc) {
-    if(index !== 0) return rows;
-      const sortedFeatureOrder = [];
-      // For the first column, sort alphabetically by name
-      if(sortColumn === -1) {
-        this.alphabeticalSort(rows, sortedFeatureOrder)
+    if(index !== 0) {
+      return rows;
+    }
+    const sortedFeatureOrder = [];
+    // For the first column, sort alphabetically by name
+    if(sortColumn === -1) {
+      this.alphabeticalSort(rows, sortedFeatureOrder);
       // For the other columns, sort numerically by score
-      } else if (sortColumn >= 0) {
-       this.numericalSort(rows, sortedFeatureOrder, sortColumn)
-      }
-      // Reverse current sort order
-      if (isSortedAsc === false) {
-        sortedFeatureOrder.reverse();
-      }
-      return sortedFeatureOrder;
+    } else if (sortColumn >= 0) {
+      this.numericalSort(rows, sortedFeatureOrder, sortColumn);
+    }
+    // Reverse current sort order
+    if (isSortedAsc === false) {
+      sortedFeatureOrder.reverse();
+    }
+    return sortedFeatureOrder;
   }
 
   handleSortClick(e) {
