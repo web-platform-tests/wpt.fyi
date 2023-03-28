@@ -422,7 +422,7 @@ class InteropDashboard extends PolymerElement {
                             </div>
                           </template>
                         </th>
-                        <th>INTEROP</th>
+                        <th><div class="interop-header">INTEROP</div></th>
                       </template>
                       <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
                         <th></th>
