@@ -622,6 +622,8 @@ class InteropDashboard extends PolymerElement {
     return `${(score / 10).toFixed(1)}%`;
   }
 
+  // getNumericalBrowserScoreByFeature returns the same score as
+  // getBrowserScoreForFeature but as a number instead of a string
   getNumericalBrowserScoreByFeature(browserIndex, feature) {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
@@ -708,7 +710,7 @@ class InteropDashboard extends PolymerElement {
       return '/static/expand_less.svg';
     } else if (this.sortColumn === index && this.isSortedAsc === true) {
       return '/static/expand_more.svg';
-    } else if (this.sortColumn === index && this.isSortedAsc === false) {
+    } else if (this.sortColumn === index && !this.isSortedAsc) {
       return '/static/expand_less.svg';
     }
     return '/static/expand_less.svg';
@@ -752,7 +754,7 @@ class InteropDashboard extends PolymerElement {
       this.numericalSort(rows, sortedFeatureOrder, sortColumn);
     }
     // Reverse current sort order
-    if (isSortedAsc === false) {
+    if (!isSortedAsc) {
       sortedFeatureOrder.reverse();
     }
     return sortedFeatureOrder;
@@ -766,7 +768,7 @@ class InteropDashboard extends PolymerElement {
       this.isSortedAsc = true;
     } else if (this.sortColumn === i && this.isSortedAsc === true) {
       this.isSortedAsc = false;
-    } else if (this.sortColumn === i && this.isSortedAsc === false) {
+    } else if (this.sortColumn === i && !this.isSortedAsc) {
       this.isSortedAsc = true;
     }
     this.sortColumn = i;
