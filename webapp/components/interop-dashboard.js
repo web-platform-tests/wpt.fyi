@@ -706,9 +706,9 @@ class InteropDashboard extends PolymerElement {
 
   getSortIcon(index) {
     index = index - 1;
-    if (this.sortColumn !== index && this.isSortedAsc === true) {
+    if (this.sortColumn !== index && this.isSortedAsc) {
       return '/static/expand_less.svg';
-    } else if (this.sortColumn === index && this.isSortedAsc === true) {
+    } else if (this.sortColumn === index && this.isSortedAsc) {
       return '/static/expand_more.svg';
     } else if (this.sortColumn === index && !this.isSortedAsc) {
       return '/static/expand_less.svg';
@@ -766,7 +766,7 @@ class InteropDashboard extends PolymerElement {
     if (this.sortColumn !== i) {
       this.sortColumn = i;
       this.isSortedAsc = true;
-    } else if (this.sortColumn === i && this.isSortedAsc === true) {
+    } else if (this.sortColumn === i && this.isSortedAsc) {
       this.isSortedAsc = false;
     } else if (this.sortColumn === i && !this.isSortedAsc) {
       this.isSortedAsc = true;
