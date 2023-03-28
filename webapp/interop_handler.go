@@ -62,8 +62,5 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		Embedded: embedded != nil && *embedded,
 		Year:     year,
 	}
-
-    
-
 	RenderTemplate(w, r, "interop.html", data)
 }
