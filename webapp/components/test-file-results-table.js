@@ -148,9 +148,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
             <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap, result.status, isTriageMode)]]">
-              <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank">
-                <iron-icon class="bug" icon="bug-report"></iron-icon>
-              </a>
+              <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
             </template>
 
             <template is="dom-if" if="[[result.screenshots]]">
