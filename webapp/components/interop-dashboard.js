@@ -107,11 +107,16 @@ class InteropDashboard extends PolymerElement {
           cursor: pointer;
         }
 
+        .sort-icon-focus-areas {
+          position: absolute;
+          top: 4px;
+          width: 20px;
+        }
+
         .sort-icon {
           position: absolute;
           top: 4px;
           right: -4px;
-          float: right;
           width: 20px;
         }
 
@@ -316,9 +321,7 @@ class InteropDashboard extends PolymerElement {
                     <tr class="section-header">
                       <th class="sortable-header" on-click="sortByName">
                         {{section.name}}
-                        <template is="dom-if" if="[[shouldShowSortIcon(0, sortColumn)]]">
-                          <img class="sort-icon" src="[[getSortIcon(isSortedAsc)]]" />
-                        </template>
+                        <img class="sort-icon-focus-areas" src="[[getSortIcon(0, sortColumn, isSortedAsc)]]" />
                       </th>
                       <th class="sortable-header" on-click="sortByChrome">
                         <template is="dom-if" if="[[stable]]">
@@ -333,9 +336,7 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
                           </div>
                         </template>
-                        <template is="dom-if" if="[[shouldShowSortIcon(1, sortColumn)]]">
-                          <img class="sort-icon" src="[[getSortIcon(isSortedAsc)]]" />
-                        </template>
+                        <img class="sort-icon" src="[[getSortIcon(1, sortColumn, isSortedAsc)]]" />
                       </th>
                       <th class="sortable-header" on-click="sortByFF">
                         <template is="dom-if" if="[[stable]]">
@@ -348,9 +349,7 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
                           </div>
                         </template>
-                        <template is="dom-if" if="[[shouldShowSortIcon(2, sortColumn)]]">
-                          <img class="sort-icon" src="[[getSortIcon(isSortedAsc)]]" />
-                        </template>
+                        <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
                       </th>
                       <th class="sortable-header" on-click="sortBySafari">
                         <template is="dom-if" if="[[stable]]">
@@ -363,15 +362,11 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
                           </div>
                         </template>
-                        <template is="dom-if" if="[[shouldShowSortIcon(3, sortColumn)]]">
-                          <img class="sort-icon" src="[[getSortIcon(isSortedAsc)]]" />
-                        </template>
+                        <img class="sort-icon" src="[[getSortIcon(3, sortColumn, isSortedAsc)]]" />
                       </th>
                       <th class="sortable-header" on-click="sortByInterop">
                         <div class="interop-header">INTEROP</div>
-                        <template is="dom-if" if="[[shouldShowSortIcon(4, sortColumn)]]">
-                          <img class="sort-icon" src="[[getSortIcon(isSortedAsc)]]" />
-                        </template>
+                        <img class="sort-icon" src="[[getSortIcon(4, sortColumn, isSortedAsc)]]" />
                       </th>
                     </tr>
                   </template>
@@ -788,7 +783,10 @@ class InteropDashboard extends PolymerElement {
     return columnNumber === sortColumn;
   }
 
-  getSortIcon(isSortedAsc) {
+  getSortIcon(index, sortColumn, isSortedAsc) {
+    if (sortColumn !== index) {
+      return '/static/expand_inactive.svg';
+    }
     if (isSortedAsc) {
       return '/static/expand_less.svg';
     }
