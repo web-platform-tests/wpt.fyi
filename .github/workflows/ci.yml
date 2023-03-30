@@ -52,7 +52,10 @@ jobs:
     # This means this CI job will have access to the service account.
     # In that case, similar to deploy.yml, trust only pull requests that are
     # made within web-platform-tests and exclude forks.
-    if: ${{ github.event.pull_request.head.repo.full_name == 'web-platform-tests/wpt.fyi' && github.repository == 'web-platform-tests/wpt.fyi' && github.actor != 'dependabot[bot]' }}
+    if: |
+      (github.repository == 'web-platform-tests/wpt.fyi') &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'web-platform-tests/wpt.fyi' && github.actor != 'dependabot[bot]') ||
+      (github.event_name != 'pull_request'))
     needs: [go_test, go_chrome_test, go_firefox_test]
     runs-on: ubuntu-latest
     env:
