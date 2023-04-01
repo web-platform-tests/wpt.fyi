@@ -7,6 +7,7 @@
 import { InteropDataManager } from './interop-data-manager.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 // InteropDashboard is a custom element that holds the overall interop dashboard.
@@ -98,6 +99,29 @@ class InteropDashboard extends PolymerElement {
         .selected {
           background-color: #1D79F2;
           color: white;
+        }
+
+        .sortable-header {
+          position: relative;
+          user-select: none;
+          cursor: pointer;
+        }
+
+        .sort-icon-focus-areas {
+          position: absolute;
+          top: 4px;
+          width: 20px;
+        }
+
+        .sort-icon {
+          position: absolute;
+          top: 4px;
+          right: -4px;
+          width: 20px;
+        }
+
+        .interop-header {
+          padding-left: 4px;
         }
 
         .focus-area-section {
@@ -291,13 +315,15 @@ class InteropDashboard extends PolymerElement {
             <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
               <table class="score-table">
                 <thead>
-                  <tr class="section-header">
-                    <th>{{section.name}}</th>
-                    <template is="dom-if" if="[[section.score_as_group]]">
-                      <th colspan=4>Group Progress</th>
-                    </template>
-                    <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
-                      <th>
+
+                  <!-- First score table header with sort functionality -->
+                  <template is="dom-if" if="[[isFirstTable(itemsIndex)]]">
+                    <tr class="section-header">
+                      <th class="sortable-header" on-click="sortByName">
+                        {{section.name}}
+                        <img class="sort-icon-focus-areas" src="[[getSortIcon(0, sortColumn, isSortedAsc)]]" />
+                      </th>
+                      <th class="sortable-header" on-click="sortByChrome">
                         <template is="dom-if" if="[[stable]]">
                           <div class="browser-icons">
                             <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
@@ -310,8 +336,9 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
                           </div>
                         </template>
+                        <img class="sort-icon" src="[[getSortIcon(1, sortColumn, isSortedAsc)]]" />
                       </th>
-                      <th>
+                      <th class="sortable-header" on-click="sortByFF">
                         <template is="dom-if" if="[[stable]]">
                           <div class="browser-icons single-browser-icon">
                             <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
@@ -322,8 +349,9 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
                           </div>
                         </template>
+                        <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
                       </th>
-                      <th>
+                      <th class="sortable-header" on-click="sortBySafari">
                         <template is="dom-if" if="[[stable]]">
                           <div class="browser-icons single-browser-icon">
                             <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
@@ -334,20 +362,76 @@ class InteropDashboard extends PolymerElement {
                             <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
                           </div>
                         </template>
+                        <img class="sort-icon" src="[[getSortIcon(3, sortColumn, isSortedAsc)]]" />
                       </th>
-                      <th>INTEROP</th>
-                    </template>
-                    <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
-                      <th></th>
-                      <th></th>
-                      <th></th>
-                      <th></th>
-                    </template>
-                  </tr>
+                      <th class="sortable-header" on-click="sortByInterop">
+                        <div class="interop-header">INTEROP</div>
+                        <img class="sort-icon" src="[[getSortIcon(4, sortColumn, isSortedAsc)]]" />
+                      </th>
+                    </tr>
+                  </template>
+
+                  <!-- All other score table headers after the first -->
+                  <template is="dom-if" if="[[!isFirstTable(itemsIndex)]]">
+                    <tr class="section-header">
+                      <th>{{section.name}}</th>
+                      <template is="dom-if" if="[[section.score_as_group]]">
+                        <th colspan=4>Group Progress</th>
+                      </template>
+                      <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
+                        <th>
+                          <template is="dom-if" if="[[stable]]">
+                            <div class="browser-icons">
+                              <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
+                              <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
+                            </div>
+                          </template>
+                          <template is="dom-if" if="[[!stable]]">
+                            <div class="browser-icons">
+                              <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
+                              <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
+                            </div>
+                          </template>
+                        </th>
+                        <th>
+                          <template is="dom-if" if="[[stable]]">
+                            <div class="browser-icons single-browser-icon">
+                              <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
+                            </div>
+                          </template>
+                          <template is="dom-if" if="[[!stable]]">
+                            <div class="browser-icons single-browser-icon">
+                              <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
+                            </div>
+                          </template>
+                        </th>
+                        <th>
+                          <template is="dom-if" if="[[stable]]">
+                            <div class="browser-icons single-browser-icon">
+                              <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
+                            </div>
+                          </template>
+                          <template is="dom-if" if="[[!stable]]">
+                            <div class="browser-icons single-browser-icon">
+                              <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
+                            </div>
+                          </template>
+                        </th>
+                        <th><div class="interop-header">INTEROP</div></th>
+                      </template>
+                      <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                      </template>
+                    </tr>
+                  </template>
+
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody>
-                    <template is="dom-repeat" items="{{section.rows}}" as="rowName">
+                    <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
@@ -456,6 +540,14 @@ class InteropDashboard extends PolymerElement {
       },
       dataManager: Object,
       scores: Object,
+      sortColumn: {
+        type: Number,
+        value: 0
+      },
+      isSortedAsc: {
+        type: Boolean,
+        value: true
+      },
       totalChromium: {
         type: String,
         value: '0%'
@@ -600,6 +692,15 @@ class InteropDashboard extends PolymerElement {
     return `${(score / 10).toFixed(1)}%`;
   }
 
+  // getNumericalBrowserScoreByFeature returns the same score as
+  // getBrowserScoreForFeature but as a number instead of a string
+  getNumericalBrowserScoreByFeature(browserIndex, feature) {
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const score = scores[browserIndex][feature];
+    const roundedScore = Math.round(score * 100) / 100;
+    return roundedScore / 10;
+  }
+
   getBrowserScoreTotal(browserIndex) {
     return this.totals[browserIndex];
   }
@@ -672,5 +773,107 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleStable.setAttribute('aria-pressed', true);
     this.$.toggleExperimental.setAttribute('aria-pressed', false);
   }
+
+  // Check if the table being rendered is the first table.
+  isFirstTable(tableIndex) {
+    return tableIndex === 0;
+  }
+
+  shouldShowSortIcon(columnNumber, sortColumn) {
+    return columnNumber === sortColumn;
+  }
+
+  getSortIcon(index, sortColumn, isSortedAsc) {
+    if (sortColumn !== index) {
+      return '/static/expand_inactive.svg';
+    }
+    if (isSortedAsc) {
+      return '/static/expand_less.svg';
+    }
+    return '/static/expand_more.svg';
+  }
+
+  alphabeticalSort = (rows, featureOrder) => {
+    const rowNames = [];
+    for(let i = 0; i < rows.length; i++) {
+      const feature = rows[i];
+      rowNames[i] = [feature, this.getRowInfo(feature, 'description').replace(/\W/g, '')];
+    }
+    rowNames.sort((a, b) => a[1].localeCompare(b[1]));
+    for (let i = 0; i < rowNames.length; i++) {
+      featureOrder[i] = rowNames[i][0];
+    }
+  };
+
+  numericalSort = (rows, featureOrder, sortColumn) => {
+    const browserIndex = sortColumn - 1;
+    const individualScores = [];
+    for (let i = 0; i < rows.length; i++) {
+      const feature = rows[i];
+      individualScores[i] = [feature, this.getNumericalBrowserScoreByFeature(browserIndex, feature)];
+    }
+    individualScores.sort((a, b) => a[1] - b[1]);
+    for (let i = 0; i < individualScores.length; i++) {
+      featureOrder[i] = individualScores[i][0];
+    }
+  };
+
+  sortRows = (rows, index, sortColumn, isSortedAsc) => {
+    if(index !== 0) {
+      return rows;
+    }
+    const sortedFeatureOrder = [];
+    // For the first column, sort alphabetically by name
+    if(sortColumn === 0) {
+      this.alphabeticalSort(rows, sortedFeatureOrder);
+    } else {
+      // For the other columns, sort numerically by score
+      this.numericalSort(rows, sortedFeatureOrder, sortColumn);
+    }
+
+    // Reverse current sort order
+    if (!isSortedAsc) {
+      sortedFeatureOrder.reverse();
+    }
+    return sortedFeatureOrder;
+  };
+
+  /**
+   * Column sort handlers.
+   * TODO(danielrsmith): There are surely better ways to this pass this on-click.
+   * Polymer makes it hard to pass arguments through event handlers.
+   * Find a way to pass the column as an argument to avoid these calls.
+   **/
+  sortByName = () => {
+    this.handleSortClick(0);
+  };
+
+  sortByChrome = () => {
+    this.handleSortClick(1);
+  };
+
+  sortByFF = () => {
+    this.handleSortClick(2);
+  };
+
+  sortBySafari = () => {
+    this.handleSortClick(3);
+  };
+
+  sortByInterop = () => {
+    this.handleSortClick(4);
+  };
+
+  // Handle the table header click to sort a column.
+  handleSortClick = (i) => {
+    // Reverse the sort order if the same column is clicked again.
+    if (this.sortColumn === i) {
+      this.isSortedAsc = !this.isSortedAsc;
+    } else  {
+      // Otherwise, sort in descending order.
+      this.isSortedAsc = false;
+    }
+    this.sortColumn = i;
+  };
 }
 export { InteropDashboard };
