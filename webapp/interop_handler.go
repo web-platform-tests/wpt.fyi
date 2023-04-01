@@ -1,4 +1,4 @@
-// Copyright 2022 The WPT Dashboard Project. All rights reserved.
+// Copyright 2023 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -32,8 +32,8 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	// /compat20XX redirects to /interop-20XX
 	needsRedirect := name == "compat"
 	if _, ok := validYears[year]; !ok {
-		year = defaultRedirectYear
-		needsRedirect = true
+		interopError(w,r)
+        return
 	}
 
 	if needsRedirect {
@@ -61,4 +61,9 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		Year:     year,
 	}
 	RenderTemplate(w, r, "interop.html", data)
+}
+
+func interopError(w http.ResponseWriter, r *http.Request){
+	RenderTemplate(w, r, "interop_error.html", nil)
+
 }

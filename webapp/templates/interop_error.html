@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{ template "_head_common.html" . }}
+<!-- <meta name="color-scheme" content="dark light"> -->
+<script type="module" src="/components/interop-404.js"></script>
+</head>
+<body>
+<div id="content">
+  <wpt-header {{if .User}}user="{{.User.GitHubHandle}}"{{end}}></wpt-header>
+
+ <interop-404></interop-404>
+</div>
+</body>
+</html>
