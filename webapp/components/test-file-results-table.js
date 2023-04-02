@@ -29,7 +29,6 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
 <style include="wpt-colors">
   table {
     width: 100%;
-    border-collapse: collapse;
   }
   th {
     background: white;
@@ -40,6 +39,8 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   td {
     padding: 0.25em;
     height: 1.5em;
+    border: 2px solid transparent;
+    box-sizing: border-box;
   }
   td.diff {
     border-left: 8px solid white;
