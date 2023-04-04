@@ -1,3 +1,6 @@
+// This file should match the data in webapp/static/interop-data.json.
+// The JSON file is used by some Mozilla infrastructure, so the file should
+// not be deleted and should match the data in this file.
 export const interopData = {
   '2021': {
     'table_sections': [
