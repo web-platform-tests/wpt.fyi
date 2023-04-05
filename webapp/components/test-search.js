@@ -514,7 +514,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   commitQuery() {
-    this.query = this.queryInput;    
+    this.query = this.queryInput;
     this.dispatchEvent(new CustomEvent('commit', {
       detail: {
         query: this.query,
