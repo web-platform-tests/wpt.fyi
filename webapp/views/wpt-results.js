@@ -1292,12 +1292,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.isPathSorted = !this.isPathSorted;
     this.sortCol = new Array(this.testRuns.length).fill(false);
     const sortedNodes = this.displayedNodes.slice();
-    const self = this;
-    sortedNodes.sort(function (a, b) {
-      if (self.isPathSorted) {
-        return self.compareTestNameDefaultOrder(a, b);
+    sortedNodes.sort((a, b) => {
+      if (this.isPathSorted) {
+        return this.compareTestNameDefaultOrder(a, b);
       }
-      return self.compareTestNameDefaultOrder(b, a);
+      return this.compareTestNameDefaultOrder(b, a);
     });
     this.displayedNodes = sortedNodes;
   }
@@ -1329,9 +1328,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
 
       const sortedNodes = this.displayedNodes.slice();
-      const self = this;
-      sortedNodes.sort(function (a, b) {
-        if (self.sortCol[index]) {
+      sortedNodes.sort((a, b) => {
+        if (this.sortCol[index]) {
           // Switch a and b to reverse the order;
           const c = a;
           a = b;
@@ -1347,7 +1345,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
         // Both 0/0 cases; compare test names.
         if (a.results[index][totalParam] === 0 && b.results[index][totalParam] === 0) {
-          return self.compareTestNameDefaultOrder(a, b);
+          return this.compareTestNameDefaultOrder(a, b);
         }
 
         // One of them is 0/0; compare passes;
@@ -1357,7 +1355,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         const percentageA = a.results[index][passesParam] / a.results[index][totalParam];
         const percentageB = b.results[index][passesParam] / b.results[index][totalParam];
         if (percentageA === percentageB) {
-          return self.compareTestNameDefaultOrder(a, b);
+          return this.compareTestNameDefaultOrder(a, b);
         }
         return percentageA - percentageB;
       });
@@ -1368,7 +1366,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.isPathSorted = false;
       this.displayedNodes = sortedNodes;
     };
-  }
+  };
 
   getSortIcon(isSorted) {
     if (isSorted) {
