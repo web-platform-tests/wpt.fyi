@@ -1366,7 +1366,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.isPathSorted = false;
       this.displayedNodes = sortedNodes;
     };
-  };
+  }
 
   getSortIcon(isSorted) {
     if (isSorted) {
