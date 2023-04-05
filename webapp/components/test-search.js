@@ -487,8 +487,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       let matches = Array.from(paths);
       if (query) {
         matches = matches
-          .filter(p => p.toLowerCase())
-          .filter(p => p.includes(query))
+          .filter(p => p.toLowerCase().includes(query))
           .sort((p1, p2) => p1.indexOf(query) - p2.indexOf(query));
       }
       for (const match of matches.slice(0, 10 - datalist.children.length)) {
@@ -515,7 +514,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   commitQuery() {
-    this.query = this.queryInput;
+    this.query = this.queryInput;    
     this.dispatchEvent(new CustomEvent('commit', {
       detail: {
         query: this.query,
@@ -526,6 +525,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   handleKeyDown(e) {
+    // Prevent tab key from working
     if (e.keyCode === 9) {
       e.preventDefault();
       return false;
@@ -533,6 +533,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   handleKeyUp(e) {
+    // Commit when enter key was pressed
     if (e.keyCode === 13) {
       this.commitQuery();
     }
@@ -551,9 +552,9 @@ class TestSearch extends WPTFlags(PolymerElement) {
       if (autocompleteSelection.getAttribute('atom')) {
         return;
       }
-      if (autocompleteSelection.value === path) {
+      if (autocompleteSelection.value.toLowerCase() === path) {
         this.dispatchEvent(new CustomEvent('autocomplete', {
-          detail: {path: path},
+          detail: {path: autocompleteSelection.value},
         }));
         this.shadowRoot.querySelector('.query').blur();
       }
