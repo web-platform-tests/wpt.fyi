@@ -35,6 +35,17 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
+        .previous-year-banner {
+          height: 40px;
+          background-color: #DEF;
+          text-align: center;
+          padding-top: 16px;
+        }
+
+        .previous-year-banner p {
+          margin: 0;
+        }
+
         .grid-container {
           margin: 0 2em;
           display: grid;
@@ -267,6 +278,12 @@ class InteropDashboard extends PolymerElement {
         }
 
       </style>
+      <div class="previous-year-banner" hidden$=[[isCurrentYear]]>
+        <p>
+          You are viewing Interop data from a previous year.
+          <a href="/interop-[[currentInteropYear]]">View the current Interop Dashboard</a>.
+        </p>
+      </div>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
           <h1>Interop [[year]] Dashboard</h1>
@@ -544,6 +561,8 @@ class InteropDashboard extends PolymerElement {
         type: Number,
         value: 0
       },
+      currentInteropYear: Number,
+      isCurrentYear: Boolean,
       isSortedAsc: {
         type: Boolean,
         value: true
@@ -582,6 +601,14 @@ class InteropDashboard extends PolymerElement {
 
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
+
+    // Determine the current Interop year. It is assumed that
+    // the current year is the latest year defined in interop-data.
+    const currentInteropYear = Math.max(
+        ...this.getYearProp('validYears')
+        .map(yearString => parseInt(yearString)));
+    this.isCurrentYear = parseInt(this.year) === currentInteropYear;
+    this.currentInteropYear = currentInteropYear;
 
     super.ready();
 
