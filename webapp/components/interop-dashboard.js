@@ -605,7 +605,7 @@ class InteropDashboard extends PolymerElement {
     // Determine the current Interop year. It is assumed that
     // the current year is the latest year defined in interop-data.
     const currentInteropYear = Math.max(
-        ...this.getYearProp('validYears')
+      ...this.getYearProp('validYears')
         .map(yearString => parseInt(yearString)));
     this.isCurrentYear = parseInt(this.year) === currentInteropYear;
     this.currentInteropYear = currentInteropYear;
