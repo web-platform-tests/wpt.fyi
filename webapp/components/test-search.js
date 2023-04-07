@@ -552,7 +552,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       if (autocompleteSelection.getAttribute('atom')) {
         return;
       }
-      if (autocompleteSelection.value.toLowerCase() === path) {
+      if (autocompleteSelection.value.toLowerCase() === path.toLowerCase()) {
         this.dispatchEvent(new CustomEvent('autocomplete', {
           detail: {path: autocompleteSelection.value},
         }));
