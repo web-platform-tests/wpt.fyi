@@ -525,7 +525,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   handleKeyDown(e) {
-    // Prevent tab key from working
+    // Prevent tab key navigation on search bar.
     if (e.keyCode === 9) {
       e.preventDefault();
       return false;
