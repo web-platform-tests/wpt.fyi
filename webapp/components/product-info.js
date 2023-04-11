@@ -46,7 +46,7 @@ const versionPatterns = Object.freeze({
 
 // The set of all browsers known to the wpt.fyi UI.
 const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
-  'deno', 'edge', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkit', 'webkitgtk']);
+  'deno', 'edge', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkitgtk', 'webkit']);
 
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
