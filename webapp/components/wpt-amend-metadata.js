@@ -294,7 +294,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   hasSearchURL(product) {
     return product === 'chrome' || product === 'deno' || product === 'edge' ||
       product === 'firefox' || product === 'node.js' || product === 'safari' ||
-      product === 'servo' || product === 'webkitgtk';
+      product === 'servo' || product === 'webkit' || product === 'webkitgtk';
   }
 
   getSearchURL(testName, product) {
@@ -321,7 +321,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       return `https://github.com/nodejs/node/issues?q="${testName}"`;
     }
 
-    if (product === 'safari' || product === 'webkitgtk') {
+    if (product === 'safari' || product === 'webkit' || product === 'webkitgtk') {
       return `https://bugs.webkit.org/buglist.cgi?quicksearch="${testName}"`;
     }
 
