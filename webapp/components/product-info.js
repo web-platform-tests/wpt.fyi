@@ -17,7 +17,7 @@ const DisplayNames = (() => {
   m.set('node.js', 'Node.js');
   m.set('servo', 'Servo');
   m.set('uc', 'UC Browser');
-  m.set('webkit', 'WebKit');
+  m.set('webkit', 'macOS WebKit');
   m.set('webkitgtk', 'WebKitGTK');
   // Platforms
   m.set('android', 'Android');

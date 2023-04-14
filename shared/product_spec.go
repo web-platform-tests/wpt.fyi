@@ -93,7 +93,7 @@ func (p ProductSpec) DisplayName() string {
 	case "servo":
 		return "Servo"
 	case "webkit":
-		return "WebKit"
+		return "macOS WebKit"
 	case "webkitgtk":
 		return "WebKitGTK"
 	default:
