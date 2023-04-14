@@ -17,7 +17,7 @@ const DisplayNames = (() => {
   m.set('node.js', 'Node.js');
   m.set('servo', 'Servo');
   m.set('uc', 'UC Browser');
-  m.set('webkit', 'macOS WebKit');
+  m.set('wktr', 'macOS WebKit');
   m.set('webkitgtk', 'WebKitGTK');
   // Platforms
   m.set('android', 'Android');
@@ -46,7 +46,7 @@ const versionPatterns = Object.freeze({
 
 // The set of all browsers known to the wpt.fyi UI.
 const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
-  'deno', 'edge', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkitgtk', 'webkit']);
+  'deno', 'edge', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkitgtk', 'wktr']);
 
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
@@ -176,7 +176,7 @@ const ProductInfo = (superClass) => class extends superClass {
       // chrome_android is mapped to chrome on wptrunner.
       return '/static/chrome_64x64.png';
 
-    } else if (name !== 'deno' && name !== 'flow' && name !== 'node.js' && name !== 'servo' && name !== 'webkit') {  // Products without per-channel logos.
+    } else if (name !== 'deno' && name !== 'flow' && name !== 'node.js' && name !== 'servo' && name !== 'wktr') {  // Products without per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
       for (const label of candidates) {
