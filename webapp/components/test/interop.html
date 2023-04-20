@@ -8,13 +8,13 @@
     <script src="module" src="../interop.js"></script>
   </head>
   <body>
-    <interop-dashboard year="2023" id="dashboard"></interop-dashboard>
+    <interop-dashboard></interop-dashboard>
     <script type="module">
       import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
       suite('Interop', () => {
         test('dashboard instanceof Polymer.element', () => {
-          assert.isTrue(document.getElementById('dashboard') instanceof PolymerElement);
+          assert.isTrue(document.createElement('interop-dashboard') instanceof PolymerElement);
         });
 
         test('summary instanceof Polymer.element', () => {
