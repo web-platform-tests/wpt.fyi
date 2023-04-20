@@ -11,7 +11,9 @@
     "requireConfigFile": false,
     "babelOptions": {
       "plugins": [
-        "@babel/plugin-syntax-import-assertions"
+        "@babel/plugin-syntax-import-assertions",
+        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-proposal-optional-chaining"
       ]
     }
   },

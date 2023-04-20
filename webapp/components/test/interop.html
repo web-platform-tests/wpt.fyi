@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <script src="module" src="../interop.js"></script>
+  </head>
+  <body>
+    <interop-dashboard year="2023" id="dashboard"></interop-dashboard>
+    <script type="module">
+      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+      suite('Interop', () => {
+        test('dashboard instanceof Polymer.element', () => {
+          assert.isTrue(document.getElementById('dashboard') instanceof PolymerElement);
+        });
+
+        test('summary instanceof Polymer.element', () => {
+          assert.isTrue(document.createElement('interop-summary') instanceof PolymerElement);
+        });
+
+        test('feature-chart instanceof Polymer.element', () => {
+          assert.isTrue(document.createElement('interop-feature-chart') instanceof PolymerElement);
+        });
+      });
+    </script>
+  </body>
+</html>
