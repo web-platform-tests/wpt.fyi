@@ -11,6 +11,7 @@ import (
 	"errors"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v47/github"
@@ -29,6 +30,7 @@ type triageMetadata struct {
 	ctx          context.Context
 	fetcher      MetadataFetcher
 	githubClient *github.Client
+	hasInterop   bool
 	logger       Logger
 	wptmetadataGitHubInfo
 }
@@ -131,7 +133,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 // createPR creates a pull request from the commit branch (with the new triage changes) to the
 // master branch of the repository.
 // Based on: https://godoc.org/github.com/google/go-github/github#example-PullRequestsService-Create
-func (tm triageMetadata) createPR() (string, error) {
+func (tm triageMetadata) createPR() (*github.PullRequest, error) {
 	newPR := &github.NewPullRequest{
 		Title:               &tm.prSubject,
 		Head:                &tm.commitBranch,
@@ -142,11 +144,21 @@ func (tm triageMetadata) createPR() (string, error) {
 
 	pr, _, err := tm.githubClient.PullRequests.Create(tm.ctx, tm.prRepoOwner, tm.prRepo, newPR)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	tm.logger.Infof("PR created: %s", pr.GetHTMLURL())
-	return pr.GetHTMLURL(), nil
+	return pr, nil
+}
+
+func (tm triageMetadata) addPRLabels(pr *github.PullRequest) (err error) {
+	if !tm.hasInterop {
+		return nil
+	}
+
+	labels := []string{"interop"}
+	_, _, err = tm.githubClient.Issues.AddLabelsToIssue(tm.ctx, tm.prRepoOwner, tm.prRepo, *pr.Number, labels)
+	return err
 }
 
 func (tm triageMetadata) createWPTMetadataPR(sha *string, triagedMetadataMap map[string][]byte) (string, error) {
@@ -178,7 +190,13 @@ func (tm triageMetadata) createWPTMetadataPR(sha *string, triagedMetadataMap map
 		return "", err
 	}
 
-	return pr, nil
+	err := tm.addPRLabels(pr)
+	if err != nil {
+		log.Errorf("Error while adding labels: %s", err)
+		return "", err
+	}
+
+	return pr.GetHTMLURL(), nil
 }
 
 // Add Metadata into the existing Metadata YML files and only return the modified files.
@@ -246,6 +264,17 @@ func appendTestName(test string, metadata MetadataResults) {
 	}
 }
 
+func containsInterop(metadata MetadataResults) bool {
+	for _, links := range metadata {
+		for _, link := range links {
+			if strings.Contains(link.Label, "interop") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func generateRandomInt() string {
 	return strconv.Itoa(rand.Intn(10000))
 }
@@ -256,6 +285,7 @@ func (tm triageMetadata) Triage(metadata MetadataResults) (string, error) {
 		return "", err
 	}
 
+	tm.hasInterop = containsInterop(metadata)
 	triagedMetadataMap := addToFiles(metadata, filesMap, tm.logger)
 	tm.wptmetadataGitHubInfo = getWptmetadataGitHubInfo(tm.ctx, tm.githubClient)
 	return tm.createWPTMetadataPR(sha, triagedMetadataMap)
