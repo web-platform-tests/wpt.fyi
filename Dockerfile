@@ -1,5 +1,5 @@
 # vim: set expandtab sw=4
-FROM golang:1.20.1-bullseye
+FROM golang:1.20.3-bullseye
 
 # Create a non-priviledged user to run browsers as (Firefox and Chrome do not
 # like to run as root).
