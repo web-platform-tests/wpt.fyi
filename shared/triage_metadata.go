@@ -190,7 +190,7 @@ func (tm triageMetadata) createWPTMetadataPR(sha *string, triagedMetadataMap map
 		return "", err
 	}
 
-	err := tm.addPRLabels(pr)
+	err = tm.addPRLabels(pr)
 	if err != nil {
 		log.Errorf("Error while adding labels: %s", err)
 		return "", err

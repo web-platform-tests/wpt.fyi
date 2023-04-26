@@ -406,3 +406,38 @@ func TestNewTriageMetadata_email_fallback(t *testing.T) {
 	assert.Equal(t, m.authorName, "testuser")
 	assert.Equal(t, m.authorEmail, "testuser@users.noreply.github.com")
 }
+
+func TestContainsInterop_True(t *testing.T) {
+	var amendment MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/abc.html": [
+			{
+				"label": "interop"
+			}
+		]
+	}`), &amendment)
+
+	actual := containsInterop(amendment)
+
+	assert.True(t, actual)
+}
+
+func TestContainsInterop_False(t *testing.T) {
+	var amendment MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/*": [
+			{
+				"url": "foo1",
+				"product": "chrome",
+				"results": [
+					{"status": 6 }
+				]
+			}
+		]
+	}`), &amendment)
+
+	actual := containsInterop(amendment)
+
+	assert.False(t, actual)
+}
+
