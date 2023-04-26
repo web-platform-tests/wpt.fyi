@@ -93,6 +93,7 @@ export const interopData = {
     'investigation_scores': [
       {
         'name': 'Editing, contenteditable, and execCommand',
+        'url': 'https://github.com/web-platform-tests/interop-2022-editing',
         'scores_over_time': [
           { 'date': '2022-10-22', 'score': 360 },
           { 'date': '2022-11-25', 'score': 460 },
@@ -101,6 +102,7 @@ export const interopData = {
       },
       {
         'name': 'Pointer and Mouse Events',
+        'url': 'https://github.com/web-platform-tests/interop-2022-pointer',
         'scores_over_time': [
           { 'date': '2022-12-01', 'score': 790 },
           { 'date': '2022-12-14', 'score': 1000 }
@@ -108,6 +110,7 @@ export const interopData = {
       },
       {
         'name': 'Viewport Measurement',
+        'url': 'https://github.com/web-platform-tests/interop-2022-viewport',
         'scores_over_time': [
           { 'date': '2022-09-28', 'score': 600 },
           { 'date': '2022-12-14', 'score': 900 }
@@ -295,12 +298,14 @@ export const interopData = {
     'investigation_scores': [
       {
         'name': 'Accessibility Testing',
+        'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
         'scores_over_time': [
           { 'date': '2023-03-08', 'score': 600 }
         ]
       },
       {
         'name': 'Mobile Testing',
+        'url': 'https://github.com/web-platform-tests/interop-2023-mobile-testing',
         'scores_over_time': []
       }
     ],
