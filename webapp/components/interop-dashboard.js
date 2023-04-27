@@ -434,7 +434,7 @@ class InteropDashboard extends PolymerElement {
                     <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
-                          <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
+                          <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
                         </td>
                         <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
                         <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
@@ -492,7 +492,7 @@ class InteropDashboard extends PolymerElement {
             </div>
 
             <div id="featureReferenceList">
-              <template is="dom-repeat" items="[[featureLinks(feature)]]">
+              <template is="dom-repeat" items="[[featureLinks(feature, stable)]]">
                 <template is="dom-if" if="[[item.href]]">
                   <a href$="[[item.href]]">[[item.text]]</a>
                 </template>
@@ -613,12 +613,16 @@ class InteropDashboard extends PolymerElement {
     return feature === this.feature;
   }
 
-  featureLinks(feature) {
+  featureLinks(feature, stable) {
     const data = this.getYearProp('focusAreas')[feature];
+    let testsURL = data?.tests;
+    if (testsURL) {
+      testsURL = this.formatTestsURL(testsURL, stable);
+    }
     return [
       { text: 'Spec', href: data?.spec },
       { text: 'MDN', href: data?.mdn },
-      { text: 'Tests', href: data?.tests },
+      { text: 'Tests', href: testsURL },
     ];
   }
 
@@ -628,6 +632,26 @@ class InteropDashboard extends PolymerElement {
 
   getRowInfo(name, prop) {
     return this.getYearProp('focusAreas')[name][prop];
+  }
+
+  // Add the stable or experimental label to a tests URL depending on the view.
+  formatTestsURL(testsURL, stable) {
+    // Don't try to add a label if the URL is undefined or empty.
+    if (!testsURL) {
+      return testsURL;
+    }
+
+    if (stable) {
+      testsURL += '&label=stable';
+    } else {
+      testsURL += '&label=experimental';
+    }
+    return testsURL;
+  }
+
+  // Get the tests URL for a row and add the stable/experimental label.
+  getTestsURL(name, stable) {
+    return this.formatTestsURL(this.getRowInfo(name, 'tests'), stable);
   }
 
   getInvestigationScore(rowName, isPreviousYear) {

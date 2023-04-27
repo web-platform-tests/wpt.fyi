@@ -22,35 +22,35 @@
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
         "spec": "https://drafts.csswg.org/css-sizing/#aspect-ratio",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio"
       },
       "interop-2021-flexbox": {
         "description": "Flexbox",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox",
         "spec": "https://drafts.csswg.org/css-flexbox/",
-        "tests": "/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox"
+        "tests": "/results/css/css-flexbox?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox"
       },
       "interop-2021-grid": {
         "description": "Grid",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/grid",
         "spec": "https://drafts.csswg.org/css-grid-1/",
-        "tests": "/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid"
+        "tests": "/results/css/css-grid?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid"
       },
       "interop-2021-position-sticky": {
         "description": "Sticky Positioning",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/position",
         "spec": "https://drafts.csswg.org/css-position/#position-property",
-        "tests": "/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky"
+        "tests": "/results/css/css-position/sticky?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky"
       },
       "interop-2021-transforms": {
         "description": "Transforms",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/transform",
         "spec": "https://drafts.csswg.org/css-transforms/",
-        "tests": "/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms"
+        "tests": "/results/css/css-transforms?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms"
       }
     }
   },
@@ -121,105 +121,105 @@
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
         "spec": "https://drafts.csswg.org/css-sizing/#aspect-ratio",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio"
       },
       "interop-2021-flexbox": {
         "description": "Flexbox",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox",
         "spec": "https://drafts.csswg.org/css-flexbox/",
-        "tests": "/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox"
+        "tests": "/results/css/css-flexbox?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox"
       },
       "interop-2021-grid": {
         "description": "Grid",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/grid",
         "spec": "https://drafts.csswg.org/css-grid-1/",
-        "tests": "/results/css/css-grid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid"
+        "tests": "/results/css/css-grid?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid"
       },
       "interop-2021-position-sticky": {
         "description": "Sticky Positioning",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/position",
         "spec": "https://drafts.csswg.org/css-position/#position-property",
-        "tests": "/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky"
+        "tests": "/results/css/css-position/sticky?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky"
       },
       "interop-2021-transforms": {
         "description": "Transforms",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/transform",
         "spec": "https://drafts.csswg.org/css-transforms/",
-        "tests": "/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms"
+        "tests": "/results/css/css-transforms?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms"
       },
       "interop-2022-cascade": {
         "description": "Cascade Layers",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/@layer",
         "spec": "https://drafts.csswg.org/css-cascade/#layering",
-        "tests": "/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade"
+        "tests": "/results/css/css-cascade?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade"
       },
       "interop-2022-color": {
         "description": "Color Spaces and Functions",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/color_value",
         "spec": "https://drafts.csswg.org/css-color/",
-        "tests": "/results/css/css-color?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color"
+        "tests": "/results/css/css-color?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color"
       },
       "interop-2022-contain": {
         "countsTowardScore": true,
         "description": "Containment",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/contain",
         "spec": "https://drafts.csswg.org/css-contain/#contain-property",
-        "tests": "/results/css/css-contain?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain"
+        "tests": "/results/css/css-contain?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain"
       },
       "interop-2022-dialog": {
         "description": "Dialog Element",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
         "spec": "https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog"
       },
       "interop-2022-forms": {
         "description": "Forms",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/form",
         "spec": "https://html.spec.whatwg.org/multipage/forms.html#the-form-element",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms"
       },
       "interop-2022-scrolling": {
         "description": "Scrolling",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/overflow",
         "spec": "https://drafts.csswg.org/css-overflow/#propdef-overflow",
-        "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling"
+        "tests": "/results/css?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling"
       },
       "interop-2022-subgrid": {
         "description": "Subgrid",
         "countsTowardScore": true,
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid",
         "spec": "https://drafts.csswg.org/css-grid-2/#subgrids",
-        "tests": "/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid"
+        "tests": "/results/css/css-grid/subgrid?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid"
       },
       "interop-2022-text": {
         "description": "Typography and Encodings",
         "countsTowardScore": true,
         "mdn": "",
         "spec": "",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text"
       },
       "interop-2022-viewport": {
         "description": "Viewport Units",
         "countsTowardScore": true,
         "mdn": "",
         "spec": "https://drafts.csswg.org/css-values/#viewport-relative-units",
-        "tests": "/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport"
+        "tests": "/results/css/css-values?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport"
       },
       "interop-2022-webcompat": {
         "description": "Web Compat",
         "countsTowardScore": true,
         "mdn": "",
         "spec": "",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat"
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat"
       }
     }
   },
@@ -310,231 +310,231 @@
         "description": "Aspect Ratio",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
         "spec": "https://drafts.csswg.org/css-sizing/#aspect-ratio",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio",
         "countsTowardScore": false
       },
       "interop-2021-position-sticky": {
         "description": "Sticky Positioning",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/position",
         "spec": "https://drafts.csswg.org/css-position/#position-property",
-        "tests": "/results/css/css-position/sticky?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky",
+        "tests": "/results/css/css-position/sticky?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky",
         "countsTowardScore": false
       },
       "interop-2022-cascade": {
         "description": "Cascade Layers",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/@layer",
         "spec": "https://drafts.csswg.org/css-cascade/#layering",
-        "tests": "/results/css/css-cascade?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade",
+        "tests": "/results/css/css-cascade?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade",
         "countsTowardScore": false
       },
       "interop-2022-dialog": {
         "description": "Dialog Element",
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
         "spec": "https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog",
         "countsTowardScore": false
       },
       "interop-2022-text": {
         "description": "Typography and Encodings",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/length#relative_length_units_based_on_viewport",
         "spec": "",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text",
         "countsTowardScore": false
       },
       "interop-2022-viewport": {
         "description": "Viewport Units",
         "mdn": "",
         "spec": "https://drafts.csswg.org/css-values/#viewport-relative-units",
-        "tests": "/results/css/css-values?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport",
+        "tests": "/results/css/css-values?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport",
         "countsTowardScore": false
       },
       "interop-2022-webcompat": {
         "description": "Web Compat",
         "mdn": "",
         "spec": "",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat",
         "countsTowardScore": false
       },
       "interop-2023-cssborderimage": {
         "description": "Border Image",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/border-image",
         "spec": "https://www.w3.org/TR/css-backgrounds-3/#the-border-image",
-        "tests": "/results/css/css-backgrounds?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage",
+        "tests": "/results/css/css-backgrounds?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage",
         "countsTowardScore": true
       },
       "interop-2023-color": {
         "description": "Color Spaces and Functions",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/color_value",
         "spec": "https://w3c.github.io/csswg-drafts/css-color/#color-syntax",
-        "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color",
+        "tests": "/results/css?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color",
         "countsTowardScore": true
       },
       "interop-2023-container": {
         "description": "Container Queries",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Container_Queries",
         "spec": "https://drafts.csswg.org/css-contain-3/#container-queries",
-        "tests": "/results/css/css-contain/container-queries?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-container",
+        "tests": "/results/css/css-contain/container-queries?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-container",
         "countsTowardScore": true
       },
       "interop-2023-contain": {
         "description": "Containment",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/contain",
         "spec": "https://drafts.csswg.org/css-contain/#contain-property",
-        "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain",
+        "tests": "/results/css?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain",
         "countsTowardScore": true
       },
       "interop-2023-pseudos": {
         "description": "CSS Pseudo-classes",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/Pseudo-classes",
         "spec": "https://drafts.csswg.org/selectors/",
-        "tests": "/results/css/selectors?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-pseudos",
+        "tests": "/results/css/selectors?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-pseudos",
         "countsTowardScore": true
       },
       "interop-2023-property": {
         "description": "Custom Properties",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/@property",
         "spec": "https://drafts.css-houdini.org/css-properties-values-api/",
-        "tests": "/results/css/css-properties-values-api?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-property",
+        "tests": "/results/css/css-properties-values-api?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-property",
         "countsTowardScore": true
       },
       "interop-2023-flexbox": {
         "description": "Flexbox",
         "mdn": "https://developer.mozilla.org/docs/Learn/CSS/CSS_layout/Flexbox",
         "spec": "https://drafts.csswg.org/css-flexbox/",
-        "tests": "/results/css/css-flexbox?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox",
+        "tests": "/results/css/css-flexbox?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox",
         "countsTowardScore": true
       },
       "interop-2023-fonts": {
         "description": "Font Feature Detection and Palettes",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/font-palette",
         "spec": "https://drafts.csswg.org/css-fonts-4/#font-palette-prop",
-        "tests": "/results/css?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-fonts",
+        "tests": "/results/css?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-fonts",
         "countsTowardScore": true
       },
       "interop-2023-forms": {
         "description": "Forms",
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/form",
         "spec": "https://html.spec.whatwg.org/multipage/forms.html#the-form-element",
-        "tests": "/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms%20or%20label%3Ainterop-2023-forms",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms%20or%20label%3Ainterop-2023-forms",
         "countsTowardScore": true
       },
       "interop-2023-grid": {
         "description": "Grid",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout",
         "spec": "https://drafts.csswg.org/css-grid/",
-        "tests": "/results/css/css-grid?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid",
+        "tests": "/results/css/css-grid?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid",
         "countsTowardScore": true
       },
       "interop-2023-has": {
         "description": ":has()",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/:has",
         "spec": "https://drafts.csswg.org/selectors-4/#relational",
-        "tests": "/results/css/selectors?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-has",
+        "tests": "/results/css/selectors?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-has",
         "countsTowardScore": true
       },
       "interop-2023-inert": {
         "description": "Inert",
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Global_attributes/inert",
         "spec": "https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute",
-        "tests": "/results/inert?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert",
+        "tests": "/results/inert?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert",
         "countsTowardScore": true
       },
       "interop-2023-cssmasking": {
         "description": "Masking",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Masking",
         "spec": "https://drafts.fxtf.org/css-masking/",
-        "tests": "/results/css/css-masking?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssmasking",
+        "tests": "/results/css/css-masking?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssmasking",
         "countsTowardScore": true
       },
       "interop-2023-mathfunctions": {
         "description": "CSS Math Functions",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Functions#math_functions",
         "spec": "https://drafts.csswg.org/css-values-4/#math",
-        "tests": "/results/css/css-values?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
+        "tests": "/results/css/css-values?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
         "countsTowardScore": true
       },
       "interop-2023-mediaqueries": {
         "description": "Media Queries 4",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/Media_Queries/Using_media_queries",
         "spec": "https://www.w3.org/TR/mediaqueries-4/",
-        "tests": "/results/css/mediaqueries?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
+        "tests": "/results/css/mediaqueries?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
         "countsTowardScore": true
       },
       "interop-2023-modules": {
         "description": "Modules",
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules",
         "spec": "https://tc39.es/proposal-import-assertions/",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules",
         "countsTowardScore": true
       },
       "interop-2023-motion": {
         "description": "Motion Path",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Motion_Path",
         "spec": "https://drafts.fxtf.org/motion-1/",
-        "tests": "/results/css/motion?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
+        "tests": "/results/css/motion?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
         "countsTowardScore": true
       },
       "interop-2023-offscreencanvas": {
         "description": "Offscreen Canvas",
         "mdn": "https://developer.mozilla.org/docs/Web/API/OffscreenCanvas",
         "spec": "https://html.spec.whatwg.org/multipage/canvas.html#the-offscreencanvas-interface",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas",
         "countsTowardScore": true
       },
       "interop-2023-events": {
         "description": "Pointer and Mouse Events",
         "mdn": "https://developer.mozilla.org/docs/Web/API/Pointer_events",
         "spec": "https://w3c.github.io/pointerevents/",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events",
         "countsTowardScore": true
       },
       "interop-2022-scrolling": {
         "description": "Scrolling",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/overflow",
         "spec": "https://drafts.csswg.org/css-overflow/#propdef-overflow",
-        "tests": "/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling",
+        "tests": "/results/css?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling",
         "countsTowardScore": true
       },
       "interop-2022-subgrid": {
         "description": "Subgrid",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Grid_Layout/Subgrid",
         "spec": "https://drafts.csswg.org/css-grid-2/#subgrids",
-        "tests": "/results/css/css-grid/subgrid?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid",
+        "tests": "/results/css/css-grid/subgrid?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-subgrid",
         "countsTowardScore": true
       },
       "interop-2021-transforms": {
         "description": "Transforms",
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/transform",
         "spec": "https://drafts.csswg.org/css-transforms/",
-        "tests": "/results/css/css-transforms?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms",
+        "tests": "/results/css/css-transforms?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms",
         "countsTowardScore": true
       },
       "interop-2023-url": {
         "description": "URL",
         "mdn": "https://developer.mozilla.org/docs/Web/API/URL",
         "spec": "https://url.spec.whatwg.org",
-        "tests": "/results/url?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
+        "tests": "/results/url?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
         "countsTowardScore": true
       },
       "interop-2023-webcompat": {
         "description": "Web Compat 2023",
         "mdn": "",
         "spec": "",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
         "countsTowardScore": true
       },
       "interop-2023-webcodecs": {
         "description": "Web Codecs (video)",
         "mdn": "https://developer.mozilla.org/docs/Web/API/WebCodecs_API",
         "spec": "https://www.w3.org/TR/webcodecs/",
-        "tests": "/results/webcodecs?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
+        "tests": "/results/webcodecs?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
         "countsTowardScore": true
       },
       "interop-2023-webcomponents": {
         "description": "Web Components",
         "mdn": "https://developer.mozilla.org/docs/Web/Web_Components",
         "spec": "https://www.w3.org/wiki/WebComponents/",
-        "tests": "/results/?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcomponents",
+        "tests": "/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcomponents",
         "countsTowardScore": true
       }
     }
