@@ -412,7 +412,7 @@ func TestContainsInterop_True(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/abc.html": [
 			{
-				"label": "interop"
+				"label": "interop-x"
 			}
 		]
 	}`), &amendment)
@@ -420,6 +420,21 @@ func TestContainsInterop_True(t *testing.T) {
 	actual := containsInterop(amendment)
 
 	assert.True(t, actual)
+}
+
+func TestContainsInterop_NotInteropLabel(t *testing.T) {
+	var amendment MetadataResults
+	json.Unmarshal([]byte(`{
+		"/foo/foo1/abc.html": [
+			{
+				"label": "lets-go-interoperability"
+			}
+		]
+	}`), &amendment)
+
+	actual := containsInterop(amendment)
+
+	assert.False(t, actual)
 }
 
 func TestContainsInterop_False(t *testing.T) {

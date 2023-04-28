@@ -267,7 +267,8 @@ func appendTestName(test string, metadata MetadataResults) {
 func containsInterop(metadata MetadataResults) bool {
 	for _, links := range metadata {
 		for _, link := range links {
-			if strings.Contains(link.Label, "interop") {
+			// Assume that all interop labels start with interop-.
+			if strings.HasPrefix(link.Label, "interop-") {
 				return true
 			}
 		}
