@@ -638,7 +638,7 @@ class InteropDashboard extends PolymerElement {
   formatTestsURL(testsURL, stable) {
     // Don't try to add a label if the URL is undefined or empty.
     if (!testsURL) {
-      return testsURL;
+      return '';
     }
 
     if (stable) {
