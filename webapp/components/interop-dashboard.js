@@ -615,10 +615,8 @@ class InteropDashboard extends PolymerElement {
 
   featureLinks(feature, stable) {
     const data = this.getYearProp('focusAreas')[feature];
-    let testsURL = data?.tests;
-    if (testsURL) {
-      testsURL = this.formatTestsURL(testsURL, stable);
-    }
+    const testsURL = this.formatTestsURL(data?.tests, stable);
+
     return [
       { text: 'Spec', href: data?.spec },
       { text: 'MDN', href: data?.mdn },
