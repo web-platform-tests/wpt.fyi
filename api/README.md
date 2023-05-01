@@ -178,13 +178,54 @@ Performs an HTTP redirect for the results summary JSON blob of the given TestRun
 
 __Response format__
 
-The summary JSON is in the format
+The summary JSON format has been updated as of July 2022, and all requisite
+summary files should now follow this  newformat. Summary files with the new format
+are denoted with the `_v2` file name suffix. This change was made to
+differentiate a test's overall status value from the subtest passes and
+totals.
+
+The v2 summary JSON is in the format
 
     {
-      "/path/to/test.html": [1, 1],
+      "/path/to/test.html": {
+        "s": "O",
+        "c": [1, 1]
+      },
     }
 
-Where the array contains [`number of passes`, `total tests`].
+Each test path has two properties.
+
+`s`, or status, which is an abbreviated value to the test's overall status.
+
+`c`, or counts, which is an array containing
+[`number of subtest passes`, `total subtests`].
+
+__Status abbrevations__
+
+| Status              | Abbreviation |
+|---------------------|--------------|
+| OK                  | O            |
+| PASS                | P            |
+| FAIL                | F            |
+| SKIP                | S            |
+| ERROR               | E            |
+| NOTRUN              | N            |
+| CRASH               | C            |
+| TIMEOUT             | T            |
+| PRECONDITION_FAILED | PF           |
+
+Any summary files before this update follow the old JSON format (v1). The v1
+summary format has no additional name suffix, unlike v2.
+
+The v1 JSON is in the format
+
+    {
+      "/path/to/test.html": [2, 2],
+    }
+
+Where the array contains [`number of subtest passes`, `total subtests`].
+The test's overall status is added with these subtest values. A passing status
+value (`OK` or `PASS`) will increment the number of subtest passes.
 
 __Parameters__
 
