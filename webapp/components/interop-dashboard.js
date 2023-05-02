@@ -639,12 +639,26 @@ class InteropDashboard extends PolymerElement {
       return '';
     }
 
-    if (stable) {
-      testsURL += '&label=stable';
-    } else {
-      testsURL += '&label=experimental';
+    // Test results are defined as absolute paths from this origin.
+    let url; 
+    try {
+      url = new URL(testsURL, window.location.origin);
+    } catch (e) {
+      console.error(e, e.stack);
+      return '';
     }
-    return testsURL;
+    // Test results URLs can have multiple 'label' params. Grab them all.
+    const existingLabels = url.searchParams.getAll('label');
+    // Make sure there isn't an existing stable or experimental label param.
+    const newLabels = existingLabels.filter(val => val !== 'stable' && val !== 'experimental');
+    // Add the stable/experimental label depending on the dashboard view.
+    newLabels.push(stable ? 'stable' : 'experimental');
+    // Delete the existing label params and re-add them.
+    url.searchParams.delete('label');
+    for (const labelValue of newLabels)
+      url.searchParams.append('label', labelValue);
+    
+    return url.toString();
   }
 
   // Get the tests URL for a row and add the stable/experimental label.
