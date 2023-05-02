@@ -457,7 +457,9 @@ class InteropDashboard extends PolymerElement {
                   <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr>
-                        <td colspan=4>[[rowName]]</td>
+                        <td colspan=4>
+                          <a href$="[[getInvestigationUrl(rowName, section.previous_investigation)]]">[[rowName]]</a>
+                        </td>
                         <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
@@ -642,6 +644,19 @@ class InteropDashboard extends PolymerElement {
     }
 
     return '0.0%';
+  }
+
+  getInvestigationUrl(rowName, isPreviousYear) {
+    const yearProp = (isPreviousYear) ? 'previousInvestigationScores' : 'investigationScores';
+    const scores = this.getYearProp(yearProp);
+    for (let i = 0; i < scores.length; i++) {
+      const area = scores[i];
+      if (area.name === rowName) {
+        return area.url;
+      }
+    }
+
+    return '#';
   }
 
   getInvestigationScoreSubtotal(isPreviousYear) {
