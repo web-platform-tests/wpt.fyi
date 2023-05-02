@@ -639,14 +639,13 @@ class InteropDashboard extends PolymerElement {
       return '';
     }
 
+    // TODO(DanielRyanSmith): This logic could be simplified. see:
+    // - https://github.com/whatwg/url/issues/762
+    // - https://github.com/whatwg/url/issues/461
+    // - https://github.com/whatwg/url/issues/335
+
     // Test results are defined as absolute paths from this origin.
-    let url; 
-    try {
-      url = new URL(testsURL, window.location.origin);
-    } catch (e) {
-      console.error(e, e.stack);
-      return '';
-    }
+    const url = new URL(testsURL, window.location.origin);
     // Test results URLs can have multiple 'label' params. Grab them all.
     const existingLabels = url.searchParams.getAll('label');
     // Remove any existing stable or experimental label param.
@@ -655,9 +654,10 @@ class InteropDashboard extends PolymerElement {
     newLabels.push(stable ? 'stable' : 'experimental');
     // Delete the existing label params and re-add them.
     url.searchParams.delete('label');
-    for (const labelValue of newLabels)
+    for (const labelValue of newLabels) {
       url.searchParams.append('label', labelValue);
-    
+    }
+
     return url.toString();
   }
 
