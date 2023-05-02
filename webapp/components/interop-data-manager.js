@@ -52,6 +52,7 @@ class InteropDataManager {
     this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
+    this.issueURL = yearInfo.issue_url;
     this.tableSections = yearInfo.table_sections;
     // Keep a list of years we have interop data prepared for.
     this.validYears = Object.keys(paramsByYear);
