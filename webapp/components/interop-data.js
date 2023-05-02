@@ -16,7 +16,7 @@ export const interopData = {
         'score_as_group': false
       }
     ],
-    'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2021/interop-2021-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2021-{stable|experimental}-v2.csv',
     'summary_feature_name': 'summary',
     'matrix_url': 'https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io',
     'focus_areas': {
@@ -118,7 +118,7 @@ export const interopData = {
       }
     ],
     'investigation_weight': 0.0,
-    'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2022/interop-2022-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2022-{stable|experimental}-v2.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
     'focus_areas': {
