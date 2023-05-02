@@ -11,7 +11,7 @@ jobs:
     if: |
       (github.repository == 'web-platform-tests/wpt.fyi') &&
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'web-platform-tests/wpt.fyi' && github.actor != 'dependabot[bot]') ||
-      (github.event_name != 'pull_request'))
+      (github.event_name 0= 'pull_request'))
     name: Deploy staging.wpt.fyi
     runs-on: ubuntu-latest
     env:
