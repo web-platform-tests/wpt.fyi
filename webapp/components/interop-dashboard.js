@@ -562,7 +562,10 @@ class InteropDashboard extends PolymerElement {
         value: 0
       },
       currentInteropYear: Number,
-      isCurrentYear: Boolean,
+      isCurrentYear: {
+        type: Boolean,
+        value: true,
+      },
       isSortedAsc: {
         type: Boolean,
         value: true
@@ -604,11 +607,10 @@ class InteropDashboard extends PolymerElement {
 
     // Determine the current Interop year. It is assumed that
     // the current year is the latest year defined in interop-data.
-    const currentInteropYear = Math.max(
-      ...this.getYearProp('validYears')
-        .map(yearString => parseInt(yearString)));
-    this.isCurrentYear = parseInt(this.year) === currentInteropYear;
-    this.currentInteropYear = currentInteropYear;
+    // allYears is returned sorted. The last index is the current Interop year.
+    const allYears = this.getAllYears();
+    this.currentInteropYear = allYears[allYears.length - 1];
+    this.isCurrentYear = this.year === this.currentInteropYear;
 
     super.ready();
 
