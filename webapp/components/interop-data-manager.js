@@ -33,7 +33,6 @@ class InteropDataManager {
 
     // Calc and save investigation scores.
     this.investigationScores = yearInfo.investigation_scores;
-    this.investigationWeight = yearInfo.investigation_weight;
     // If the previous year has an investigation score, save it for later reference.
     if (paramsByYear[previousYear]) {
       this.previousInvestigationScores = paramsByYear[previousYear].investigation_scores;
@@ -52,7 +51,6 @@ class InteropDataManager {
     this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
     this.csvURL = yearInfo.csv_url;
-    this.issueURL = yearInfo.issue_url;
     this.tableSections = yearInfo.table_sections;
     // Keep a list of years we have interop data prepared for.
     this.validYears = Object.keys(paramsByYear);
@@ -214,18 +212,12 @@ class InteropDataManager {
         // to handle averaging.
         const numCountedFocusAreas = this.focusAreasList.filter(
           k => this.focusAreas[k].countsTowardScore).length;
+
         testScore /= numCountedFocusAreas;
+        testScore = Math.floor(testScore);
 
-        // Handle investigation scoring if applicable.
-        const [investigationScore, investigationWeight] =
-          this.#getInvestigationScoreAndWeight(date);
-
-        // Factor in the the investigation score and weight as specified.
-        const summaryScore = Math.floor(testScore * (1 - investigationWeight) +
-                                        investigationScore * investigationWeight);
-
-        const summaryTooltip = this.createTooltip(browserName, version, summaryScore);
-        newRows.get(this.summaryFeatureName).push(summaryScore / 1000);
+        const summaryTooltip = this.createTooltip(browserName, version, testScore);
+        newRows.get(this.summaryFeatureName).push(testScore / 1000);
         newRows.get(this.summaryFeatureName).push(summaryTooltip);
       }
 
@@ -244,23 +236,6 @@ class InteropDataManager {
       this.experimentalDatatables = dataTables;
       this.experimentalBrowserVersions = browserVersions;
     }
-  }
-
-  #getInvestigationScoreAndWeight(date) {
-    if (!this.investigationScores) {
-      return [0, 0];
-    }
-    let totalInvestigationScore = 0;
-    for (const info of this.investigationScores) {
-      // Find the investigation score at the given date.
-      const entry = info.scores_over_time.findLast(
-        entry => date >= new Date(entry.date));
-      if (entry) {
-        totalInvestigationScore += entry.score;
-      }
-    }
-    totalInvestigationScore /= this.investigationScores.length;
-    return [totalInvestigationScore, this.investigationWeight];
   }
 
   createTooltip(browser, version, score) {

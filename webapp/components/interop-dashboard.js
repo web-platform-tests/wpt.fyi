@@ -304,7 +304,7 @@ class InteropDashboard extends PolymerElement {
           to contribute improvements to
           <a href="https://github.com/web-platform-tests/wpt" target="_blank">WPT</a>
           and then
-          <a href="[[getYearProp('issueURL')]]" target="_blank">file an issue</a>
+          <a href="https://github.com/web-platform-tests/interop/issues/new" target="_blank">file an issue</a>
           to request updating the set of tests used for scoring. You're also
           welcome to
           <a href="https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io" target="_blank">join
