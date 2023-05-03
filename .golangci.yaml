@@ -1,0 +1,38 @@
+linters:
+  # List of linters enabled by default
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable: # Enabling specified linters
+    - containedctx
+    - dupl
+    - dogsled
+    - errname
+    - errorlint
+    - exhaustive
+    - exhaustruct
+    - exportloopref
+    - gochecknoglobals
+    - gocognit
+    - goconst
+    - gocyclo
+    - godot
+    - godox
+    - gofmt
+    - goheader
+    - gomoddirectives
+    - gosec
+    - importas
+    - ireturn
+    - lll
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - prealloc
+    - revive
+    - unparam
+    - usestdlibvars
+  fast: true
+  
