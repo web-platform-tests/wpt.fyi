@@ -16,6 +16,14 @@ export const interopData = {
         'score_as_group': false
       }
     ],
+    /**
+     * Interop scores are "frozen" after the end of the year.
+     * Once an interop year is completed, results are generated one more time
+     * from the results-analysis script for the full year, and those scores
+     * are placed for reference in the webapp/static directory. The score
+     * is no longer updated and is referenced from this location.
+     * More information at https://github.com/web-platform-tests/results-analysis
+    **/
     'csv_url': '/static/interop-2021-{stable|experimental}-v2.csv',
     'summary_feature_name': 'summary',
     'matrix_url': 'https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io',
@@ -118,6 +126,14 @@ export const interopData = {
       }
     ],
     'investigation_weight': 0.0,
+    /**
+     * Interop scores are "frozen" after the end of the year.
+     * Once an interop year is completed, results are generated one more time
+     * from the results-analysis script for the full year, and those scores
+     * are placed for reference in the webapp/static directory. The score
+     * is no longer updated and is referenced from this location.
+     * More information at https://github.com/web-platform-tests/results-analysis
+    **/
     'csv_url': '/static/interop-2022-{stable|experimental}-v2.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
@@ -310,6 +326,10 @@ export const interopData = {
       }
     ],
     'investigation_weight': 0.0,
+    /**
+     * More information on results generation at
+     * https://github.com/web-platform-tests/results-analysis
+    **/
     'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2023/interop-2023-{stable|experimental}-v2.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
