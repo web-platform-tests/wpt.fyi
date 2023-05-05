@@ -16,7 +16,7 @@ import (
 // png blob for the given screenshot hash.
 //
 // URL format:
-// /api/screenshot/{screenshot}
+// "/api/screenshot/{screenshot}".
 func apiScreenshotRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	shot := mux.Vars(r)["screenshot"]
 	if shot == "" {

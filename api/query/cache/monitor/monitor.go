@@ -92,6 +92,7 @@ type GoRuntime struct{}
 func (r GoRuntime) GetHeapBytes() uint64 {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
+
 	return stats.HeapAlloc
 }
 
@@ -157,6 +158,7 @@ func (m *indexMonitor) Stop() error {
 	}
 	m.isRunning = false
 	m.runIngested = make(chan bool)
+
 	return nil
 }
 
@@ -164,6 +166,7 @@ func (m *indexMonitor) SetInterval(interval time.Duration) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.interval = interval
+
 	return nil
 }
 
@@ -171,6 +174,7 @@ func (m *indexMonitor) SetMaxHeapBytes(maxHeapBytes uint64) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.maxHeapBytes = maxHeapBytes
+
 	return nil
 }
 
@@ -182,6 +186,7 @@ func (m *indexMonitor) SetEvictionPercent(percent float64) error {
 	}
 
 	m.percent = percent
+
 	return nil
 }
 
@@ -192,6 +197,7 @@ func (m *indexMonitor) start() error {
 		return errRunning
 	}
 	m.isRunning = true
+
 	return nil
 }
 
@@ -199,19 +205,40 @@ func (m *indexMonitor) check() {
 	heapBytes := m.rt.GetHeapBytes()
 	if heapBytes > m.maxHeapBytes {
 		m.logger.Warningf("Monitor %d bytes allocated, exceeding threshold of %d bytes", heapBytes, m.maxHeapBytes)
-		m.idx.EvictRuns(m.percent)
+		if percent, err := m.idx.EvictRuns(m.percent); err != nil {
+			m.logger.Warningf("%s", percent)
+		}
 	} else {
 		m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)
 	}
 }
 
 // NewIndexMonitor instantiates a new index.Index monitor.
-func NewIndexMonitor(logger shared.Logger, rt Runtime, interval time.Duration, maxIngestedRuns uint, maxHeapBytes uint64, percent float64, idx index.Index) (Monitor, error) {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func NewIndexMonitor(
+	logger shared.Logger,
+	rt Runtime, interval time.Duration,
+	maxIngestedRuns uint,
+	maxHeapBytes uint64,
+	percent float64,
+	idx index.Index,
+) (Monitor, error) {
 	if percent < 0 {
 		return nil, errNegativePercent
 	} else if percent > 1.0 {
 		return nil, errPercentTooLarge
 	}
 
-	return &indexMonitor{logger, rt, interval, maxIngestedRuns, maxHeapBytes, percent, false, &sync.Mutex{}, make(chan bool), idx}, nil
+	return &indexMonitor{
+		logger,
+		rt,
+		interval,
+		maxIngestedRuns,
+		maxHeapBytes,
+		percent,
+		false,
+		&sync.Mutex{},
+		make(chan bool),
+		idx,
+	}, nil
 }

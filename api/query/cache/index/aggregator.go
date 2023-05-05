@@ -22,6 +22,7 @@ type indexAggregator struct {
 	opts   query.AggregationOpts
 }
 
+// nolint:gocognit // TODO: Fix gocognit lint error
 func (a *indexAggregator) Add(t TestID) error {
 	id := t.testID
 	ts := a.tests
@@ -32,6 +33,7 @@ func (a *indexAggregator) Add(t TestID) error {
 			return err
 		}
 
+		// nolint:exhaustruct // Not required since missing field has omitempty.
 		r = shared.SearchResult{
 			Test:         name,
 			LegacyStatus: nil,
@@ -113,9 +115,11 @@ func (a *indexAggregator) Done() []shared.SearchResult {
 	for _, r := range a.agg {
 		res = append(res, r)
 	}
+
 	return res
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func newIndexAggregator(idx index, runIDs []RunID, opts query.AggregationOpts) aggregator {
 	return &indexAggregator{
 		index:  idx,

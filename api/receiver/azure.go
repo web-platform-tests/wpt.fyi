@@ -18,5 +18,6 @@ func getAzureArtifactName(url string) string {
 	if match := azureArtifactRegex.FindStringSubmatch(url); len(match) > 1 {
 		return match[1]
 	}
+
 	return ""
 }

@@ -14,6 +14,7 @@ import (
 // out tests that do not appear in the reports of any test run over which the
 // query will be executed. PrepareUserQuery should be executed exactly once on a
 // user query.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func PrepareUserQuery(runIDs []int64, q query.ConcreteQuery) query.ConcreteQuery {
 	baseQuery := query.Or{
 		Args: make([]query.ConcreteQuery, len(runIDs)),

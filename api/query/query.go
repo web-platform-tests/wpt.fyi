@@ -39,22 +39,30 @@ type queryHandler struct {
 // ErrBadSummaryVersion occurs when the summary file URL is not the correct version.
 var ErrBadSummaryVersion = errors.New("invalid/unsupported summary version")
 
-func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (*shared.QueryFilter, shared.TestRuns, []summary, error) {
+func (qh queryHandler) processInput(w http.ResponseWriter, r *http.Request) (
+	*shared.QueryFilter,
+	shared.TestRuns,
+	[]summary,
+	error,
+) {
 	filters, err := shared.ParseQueryFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return nil, nil, nil, err
 	}
 
 	testRuns, filters, err := qh.getRunsAndFilters(filters)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
+
 		return nil, nil, nil, err
 	}
 
 	summaries, err := qh.loadSummaries(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return nil, nil, nil, err
 	}
 
@@ -75,9 +83,11 @@ func (qh queryHandler) validateSummaryVersions(v url.Values, logger shared.Logge
 		summaryURL := shared.GetResultsURL(testRun, "")
 		if !qh.summaryIsValid(summaryURL) {
 			logger.Infof("summary URL has invalid suffix: %s", summaryURL)
+
 			return fmt.Errorf("%w for URL %s", ErrBadSummaryVersion, summaryURL)
 		}
 	}
+
 	return nil
 }
 
@@ -137,12 +147,14 @@ func (qh queryHandler) loadSummaries(testRuns shared.TestRuns) ([]summary, error
 			data, loadErr := qh.loadSummary(testRun)
 			if err == nil && loadErr != nil {
 				err = fmt.Errorf("Failed to load test run %v: %s", testRun.ID, loadErr.Error())
+
 				return
 			}
 			// Try to unmarshal the json using the new aggregation structure.
 			marshalErr := json.Unmarshal(data, &s)
 			if err == nil && marshalErr != nil {
 				err = marshalErr
+
 				return
 			}
 			summaries[i] = s
@@ -158,6 +170,7 @@ func (qh queryHandler) loadSummary(testRun shared.TestRun) ([]byte, error) {
 	url := shared.GetResultsURL(testRun, "")
 	var data []byte
 	err := qh.dataSource.Get(mkey, url, &data)
+
 	return data, err
 }
 
@@ -166,13 +179,15 @@ func getSummaryFileRedisKey(testRun shared.TestRun) string {
 }
 
 func isRequestCacheable(r *http.Request) bool {
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		ids, err := shared.ParseRunIDsParam(r.URL.Query())
+
 		return err == nil && len(ids) > 0
 	}
 
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		ids, err := shared.ExtractRunIDsBodyParam(r, true)
+
 		return err == nil && len(ids) > 0
 	}
 

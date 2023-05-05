@@ -29,10 +29,12 @@ type API interface {
 }
 
 type apiImpl struct {
-	ctx context.Context
+	ctx context.Context // nolint:containedctx // TODO: Fix containedctx lint error
+
 }
 
 // NewAPI returns an API implementation for the given context.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewAPI(ctx context.Context) API {
 	return apiImpl{
 		ctx: ctx,
@@ -51,12 +53,17 @@ func (a apiImpl) GetManifestForSHA(sha string) (fetchedSHA string, manifest []by
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
+
 	return fetchedSHA, data, err
 }
 
 // getGitHubReleaseAssetForSHA gets the bytes for the SHA's release's manifest json gzip asset.
 // This is done using a few hops on the GitHub API, so should be cached afterward.
-func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetchedSHA string, manifest io.Reader, err error) {
+func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (
+	fetchedSHA string,
+	manifest io.Reader,
+	err error,
+) {
 	client, err := aeAPI.GetGitHubClient()
 	if err != nil {
 		return "", nil, err
@@ -77,7 +84,13 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 		}
 
 		releaseTag = fmt.Sprintf("merge_pr_%d", issues.Issues[0].GetNumber())
-		release, _, err = client.Repositories.GetReleaseByTag(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName, releaseTag)
+		//nolint: ineffassign // err is still used below.
+		release, _, err = client.Repositories.GetReleaseByTag(
+			aeAPI.Context(),
+			shared.WPTRepoOwner,
+			shared.WPTRepoName,
+			releaseTag,
+		)
 	}
 
 	if err != nil {
@@ -98,13 +111,16 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (fetched
 			if err != nil {
 				return fetchedSHA, nil, err
 			}
+
 			return fetchedSHA, resp.Body, err
 		}
 	}
+
 	return "", nil, fmt.Errorf("No manifest asset found for release %s", releaseTag)
 }
 
 // NewRedis creates a new redisReadWritable with the given duration.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (a apiImpl) NewRedis(duration time.Duration) shared.ReadWritable {
 	return shared.NewRedisReadWritable(a.ctx, duration)
 }

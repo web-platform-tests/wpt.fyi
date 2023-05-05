@@ -34,6 +34,7 @@ func AuthenticateUploader(aeAPI shared.AppEngineAPI, r *http.Request) string {
 	if err != nil || user.Password != password {
 		return ""
 	}
+
 	return user.Username
 }
 
@@ -59,9 +60,11 @@ type apiImpl struct {
 }
 
 // NewAPI creates a real API from a given context.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewAPI(ctx context.Context) API {
 	api := shared.NewAppEngineAPI(ctx)
 	store := shared.NewAppEngineDatastore(ctx, false)
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	return &apiImpl{
 		AppEngineAPI: api,
 		store:        store,
@@ -72,6 +75,7 @@ func NewAPI(ctx context.Context) API {
 	}
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	key := a.store.NewIDKey("TestRun", testRun.ID)
 	var err error
@@ -83,6 +87,7 @@ func (a apiImpl) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return key, nil
 }
 
@@ -91,6 +96,7 @@ func (a apiImpl) IsAdmin(r *http.Request) bool {
 	acl, err := a.githubACLFactory(r)
 	if err != nil {
 		logger.Errorf("Error creating GitHubAccessControl: %s", err.Error())
+
 		return false
 	}
 	if acl == nil {
@@ -99,14 +105,17 @@ func (a apiImpl) IsAdmin(r *http.Request) bool {
 	admin, err := acl.IsValidAdmin()
 	if err != nil {
 		logger.Errorf("Error checking admin: %s", err.Error())
+
 		return false
 	}
+
 	return admin
 }
 
 func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 	var buffer shared.PendingTestRun
 	key := a.store.NewIDKey("PendingTestRun", newRun.ID)
+
 	return a.store.Update(key, &buffer, func(obj interface{}) error {
 		run := obj.(*shared.PendingTestRun)
 		if newRun.Stage != 0 {
@@ -145,6 +154,7 @@ func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 			run.Created = time.Now()
 		}
 		run.Updated = time.Now()
+
 		return nil
 	})
 }
@@ -158,6 +168,7 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	fileName := matches[2]
 
 	if a.gcs == nil {
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		a.gcs = &gcsImpl{ctx: a.Context()}
 	}
 
@@ -175,10 +186,8 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	if err != nil {
 		return err
 	}
-	if err := w.Close(); err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 func (a apiImpl) ScheduleResultsTask(
@@ -188,6 +197,7 @@ func (a apiImpl) ScheduleResultsTask(
 		return "", err
 	}
 
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	pendingRun := shared.PendingTestRun{
 		ID:       key.IntID(),
 		Stage:    shared.StageWptFyiReceived,
@@ -212,5 +222,6 @@ func (a apiImpl) ScheduleResultsTask(
 			payload.Set(k, v)
 		}
 	}
+
 	return a.ScheduleTask(ResultsQueue, fmt.Sprint(key.IntID()), ResultsTarget, payload)
 }

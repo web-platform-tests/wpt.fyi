@@ -35,6 +35,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		// No-op
 	default:
 		http.Error(w, "Invalid filter: "+filter, http.StatusBadRequest)
+
 		return
 	}
 	// TODO(Hexcles): Support pagination.
@@ -44,6 +45,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	keys, err := store.GetAll(q, &runs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	for i, key := range keys {
@@ -51,6 +53,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	// When we filter by status (pending) we need to re-sort.
@@ -63,6 +66,7 @@ func emit(w http.ResponseWriter, i interface{}) {
 	data, err := json.Marshal(i)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(data)

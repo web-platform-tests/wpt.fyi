@@ -15,6 +15,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+const requestedAction = "requested"
+const rerequestedAction = "rerequested"
+
 var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
 
 func isWPTFYIApp(appID int64) bool {
@@ -34,6 +37,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if contentType != "application/json" {
 		log.Errorf("Invalid content-type: %s", contentType)
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 	event := r.Header.Get("X-GitHub-Event")
@@ -43,6 +47,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		log.Debugf("Ignoring %s event", event)
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 
@@ -50,6 +55,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Missing secret: github-check-webhook-secret")
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+
 		return
 	}
 
@@ -57,6 +63,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -74,6 +81,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	if processed {
@@ -83,11 +91,13 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
 	}
+
 	return
 }
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring
 // that a check_run exists for each product that contains results for the head SHA.
+// nolint:gocognit // TODO: Fix gocognit lint error
 func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
 	log := shared.GetLogger(api.Context())
 	var checkSuite github.CheckSuiteEvent
@@ -102,20 +112,30 @@ func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
 	appName := checkSuite.GetCheckSuite().GetApp().GetName()
 	appID := checkSuite.GetCheckSuite().GetApp().GetID()
 
-	log.Debugf("Check suite %s: %s/%s @ %s (App %v, ID %v)", action, owner, repo, shared.CropString(sha, 7), appName, appID)
+	log.Debugf("Check suite %s: %s/%s @ %s (App %v, ID %v)",
+		action,
+		owner,
+		repo,
+		shared.CropString(sha, 7),
+		appName,
+		appID,
+	)
 
 	if !isWPTFYIApp(appID) {
 		log.Infof("Ignoring check_suite App ID %v", appID)
+
 		return false, nil
 	}
 
 	login := checkSuite.GetSender().GetLogin()
 	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
+
 		return false, nil
 	}
 
-	if action == "requested" || action == "rerequested" {
+	// nolint:nestif // TODO: Fix nestif lint error
+	if action == requestedAction || action == rerequestedAction {
 		pullRequests := checkSuite.GetCheckSuite().PullRequests
 		prNumbers := []int{}
 		for _, pr := range pullRequests {
@@ -125,11 +145,12 @@ func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
 		}
 
 		installationID := checkSuite.GetInstallation().GetID()
-		if action == "requested" {
+		if action == requestedAction {
 			for _, p := range pullRequests {
 				destRepoID := p.GetBase().GetRepo().GetID()
 				if destRepoID == wptRepoID && p.GetHead().GetRepo().GetID() != destRepoID {
-					api.CreateWPTCheckSuite(appID, installationID, sha, prNumbers...)
+					// Errors are already logged by CreateWPTCheckSuite
+					_, _ = api.CreateWPTCheckSuite(appID, installationID, sha, prNumbers...)
 				}
 			}
 		}
@@ -139,10 +160,11 @@ func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
 			return false, err
 		}
 
-		if action == "rerequested" {
+		if action == rerequestedAction {
 			return scheduleProcessingForExistingRuns(api.Context(), sha)
 		}
 	}
+
 	return false, nil
 }
 
@@ -169,12 +191,14 @@ func handleCheckRunEvent(
 
 	if !isWPTFYIApp(appID) {
 		log.Infof("Ignoring check_run App ID %v", appID)
+
 		return false, nil
 	}
 
 	login := checkRun.GetSender().GetLogin()
 	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
+
 		return false, nil
 	}
 
@@ -200,6 +224,7 @@ func handleCheckRunEvent(
 				repo,
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
+
 			return err == nil, err
 		case "cancel":
 			err := api.CancelRun(
@@ -208,9 +233,11 @@ func handleCheckRunEvent(
 				repo,
 				checkRun.GetCheckRun(),
 				checkRun.GetInstallation())
+
 			return err == nil, err
 		default:
 			log.Debugf("Ignoring %s action with id %s", action, actionID)
+
 			return false, nil
 		}
 	}
@@ -225,12 +252,16 @@ func handleCheckRunEvent(
 		spec, err := shared.ParseProductSpec(name)
 		if err != nil {
 			log.Errorf("Failed to parse \"%s\" as product spec", name)
+
 			return false, err
 		}
-		api.ScheduleResultsProcessing(sha, spec)
+		// Errors are logged by ScheduleResultsProcessing
+		_ = api.ScheduleResultsProcessing(sha, spec)
+
 		return true, nil
 	}
 	log.Debugf("Ignoring %s action for %s check_run", action, status)
+
 	return false, nil
 }
 
@@ -248,6 +279,7 @@ func handlePullRequestEvent(api API, payload []byte) (bool, error) {
 	login := pullRequest.GetPullRequest().GetUser().GetLogin()
 	if !checksEnabledForUser(api, login) {
 		log.Infof("Checks not enabled for sender %s", login)
+
 		return false, nil
 	}
 
@@ -256,6 +288,7 @@ func handlePullRequestEvent(api API, payload []byte) (bool, error) {
 		break
 	default:
 		log.Debugf("Skipping pull request action %s", pullRequest.GetAction())
+
 		return false, nil
 	}
 
@@ -264,8 +297,10 @@ func handlePullRequestEvent(api API, payload []byte) (bool, error) {
 	if destRepoID == wptRepoID && pullRequest.GetPullRequest().GetHead().GetRepo().GetID() != destRepoID {
 		// Pull is across forks; request a check suite on the main fork too.
 		appID, installationID := api.GetWPTRepoAppInstallationIDs()
+
 		return api.CreateWPTCheckSuite(appID, installationID, sha, pullRequest.GetNumber())
 	}
+
 	return false, nil
 }
 
@@ -288,6 +323,7 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 			}
 		}
 	}
+
 	return createdSome, nil
 }
 
@@ -305,6 +341,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	client, err := getGitHubClient(ctx, suite.AppID, suite.InstallationID)
 	if err != nil {
 		log.Errorf("Failed to create JWT client: %s", err.Error())
+
 		return false, err
 	}
 
@@ -315,10 +352,12 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 			msg = fmt.Sprintf("%s: %s", msg, resp.Status)
 		}
 		log.Warningf(msg)
+
 		return false, err
 	} else if checkRun != nil {
 		log.Infof("Created check_run %v", checkRun.GetID())
 	}
+
 	return true, nil
 }
 
@@ -338,5 +377,6 @@ func checksEnabledForUser(api API, login string) bool {
 		"lukebjerring",
 		"Ms2ger",
 	}
+
 	return shared.StringSliceContains(enabledLogins, login)
 }

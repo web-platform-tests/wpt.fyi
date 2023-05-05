@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -18,9 +19,9 @@ import (
 // POST takes only a before param, and the after state is provided in the body of the POST request.
 func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		handleAPIDiffGet(w, r)
-	case "POST":
+	case http.MethodPost:
 		handleAPIDiffPost(w, r)
 	default:
 		http.Error(w, fmt.Sprintf("invalid HTTP method %s", r.Method), http.StatusBadRequest)
@@ -28,17 +29,20 @@ func apiDiffHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error) {
+	// nolint:nestif // TODO: Fix nestif lint error
 	if runIDs, err := shared.ParseRunIDsParam(q); err != nil {
 		return nil, err
 	} else if len(runIDs) > 0 {
 		runs, err := runIDs.LoadTestRuns(store)
 		// If all errors are NoSuchEntity, we don't treat it as an error.
 		// If err is nil, the type conversion will fail.
-		if multiError, ok := err.(shared.MultiError); ok {
+		var multiError *shared.MultiError
+		if errors.As(err, &multiError) {
 			all404s := true
 			for _, err := range multiError.Errors() {
-				if err != shared.ErrNoSuchEntity {
+				if !errors.Is(err, shared.ErrNoSuchEntity) {
 					all404s = false
+
 					break
 				}
 			}
@@ -49,6 +53,7 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 		if err != nil {
 			return nil, err
 		}
+
 		return runs, nil
 	}
 
@@ -67,6 +72,7 @@ func loadDiffRuns(store shared.Datastore, q url.Values) (shared.TestRuns, error)
 	if err != nil {
 		return nil, err
 	}
+
 	return runsByProduct.AllRuns(), nil
 }
 
@@ -78,21 +84,25 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	diffFilter, paths, err := shared.ParseDiffFilterParams(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	runs, err := loadDiffRuns(store, q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 	if runs == nil {
 		http.NotFound(w, r)
+
 		return
 	}
 
 	if len(runs) != 2 {
 		http.Error(w, fmt.Sprintf("Diffing requires exactly 2 runs, but found %v", len(runs)), http.StatusBadRequest)
+
 		return
 	}
 
@@ -100,15 +110,20 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	diff, err := diffAPI.GetRunsDiff(runs[0], runs[1], diffFilter, paths)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	var bytes []byte
 	if bytes, err = json.Marshal(diff); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
-	w.Write(bytes)
+	_, err = w.Write(bytes)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // handleAPIDiffPost handles POST requests to /api/diff, which allows the caller to produce the diff of an arbitrary
@@ -119,32 +134,38 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	params, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	specBefore := params.Get("before")
 	if specBefore == "" {
 		http.Error(w, "before param missing", http.StatusBadRequest)
+
 		return
 	}
 	var beforeJSON shared.ResultsSummary
 	if beforeJSON, err = shared.FetchRunResultsJSONForParam(ctx, r, specBefore); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	} else if beforeJSON == nil {
 		http.Error(w, specBefore+" not found", http.StatusNotFound)
+
 		return
 	}
 
 	var body []byte
 	if body, err = ioutil.ReadAll(r.Body); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	var afterJSON shared.ResultsSummary
 	if err := json.Unmarshal(body, &afterJSON); err != nil {
 		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -152,6 +173,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	var paths mapset.Set
 	if filter, paths, err = shared.ParseDiffFilterParams(params); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -159,6 +181,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	var bytes []byte
 	if bytes, err = json.Marshal(diffJSON); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(bytes)

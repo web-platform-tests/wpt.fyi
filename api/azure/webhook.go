@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"regexp"
 
 	mapset "github.com/deckarep/golang-set"
@@ -28,7 +29,15 @@ var (
 	epochBranchesRegex = regexp.MustCompile("^refs/heads/epochs/.*")
 )
 
-func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, artifactName string, buildID int64) (bool, error) {
+func processBuild(
+	aeAPI shared.AppEngineAPI,
+	azureAPI API,
+	owner,
+	repo,
+	sender,
+	artifactName string,
+	buildID int64,
+) (bool, error) {
 	build, err := azureAPI.GetBuild(owner, repo, buildID)
 	if err != nil {
 		return false, err
@@ -45,16 +54,20 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	log.Infof("Fetching %s", artifactsURL)
 
 	client := aeAPI.GetHTTPClient()
-	resp, err := client.Get(artifactsURL)
+	req, err := http.NewRequestWithContext(aeAPI.Context(), http.MethodGet, artifactsURL, nil)
 	if err != nil {
-		return false, fmt.Errorf("failed to fetch artifacts for %s/%s/%d: %v", owner, repo, buildID, err)
+		return false, fmt.Errorf("failed to create get for %s/%s/%d: %w", owner, repo, buildID, err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch artifacts for %s/%s/%d: %w", owner, repo, buildID, err)
 	}
 
 	var artifacts BuildArtifacts
 	if body, err := ioutil.ReadAll(resp.Body); err != nil {
-		return false, fmt.Errorf("failed to read response body: %v", err)
+		return false, fmt.Errorf("failed to read response body: %w", err)
 	} else if err = json.Unmarshal(body, &artifacts); err != nil {
-		return false, fmt.Errorf("failed to unmarshal JSON: %v", err)
+		return false, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
 	uploadedAny := false
@@ -62,6 +75,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	for _, artifact := range artifacts.Value {
 		if artifactName != "" && artifactName != artifact.Name {
 			log.Infof("Skipping artifact %s (looking for %s)", artifact.Name, artifactName)
+
 			continue
 		}
 		log.Infof("Uploading %s for %s/%s build %v...", artifact.Name, owner, repo, buildID)
@@ -83,7 +97,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 
 		uploader, err := aeAPI.GetUploader(uploaderName)
 		if err != nil {
-			return false, fmt.Errorf("failed to get uploader creds from Datastore: %v", err)
+			return false, fmt.Errorf("failed to get uploader creds from Datastore: %w", err)
 		}
 
 		uploadClient := uc.NewClient(aeAPI)
@@ -96,7 +110,7 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 			nil,
 			shared.ToStringSlice(labels))
 		if err != nil {
-			errors <- fmt.Errorf("failed to create run: %v", err)
+			errors <- fmt.Errorf("failed to create run: %w", err)
 		} else {
 			uploadedAny = true
 		}
@@ -105,5 +119,6 @@ func processBuild(aeAPI shared.AppEngineAPI, azureAPI API, owner, repo, sender, 
 	for err := range errors {
 		return uploadedAny, err
 	}
+
 	return uploadedAny, nil
 }

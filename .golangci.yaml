@@ -15,7 +15,7 @@ linters:
     - goconst
     - gocyclo
     - godot
-    - godox
+    # - godox
     - gofmt
     - goheader
     - gomoddirectives
@@ -28,11 +28,19 @@ linters:
     - nestif
     - nilerr
     - nilnil
-    - nlreturn
+    - nlreturn  
     - noctx
     - prealloc
     - revive
     - unparam
     - usestdlibvars
   fast: true
-  
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+linters-settings:
+  gomoddirectives:
+    # List of allowed `replace directives`
+    # See: https://github.com/web-platform-tests/wpt.fyi/blob/main/go.mod
+    replace-allow-list:
+      - launchpad.net/gocheck

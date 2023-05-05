@@ -8,7 +8,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// Average as of Aug 20, 2019
+// Average as of Aug 20, 2019.
 const averageNumberOfSubtests = int(1655263 / 34236)
 
 // AggregationOpts are options for the aggregation format used when collecting
@@ -139,7 +139,7 @@ func (RunTestStatusNeq) Size() int { return 1 }
 func (Link) Size() int { return 1 }
 
 // Size of Triaged is 1: servicing such a query requires a single
-// lookup in a test run result mapping per test
+// lookup in a test run result mapping per test.
 func (Triaged) Size() int { return 1 }
 
 // Size of TestLabel has a size of 1: servicing such a query requires a
@@ -176,5 +176,6 @@ func size(qs []ConcreteQuery) int {
 	for _, q := range qs {
 		s += q.Size()
 	}
+
 	return s
 }

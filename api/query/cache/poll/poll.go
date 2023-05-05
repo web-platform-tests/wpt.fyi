@@ -6,6 +6,7 @@ package poll
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,6 +19,7 @@ import (
 
 // KeepRunsUpdated implements updates to an index.Index via simple polling every
 // interval duration for at most limit runs loaded from fetcher.
+// nolint:gocognit // TODO: Fix gocognit lint error
 func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time.Duration, limit int, idx index.Index) {
 	// Start by waiting polling interval. This reduces the chance of false alarms
 	// from log monitoring when KeepRunsUpdated is invoked around the same time as
@@ -34,11 +36,13 @@ func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time
 		if err != nil {
 			logger.Errorf("Error fetching runs for update: %v", err)
 			wait(start, interval)
+
 			continue
 		}
 		if len(runs) == 0 {
 			logger.Errorf("Fetcher produced no runs for update")
 			wait(start, interval)
+
 			continue
 		}
 
@@ -49,9 +53,9 @@ func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time
 				err := idx.IngestRun(run)
 				errs[i] = err
 				if err != nil {
-					if err == index.ErrRunExists() {
+					if errors.Is(err, index.ErrRunExists()) {
 						logger.Debugf("Not updating run (already exists): %v", run)
-					} else if err == index.ErrRunLoading() {
+					} else if errors.Is(err, index.ErrRunLoading()) {
 						logger.Debugf("Not updating run (already loading): %v", run)
 					} else {
 						logger.Errorf("Error ingesting run: %v: %v", run, err)
@@ -71,6 +75,7 @@ func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time
 			for i := range next {
 				if errs[i] != nil && next[i] == nil {
 					logger.Errorf("Ingested run after skipping %d runs; ingest run attempt errors: %v", i, errs)
+
 					break
 				}
 			}
@@ -92,6 +97,7 @@ func wait(start time.Time, total time.Duration) {
 func StartMetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Starting Metadata polling service.")
 	toBeRemovedPRs := make([]string, 0)
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	netClient := &http.Client{Timeout: time.Second * 5}
 	cacheSet := shared.NewRedisSet()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
@@ -116,6 +122,7 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 	metadataCache, err := shared.GetWPTMetadataArchive(client, nil)
 	if err != nil {
 		logger.Infof("Error fetching Metadata for update: %v", err)
+
 		return
 	}
 
@@ -125,18 +132,31 @@ func keepMetadataUpdated(client *http.Client, logger shared.Logger) {
 }
 
 // cleanOrphanedPendingMetadata cleans and removes orphaned pending metadata in Redis.
-func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, cacheSet shared.RedisSet, logger shared.Logger, toBeRemovedPRs *[]string) {
+func cleanOrphanedPendingMetadata(
+	ctx context.Context,
+	ghClient *github.Client,
+	cacheSet shared.RedisSet,
+	logger shared.Logger,
+	toBeRemovedPRs *[]string,
+) {
 	logger.Infof("Running cleanOrphanedPendingMetadata...")
 
 	for _, pr := range *toBeRemovedPRs {
 		logger.Infof("Removing PR %s and its pending metadata from Redis", pr)
-		cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
-		shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+		err := cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
+		if err != nil {
+			logger.Infof("Error removing %s from RedisSet: %s", pr, err.Error())
+		}
+		err = shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
+		if err != nil {
+			logger.Infof("Error removing %s from Redis: %s", pr, err.Error())
+		}
 	}
 
 	prs, err := cacheSet.GetAll(shared.PendingMetadataCacheKey)
 	if err != nil {
 		logger.Infof("Error fetching pending PRs from cacheSet: %v", err)
+
 		return
 	}
 	logger.Infof("Pending PR numbers in cacheSet are: %v", prs)
@@ -149,12 +169,14 @@ func cleanOrphanedPendingMetadata(ctx context.Context, ghClient *github.Client, 
 			logger.Infof("Error parsing %s into integer in cleanOrphanedPendingMetadata", pr)
 			// Not an integer; remove it.
 			newRemovePRs = append(newRemovePRs, pr)
+
 			continue
 		}
 
 		res, _, err := ghClient.PullRequests.Get(ctx, shared.SourceOwner, shared.SourceRepo, prInt)
 		if err != nil {
 			logger.Infof("Error getting information for PR %s: %v", pr, err)
+
 			continue
 		}
 

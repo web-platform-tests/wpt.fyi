@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 package api

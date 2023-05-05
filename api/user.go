@@ -21,28 +21,33 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("githubLogin") {
 		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
+
 		return
 	}
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, _ := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil {
+		// nolint:exhaustruct // Not required since missing fields have omitempty.
 		response := loginResponse{Error: "Unable to retrieve login information, please log in again"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(marshalled)
+
 		return
 	}
-
+	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	response := loginResponse{User: user}
 	marshalled, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(marshalled)

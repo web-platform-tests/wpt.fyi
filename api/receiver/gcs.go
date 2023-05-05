@@ -18,7 +18,7 @@ type gcs interface {
 }
 
 type gcsImpl struct {
-	ctx    context.Context
+	ctx    context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 	client *storage.Client
 }
 
@@ -38,5 +38,6 @@ func (g *gcsImpl) NewWriter(bucketName, fileName, contentType, contentEncoding s
 	if contentEncoding != "" {
 		w.ContentEncoding = contentEncoding
 	}
+
 	return w, nil
 }

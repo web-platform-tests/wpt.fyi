@@ -20,6 +20,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var templates *template.Template
 
 func init() {
@@ -63,8 +64,11 @@ type CheckState struct {
 	Product    shared.ProductSpec
 	HeadSHA    string
 	DetailsURL *url.URL
-	Status     string  // The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
-	Conclusion *string // Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required". (Optional. Required if you provide a status of "completed".)
+	// The current status. Can be one of "queued", "in_progress", or "completed". Default: "queued". (Optional.)
+	Status string
+	// Can be one of "success", "failure", "neutral", "cancelled", "timed_out", or "action_required".
+	// (Optional. Required if you provide a status of "completed".)
+	Conclusion *string
 	Actions    []github.CheckRunAction
 	PRNumbers  []int
 }
@@ -75,11 +79,12 @@ func (c CheckState) Name() string {
 	if host == "" {
 		host = "wpt.fyi"
 	}
-	spec := shared.ProductSpec{}
+	spec := shared.ProductSpec{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	spec.BrowserName = c.Product.BrowserName
 	if c.Product.IsExperimental() {
 		spec.Labels = mapset.NewSetWith(shared.ExperimentalLabel)
 	}
+
 	return fmt.Sprintf("%s - %s", host, spec.String())
 }
 
@@ -103,6 +108,7 @@ func (c CheckState) FileIssueURL() *url.URL {
 	q.Set("template", "checks.md")
 	q.Set("labels", "bug")
 	result.RawQuery = q.Encode()
+
 	return result
 }
 
@@ -111,5 +117,6 @@ func compile(i interface{}, t string) (string, error) {
 	if err := templates.ExecuteTemplate(&dest, t, i); err != nil {
 		return "", err
 	}
+
 	return dest.String(), nil
 }

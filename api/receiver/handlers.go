@@ -11,8 +11,9 @@ import (
 )
 
 func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+
 		return
 	}
 
@@ -22,8 +23,9 @@ func apiResultsUploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+
 		return
 	}
 
@@ -34,8 +36,9 @@ func apiResultsCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiPendingTestRunUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PATCH" {
+	if r.Method != http.MethodPatch {
 		http.Error(w, "Only PATCH is supported", http.StatusMethodNotAllowed)
+
 		return
 	}
 

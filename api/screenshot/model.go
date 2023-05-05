@@ -5,7 +5,7 @@
 package screenshot
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // nolint:gosec // TODO: Fix gosec lint error
 	"errors"
 	"fmt"
 	"io"
@@ -42,12 +42,13 @@ type Screenshot struct {
 // NewScreenshot creates a new Screenshot with the given labels (empty labels
 // are omitted).
 func NewScreenshot(labels ...string) *Screenshot {
-	s := &Screenshot{}
+	s := &Screenshot{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	for _, l := range labels {
 		if l != "" {
 			s.Labels = append(s.Labels, l)
 		}
 	}
+
 	return s
 }
 
@@ -70,12 +71,14 @@ func (s *Screenshot) SetHashFromFile(f io.Reader, hashMethod string) error {
 	if hashMethod != "sha1" {
 		return ErrUnsupportedHashMethod
 	}
+	// nolint:gosec // TODO: Fix gosec lint error
 	h := sha1.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return err
 	}
 	s.HashMethod = hashMethod
 	s.HashDigest = fmt.Sprintf("%x", h.Sum(nil))
+
 	return nil
 }
 
@@ -102,6 +105,7 @@ func (s *Screenshot) Store(ds shared.Datastore) error {
 	}
 	s.LastUsed = time.Now()
 	_, err = ds.Put(key, s)
+
 	return err
 }
 
@@ -110,7 +114,14 @@ func (s *Screenshot) Store(ds shared.Datastore) error {
 //
 // We first try to find screenshots with all the four labels. When there are
 // not enough, we remove the least important label and try again.
-func RecentScreenshotHashes(ds shared.Datastore, browser, browserVersion, os, osVersion string, limit *int) ([]string, error) {
+func RecentScreenshotHashes(
+	ds shared.Datastore,
+	browser,
+	browserVersion,
+	os,
+	osVersion string,
+	limit *int,
+) ([]string, error) {
 	totalLimit := MaxItemsInResponse
 	if limit != nil {
 		totalLimit = *limit
@@ -149,5 +160,6 @@ func RecentScreenshotHashes(ds shared.Datastore, browser, browserVersion, os, os
 		}
 		labels = labels[1:]
 	}
+
 	return shared.ToStringSlice(all), nil
 }

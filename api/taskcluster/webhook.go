@@ -29,9 +29,11 @@ const AppID = int64(40788)
 
 const uploaderName = "taskcluster"
 const flagPendingChecks = "pendingChecks"
+const completedState = "completed"
 
 var (
-	// TaskNameRegex is based on task names in https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml
+	// TaskNameRegex is based on task names in
+	// https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml.
 	TaskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
@@ -77,7 +79,7 @@ type API interface {
 }
 
 type apiImpl struct {
-	ctx      context.Context
+	ctx      context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 	ghClient *github.Client
 }
 
@@ -127,12 +129,14 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 	repo := checkSuite.GetRepo().GetName()
 	if owner != shared.WPTRepoOwner || repo != shared.WPTRepoName {
 		log.Errorf("Received check_suite event from invalid repo %s/%s", owner, repo)
+
 		return EventInfo{}, errors.New("Invalid source repository")
 	}
 
 	runs, err := api.ListCheckRuns(owner, repo, checkSuite.GetCheckSuite().GetID())
 	if err != nil {
 		log.Errorf("Failed to fetch check runs for suite %v: %s", checkSuite.GetCheckSuite().GetID(), err.Error())
+
 		return EventInfo{}, err
 	}
 
@@ -143,15 +147,27 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 	log.Debugf("Found %d check_runs for check_suite", len(runs))
 
 	rootURL := ""
-	group := TaskGroupInfo{}
+	group := TaskGroupInfo{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	for _, run := range runs {
 		matches := checkRunDetailsURLRegex.FindStringSubmatch(run.GetDetailsURL())
 		if matches == nil {
-			log.Errorf("Unable to parse details URL for suite %v, run %v: %s", checkSuite.GetCheckSuite().GetID(), run.GetID(), run.GetDetailsURL())
+			log.Errorf(
+				"Unable to parse details URL for suite %v, run %v: %s",
+				checkSuite.GetCheckSuite().GetID(),
+				run.GetID(),
+				run.GetDetailsURL(),
+			)
+
 			return EventInfo{}, errors.New("Unable to parse check_run details URL")
 		}
 		if rootURL != "" && rootURL != matches[1] {
-			log.Errorf("Conflicting root URLs for runs for suite %v (%s vs %s)", checkSuite.GetCheckSuite().GetID(), rootURL, matches[1])
+			log.Errorf(
+				"Conflicting root URLs for runs for suite %v (%s vs %s)",
+				checkSuite.GetCheckSuite().GetID(),
+				rootURL,
+				matches[1],
+			)
+
 			return EventInfo{}, errors.New("Conflicting root URLs for runs in check_suite")
 		}
 		rootURL = matches[1]
@@ -169,7 +185,7 @@ func GetCheckSuiteEventInfo(checkSuite github.CheckSuiteEvent, log shared.Logger
 		state := run.GetConclusion()
 		if state == "success" {
 			// Checked in ExtractArtifactURLs.
-			state = "completed"
+			state = completedState
 		}
 
 		group.Tasks = append(group.Tasks, TaskInfo{
@@ -198,6 +214,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	eventName := r.Header.Get("X-GitHub-Event")
 	if r.Header.Get("Content-Type") != "application/json" || (eventName != "status" && eventName != "check_suite") {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 
@@ -206,6 +223,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	secret, err := shared.GetSecret(ds, "github-tc-webhook-secret")
 	if err != nil {
 		http.Error(w, "Unable to verify request: secret not found", http.StatusInternalServerError)
+
 		return
 	}
 
@@ -215,6 +233,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	payload, err := github.ValidatePayload(r, []byte(secret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
+
 		return
 	}
 	log.Debugf("Payload validated against secret")
@@ -227,22 +246,26 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Failed to get GitHub client: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	api := apiImpl{ctx: aeAPI.Context(), ghClient: ghClient}
 
 	var event EventInfo
+	// nolint:nestif // TODO: Fix nestif lint error
 	if eventName == "status" {
 		var status StatusEventPayload
 		if err := json.Unmarshal(payload, &status); err != nil {
 			log.Errorf("%v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
+
 			return
 		}
 
 		if !ShouldProcessStatus(log, &status) {
 			w.WriteHeader(http.StatusNoContent)
 			fmt.Fprintln(w, "Status was ignored")
+
 			return
 		}
 
@@ -252,6 +275,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		if err := json.Unmarshal(payload, &checkSuite); err != nil {
 			log.Errorf("%v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
+
 			return
 		}
 
@@ -261,15 +285,17 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 				checkSuite.GetCheckSuite().GetApp().GetID())
 			w.WriteHeader(http.StatusNoContent)
 			fmt.Fprintln(w, "Status was ignored")
+
 			return
 		}
 
 		// As a webhook we should only receive completed check_suite events, as per
 		// https://developer.github.com/webhooks/event-payloads/#check_suite
-		if checkSuite.GetAction() != "completed" || checkSuite.GetCheckSuite().GetStatus() != "completed" {
+		if checkSuite.GetAction() != completedState || checkSuite.GetCheckSuite().GetStatus() != completedState {
 			log.Errorf("Received non-completed check_suite event (action: %s, status: %s)",
 				checkSuite.GetAction(), checkSuite.GetCheckSuite().GetStatus())
 			http.Error(w, "Non-completed check_suite event", http.StatusBadRequest)
+
 			return
 		}
 
@@ -278,6 +304,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -291,14 +318,16 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	processed, err := processTaskclusterBuild(aeAPI, event, shared.ToStringSlice(labels)...)
 
-	if err == errNoResults {
+	if errors.Is(err, errNoResults) {
 		log.Infof("%v", err)
 		http.Error(w, err.Error(), http.StatusNoContent)
+
 		return
 	}
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	if processed {
@@ -308,6 +337,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
 	}
+
 	return
 }
 
@@ -335,6 +365,7 @@ func (s StatusEventPayload) IsOnMaster() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -354,6 +385,7 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, event EventInfo, labels 
 	uploader, err := aeAPI.GetUploader(uploaderName)
 	if err != nil {
 		log.Errorf("Failed to get uploader creds from Datastore")
+
 		return false, err
 	}
 
@@ -377,11 +409,14 @@ func processTaskclusterBuild(aeAPI shared.AppEngineAPI, event EventInfo, labels 
 func ShouldProcessStatus(log shared.Logger, status *StatusEventPayload) bool {
 	if !status.IsCompleted() {
 		log.Debugf("Ignoring status: %s", status.GetState())
+
 		return false
 	} else if !status.IsTaskcluster() {
 		log.Debugf("Ignoring non-Taskcluster context: %s", status.GetContext())
+
 		return false
 	}
+
 	return true
 }
 
@@ -402,13 +437,14 @@ func ParseTaskclusterURL(targetURL string) (rootURL, taskGroupID, taskID string)
 	if strings.HasSuffix(rootURL, "taskcluster.net") {
 		rootURL = "https://taskcluster.net"
 	}
+
 	return rootURL, taskGroupID, taskID
 }
 
 func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupInfo, error) {
 	queue := tcqueue.New(nil, rootURL)
 
-	group := TaskGroupInfo{
+	group := TaskGroupInfo{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		TaskGroupID: groupID,
 	}
 	continuationToken := ""
@@ -432,11 +468,13 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 			break
 		}
 	}
+
 	return &group, nil
 }
 
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	var runs []*github.CheckRun
+	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page[0], but due to
@@ -468,6 +506,7 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 		// Setup for the next call.
 		options.ListOptions.Page = response.NextPage
 	}
+
 	return runs, errors.New("More than 500 CheckRuns returned for CheckSuite")
 }
 
@@ -490,12 +529,14 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 			return nil, fmt.Errorf("task group %s has a task without taskId", group.TaskGroupID)
 		} else if taskID != "" && taskID != id {
 			log.Debugf("Skipping task %s", id)
+
 			continue
 		}
 
 		matches := TaskNameRegex.FindStringSubmatch(task.Name)
 		if len(matches) != 3 { // full match, browser-channel, test type
 			log.Infof("Ignoring unrecognized task: %s", task.Name)
+
 			continue
 		}
 		product := matches[1]
@@ -509,10 +550,11 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 			product += "-" + shared.PRBaseLabel
 		}
 
-		if task.State != "completed" {
+		if task.State != completedState {
 			log.Infof("Task group %s has a non-successful task: %s; %s will be ignored in this group.",
 				group.TaskGroupID, id, product)
 			failures.Add(product)
+
 			continue
 		}
 
@@ -539,6 +581,7 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 	if len(urlsByProduct) == 0 {
 		return nil, errNoResults
 	}
+
 	return urlsByProduct, nil
 }
 
@@ -571,6 +614,7 @@ func CreateAllRuns(
 				for i, label := range labelsForRun {
 					if label == shared.MasterLabel {
 						labelsForRun = append(labelsForRun[:i], labelsForRun[i+1:]...)
+
 						break
 					}
 				}
@@ -581,11 +625,13 @@ func CreateAllRuns(
 			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, labelsForRun)
 			if err != nil {
 				errors <- err
+
 				return
 			}
 		}(product, urls)
 	}
 	wg.Wait()
 	close(errors)
+
 	return shared.NewMultiErrorFromChan(errors, "sending Taskcluster runs to results receiver")
 }

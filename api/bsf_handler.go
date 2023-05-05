@@ -37,12 +37,14 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var from *time.Time
 	if from, err = shared.ParseDateTimeParam(q, "from"); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	var to *time.Time
 	if to, err = shared.ParseDateTimeParam(q, "to"); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -55,6 +57,7 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	lines, err := b.fetcher.Fetch(isExperimental)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -62,8 +65,12 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	marshalled, err := json.Marshal(bsfData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
-	w.Write(marshalled)
+	_, err = w.Write(marshalled)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

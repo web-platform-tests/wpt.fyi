@@ -35,6 +35,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			if spec, _ := shared.ParseProductSpec(run.GetName()); spec.Matches(*testRun) {
 				log.Debugf("Found existing run %v for %s @ %s", run.GetID(), run.GetName(), suite.SHA[:7])
 				existing = run
+
 				break
 			}
 		}
@@ -51,11 +52,13 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 		summaryStr, err = summary.GetSummary()
 		if err != nil {
 			log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
+
 			return false, err
 		}
 
 		detailsURLStr := state.DetailsURL.String()
 		title := state.Title()
+		// nolint:exhaustruct // Not required since missing fields have omitempty.
 		opts := github.CreateCheckRunOptions{
 			Name:       state.Name(),
 			HeadSHA:    state.HeadSHA,
@@ -76,6 +79,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 	if created {
 		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], product.String())
 	}
+
 	return created, nil
 }
 
@@ -84,10 +88,12 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 	client, err := getGitHubClient(ctx, suite.AppID, suite.InstallationID)
 	if err != nil {
 		log.Errorf("Failed to fetch runs for suite: %s", err.Error())
+
 		return nil, err
 	}
 
 	var runs []*github.CheckRun
+	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page; see
@@ -116,10 +122,16 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		// Setup for the next call.
 		options.ListOptions.Page = response.NextPage
 	}
+
 	return nil, fmt.Errorf("More than 10 pages of CheckRuns returned for ref %s", suite.SHA)
 }
 
-func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summary, suite shared.CheckSuite, run *github.CheckRun) (bool, error) {
+func updateExistingCheckRunSummary(
+	ctx context.Context,
+	summary summaries.Summary,
+	suite shared.CheckSuite,
+	run *github.CheckRun,
+) (bool, error) {
 	log := shared.GetLogger(ctx)
 
 	state := summary.GetCheckState()
@@ -128,11 +140,13 @@ func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summar
 	summaryStr, err := summary.GetSummary()
 	if err != nil {
 		log.Warningf("Failed to generate summary for %s: %s", state.HeadSHA, err.Error())
+
 		return false, err
 	}
 
 	detailsURLStr := state.DetailsURL.String()
 	title := state.Title()
+	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	opts := github.UpdateCheckRunOptions{
 		Name:       state.Name(),
 		DetailsURL: &detailsURLStr,
@@ -156,7 +170,9 @@ func updateExistingCheckRunSummary(ctx context.Context, summary summaries.Summar
 	_, _, err = client.Checks.UpdateCheckRun(ctx, suite.Owner, suite.Repo, run.GetID(), opts)
 	if err != nil {
 		log.Errorf("Failed to update run %v: %s", run.GetID(), err.Error())
+
 		return false, err
 	}
+
 	return true, err
 }

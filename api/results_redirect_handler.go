@@ -18,13 +18,14 @@ import (
 // /results
 //
 // Params:
-//   product: Browser (and OS) of the run, e.g. "chrome-63.0" or "safari"
-//   (optional) run: SHA[0:10] of the test run, or "latest" (latest is the default)
-//   (optional) test: Path of the test, e.g. "/css/css-images-3/gradient-button.html"
+// product: Browser (and OS) of the run, e.g. "chrome-63.0" or "safari"
+// (optional) run: SHA[0:10] of the test run, or "latest" (latest is the default)
+// (optional) test: Path of the test, e.g. "/css/css-images-3/gradient-button.html".
 func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	filters, err := shared.ParseTestRunFilterParams(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -35,11 +36,13 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	allRuns := testRuns.AllRuns()
 	if len(allRuns) == 0 {
 		http.Error(w, fmt.Sprintf("404 - Test run '%s' not found", filters.SHAs.FirstOrLatest()), http.StatusNotFound)
+
 		return
 	}
 

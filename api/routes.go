@@ -58,20 +58,40 @@ func RegisterRoutes() {
 	shared.AddRoute("/api/results", "api-results", shared.WrapPermissiveCORS(apiResultsRedirectHandler))
 
 	// API endpoint for redirecting to a screenshot png blob.
-	shared.AddRoute("/api/screenshot/{screenshot:.*}", "api-screenshot", shared.WrapPermissiveCORS(apiScreenshotRedirectHandler))
+	shared.AddRoute(
+		"/api/screenshot/{screenshot:.*}",
+		"api-screenshot",
+		shared.WrapPermissiveCORS(apiScreenshotRedirectHandler),
+	)
 
 	// API endpoint for searching Metadata for the products.
 	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
 
 	// API endpoint for searching pending Metadata stored in memory.
-	shared.AddRoute("/api/metadata/pending", "api-pending-metadata", shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiPendingMetadataHandler)))
+	shared.AddRoute(
+		"/api/metadata/pending",
+		"api-pending-metadata",
+		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiPendingMetadataHandler)),
+	)
 
 	// API endpoint for modifying Metadata.
-	shared.AddRoute("/api/metadata/triage", "api-metadata-triage", shared.WrapTrustedCORS(apiMetadataTriageHandler, CORSList, []string{"PATCH"}))
+	shared.AddRoute(
+		"/api/metadata/triage",
+		"api-metadata-triage",
+		shared.WrapTrustedCORS(apiMetadataTriageHandler, CORSList, []string{"PATCH"}),
+	)
 
 	// API endpoint for checking a user's login status.
-	shared.AddRoute("/api/user", "api-user", shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)))
+	shared.AddRoute(
+		"/api/user",
+		"api-user",
+		shared.WrapApplicationJSON(shared.WrapTrustedCORS(apiUserHandler, CORSList, nil)),
+	)
 
 	// API endpoint for fetching browser-specific failure data.
-	shared.AddRoute("/api/bsf", "api-bsf", shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)))
+	shared.AddRoute(
+		"/api/bsf",
+		"api-bsf",
+		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)),
+	)
 }

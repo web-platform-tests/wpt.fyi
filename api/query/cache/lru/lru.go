@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// Verify LRU interface compliance in compile-time.
+var _ LRU = (*lru)(nil)
+
 // LRU is a least recently used collection that supports element acces and
 // item eviction. The first access of an unevicted value implicitly adds the
 // value to the collection.
@@ -29,7 +32,7 @@ type LRU interface {
 
 type lru struct {
 	values map[int64]time.Time
-	m       *sync.Mutex
+	m      *sync.Mutex
 }
 
 type lruEntry struct {
@@ -61,10 +64,10 @@ func (l *lru) EvictLRU(percent float64) []int64 {
 }
 
 // NewLRU constructs a new empty LRU.
-func NewLRU() LRU {
+func NewLRU() LRU { // nolint:ireturn // TODO: Fix ireturn lint error
 	return &lru{
 		values: make(map[int64]time.Time),
-		m:       &sync.Mutex{},
+		m:      &sync.Mutex{},
 	}
 }
 

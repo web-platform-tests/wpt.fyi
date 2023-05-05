@@ -40,7 +40,8 @@ var errNilIndex = errors.New("Index to backfill is nil")
 
 // GetDatastore constructs a shared.Datastore interface that loads runs from Datastore
 // in reverse cronological order, by shared.TestRun.TimeStart.
-func GetDatastore(projectID string, gcpCredentialsFile *string, logger shared.Logger) (shared.Datastore, error) {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func GetDatastore(projectID string, gcpCredentialsFile *string, _ shared.Logger) (shared.Datastore, error) {
 	ctx := context.WithValue(context.Background(), shared.DefaultLoggerCtxKey(), logrus.StandardLogger())
 	var client *datastore.Client
 	var err error
@@ -52,19 +53,23 @@ func GetDatastore(projectID string, gcpCredentialsFile *string, logger shared.Lo
 	if err != nil {
 		return nil, err
 	}
+
 	return shared.NewCloudDatastore(ctx, client), nil
 }
 
 func (i *backfillIndex) EvictRuns(percent float64) (int, error) {
 	i.backfilling = false
+
 	return i.ProxyIndex.EvictRuns(percent)
 }
 
 func (m *backfillMonitor) Stop() error {
 	m.idx.backfilling = false
+
 	return m.ProxyMonitor.Stop()
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, error) {
 	return nil, nil
 }
@@ -74,7 +79,17 @@ func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, e
 // will halt either:
 // The first time a run is evicted from the index.Index via EvictAnyRun(), OR
 // the first time the returned monitor.Monitor is stopped via Stop().
-func FillIndex(store shared.Datastore, logger shared.Logger, rt monitor.Runtime, interval time.Duration, maxIngestedRuns uint, maxBytes uint64, evictionPercent float64, idx index.Index) (monitor.Monitor, error) {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func FillIndex(
+	store shared.Datastore,
+	logger shared.Logger,
+	rt monitor.Runtime,
+	interval time.Duration,
+	maxIngestedRuns uint,
+	maxBytes uint64,
+	evictionPercent float64,
+	idx index.Index,
+) (monitor.Monitor, error) {
 	if idx == nil {
 		return nil, errNilIndex
 	}
@@ -127,6 +142,7 @@ func startBackfillMonitor(store shared.Datastore, logger shared.Logger, maxBytes
 			for _, productRuns := range runsByProduct {
 				if !m.idx.backfilling {
 					logger.Warningf("Backfilling halted mid-iteration")
+
 					break
 				} else if i >= len(productRuns.TestRuns) {
 					continue

@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -79,7 +80,7 @@ func TestBindFail_NoQuery(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 
-	_, err = idx.Bind([]shared.TestRun{shared.TestRun{ID: 1}}, nil)
+	_, err = idx.Bind([]shared.TestRun{{ID: 1}}, nil)
 	assert.NotNil(t, err)
 }
 
@@ -90,7 +91,7 @@ func TestBindFail_MissingRun(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 
-	runs := []shared.TestRun{shared.TestRun{ID: 1}}
+	runs := []shared.TestRun{{ID: 1}}
 	_, err = idx.Bind(runs, query.TestNamePattern{Pattern: "/"}.BindToRuns(runs...))
 	assert.NotNil(t, err)
 }
@@ -104,15 +105,15 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -150,37 +151,37 @@ func TestBindExecute_SubtestNamePattern(t *testing.T) {
 	assert.Nil(t, err)
 
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "OK",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   "a1",
 								Status: "PASS",
 							},
-							metrics.SubTest{
+							{
 								Name:   "a2",
 								Status: "FAIL",
 							},
 						},
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "TIMEOUT",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   "d1",
 								Status: "PASS",
 							},
-							metrics.SubTest{
+							{
 								Name:   "d2",
 								Status: "FAIL",
 							},
-							metrics.SubTest{
+							{
 								Name:   "d3",
 								Status: "TIMEOUT",
 							},
@@ -232,15 +233,15 @@ func TestBindExecute_TestPath(t *testing.T) {
 	matchingPath := "/dom/"
 	unmatchingPath := "/html/dom/"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingPath,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   unmatchingPath,
 						Status: "FAIL",
 					},
@@ -286,37 +287,37 @@ func TestBindExecute_TestStatus(t *testing.T) {
 		//
 		// [0]: Chrome test run.
 		//
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   match1Name,
 						Status: "FAIL",
 					},
-					&metrics.TestResults{
+					{
 						Test:   match2Name,
 						Status: "OK",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   match2Sub,
 								Status: "FAIL",
 							},
-							metrics.SubTest{
+							{
 								Name:   "other sub",
 								Status: "PASS",
 							},
 						},
 					},
-					&metrics.TestResults{
+					{
 						Test:   "m/n/o",
 						Status: "TIMEOUT",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "x/y/z",
 						Status: "OK",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   "last sub",
 								Status: "PASS",
 							},
@@ -329,35 +330,35 @@ func TestBindExecute_TestStatus(t *testing.T) {
 		// [1] Safari test run: Several result values differ or are missing. One
 		//     test does not appear in Chrome, but does appear here.
 		//
-		testRunData{
+		{
 			shared.TestRun{ID: 2},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   match1Name,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   match2Name,
 						Status: "OK",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   "other sub",
 								Status: "FAIL",
 							},
 						},
 					},
-					&metrics.TestResults{
+					{
 						Test:   "x/y/z",
 						Status: "OK",
 						Subtests: []metrics.SubTest{
-							metrics.SubTest{
+							{
 								Name:   "last sub",
 								Status: "TIMEOUT",
 							},
 						},
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/safari/only",
 						Status: "FAIL",
 					},
@@ -381,7 +382,7 @@ func TestBindExecute_TestStatus(t *testing.T) {
 
 	assert.Equal(t, 2, len(srs))
 	assert.Equal(t, resultSet(t, []shared.SearchResult{
-		shared.SearchResult{
+		{
 			Test: match1Name,
 			LegacyStatus: []shared.LegacySearchRunResult{
 				// Run [0]: Chrome: match1Name status is FAIL: 0 / 1.
@@ -400,7 +401,7 @@ func TestBindExecute_TestStatus(t *testing.T) {
 				},
 			},
 		},
-		shared.SearchResult{
+		{
 			Test: match2Name,
 			// Run [0]: Chrome: match1Name.match2Sub status is FAIL,
 			//                  and no other subtests match: 0 / 1.
@@ -434,15 +435,15 @@ func TestBindExecute_Link(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -450,9 +451,9 @@ func TestBindExecute_Link(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{
+	metadata := map[string][]string{"/foo/bar/b.html": {
 		"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
-		matchingTestName: []string{"", "https://external.com/item", ""},
+		matchingTestName: {"", "https://external.com/item", ""},
 	}
 
 	link := query.Link{Pattern: "external", Metadata: metadata}
@@ -489,15 +490,15 @@ func TestBindExecute_LinkWithWildcards(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -506,8 +507,8 @@ func TestBindExecute_LinkWithWildcards(t *testing.T) {
 		},
 	})
 	metadata := map[string][]string{
-		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
-		"/a/*":            []string{"", "https://external.com/item", ""},
+		"/foo/bar/b.html": {"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		"/a/*":            {"", "https://external.com/item", ""},
 	}
 
 	// Create an execute a plan for `link:external`. Inside the metadata
@@ -546,15 +547,15 @@ func TestBindExecute_Triaged(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -562,10 +563,10 @@ func TestBindExecute_Triaged(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{
+	metadata := map[string][]string{"/foo/bar/b.html": {
 		""},
-		matchingTestName: []string{"https://bug.com/item"},
-		"/d/e/f":         []string{""},
+		matchingTestName: {"https://bug.com/item"},
+		"/d/e/f":         {""},
 	}
 
 	link := query.Or{Args: []query.ConcreteQuery{query.Triaged{Run: 1, Metadata: metadata}}}
@@ -602,15 +603,15 @@ func TestBindExecute_TriagedWildcards(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -618,10 +619,10 @@ func TestBindExecute_TriagedWildcards(t *testing.T) {
 			},
 		},
 	})
-	metadata := map[string][]string{"/foo/bar/b.html": []string{
+	metadata := map[string][]string{"/foo/bar/b.html": {
 		""},
-		"/a/*":   []string{"https://bug.com/item", "https://bug.com/item1"},
-		"/d/e/f": []string{""},
+		"/a/*":   {"https://bug.com/item", "https://bug.com/item1"},
+		"/d/e/f": {""},
 	}
 
 	link := query.Or{Args: []query.ConcreteQuery{query.Triaged{Run: 1, Metadata: metadata}}}
@@ -658,15 +659,15 @@ func TestBindExecute_QueryAndTestLabel(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -715,15 +716,15 @@ func TestBindExecute_QueryOrTestLabel(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "PASS",
 					},
@@ -785,15 +786,15 @@ func TestBindExecute_TestLabel(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -839,30 +840,30 @@ func TestBindExecute_IsDifferent(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
 				},
 			},
 		},
-		testRunData{
+		{
 			shared.TestRun{ID: 2},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "PASS",
 					},
@@ -908,15 +909,15 @@ func TestBindExecute_IsTentative(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c.tentative.html",
 						Status: "PASS",
 					},
@@ -956,15 +957,15 @@ func TestBindExecute_IsOptional(t *testing.T) {
 	idx, err := NewShardedWPTIndex(loader, testNumShards)
 	assert.Nil(t, err)
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c.optional.html",
 						Status: "PASS",
 					},
@@ -1005,30 +1006,30 @@ func TestBindExecute_MoreThan(t *testing.T) {
 	assert.Nil(t, err)
 
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
 				},
 			},
 		},
-		testRunData{
+		{
 			shared.TestRun{ID: 2},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "PASS",
 					},
@@ -1080,30 +1081,30 @@ func TestBindExecute_LessThan(t *testing.T) {
 	assert.Nil(t, err)
 
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
 				},
 			},
 		},
-		testRunData{
+		{
 			shared.TestRun{ID: 2},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   "/a/b/c",
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "PASS",
 					},
@@ -1156,15 +1157,15 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 
 	noMatchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   noMatchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -1173,8 +1174,8 @@ func TestBindExecute_LinkNoMatchingPattern(t *testing.T) {
 		},
 	})
 	metadata := map[string][]string{
-		"/foo/bar/b.html":  []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
-		noMatchingTestName: []string{"", "https://external.com/item", ""},
+		"/foo/bar/b.html":  {"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		noMatchingTestName: {"", "https://external.com/item", ""},
 	}
 
 	link := query.Link{Pattern: "NoMatchingPattern", Metadata: metadata}
@@ -1197,15 +1198,15 @@ func TestBindExecute_NotLink(t *testing.T) {
 
 	matchingTestName := "/a/b/c"
 	runs := mockTestRuns(loader, idx, []testRunData{
-		testRunData{
+		{
 			shared.TestRun{ID: 1},
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
-					&metrics.TestResults{
+					{
 						Test:   matchingTestName,
 						Status: "PASS",
 					},
-					&metrics.TestResults{
+					{
 						Test:   "/d/e/f",
 						Status: "FAIL",
 					},
@@ -1214,8 +1215,8 @@ func TestBindExecute_NotLink(t *testing.T) {
 		},
 	})
 	metadata := map[string][]string{
-		"/foo/bar/b.html": []string{"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
-		matchingTestName:  []string{"", "https://external.com/item", ""},
+		"/foo/bar/b.html": {"https://bug.com/item", "https://bug.com/item", "https://bug.com/item"},
+		matchingTestName:  {"", "https://external.com/item", ""},
 	}
 
 	notQuery := query.Not{Arg: query.Link{Pattern: "external", Metadata: metadata}}

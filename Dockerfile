@@ -31,6 +31,9 @@ RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -qqy nodejs
 
+# Golangci-lint
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s
+
 # Google Cloud SDK
 # Based on https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/Dockerfile
 RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \

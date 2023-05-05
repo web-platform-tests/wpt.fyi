@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 // Copyright 2019 The WPT Dashboard Project. All rights reserved.
@@ -112,27 +113,27 @@ func TestRecentScreenshotHashes_filtering(t *testing.T) {
 	screenshots := []Screenshot{
 		// The order matters: 0001 is the perfect match, and the rest
 		// have have fewer and less important matching labels.
-		Screenshot{
+		{
 			HashDigest: "0001",
 			HashMethod: "hash",
 			Labels:     []string{"chrome", "64", "mac", "10.13"},
 		},
-		Screenshot{
+		{
 			HashDigest: "0002",
 			HashMethod: "hash",
 			Labels:     []string{"chrome", "64", "mac", "10.14"},
 		},
-		Screenshot{
+		{
 			HashDigest: "0003",
 			HashMethod: "hash",
 			Labels:     []string{"chrome", "64", "windows", "10"},
 		},
-		Screenshot{
+		{
 			HashDigest: "0004",
 			HashMethod: "hash",
 			Labels:     []string{"chrome", "65", "windows", "10"},
 		},
-		Screenshot{
+		{
 			HashDigest: "0005",
 			HashMethod: "hash",
 			Labels:     []string{"firefox", "60", "windows", "10"},
@@ -166,17 +167,17 @@ func TestRecentScreenshotHashes_ordering(t *testing.T) {
 		// The order matters: we want the smallest ID to have the
 		// oldest timestamp to avoid accidentally passing the test even
 		// without ordering.
-		Screenshot{
+		{
 			HashDigest: "0001",
 			HashMethod: "hash",
 			LastUsed:   time.Now().Add(-time.Minute * 3),
 		},
-		Screenshot{
+		{
 			HashDigest: "0002",
 			HashMethod: "hash",
 			LastUsed:   time.Now().Add(-time.Minute * 2),
 		},
-		Screenshot{
+		{
 			HashDigest: "0003",
 			HashMethod: "hash",
 			LastUsed:   time.Now().Add(-time.Minute * 1),

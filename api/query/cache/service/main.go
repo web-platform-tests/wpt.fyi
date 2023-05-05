@@ -24,18 +24,27 @@ import (
 	"google.golang.org/api/option"
 )
 
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var (
-	port                   = flag.Int("port", 8080, "Port to listen on")
-	projectID              = flag.String("project_id", "", "Google Cloud Platform project ID, used for connecting to Datastore")
-	gcpCredentialsFile     = flag.String("gcp_credentials_file", "", "Path to Google Cloud Platform credentials file, if necessary")
+	port      = flag.Int("port", 8080, "Port to listen on")
+	projectID = flag.String("project_id", "",
+		"Google Cloud Platform project ID, used for connecting to Datastore")
+	gcpCredentialsFile = flag.String("gcp_credentials_file", "",
+		"Path to Google Cloud Platform credentials file, if necessary")
 	numShards              = flag.Int("num_shards", runtime.NumCPU(), "Number of shards for parallelizing query execution")
 	monitorInterval        = flag.Duration("monitor_interval", time.Second*5, "Polling interval for memory usage monitor")
-	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", 10, "Maximum number of runs that can be ingested before memory monitor must run")
-	maxHeapBytes           = flag.Uint64("max_heap_bytes", 0, "Soft limit on heap-allocated bytes before evicting test runs from memory")
-	evictRunsPercent       = flag.Float64("evict_runs_percent", 0.1, "Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
-	updateInterval         = flag.Duration("update_interval", time.Second*10, "Update interval for polling for new runs")
-	updateMaxRuns          = flag.Int("update_max_runs", 10, "The maximum number of latest runs to lookup in attempts to update indexes via polling")
-	maxRunsPerRequest      = flag.Int("max_runs_per_request", 16, "Maximum number of runs that may be queried per request")
+	monitorMaxIngestedRuns = flag.Uint("monitor_max_ingested_runs", 10,
+		"Maximum number of runs that can be ingested before memory monitor must run")
+	maxHeapBytes = flag.Uint64("max_heap_bytes", 0,
+		"Soft limit on heap-allocated bytes before evicting test runs from memory")
+	evictRunsPercent = flag.Float64("evict_runs_percent", 0.1,
+		"Decimal percentage indicating what fraction of runs to evict when soft memory limit is reached")
+	updateInterval = flag.Duration("update_interval", time.Second*10,
+		"Update interval for polling for new runs")
+	updateMaxRuns = flag.Int("update_max_runs", 10,
+		"The maximum number of latest runs to lookup in attempts to update indexes via polling")
+	maxRunsPerRequest = flag.Int("max_runs_per_request", 16,
+		"Maximum number of runs that may be queried per request")
 
 	// User-facing message for when runs in a request exceeds maxRunsPerRequest.
 	// Set in init() after parsing flags.
@@ -45,13 +54,14 @@ var (
 	mon monitor.Monitor
 )
 
-func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func livenessCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Alive"))
 }
 
-func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func readinessCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	if idx == nil || mon == nil {
 		http.Error(w, "Cache not yet ready", http.StatusServiceUnavailable)
+
 		return
 	}
 
@@ -67,6 +77,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func getDatastore(ctx context.Context) (shared.Datastore, error) {
 	var client *datastore.Client
 	var err error
@@ -79,6 +90,7 @@ func getDatastore(ctx context.Context) (shared.Datastore, error) {
 		return nil, err
 	}
 	d := shared.NewCloudDatastore(ctx, client)
+
 	return d, nil
 }
 
@@ -110,7 +122,11 @@ func init() {
 			logrus.Infof("Using project ID from environment: %s", autoProjectID)
 			*projectID = autoProjectID
 		} else if *projectID != autoProjectID {
-			logrus.Warningf("Using project ID from flag: %s, even though environment reports project ID: %s", *projectID, autoProjectID)
+			logrus.Warningf(
+				"Using project ID from flag: %s, even though environment reports project ID: %s",
+				*projectID,
+				autoProjectID,
+			)
 		} else {
 			logrus.Infof("Using project ID: %s", *projectID)
 		}
@@ -132,7 +148,16 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to get datastore: %s", err)
 	}
-	mon, err = backfill.FillIndex(store, logger, monitor.GoRuntime{}, *monitorInterval, *monitorMaxIngestedRuns, *maxHeapBytes, *evictRunsPercent, idx)
+	mon, err = backfill.FillIndex(
+		store,
+		logger,
+		monitor.GoRuntime{},
+		*monitorInterval,
+		*monitorMaxIngestedRuns,
+		*maxHeapBytes,
+		*evictRunsPercent,
+		idx,
+	)
 	if err != nil {
 		logrus.Fatalf("Failed to initiate index backkfill: %v", err)
 	}
@@ -154,5 +179,6 @@ func main() {
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
 	http.HandleFunc("/api/search/cache", shared.HandleWithLogging(searchHandler))
 	logrus.Infof("Listening on port %d", *port)
+	// nolint:gosec // TODO: Fix gosec lint error.
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }

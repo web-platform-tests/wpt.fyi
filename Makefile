@@ -30,7 +30,7 @@ build: go_build
 
 test: go_test python_test
 
-lint: golangci_lint eslint
+lint: eslint go_lint # TODO: Replace go_lint with golangci_lint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint

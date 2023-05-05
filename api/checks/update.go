@@ -6,6 +6,7 @@ package checks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -36,12 +37,14 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warningf(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
 		log.Warningf("Failed to parse form: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -49,6 +52,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warningf("Failed to parse params: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -56,6 +60,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		msg := "product param is missing"
 		log.Warningf(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 	filter.SHAs = shared.SHAs{sha}
@@ -64,6 +69,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		msg := "Could not find runs to compare: " + err.Error()
 		log.Errorf(msg)
 		http.Error(w, msg, http.StatusNotFound)
+
 		return
 	}
 
@@ -74,6 +80,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warningf("Failed to load CheckSuites for %s: %s", sha, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	} else if len(suites) < 1 {
 		log.Debugf("No CheckSuites found for %s", sha)
@@ -82,11 +89,13 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	updatedAny := false
 	for _, suite := range suites {
 		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
-		if err == shared.ErrRunNotInSearchCache {
+		if errors.Is(err, shared.ErrRunNotInSearchCache) {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+
 			return
 		} else if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 		updated, updateErr := updateCheckRunSummary(ctx, summaryData, suite)
@@ -106,10 +115,22 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (headRun, baseRun *shared.TestRun, err error) {
+func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (
+	headRun,
+	baseRun *shared.TestRun,
+	err error,
+) {
 	one := 1
 	store := shared.NewAppEngineDatastore(ctx, false)
-	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, filter.Labels, filter.SHAs, filter.From, filter.To, &one, nil)
+	runs, err := store.TestRunQuery().LoadTestRuns(
+		filter.Products,
+		filter.Labels,
+		filter.SHAs,
+		filter.From,
+		filter.To,
+		&one,
+		nil,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,7 +163,15 @@ func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel stri
 	one := 1
 	store := shared.NewAppEngineDatastore(ctx, false)
 	labels := mapset.NewSetWith(extraLabel)
-	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, labels, filter.SHAs, nil, nil, &one, nil)
+	runs, err := store.TestRunQuery().LoadTestRuns(
+		filter.Products,
+		labels,
+		filter.SHAs,
+		nil,
+		nil,
+		&one,
+		nil,
+	)
 	run := runs.First()
 	if err != nil {
 		return nil, err
@@ -151,10 +180,15 @@ func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel stri
 		err = fmt.Errorf("no test run found for %s @ %s with label %s",
 			filter.Products[0].String(), filter.SHAs.FirstOrLatest(), extraLabel)
 	}
+
 	return run, err
 }
 
-func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headRun *shared.TestRun) (*shared.TestRun, error) {
+func loadMasterRunBefore(
+	ctx context.Context,
+	filter shared.TestRunFilter,
+	headRun *shared.TestRun,
+) (*shared.TestRun, error) {
 	// Get the most recent, but still earlier, master run to compare.
 	store := shared.NewAppEngineDatastore(ctx, false)
 	one := 1
@@ -169,10 +203,19 @@ func loadMasterRunBefore(ctx context.Context, filter shared.TestRunFilter, headR
 		err = fmt.Errorf("no master run found for %s before %s",
 			filter.Products[0].String(), filter.SHAs.FirstOrLatest())
 	}
+
 	return baseRun, err
 }
 
-func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite shared.CheckSuite, baseRun, headRun shared.TestRun) (summaries.Summary, error) {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func getDiffSummary(
+	aeAPI shared.AppEngineAPI,
+	diffAPI shared.DiffAPI,
+	suite shared.CheckSuite,
+	baseRun,
+	headRun shared.TestRun,
+) (summaries.Summary, error) { // nolint:ireturn // TODO: Fix ireturn lint error
+	// nolint:exhaustruct // TODO: Fix exhauststruct lint error
 	diffFilter := shared.DiffFilterParam{Added: true, Changed: true, Deleted: true}
 	diff, err := diffAPI.GetRunsDiff(baseRun, headRun, diffFilter, nil)
 	if err != nil {
@@ -181,6 +224,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 
 	checkProduct := shared.ProductSpec{
 		// [browser]@[sha] is plenty specific, and avoids bad version strings.
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ProductAtRevision: shared.ProductAtRevision{
 			Product:  shared.Product{BrowserName: headRun.BrowserName},
 			Revision: headRun.Revision,
@@ -190,6 +234,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 
 	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
 	host := aeAPI.GetHostname()
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	checkState := summaries.CheckState{
 		HostName:   host,
 		TestRun:    &headRun,
@@ -202,6 +247,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 
 	var regressions mapset.Set
 	if aeAPI.IsFeatureEnabled("onlyChangesAsRegressions") {
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		regressionFilter := shared.DiffFilterParam{Changed: true} // Only changed items
 		changeOnlyDiff, err := diffAPI.GetRunsDiff(baseRun, headRun, regressionFilter, nil)
 		if err != nil {
@@ -228,6 +274,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 
 	var summary summaries.Summary
 
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	resultsComparison := summaries.ResultsComparison{
 		BaseRun: baseRun,
 		HeadRun: headRun,
@@ -236,15 +283,17 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {
 		// Deletions are meaningless and abundant comparing to master; ignore them.
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		masterDiffFilter := shared.DiffFilterParam{Added: true, Changed: true, Unchanged: true}
 		masterDiffURL := diffAPI.GetMasterDiffURL(headRun, &masterDiffFilter)
 		masterDiffURL.Path = sharedPath
 		resultsComparison.MasterDiffURL = masterDiffURL.String()
 	}
 
+	// nolint:nestif // TODO: Fix nestif lint error
 	if !hasRegressions {
 		collapsed := collapseSummary(diff, 10)
-		data := summaries.Completed{
+		data := summaries.Completed{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,
 			Results:           make(summaries.BeforeAndAfter),
@@ -262,6 +311,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 		data.CheckState.Conclusion = &success
 		summary = data
 	} else {
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		data := summaries.Regressed{
 			CheckState:        checkState,
 			ResultsComparison: resultsComparison,
@@ -282,6 +332,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 		}
 		summary = data
 	}
+
 	return summary, nil
 }
 
@@ -302,10 +353,12 @@ func collapseDiff(diff shared.ResultsDiff, limit int) shared.ResultsDiff {
 		for _, p := range paths {
 			if strings.HasPrefix(k, p) {
 				result.Add(p, v)
+
 				break
 			}
 		}
 	}
+
 	return result
 }
 
@@ -322,14 +375,16 @@ func collapseSummary(diff shared.RunDiff, limit int) summaries.BeforeAndAfter {
 		for _, p := range paths {
 			if strings.HasPrefix(k, p) {
 				result.Add(p, diff.BeforeSummary[k], diff.AfterSummary[k])
+
 				break
 			}
 		}
 	}
+
 	return result
 }
 
-func collapsePaths(keys []string, limit int) mapset.Set {
+func collapsePaths(keys []string, limit int) mapset.Set { // nolint:ireturn // TODO: Fix ireturn lint error
 	result := shared.NewSetFromStringSlice(keys)
 	// 10 iterations to avoid edge-case infinite looping risk.
 	for i := 0; i < 10 && result.Cardinality() > limit; i++ {
@@ -347,6 +402,7 @@ func collapsePaths(keys []string, limit int) mapset.Set {
 			}
 			if len(parts) < depth {
 				collapsed.Add(k)
+
 				continue
 			}
 
@@ -360,5 +416,6 @@ func collapsePaths(keys []string, limit int) mapset.Set {
 		keys = shared.ToStringSlice(collapsed)
 		result = collapsed
 	}
+
 	return result
 }
