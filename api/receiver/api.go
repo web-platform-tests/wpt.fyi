@@ -186,6 +186,7 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	if err != nil {
 		return err
 	}
+	err = w.Close()
 
 	return err
 }
