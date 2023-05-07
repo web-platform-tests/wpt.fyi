@@ -24,7 +24,7 @@ export const interopData = {
      * is no longer updated and is referenced from this location.
      * More information at https://github.com/web-platform-tests/results-analysis
     **/
-    'csv_url': '/static/interop-2021-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2021-{stable|experimental}.csv',
     'summary_feature_name': 'summary',
     'matrix_url': 'https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io',
     'focus_areas': {
@@ -125,7 +125,7 @@ export const interopData = {
         ]
       }
     ],
-    'investigation_weight': 0.0,
+    'investigation_weight': 0.1,
     /**
      * Interop scores are "frozen" after the end of the year.
      * Once an interop year is completed, results are generated one more time
@@ -134,7 +134,7 @@ export const interopData = {
      * is no longer updated and is referenced from this location.
      * More information at https://github.com/web-platform-tests/results-analysis
     **/
-    'csv_url': '/static/interop-2022-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2022-{stable|experimental}.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
     'focus_areas': {

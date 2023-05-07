@@ -221,13 +221,7 @@ class InteropSummary extends PolymerElement {
     this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
     // Update the rest of the browser scores.
     for (let i = 1; i < scoreNumbers.length; i++) {
-      let browserScore = scores[i - 1][summaryFeatureName];
-      // For Interop 2022, 10% of the browser score was based on the investigation scores.
-      if (this.year === '2022') {
-        const investigationScore = this.dataManager.getYearProp('investigationTotalScore');
-        browserScore = Math.floor(browserScore * 0.9 + investigationScore * 0.1);
-      }
-      this.updateSummaryScore(scoreNumbers[i], browserScore);
+      this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
     }
 
     // Update investigation summary separately.

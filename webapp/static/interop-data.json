@@ -13,7 +13,7 @@
         "score_as_group": false
       }
     ],
-    "csv_url": "/static/interop-2021-{stable|experimental}-v2.csv",
+    "csv_url": "/static/interop-2021-{stable|experimental}.csv",
     "summary_feature_name": "summary",
     "matrix_url": "https://matrix.to/#/#interop20xx:matrix.org?web-instance%5Belement.io%5D=app.element.io",
     "focus_areas": {
@@ -114,8 +114,8 @@
         ]
       }
     ],
-    "investigation_weight": 0.0,
-    "csv_url": "/static/interop-2022-{stable|experimental}-v2.csv",
+    "investigation_weight": 0.1,
+    "csv_url": "/static/interop-2022-{stable|experimental}.csv",
     "summary_feature_name": "summary",
     "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
     "focus_areas": {
