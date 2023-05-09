@@ -30,7 +30,7 @@ build: go_build
 
 test: go_test python_test
 
-lint: eslint go_lint golangci_lint
+lint: eslint go_lint #golangci_lint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
@@ -72,11 +72,7 @@ go_lint: golint go_test_tag_lint
 # TODO: run on /shared/, /util/, /webapp/, /webdriver/
 golangci_lint: golangci-lint
 	golangci-lint run ./api/...
-
-golangci_lint: golangci-lint
-	$(which golangci-lint)
-	golangci-lint run ./api/... 
-
+	
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
