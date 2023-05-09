@@ -30,7 +30,7 @@ build: go_build
 
 test: go_test python_test
 
-lint: eslint go_lint # TODO: Replace go_lint with golangci_lint
+lint: eslint go_lint golangci_lint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
@@ -69,12 +69,13 @@ go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./webapp/...
 	golint -set_exit_status ./webdriver/...
 
-golangci_lint: 
+# TODO: run on /shared/, /util/, /webapp/, /webdriver/
+golangci_lint: golangci-lint
 	golangci-lint run ./api/...
-	golangci-lint run ./shared/...
-	golangci-lint run ./util/...
-	golangci-lint run ./webapp/...
-	golangci-lint run ./webdriver/...
+
+golangci_lint: golangci-lint
+	$(which golangci-lint)
+	golangci-lint run ./api/... 
 
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
@@ -167,6 +168,11 @@ firefox: bzip2 wget
 	fi
 
 geckodriver: node-wct-local
+
+golangci-lint: curl gpg
+	if [ "$$(which golangci-lint)" == "" ]; then \
+		curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /go/bin; \
+	fi
 
 golint: git
 	if [ "$$(which golint)" == "" ]; then \
