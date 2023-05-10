@@ -251,7 +251,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	}
 
 	if err := i.syncStoreRun(r, shardData); err != nil {
-		logrus.Warningf("Sync clear error: %s", err.Error())
+		logrus.Warningf("Sync store run error: %s", err.Error())
 	}
 
 	return nil
