@@ -11,10 +11,9 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// nolint:exhaustruct // Not required since missing fields have omitempty.
 type loginResponse struct {
-	User  *shared.User `json:"user,omitempty"`
-	Error string       `json:"error,omitempty"`
+	User  *shared.User `json:"user,omitempty" exhaustruct:"optional"`
+	Error string       `json:"error,omitempty" exhaustruct:"optional"`
 }
 
 func apiUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +28,6 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, _ := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil {
-		// nolint:exhaustruct // Not required since missing fields have omitempty.
 		response := loginResponse{Error: "Unable to retrieve login information, please log in again"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {

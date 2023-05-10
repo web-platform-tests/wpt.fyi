@@ -56,7 +56,6 @@ linters-settings:
       - 'github\.com/google/go-github/v47/github\.CheckRunOutput'
       - 'github\.com/google/go-github/v47/github\.ListCheckRunsOptions'
       - 'github\.com/google/go-github/v47/github\.ListOptions'
-      - 'wpt\.fyi/api\.loginResponse'
       - 'github\.com/golang-jwt/jwt\.StandardClaims'
   gomoddirectives:  
     # List of allowed `replace directives`
