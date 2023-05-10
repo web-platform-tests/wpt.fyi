@@ -44,7 +44,7 @@ linters:
     - revive
     - unparam
     - usestdlibvars
-    fast: true
+  fast: true
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
