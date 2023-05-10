@@ -167,7 +167,7 @@ geckodriver: node-wct-local
 
 golangci-lint: curl gpg
 	if [ "$$(which golangci-lint)" == "" ]; then \
-		curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /go/bin; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v1.52.2/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2; \
 	fi
 
 golint: git
