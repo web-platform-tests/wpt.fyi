@@ -35,6 +35,17 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
+        .previous-year-banner {
+          height: 40px;
+          background-color: #DEF;
+          text-align: center;
+          padding-top: 16px;
+        }
+
+        .previous-year-banner p {
+          margin: 0;
+        }
+
         .grid-container {
           margin: 0 2em;
           display: grid;
@@ -267,6 +278,12 @@ class InteropDashboard extends PolymerElement {
         }
 
       </style>
+      <div class="previous-year-banner" hidden$=[[isCurrentYear]]>
+        <p>
+          You are viewing Interop data from a previous year.
+          <a href="/interop-[[currentInteropYear]]">View the current Interop Dashboard</a>.
+        </p>
+      </div>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
           <h1>Interop [[year]] Dashboard</h1>
@@ -434,7 +451,7 @@ class InteropDashboard extends PolymerElement {
                     <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
-                          <a href$="[[getRowInfo(rowName, 'tests')]]">[[getRowInfo(rowName, 'description')]]</a>
+                          <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
                         </td>
                         <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
                         <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
@@ -494,7 +511,7 @@ class InteropDashboard extends PolymerElement {
             </div>
 
             <div id="featureReferenceList">
-              <template is="dom-repeat" items="[[featureLinks(feature)]]">
+              <template is="dom-repeat" items="[[featureLinks(feature, stable)]]">
                 <template is="dom-if" if="[[item.href]]">
                   <a href$="[[item.href]]">[[item.text]]</a>
                 </template>
@@ -546,6 +563,11 @@ class InteropDashboard extends PolymerElement {
         type: Number,
         value: 0
       },
+      currentInteropYear: Number,
+      isCurrentYear: {
+        type: Boolean,
+        value: true,
+      },
       isSortedAsc: {
         type: Boolean,
         value: true
@@ -585,6 +607,13 @@ class InteropDashboard extends PolymerElement {
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
 
+    // Determine the current Interop year. It is assumed that
+    // the current year is the latest year defined in interop-data.
+    // allYears is returned sorted. The last index is the current Interop year.
+    const allYears = this.getAllYears();
+    this.currentInteropYear = allYears[allYears.length - 1];
+    this.isCurrentYear = this.year === this.currentInteropYear;
+
     super.ready();
 
     this.embedded = params.get('embedded') !== null;
@@ -615,12 +644,14 @@ class InteropDashboard extends PolymerElement {
     return feature === this.feature;
   }
 
-  featureLinks(feature) {
+  featureLinks(feature, stable) {
     const data = this.getYearProp('focusAreas')[feature];
+    const testsURL = this.formatTestsURL(data?.tests, stable);
+
     return [
       { text: 'Spec', href: data?.spec },
       { text: 'MDN', href: data?.mdn },
-      { text: 'Tests', href: data?.tests },
+      { text: 'Tests', href: testsURL },
     ];
   }
 
@@ -630,6 +661,40 @@ class InteropDashboard extends PolymerElement {
 
   getRowInfo(name, prop) {
     return this.getYearProp('focusAreas')[name][prop];
+  }
+
+  // Add the stable or experimental label to a tests URL depending on the view.
+  formatTestsURL(testsURL, stable) {
+    // Don't try to add a label if the URL is undefined or empty.
+    if (!testsURL) {
+      return '';
+    }
+
+    // TODO(DanielRyanSmith): This logic could be simplified. see:
+    // - https://github.com/whatwg/url/issues/762
+    // - https://github.com/whatwg/url/issues/461
+    // - https://github.com/whatwg/url/issues/335
+
+    // Test results are defined as absolute paths from this origin.
+    const url = new URL(testsURL, window.location.origin);
+    // Test results URLs can have multiple 'label' params. Grab them all.
+    const existingLabels = url.searchParams.getAll('label');
+    // Remove any existing stable or experimental label param.
+    const newLabels = existingLabels.filter(val => val !== 'stable' && val !== 'experimental');
+    // Add the stable/experimental label depending on the dashboard view.
+    newLabels.push(stable ? 'stable' : 'experimental');
+    // Delete the existing label params and re-add them.
+    url.searchParams.delete('label');
+    for (const labelValue of newLabels) {
+      url.searchParams.append('label', labelValue);
+    }
+
+    return url.toString();
+  }
+
+  // Get the tests URL for a row and add the stable/experimental label.
+  getTestsURL(name, stable) {
+    return this.formatTestsURL(this.getRowInfo(name, 'tests'), stable);
   }
 
   getInvestigationScore(rowName, isPreviousYear) {
