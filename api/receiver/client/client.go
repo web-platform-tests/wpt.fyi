@@ -18,9 +18,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// Verify Client interface compliance in compile-time.
-var _ Client = (*client)(nil)
-
 // UploadTimeout is the timeout to upload results to the results receiver.
 const UploadTimeout = time.Minute
 
@@ -35,16 +32,16 @@ type Client interface {
 		labels []string) error
 }
 
-type client struct {
-	aeAPI shared.AppEngineAPI
-}
-
 // NewClient returns a client impl.
 // nolint:ireturn // TODO: Fix ireturn lint error
 func NewClient(aeAPI shared.AppEngineAPI) Client {
 	return client{
 		aeAPI: aeAPI,
 	}
+}
+
+type client struct {
+	aeAPI shared.AppEngineAPI
 }
 
 // CreateRun issues a POST request to the results receiver with the given payload.

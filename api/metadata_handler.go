@@ -151,7 +151,7 @@ func handleMetadataTriage(
 		return
 	}
 
-	// TODO(kyleju): Check github client permission levels for auto merge.
+	// nolint:godox // TODO(kyleju): Check github client permission levels for auto merge.
 	prURL, err := tm.Triage(metadata)
 	if err != nil {
 		http.Error(w, "Unable to triage metadata: "+err.Error(), http.StatusInternalServerError)
@@ -305,7 +305,7 @@ func handlePendingMetadata(
 		return
 	}
 
-	// TODO(kyleju): Check if a PR has been merged or closed; if so, remove them from Redis.
+	// nolint:godox // TODO(kyleju): Check if a PR has been merged or closed; if so, remove them from Redis.
 	allPendingResults := make(shared.MetadataResults)
 	for _, pr := range prs {
 		var pendingMetadata shared.MetadataResults

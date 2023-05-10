@@ -247,7 +247,7 @@ func (l Link) Filter(t TestID) bool {
 	// WPT metadata can contain wildcards that match arbitrary
 	// subdirectories, so if we fail to lookup the map we keep stripping
 	// directories and try again.
-	// TODO: Verify whether this is too slow; if so, try building a trie
+	// nolint:godox // TODO: Verify whether this is too slow; if so, try building a trie
 	// from the wildcards only and match to that as a fallback.
 	urls, ok := l.metadata[name]
 	dir := filepath.Dir(name)
@@ -284,7 +284,7 @@ func (tr Triaged) Filter(t TestID) bool {
 	// WPT metadata can contain wildcards that match arbitrary
 	// subdirectories, so if we fail to lookup the map we keep stripping
 	// directories and try again.
-	// TODO: Verify whether this is too slow; if so, try building a trie
+	// nolint:godox // TODO: Verify whether this is too slow; if so, try building a trie
 	// from the wildcards only and match to that as a fallback.
 	val, ok := tr.metadata[name]
 	dir := filepath.Dir(name)
@@ -364,7 +364,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		// is:optional only returns rows from tests with .optional.
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
-		// TODO(gh-1619): Handle the CSS meta flags; see
+		// nolint:godox // TODO(gh-1619): Handle the CSS meta flags; see
 		// https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags
 		name, _, err := q.tests.GetName(t)
 		if err != nil {
@@ -511,7 +511,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	if len(errs) > 0 {
 		go func() {
 			for err := range errs {
-				// TODO: Should this use a context-based logger?
+				// nolint:godox // TODO: Should this use a context-based logger?
 				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()

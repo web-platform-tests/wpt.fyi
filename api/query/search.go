@@ -165,7 +165,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.Request,
 	data []byte, logger shared.Logger) (*http.Response, error) {
 	hostname := sh.api.GetServiceHostname("searchcache")
-	// TODO(Issue #2941): This will not work when hostname is localhost (http scheme needed).
+	// nolint:godox // TODO(Issue #2941): This will not work when hostname is localhost (http scheme needed).
 	fwdURL, err := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
 	if err != nil {
 		logger.Debugf("Error parsing hostname.")
@@ -284,11 +284,12 @@ var cacheKey = func(r *http.Request) interface{} {
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
 
-// TODO: Sometimes an empty result set is being cached for a query over
+// nolint:godox // TODO: Sometimes an empty result set is being cached for a query over
 // legitimate runs. For now, prevent serving empty result sets from cache.
 // Eventually, a more durable fix to
 // https://github.com/web-platform-tests/wpt.fyi/issues/759 should replace this
 // approximation.
+
 // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payload []byte) bool {
 	if !shared.CacheStatusOK(ctx, statusCode, payload) {

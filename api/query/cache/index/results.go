@@ -31,7 +31,7 @@ type Results interface {
 	// nil if the input RunID is unknown to this index.
 	ForRun(RunID) RunResults
 
-	// TODO: Add filter binding function:
+	// nolint:godox // TODO: Add filter binding function:
 	// ResultFilter(ru RunID, re ResultID) UnboundFilter
 }
 

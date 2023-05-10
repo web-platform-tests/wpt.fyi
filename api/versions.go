@@ -88,7 +88,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for i := range runs {
 		versions[i] = runs[i].BrowserVersion
 	}
-	// TODO(lukebjerring): Fix this, it will put 100 before 11..., etc.
+	// nolint:godox // TODO(lukebjerring): Fix this, it will put 100 before 11..., etc.
 	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 
 	versionsBytes, err := json.Marshal(versions)

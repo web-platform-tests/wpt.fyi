@@ -70,7 +70,10 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = w.Write(marshalled)
+	// nolint:godox // TODO: Golangci-lint found that we previously ignored the error.
+	// We should investigate if we should return a HTTP error or not. In the meantime, we log the error.
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data: %w", err.Error())
 	}
 }

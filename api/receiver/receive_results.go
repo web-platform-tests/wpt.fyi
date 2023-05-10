@@ -127,8 +127,8 @@ func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart
 			return
 		}
 		defer f.Close()
-		// TODO(Hexcles): Detect whether the file is gzipped.
-		// TODO(Hexcles): Retry after failures.
+		// nolint:godox // TODO(Hexcles): Detect whether the file is gzipped.
+		// nolint:godox // TODO(Hexcles): Retry after failures.
 		if err := a.UploadToGCS(gcsPath, f, true); err != nil {
 			errors <- err
 		}

@@ -11,6 +11,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// nolint:exhaustruct // Not required since missing fields have omitempty.
 type loginResponse struct {
 	User  *shared.User `json:"user,omitempty"`
 	Error string       `json:"error,omitempty"`
@@ -42,7 +43,7 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
+
 	response := loginResponse{User: user}
 	marshalled, err := json.Marshal(response)
 	if err != nil {

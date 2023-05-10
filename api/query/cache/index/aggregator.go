@@ -72,8 +72,7 @@ func (a *indexAggregator) Add(t TestID) error {
 
 	for i, id := range a.runIDs {
 		res := shared.TestStatus(a.runResults[id].GetResult(t))
-		// TODO: Switch to a consistent value for Total across all runs.
-		//
+		// nolint:godox // TODO: Switch to a consistent value for Total across all runs.
 		// Only include tests with non-UNKNOWN status for this run's total.
 		if res != shared.TestStatusUnknown {
 			results[i].NewAggProcess = true

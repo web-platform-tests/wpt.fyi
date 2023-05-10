@@ -11,7 +11,7 @@ import (
 	"cloud.google.com/go/storage"
 )
 
-// TODO: This interface might also be useful to other APIs.
+// nolint:godox // TODO: This interface might also be useful to other APIs.
 
 type gcs interface {
 	NewWriter(bucketName, fileName, contentType, contentEncoding string) (io.WriteCloser, error)

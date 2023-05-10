@@ -145,11 +145,11 @@ func cleanOrphanedPendingMetadata(
 		logger.Infof("Removing PR %s and its pending metadata from Redis", pr)
 		err := cacheSet.Remove(shared.PendingMetadataCacheKey, pr)
 		if err != nil {
-			logger.Infof("Error removing %s from RedisSet: %s", pr, err.Error())
+			logger.Warningf("Error removing %s from RedisSet: %s", pr, err.Error())
 		}
 		err = shared.DeleteCache(shared.PendingMetadataCachePrefix + pr)
 		if err != nil {
-			logger.Infof("Error removing %s from Redis: %s", pr, err.Error())
+			logger.Warningf("Error removing %s from Redis: %s", pr, err.Error())
 		}
 	}
 

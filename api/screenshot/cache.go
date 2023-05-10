@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -63,7 +62,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
+	// nolint:godox // TODO(Hexcles): Abstract and mock the GCS utilities in shared.
 	gcs, err := storage.NewClient(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,7 +133,8 @@ func storeScreenshot(
 	}
 	// Need to reset the file after hashing it.
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		fmt.Sprintf("Failed to reset file: %s", err.Error())
+		logger := shared.GetLogger(ctx)
+		logger.Warningf("Failed to reset file: %s", err.Error())
 	}
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
@@ -153,7 +153,5 @@ func storeScreenshot(
 	}
 
 	// Write to Datastore last.
-	err := s.Store(ds)
-
-	return err
+	return s.Store(ds)
 }

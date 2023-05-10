@@ -99,7 +99,7 @@ func getSignedJWT(ctx context.Context, appID int64) (string, error) {
 
 	/* Create the jwt token */
 	now := time.Now()
-	claims := &jwt.StandardClaims{ // nolint:exhaustruct // Not required since missing fields have omitempty.
+	claims := &jwt.StandardClaims{
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(time.Minute * 10).Unix(),
 		Issuer:    fmt.Sprintf("%v", appID),

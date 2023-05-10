@@ -205,8 +205,8 @@ func (m *indexMonitor) check() {
 	heapBytes := m.rt.GetHeapBytes()
 	if heapBytes > m.maxHeapBytes {
 		m.logger.Warningf("Monitor %d bytes allocated, exceeding threshold of %d bytes", heapBytes, m.maxHeapBytes)
-		if percent, err := m.idx.EvictRuns(m.percent); err != nil {
-			m.logger.Warningf("%s", percent)
+		if _, err := m.idx.EvictRuns(m.percent); err != nil {
+			m.logger.Warningf("Error occurred while evicting %f%% of current runs: %w", m.percent, err)
 		}
 	} else {
 		m.logger.Debugf("Monitor: %d heap-allocated bytes OK", heapBytes)

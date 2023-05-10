@@ -38,7 +38,7 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	// TODO(Hexcles): Support pagination.
+	// nolint:godox // TODO(Hexcles): Support pagination.
 	q = q.Order("-Updated").Limit(shared.MaxCountMaxValue)
 
 	var runs []shared.PendingTestRun

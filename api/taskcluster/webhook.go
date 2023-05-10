@@ -474,7 +474,6 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	var runs []*github.CheckRun
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page[0], but due to

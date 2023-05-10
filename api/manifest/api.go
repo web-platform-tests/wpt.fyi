@@ -75,7 +75,8 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (
 		release, _, err = client.Repositories.GetLatestRelease(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName)
 	} else {
 		q := fmt.Sprintf("SHA:%s repo:web-platform-tests/wpt", sha)
-		issues, _, err := client.Search.Issues(aeAPI.Context(), q, nil)
+		var issues *github.IssuesSearchResult
+		issues, _, err = client.Search.Issues(aeAPI.Context(), q, nil)
 		if err != nil {
 			return "", nil, err
 		}
@@ -84,7 +85,6 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (
 		}
 
 		releaseTag = fmt.Sprintf("merge_pr_%d", issues.Issues[0].GetNumber())
-		//nolint: ineffassign // err is still used below.
 		release, _, err = client.Repositories.GetReleaseByTag(
 			aeAPI.Context(),
 			shared.WPTRepoOwner,

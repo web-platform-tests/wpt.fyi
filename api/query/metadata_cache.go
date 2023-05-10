@@ -26,7 +26,7 @@ func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte,
 		Timeout: time.Second * 5,
 	}
 
-	// TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
+	// nolint:godox // TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
 	// out-of-sync issue between searchcache and webapp.
 	res, err = shared.GetWPTMetadataArchive(netClient, nil)
 

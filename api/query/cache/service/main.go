@@ -135,7 +135,7 @@ func init() {
 
 func main() {
 	logrus.Infof("Serving index with %d shards", *numShards)
-	// TODO: Use different field configurations for index, backfiller, monitor?
+	// nolint:godox // TODO: Use different field configurations for index, backfiller, monitor?
 	logger := logrus.StandardLogger()
 
 	var err error

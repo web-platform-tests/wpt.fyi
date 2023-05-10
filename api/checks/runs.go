@@ -93,7 +93,6 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 	}
 
 	var runs []*github.CheckRun
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	options := github.ListCheckRunsOptions{
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page; see
