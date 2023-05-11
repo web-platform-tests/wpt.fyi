@@ -333,7 +333,8 @@ __Content type__: `multipart/form-data`
 __Parameters__
 
 __`labels`__: (Optional) A comma-separated string of labels for this test run. Currently recognized
-labels are "experimental" and "stable" (the release channel of the tested browser).
+labels are "experimental", "stable" (the release channel of the tested browser) and "master" (test run
+from the master branch).
 
 __`callback_url`__: (Optional) A URL that the processor should `POST` when successful, which will
 create the TestRun. Defaults to /api/results/create in the current project's environment (e.g. wpt.fyi for
