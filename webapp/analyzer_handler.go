@@ -29,7 +29,7 @@ func analyzerHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	bucket := "wptd-screenshots-staging"
-	if aeAPI.GetHostname() == "wpt.fyi" {
+	if aeAPI.GetOrigin().Hostname() == "wpt.fyi" {
 		bucket = "wptd-screenshots"
 	}
 

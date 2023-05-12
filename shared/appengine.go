@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -175,16 +176,16 @@ type AppEngineAPI interface {
 
 	// GetVersion returns the version name for the current environment.
 	GetVersion() string
-	// GetHostname returns the canonical hostname for the current AppEngine
-	// project, i.e. staging.wpt.fyi or wpt.fyi.
-	GetHostname() string
-	// GetVersionedHostname returns the AppEngine hostname for the current
+	// GetOrigin returns the canonical origin for the current AppEngine
+	// project, i.e. [https|http]://staging.wpt.fyi or [https|http]://wpt.fyi.
+	GetOrigin() *url.URL
+	// GetVersionedOrigin returns the AppEngine origin for the current
 	// version of the default service, i.e.,
-	//   VERSION-dot-wptdashboard{,-staging}.REGION.r.appspot.com.
+	//   [https|http]://VERSION-dot-wptdashboard{,-staging}.REGION.r.appspot.com.
 	// Note: if the default service does not have the current version,
 	// AppEngine routing will find a version according to traffic split.
 	// https://cloud.google.com/appengine/docs/standard/go/how-requests-are-routed#soft_routing
-	GetVersionedHostname() string
+	GetVersionedOrigin() *url.URL
 	// GetServiceHostname returns the AppEngine hostname for the current
 	// version of the given service, i.e.,
 	//   VERSION-dot-SERVICE-dot-wptdashboard{,-staging}.REGION.r.appspot.com.
@@ -302,6 +303,26 @@ func (a appEngineAPIImpl) GetUploader(uploader string) (Uploader, error) {
 	return GetUploader(m, uploader)
 }
 
+func (a appEngineAPIImpl) GetOrigin() *url.URL {
+	u := new(url.URL)
+	u.Scheme = a.getScheme()
+	u.Host = a.GetHostname()
+	return u
+}
+func (a appEngineAPIImpl) GetVersionedOrigin() *url.URL {
+	u := new(url.URL)
+	u.Scheme = a.getScheme()
+	u.Host = a.GetVersionedHostname()
+	return u
+}
+
+func (a appEngineAPIImpl) getScheme() string {
+	if runtimeIdentity.application != nil {
+		return "https"
+	}
+	return "http"
+}
+
 func (a appEngineAPIImpl) GetHostname() string {
 	if runtimeIdentity.AppID == "wptdashboard" {
 		return "wpt.fyi"
@@ -335,15 +356,16 @@ func (a appEngineAPIImpl) GetServiceHostname(service string) string {
 }
 
 func (a appEngineAPIImpl) GetResultsURL(filter TestRunFilter) *url.URL {
-	return getURL(a.GetHostname(), "/results/", filter)
+	return getURL(*a.GetOrigin(), "/results/", filter)
 }
 
 func (a appEngineAPIImpl) GetRunsURL(filter TestRunFilter) *url.URL {
-	return getURL(a.GetHostname(), "/runs", filter)
+	return getURL(*a.GetOrigin(), "/runs", filter)
 }
 
 func (a appEngineAPIImpl) GetResultsUploadURL() *url.URL {
-	result, _ := url.Parse(fmt.Sprintf("https://%s%s", a.GetVersionedHostname(), "/api/results/upload"))
+	result := a.GetVersionedOrigin()
+	result.Path = path.Join(result.Path, "/api/results/upload")
 	return result
 }
 
@@ -372,10 +394,10 @@ func (a appEngineAPIImpl) ScheduleTask(queueName, taskName, target string, param
 	return createdTaskName, nil
 }
 
-func getURL(host, path string, filter TestRunFilter) *url.URL {
-	detailsURL, _ := url.Parse(fmt.Sprintf("https://%s%s", host, path))
-	detailsURL.RawQuery = filter.ToQuery().Encode()
-	return detailsURL
+func getURL(origin url.URL, inputPath string, filter TestRunFilter) *url.URL {
+	origin.Path += path.Join(origin.Path, inputPath)
+	origin.RawQuery = filter.ToQuery().Encode()
+	return &origin
 }
 
 func createTaskRequest(queueName, taskName, target string, params url.Values) (taskPrefix string, req *taskspb.CreateTaskRequest) {

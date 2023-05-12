@@ -189,9 +189,9 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	}
 
 	diffURL := diffAPI.GetDiffURL(baseRun, headRun, &diffFilter)
-	host := aeAPI.GetHostname()
+	origin := aeAPI.GetOrigin()
 	checkState := summaries.CheckState{
-		HostName:   host,
+		HostName:   origin.Host,
 		TestRun:    &headRun,
 		Product:    checkProduct,
 		HeadSHA:    headRun.FullRevisionHash,
@@ -231,7 +231,7 @@ func getDiffSummary(aeAPI shared.AppEngineAPI, diffAPI shared.DiffAPI, suite sha
 	resultsComparison := summaries.ResultsComparison{
 		BaseRun: baseRun,
 		HeadRun: headRun,
-		HostURL: fmt.Sprintf("https://%s/", host),
+		HostURL: origin.Host,
 		DiffURL: diffURL.String(),
 	}
 	if headRun.LabelsSet().Contains(shared.PRHeadLabel) {

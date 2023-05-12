@@ -34,6 +34,16 @@ func strPtr(s string) *string {
 	return &s
 }
 
+func testOrigin() *url.URL {
+	// Because these tests call the function multiple times, we need to use
+	// DoAndReturn and pass this function for the mock assertion.
+	// Without it, it will append the path to the same pointer
+	u := new(url.URL)
+	u.Scheme = "http"
+	u.Host = "localhost:8080"
+	return u
+}
+
 func TestShouldProcessStatus_states(t *testing.T) {
 	status := tc.StatusEventPayload{}
 	status.State = strPtr("success")
@@ -250,6 +260,8 @@ func TestCreateAllRuns_success(t *testing.T) {
 	var requested uint32
 	requested = 0
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		assert.Nil(t, r.ParseForm())
+		assert.Equal(t, []string{"http://localhost:8080/api/results/create"}, r.PostForm["callback_url"])
 		atomic.AddUint32(&requested, 1)
 		w.Write([]byte("OK"))
 	}
@@ -261,7 +273,8 @@ func TestCreateAllRuns_success(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
+
+	aeAPI.EXPECT().GetVersionedOrigin().MinTimes(1).DoAndReturn(testOrigin)
 	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).AnyTimes().Return(server.Client())
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 
@@ -308,6 +321,8 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	var requested uint32
 	requested = 0
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		assert.Nil(t, r.ParseForm())
+		assert.Equal(t, []string{"http://localhost:8080/api/results/create"}, r.PostForm["callback_url"])
 		if atomic.CompareAndSwapUint32(&requested, 0, 1) {
 			w.Write([]byte("OK"))
 		} else if atomic.CompareAndSwapUint32(&requested, 1, 2) {
@@ -324,7 +339,7 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedOrigin().MinTimes(1).DoAndReturn(testOrigin)
 	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).Times(2).Return(server.Client())
 	serverURL, _ := url.Parse(server.URL)
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
@@ -349,6 +364,8 @@ func TestCreateAllRuns_one_error(t *testing.T) {
 
 func TestCreateAllRuns_all_errors(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		assert.Nil(t, r.ParseForm())
+		assert.Equal(t, []string{"http://localhost:8080/api/results/create"}, r.PostForm["callback_url"])
 		time.Sleep(time.Second * 2)
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
@@ -359,7 +376,7 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 	sha := "abcdef1234abcdef1234abcdef1234abcdef1234"
 
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().MinTimes(1).Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedOrigin().MinTimes(1).DoAndReturn(testOrigin)
 	// Give a very short timeout (instead of the asked 1min) to make tests faster.
 	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).MinTimes(1).Return(&http.Client{Timeout: time.Microsecond})
 	serverURL, _ := url.Parse(server.URL)
@@ -383,6 +400,8 @@ func TestCreateAllRuns_all_errors(t *testing.T) {
 
 func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		assert.Nil(t, r.ParseForm())
+		assert.Equal(t, []string{"http://localhost:8080/api/results/create"}, r.PostForm["callback_url"])
 		// We should not see a master label here, even though we
 		// specify one in the call to tc.CreateAllRuns.
 		defer r.Body.Close()
@@ -398,7 +417,7 @@ func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 	mockC := gomock.NewController(t)
 	defer mockC.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockC)
-	aeAPI.EXPECT().GetVersionedHostname().AnyTimes().Return("localhost:8080")
+	aeAPI.EXPECT().GetVersionedOrigin().AnyTimes().DoAndReturn(testOrigin)
 	aeAPI.EXPECT().GetHTTPClientWithTimeout(uc.UploadTimeout).AnyTimes().Return(server.Client())
 	aeAPI.EXPECT().GetResultsUploadURL().AnyTimes().Return(serverURL)
 

@@ -31,7 +31,8 @@ func TestGetDiffSummary_Regressed(t *testing.T) {
 			aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 			aeAPI.EXPECT().IsFeatureEnabled(onlyChangesAsRegressionsFeature).Return(enabled)
 			aeAPI.EXPECT().IsFeatureEnabled(failChecksOnRegressionFeature).Return(false)
-			aeAPI.EXPECT().GetHostname()
+			origin, _ := url.Parse("https://some-origin.com")
+			aeAPI.EXPECT().GetOrigin().Return(origin)
 			diffAPI := sharedtest.NewMockDiffAPI(mockCtrl)
 			diffAPI.EXPECT().GetRunsDiff(before, after, sharedtest.SameDiffFilter("ADC"), gomock.Any()).Return(runDiff, nil)
 			if enabled {
@@ -49,6 +50,7 @@ func TestGetDiffSummary_Regressed(t *testing.T) {
 			_, ok := summary.(summaries.Regressed)
 			assert.True(t, ok)
 			assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
+			assert.Equal(t, "some-origin.com", summary.GetCheckState().HostName)
 		})
 	}
 	testSummary(false)
@@ -68,7 +70,10 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
 	aeAPI.EXPECT().IsFeatureEnabled(onlyChangesAsRegressionsFeature).Return(false)
 	aeAPI.EXPECT().IsFeatureEnabled(failChecksOnRegressionFeature).Return(false)
-	aeAPI.EXPECT().GetHostname()
+	aeAPI.EXPECT().GetOrigin().Return(&url.URL{
+		Scheme: "https",
+		Host:   "example.com",
+	})
 	diffAPI := sharedtest.NewMockDiffAPI(mockCtrl)
 	diffAPI.EXPECT().GetRunsDiff(before, after, gomock.Any(), gomock.Any()).Return(runDiff, nil)
 	diffURL, _ := url.Parse("https://wpt.fyi/results?diff")
@@ -83,6 +88,7 @@ func TestGetDiffSummary_Completed(t *testing.T) {
 	_, ok := summary.(summaries.Completed)
 	assert.True(t, ok)
 	assert.Equal(t, suite.PRNumbers, summary.GetCheckState().PRNumbers)
+	assert.Equal(t, "example.com", summary.GetCheckState().HostName)
 }
 
 func getBeforeAndAfterRuns() (before, after shared.TestRun) {

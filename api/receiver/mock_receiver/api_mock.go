@@ -112,18 +112,18 @@ func (mr *MockAPIMockRecorder) GetHTTPClientWithTimeout(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHTTPClientWithTimeout", reflect.TypeOf((*MockAPI)(nil).GetHTTPClientWithTimeout), arg0)
 }
 
-// GetHostname mocks base method.
-func (m *MockAPI) GetHostname() string {
+// GetOrigin mocks base method.
+func (m *MockAPI) GetOrigin() *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHostname")
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GetOrigin")
+	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
-// GetHostname indicates an expected call of GetHostname.
-func (mr *MockAPIMockRecorder) GetHostname() *gomock.Call {
+// GetOrigin indicates an expected call of GetOrigin.
+func (mr *MockAPIMockRecorder) GetOrigin() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostname", reflect.TypeOf((*MockAPI)(nil).GetHostname))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrigin", reflect.TypeOf((*MockAPI)(nil).GetOrigin))
 }
 
 // GetResultsURL mocks base method.
@@ -211,18 +211,18 @@ func (mr *MockAPIMockRecorder) GetVersion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockAPI)(nil).GetVersion))
 }
 
-// GetVersionedHostname mocks base method.
-func (m *MockAPI) GetVersionedHostname() string {
+// GetVersionedOrigin mocks base method.
+func (m *MockAPI) GetVersionedOrigin() *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVersionedHostname")
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GetVersionedOrigin")
+	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
-// GetVersionedHostname indicates an expected call of GetVersionedHostname.
-func (mr *MockAPIMockRecorder) GetVersionedHostname() *gomock.Call {
+// GetVersionedOrigin indicates an expected call of GetVersionedOrigin.
+func (mr *MockAPIMockRecorder) GetVersionedOrigin() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedHostname", reflect.TypeOf((*MockAPI)(nil).GetVersionedHostname))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersionedOrigin", reflect.TypeOf((*MockAPI)(nil).GetVersionedOrigin))
 }
 
 // IsAdmin mocks base method.
