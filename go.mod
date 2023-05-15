@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v1.10.0
 	cloud.google.com/go/datastore v1.11.0
 	cloud.google.com/go/logging v1.7.0
-	cloud.google.com/go/secretmanager v1.10.0
+	cloud.google.com/go/secretmanager v1.10.1
 	cloud.google.com/go/storage v1.30.1
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
@@ -72,7 +72,7 @@ require (
 	github.com/taskcluster/slugid-go v1.1.0 // indirect
 	github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
