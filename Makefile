@@ -25,12 +25,13 @@ VERBOSE := -v
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
+GOLANGCI_LINT_VERSION := v1.52.2
 
 build: go_build
 
 test: go_test python_test
 
-lint: eslint go_lint # TODO: Replace go_lint with golangci_lint
+lint: eslint go_lint golangci_lint # TODO: Replace go_lint with golangci_lint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
@@ -167,7 +168,7 @@ geckodriver: node-wct-local
 
 golangci-lint: curl gpg
 	if [ "$$(which golangci-lint)" == "" ]; then \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v1.52.2/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCI_LINT_VERSION}/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}; \
 	fi
 
 golint: git
