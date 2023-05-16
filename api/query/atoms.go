@@ -118,6 +118,11 @@ type AbstractExists struct {
 // each specific/individual run.
 func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
+	// When the nested query is a single query, e.g. And/Or, bind that query directly.
+	if len(e.Args) == 1 {
+		return e.Args[0].BindToRuns(runs...)
+	}
+
 	for i, arg := range e.Args {
 		var query ConcreteQuery
 		// Exists queries are split; one run must satisfy the whole tree.
