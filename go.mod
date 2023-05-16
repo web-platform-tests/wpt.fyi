@@ -3,10 +3,10 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.20
 
 require (
-	cloud.google.com/go/cloudtasks v1.10.0
+	cloud.google.com/go/cloudtasks v1.10.1
 	cloud.google.com/go/datastore v1.11.0
 	cloud.google.com/go/logging v1.7.0
-	cloud.google.com/go/secretmanager v1.10.0
+	cloud.google.com/go/secretmanager v1.10.1
 	cloud.google.com/go/storage v1.30.1
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
@@ -27,8 +27,8 @@ require (
 	github.com/taskcluster/taskcluster/v44 v44.23.4
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/oauth2 v0.7.0
-	google.golang.org/api v0.121.0
+	golang.org/x/oauth2 v0.8.0
+	google.golang.org/api v0.122.0
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 	google.golang.org/grpc v1.55.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -72,12 +72,12 @@ require (
 	github.com/taskcluster/slugid-go v1.1.0 // indirect
 	github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
