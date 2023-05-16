@@ -85,7 +85,7 @@ func (rs *resultsMap) Delete(ru RunID) error {
 	return nil
 }
 
-//nolint:ireturn // TODO: Fix ireturn lint error
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (rs *resultsMap) ForRun(ru RunID) RunResults {
 	v, ok := rs.byRunTest.Load(ru)
 	if !ok {

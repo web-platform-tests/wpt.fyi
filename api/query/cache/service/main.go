@@ -179,6 +179,6 @@ func main() {
 	http.HandleFunc("/_ah/readiness_check", readinessCheckHandler)
 	http.HandleFunc("/api/search/cache", shared.HandleWithLogging(searchHandler))
 	logrus.Infof("Listening on port %d", *port)
-	// nolint:gosec // TODO: Fix gosec lint error.
+	// nolint:gosec // TODO: Fix gosec lint error (G114).
 	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }

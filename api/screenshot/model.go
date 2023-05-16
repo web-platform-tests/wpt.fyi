@@ -71,7 +71,7 @@ func (s *Screenshot) SetHashFromFile(f io.Reader, hashMethod string) error {
 	if hashMethod != "sha1" {
 		return ErrUnsupportedHashMethod
 	}
-	// nolint:gosec // TODO: Fix gosec lint error
+	// nolint:gosec // TODO: Fix gosec lint error (G401)
 	h := sha1.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return err

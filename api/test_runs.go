@@ -13,7 +13,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// nolint:gosec // TODO: Fix gosec lint error
+// nolint:gosec // TODO: Fix gosec lint error (G101)
 const nextPageTokenHeaderName = "wpt-next-page"
 const paginationTokenFeatureFlagName = "paginationTokens"
 
