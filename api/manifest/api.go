@@ -90,6 +90,13 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (
 			shared.WPTRepoName,
 			releaseTag,
 		)
+		if err != nil {
+			// TODO: golangci-lint discovered that this error was being shadowed.
+			// Review if we should actually return the error. In the meantime, ignore it.
+			log := shared.GetLogger(aeAPI.Context())
+			log.Warningf("GetReleaseByTag failed with error %w. Will ignore", err)
+			err = nil
+		}
 	}
 
 	if err != nil {
