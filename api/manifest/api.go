@@ -30,7 +30,6 @@ type API interface {
 
 type apiImpl struct {
 	ctx context.Context // nolint:containedctx // TODO: Fix containedctx lint error
-
 }
 
 // NewAPI returns an API implementation for the given context.

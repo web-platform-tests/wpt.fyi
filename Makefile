@@ -25,7 +25,9 @@ VERBOSE := -v
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
-GOLANGCI_LINT_VERSION := v1.52.2
+# Golangci version should be updated periodically.
+# See: https://golangci-lint.run/usage/install/#other-ci
+GOLANGCI_LINT_VERSION := v1.52.2 
 
 build: go_build
 
@@ -168,7 +170,7 @@ geckodriver: node-wct-local
 
 golangci-lint: curl gpg
 	if [ "$$(which golangci-lint)" == "" ]; then \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCI_LINT_VERSION}/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCI_LINT_VERSION}/install.sh | sh -s -- -b $$(go env GOPATH)/bin; \
 	fi
 
 golint: git

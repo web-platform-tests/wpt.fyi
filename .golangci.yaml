@@ -1,9 +1,10 @@
 linters:
-  # Disable all linters.
-  disable-all: true
-  # List of linters enabled by default
-  # https://golangci-lint.run/usage/linters
-  enable: # Enabling specified linters
+  # Disable all linters enabled by default.
+  # See: https://golangci-lint.run/usage/linters
+  disable-all: true  
+  # Enabling specified linters.
+  # See: https://github.com/web-platform-tests/wpt.fyi/issues/2983
+  enable: 
     # TODO(LeonardYam): Enable the linters below and fix the errors.
     # - staticcheck
     # - errcheck
@@ -44,7 +45,6 @@ linters:
     - revive
     - unparam
     - usestdlibvars
-  fast: true
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
