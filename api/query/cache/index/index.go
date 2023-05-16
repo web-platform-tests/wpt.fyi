@@ -300,7 +300,7 @@ func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, 
 	// Attempt to fetch-and-unmarshal run from run.RawResultsURL.
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, run.RawResultsURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GET request: %w", err)
+		return nil, fmt.Errorf("failed to create GET request for Results URL: %w", err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
