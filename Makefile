@@ -27,7 +27,7 @@ GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 # Golangci version should be updated periodically.
 # See: https://golangci-lint.run/usage/install/#other-ci
-GOLANGCI_LINT_VERSION := v1.52.2 
+GOLANGCI_LINT_VERSION := v1.52.2
 
 build: go_build
 
