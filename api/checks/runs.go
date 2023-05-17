@@ -58,7 +58,7 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 
 		detailsURLStr := state.DetailsURL.String()
 		title := state.Title()
-		// nolint:exhaustruct // Not required since missing fields have omitempty.
+		// nolint:exhaustruct // WONTFIX: Name, HeadSHA only required.
 		opts := github.CreateCheckRunOptions{
 			Name:       state.Name(),
 			HeadSHA:    state.HeadSHA,
@@ -145,7 +145,7 @@ func updateExistingCheckRunSummary(
 
 	detailsURLStr := state.DetailsURL.String()
 	title := state.Title()
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
+	// nolint:exhaustruct // WONTFIX: Name, HeadSHA only required.
 	opts := github.UpdateCheckRunOptions{
 		Name:       state.Name(),
 		DetailsURL: &detailsURLStr,

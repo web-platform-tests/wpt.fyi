@@ -40,7 +40,7 @@ func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client,
 		return nil, err
 	}
 	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: ss}, // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
+		&oauth2.Token{AccessToken: ss}, // nolint:exhaustruct // WONTFIX: AccessToken only required.
 	)
 	oauthClient := oauth2.NewClient(ctx, tokenSource)
 
@@ -59,6 +59,7 @@ func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client,
 	}
 	if c := resp.StatusCode; c < 200 || c > 299 {
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
+		// Investigate which error code should be returned here.
 		return nil, &oauth2.RetrieveError{
 			Response: resp,
 			Body:     body,
@@ -72,7 +73,7 @@ func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client,
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %w", err)
 	}
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
+	// nolint:exhaustruct // WONTFIX: AccessToken only required.
 	token := &oauth2.Token{
 		AccessToken: tokenResponse.AccessToken,
 		Expiry:      tokenResponse.ExpiresAt,

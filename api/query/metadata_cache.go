@@ -21,7 +21,6 @@ func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte,
 		return nil, MetadataMapCached, nil
 	}
 
-	// nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	var netClient = &http.Client{
 		Timeout: time.Second * 5,
 	}

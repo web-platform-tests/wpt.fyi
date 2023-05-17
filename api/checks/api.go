@@ -104,7 +104,7 @@ func (s checksAPIImpl) IgnoreFailure(
 	output.Summary = &summary
 
 	success := "success"
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
+	// nolint:exhaustruct // WONTFIX: Name only required.
 	opts := github.UpdateCheckRunOptions{
 		Name:        run.GetName(),
 		Output:      output,
@@ -142,7 +142,7 @@ func (s checksAPIImpl) CancelRun(
 	}
 
 	cancelled := "cancelled"
-	// nolint:exhaustruct // Not required since missing fields have omitempty.
+	// nolint:exhaustruct // WONTFIX: Name only required.
 	opts := github.UpdateCheckRunOptions{
 		Name:        run.GetName(),
 		Output:      output,
@@ -169,7 +169,7 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		return false, err
 	}
 
-	// nolint:exhaustruct // Not required since missing field has omitempty.
+	// nolint:exhaustruct // WONTFIX: HeadSHA only required.
 	opts := github.CreateCheckSuiteOptions{
 		HeadSHA: sha,
 	}

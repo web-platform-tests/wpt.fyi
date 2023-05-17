@@ -97,7 +97,6 @@ func wait(start time.Time, total time.Duration) {
 func StartMetadataPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Starting Metadata polling service.")
 	toBeRemovedPRs := make([]string, 0)
-	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	netClient := &http.Client{Timeout: time.Second * 5}
 	cacheSet := shared.NewRedisSet()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
