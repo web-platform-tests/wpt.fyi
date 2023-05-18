@@ -18,7 +18,7 @@ const metadataCacheKey = "WPT-METADATA"
 const metadataCacheExpiry = time.Minute * 10
 
 type webappMetadataFetcher struct {
-	ctx          context.Context
+	ctx          context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 	httpClient   *http.Client
 	gitHubClient *github.Client
 	forceUpdate  bool
@@ -38,12 +38,14 @@ func (f webappMetadataFetcher) Fetch() (sha *string, res map[string][]byte, err 
 	sha, err = shared.GetWPTMetadataMasterSHA(f.ctx, f.gitHubClient)
 	if err != nil {
 		log.Errorf("Error getting HEAD SHA of wpt-metadata: %v", err)
+
 		return nil, nil, err
 	}
 
 	res, err = shared.GetWPTMetadataArchive(f.httpClient, sha)
 	if err != nil {
 		log.Errorf("Error getting archive of wpt-metadata: %v", err)
+
 		return nil, nil, err
 	}
 
@@ -63,7 +65,7 @@ func getMetadataFromRedis(cache shared.ObjectCache) (sha *string, res map[string
 	}
 
 	// Caches hit; update Metadata.
-	var keys []string
+	keys := make([]string, 0, len(metadataSHAMap))
 	for key := range metadataSHAMap {
 		keys = append(keys, key)
 	}
@@ -73,6 +75,7 @@ func getMetadataFromRedis(cache shared.ObjectCache) (sha *string, res map[string
 	}
 
 	sha = &keys[0]
+
 	return sha, metadataSHAMap[*sha], nil
 }
 

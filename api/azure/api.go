@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -66,10 +67,11 @@ type API interface {
 }
 
 type apiImpl struct {
-	ctx context.Context
+	ctx context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 }
 
-// NewAPI returns an implementation of azure API
+// NewAPI returns an implementation of azure API.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewAPI(ctx context.Context) API {
 	return apiImpl{
 		ctx: ctx,
@@ -93,21 +95,26 @@ func (a apiImpl) GetAzureArtifactsURL(owner, repo string, buildID int64) string 
 func (a apiImpl) GetBuild(owner, repo string, buildID int64) (*Build, error) {
 	buildURL := a.GetBuildURL(owner, repo, buildID)
 	client := shared.NewAppEngineAPI(a.ctx).GetHTTPClient()
-	resp, err := client.Get(buildURL)
+	req, err := http.NewRequestWithContext(a.ctx, http.MethodGet, buildURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to handle fetch build: %v", err)
+		return nil, fmt.Errorf("failed to create GET request: %w", err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to handle fetch build: %w", err)
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read request response: %v", err)
+		return nil, fmt.Errorf("failed to read request response: %w", err)
 	}
 	var build Build
 	if err := json.Unmarshal(data, &build); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal request response: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal request response: %w", err)
 	}
 	log := shared.GetLogger(a.ctx)
 	log.Debugf("Source branch: %s", build.SourceBranch)
 	log.Debugf("Trigger PR branch: %s", build.TriggerInfo.SourceBranch)
+
 	return &build, nil
 }

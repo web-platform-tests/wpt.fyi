@@ -31,7 +31,7 @@ type Results interface {
 	// nil if the input RunID is unknown to this index.
 	ForRun(RunID) RunResults
 
-	// TODO: Add filter binding function:
+	// nolint:godox // TODO: Add filter binding function:
 	// ResultFilter(ru RunID, re ResultID) UnboundFilter
 }
 
@@ -54,11 +54,13 @@ type runResultsMap struct {
 }
 
 // NewResults generates a new empty results index.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewResults() Results {
 	return &resultsMap{byRunTest: sync.Map{}}
 }
 
 // NewRunResults generates a new empty run results index.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewRunResults() RunResults {
 	return &runResultsMap{make(map[TestID]ResultID)}
 }
@@ -79,15 +81,18 @@ func (rs *resultsMap) Delete(ru RunID) error {
 	}
 
 	rs.byRunTest.Delete(ru)
+
 	return nil
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (rs *resultsMap) ForRun(ru RunID) RunResults {
 	v, ok := rs.byRunTest.Load(ru)
 	if !ok {
 		return nil
 	}
 	rrm := v.(*runResultsMap)
+
 	return rrm
 }
 
@@ -100,5 +105,6 @@ func (rrs *runResultsMap) GetResult(t TestID) ResultID {
 	if !ok {
 		return ResultID(shared.TestStatusUnknown)
 	}
+
 	return re
 }

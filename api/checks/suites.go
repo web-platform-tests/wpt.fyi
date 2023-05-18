@@ -10,7 +10,15 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, installationID int64, prNumbers ...int) (*shared.CheckSuite, error) {
+func getOrCreateCheckSuite(
+	ctx context.Context,
+	sha,
+	owner,
+	repo string,
+	appID,
+	installationID int64,
+	prNumbers ...int,
+) (*shared.CheckSuite, error) {
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	query := ds.NewQuery("CheckSuite").
 		Filter("SHA =", sha).
@@ -24,6 +32,7 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, 
 		return nil, err
 	} else if len(keys) > 0 {
 		err := ds.Get(keys[0], &suite)
+
 		return &suite, err
 	}
 
@@ -38,5 +47,6 @@ func getOrCreateCheckSuite(ctx context.Context, sha, owner, repo string, appID, 
 	if err != nil {
 		log.Debugf("Created CheckSuite entity for %s/%s @ %s", owner, repo, sha)
 	}
+
 	return &suite, err
 }

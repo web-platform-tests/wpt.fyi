@@ -16,7 +16,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-type searchErr struct {
+type searchError struct {
 	// Detail is the internal error that should not be exposed to the end-user.
 	Detail error
 	// Message is the user-facing error message.
@@ -25,18 +25,20 @@ type searchErr struct {
 	Code int
 }
 
-func (e searchErr) Error() string {
+func (e searchError) Error() string {
 	if e.Detail == nil {
 		return e.Message
 	}
+
 	return fmt.Sprintf("%s: %v", e.Message, e.Detail)
 }
 
-func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
+// nolint:gocognit // TODO: Fix gocognit lint error
+func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 	ctx := r.Context()
 	log := shared.GetLogger(ctx)
-	if r.Method != "POST" {
-		return &searchErr{
+	if r.Method != http.MethodPost {
+		return &searchError{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 			Message: "Invalid HTTP method " + r.Method,
 			Code:    http.StatusBadRequest,
 		}
@@ -44,7 +46,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 
 	reqData, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to read request body",
 			Code:    http.StatusInternalServerError,
@@ -52,7 +54,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	}
 	log.Debugf(string(reqData))
 	if err := r.Body.Close(); err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to close request body",
 			Code:    http.StatusInternalServerError,
@@ -61,7 +63,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 
 	var rq query.RunQuery
 	if err := json.Unmarshal(reqData, &rq); err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to unmarshal request body",
 			Code:    http.StatusBadRequest,
@@ -69,7 +71,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	}
 
 	if len(rq.RunIDs) > *maxRunsPerRequest {
-		return &searchErr{
+		return &searchError{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 			Message: maxRunsPerRequestMsg,
 			Code:    http.StatusBadRequest,
 		}
@@ -88,7 +90,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	// are currently resident in `idx`.
 	store, err := getDatastore(ctx)
 	if err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to open Datastore",
 			Code:    http.StatusInternalServerError,
@@ -105,7 +107,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 		if err != nil {
 			runPtr := new(shared.TestRun)
 			if err := store.Get(store.NewIDKey("TestRun", int64(id)), runPtr); err != nil {
-				return &searchErr{
+				return &searchError{
 					Detail:  err,
 					Message: fmt.Sprintf("Unknown test run ID %d", id),
 					Code:    http.StatusBadRequest,
@@ -124,11 +126,11 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	// Return to client `http.StatusUnprocessableEntity` immediately if any runs
 	// are missing.
 	if len(runs) == 0 && len(missing) > 0 {
-		data, err := json.Marshal(shared.SearchResponse{
+		data, err := json.Marshal(shared.SearchResponse{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 			IgnoredRuns: missing,
 		})
 		if err != nil {
-			return &searchErr{
+			return &searchError{
 				Detail:  err,
 				Message: "Failed to marshal results to JSON",
 				Code:    http.StatusInternalServerError,
@@ -136,6 +138,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 		}
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Write(data)
+
 		return nil
 	}
 
@@ -151,7 +154,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	diff, _ := shared.ParseBooleanParam(urlQuery, "diff")
 	diffFilter, _, err := shared.ParseDiffFilterParams(urlQuery)
 	if err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to parse diff filter",
 			Code:    http.StatusBadRequest,
@@ -166,7 +169,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	}
 	plan, err := idx.Bind(runs, q)
 	if err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to create query plan",
 			Code:    http.StatusInternalServerError,
@@ -176,7 +179,8 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	results := plan.Execute(runs, opts)
 	res, ok := results.([]shared.SearchResult)
 	if !ok {
-		return &searchErr{
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
+		return &searchError{
 			Message: "Search index returned bad results",
 			Code:    http.StatusInternalServerError,
 		}
@@ -195,6 +199,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	// - Add missing runs to IgnoredRuns;
 	// - (If no other error occurs) return `http.StatusUnprocessableEntity` to
 	//   client.
+	// nolint:exhaustruct // Not required since missing fields have omitempty.
 	resp := shared.SearchResponse{
 		Runs:    runs,
 		Results: res,
@@ -205,7 +210,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 
 	respData, err := json.Marshal(resp)
 	if err != nil {
-		return &searchErr{
+		return &searchError{
 			Detail:  err,
 			Message: "Failed to marshal results to JSON",
 			Code:    http.StatusInternalServerError,
@@ -216,5 +221,6 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchErr {
 	}
 
 	w.Write(respData)
+
 	return nil
 }

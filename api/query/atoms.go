@@ -45,15 +45,16 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var browsers = shared.GetDefaultBrowserNames()
 
 // AbstractQuery is an intermetidate representation of a test results query that
-//  has not been bound to specific shared.TestRun specs for processing.
+// has not been bound to specific shared.TestRun specs for processing.
 type AbstractQuery interface {
 	BindToRuns(runs ...shared.TestRun) ConcreteQuery
 }
 
-// RunQuery is the internal representation of a query recieved from an HTTP
+// RunQuery is the internal representation of a query received from an HTTP
 // client, including the IDs of the test runs to query, and the structured query
 // to run.
 type RunQuery struct {
@@ -65,7 +66,8 @@ type RunQuery struct {
 type True struct{}
 
 // BindToRuns for True is a no-op; it is independent of test runs.
-func (t True) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (t True) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return t
 }
 
@@ -73,7 +75,8 @@ func (t True) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 type False struct{}
 
 // BindToRuns for False is a no-op; it is independent of test runs.
-func (f False) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (f False) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return f
 }
 
@@ -83,7 +86,8 @@ type TestNamePattern struct {
 }
 
 // BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
-func (tnp TestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (tnp TestNamePattern) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
@@ -93,7 +97,8 @@ type SubtestNamePattern struct {
 }
 
 // BindToRuns for SubtestNamePattern is a no-op; it is independent of test runs.
-func (tnp SubtestNamePattern) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (tnp SubtestNamePattern) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return tnp
 }
 
@@ -104,7 +109,8 @@ type TestPath struct {
 }
 
 // BindToRuns for TestNamePattern is a no-op; it is independent of test runs.
-func (tp TestPath) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (tp TestPath) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return tp
 }
 
@@ -116,6 +122,7 @@ type AbstractExists struct {
 
 // BindToRuns binds each abstract query to an or-combo of that query against
 // each specific/individual run.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (e AbstractExists) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
@@ -145,6 +152,7 @@ type AbstractAll struct {
 
 // BindToRuns binds each abstract query to an and-combo of that query against
 // each specific/individual run.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (e AbstractAll) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	queries := make([]ConcreteQuery, len(e.Args))
 	for i, arg := range e.Args {
@@ -172,6 +180,7 @@ type AbstractNone struct {
 }
 
 // BindToRuns binds to a not-exists for the same query(s).
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (e AbstractNone) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Not{
 		AbstractExists{
@@ -189,16 +198,18 @@ type AbstractSequential struct {
 
 // BindToRuns binds each sequential query to an and-combo of those queries against
 // specific sequential runs, for each combination of sequential runs.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (e AbstractSequential) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	numSeqQueries := len(e.Args)
 	byRuns := []ConcreteQuery{}
 	for i := 0; i+numSeqQueries-1 < len(runs); i++ {
-		all := And{}
+		all := And{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		for j, arg := range e.Args {
 			all.Args = append(all.Args, arg.BindToRuns(runs[i+j]))
 		}
 		byRuns = append(byRuns, all)
 	}
+
 	return Or{
 		Args: byRuns,
 	}
@@ -213,11 +224,13 @@ type AbstractCount struct {
 
 // BindToRuns binds each count query to all of the runs, so that it can count the
 // number of runs that match the criteria.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	byRun := []ConcreteQuery{}
 	for _, run := range runs {
 		byRun = append(byRun, c.Where.BindToRuns(run))
 	}
+
 	return Count{
 		Count: c.Count,
 		Args:  byRun,
@@ -232,8 +245,10 @@ type AbstractMoreThan struct {
 
 // BindToRuns binds each count query to all of the runs, so that it can count the
 // number of runs that match the criteria.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (m AbstractMoreThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	c := m.AbstractCount.BindToRuns(runs...).(Count)
+
 	return MoreThan{c}
 }
 
@@ -245,8 +260,10 @@ type AbstractLessThan struct {
 
 // BindToRuns binds each count query to all of the runs, so that it can count the
 // number of runs that match the criteria.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (l AbstractLessThan) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	c := l.AbstractCount.BindToRuns(runs...).(Count)
+
 	return LessThan{c}
 }
 
@@ -260,6 +277,7 @@ type AbstractLink struct {
 // BindToRuns for AbstractLink fetches metadata for either test-level issues or
 // issues associated with the given runs. It does not filter the metadata by
 // the pattern yet.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	if l.metadataFetcher == nil {
 		l.metadataFetcher = searchcacheMetadataFetcher{}
@@ -275,7 +293,7 @@ func (l AbstractLink) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 }
 
 // AbstractTriaged represents the root of a triaged query that matches
-// tests where the test of a specific browser has been triaged through Metadata
+// tests where the test of a specific browser has been triaged through Metadata.
 type AbstractTriaged struct {
 	Product         *shared.ProductSpec
 	metadataFetcher shared.MetadataFetcher
@@ -283,6 +301,7 @@ type AbstractTriaged struct {
 
 // BindToRuns for AbstractTriaged binds each run matching the AbstractTriaged
 // ProductSpec to a triaged object.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (t AbstractTriaged) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	cq := make([]ConcreteQuery, 0)
 
@@ -324,14 +343,20 @@ type AbstractTestLabel struct {
 }
 
 // BindToRuns for AbstractTestLabel fetches test-level metadata; it is independent of test runs.
-func (t AbstractTestLabel) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (t AbstractTestLabel) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	if t.metadataFetcher == nil {
 		t.metadataFetcher = searchcacheMetadataFetcher{}
 	}
 
 	includeTestLevel := true
 	// Passing []shared.TestRun{} means that we want test-level issues.
-	metadata, _ := shared.GetMetadataResponse([]shared.TestRun{}, includeTestLevel, logrus.StandardLogger(), t.metadataFetcher)
+	metadata, _ := shared.GetMetadataResponse(
+		[]shared.TestRun{},
+		includeTestLevel,
+		logrus.StandardLogger(),
+		t.metadataFetcher,
+	)
 	metadataMap := shared.PrepareTestLabelFilter(metadata)
 
 	return TestLabel{
@@ -341,7 +366,7 @@ func (t AbstractTestLabel) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 }
 
 // MetadataQuality represents the root of an "is" query, which asserts known
-// metadata qualities to the results
+// metadata qualities to the results.
 type MetadataQuality int
 
 const (
@@ -359,7 +384,8 @@ const (
 )
 
 // BindToRuns for MetadataQuality is a no-op; it is independent of test runs.
-func (q MetadataQuality) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (q MetadataQuality) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	return q
 }
 
@@ -381,6 +407,7 @@ type TestStatusNeq struct {
 
 // BindToRuns for TestStatusEq expands to a disjunction of RunTestStatusEq
 // values.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (tse TestStatusEq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
@@ -399,11 +426,13 @@ func (tse TestStatusEq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	for i := range ids {
 		q.Args[i] = RunTestStatusEq{ids[i], tse.Status}
 	}
+
 	return q
 }
 
 // BindToRuns for TestStatusNeq expands to a disjunction of RunTestStatusNeq
 // values.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (tsn TestStatusNeq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	ids := make([]int64, 0, len(runs))
 	for _, run := range runs {
@@ -422,6 +451,7 @@ func (tsn TestStatusNeq) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	for i := range ids {
 		q.Args[i] = RunTestStatusNeq{ids[i], tsn.Status}
 	}
+
 	return q
 }
 
@@ -431,6 +461,7 @@ type AbstractNot struct {
 }
 
 // BindToRuns for AbstractNot produces a Not with a bound argument.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (n AbstractNot) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Not{n.Arg.BindToRuns(runs...)}
 }
@@ -441,6 +472,7 @@ type AbstractOr struct {
 }
 
 // BindToRuns for AbstractOr produces an Or with bound arguments.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(o.Args))
 	for i := range o.Args {
@@ -459,6 +491,7 @@ func (o AbstractOr) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	if len(args) == 1 {
 		return args[0]
 	}
+
 	return Or{
 		Args: args,
 	}
@@ -470,6 +503,7 @@ type AbstractAnd struct {
 }
 
 // BindToRuns for AbstractAnd produces an And with bound arguments.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (a AbstractAnd) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	args := make([]ConcreteQuery, 0, len(a.Args))
 	for i := range a.Args {
@@ -488,6 +522,7 @@ func (a AbstractAnd) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	if len(args) == 1 {
 		return args[0]
 	}
+
 	return And{
 		Args: args,
 	}
@@ -517,6 +552,7 @@ func (rq *RunQuery) UnmarshalJSON(b []byte) error {
 	} else {
 		rq.AbstractQuery = True{}
 	}
+
 	return nil
 }
 
@@ -537,6 +573,7 @@ func (tnp *TestNamePattern) UnmarshalJSON(b []byte) error {
 	}
 
 	tnp.Pattern = pattern
+
 	return nil
 }
 
@@ -555,8 +592,8 @@ func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(*subtestMsg, &subtest); err != nil {
 		return errors.New(`Subtest name property "subtest" is not a string`)
 	}
-
 	tnp.Subtest = subtest
+
 	return nil
 }
 
@@ -565,6 +602,7 @@ func (tnp *SubtestNamePattern) UnmarshalJSON(b []byte) error {
 func (tp *TestPath) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
 	if err := json.Unmarshal(b, &data); err != nil {
+
 		return err
 	}
 	pathMsg, ok := data["path"]
@@ -577,6 +615,7 @@ func (tp *TestPath) UnmarshalJSON(b []byte) error {
 	}
 
 	tp.Path = path
+
 	return nil
 }
 
@@ -616,6 +655,7 @@ func (tse *TestStatusEq) UnmarshalJSON(b []byte) error {
 
 	tse.Product = product
 	tse.Status = status
+
 	return nil
 }
 
@@ -657,6 +697,7 @@ func (tsn *TestStatusNeq) UnmarshalJSON(b []byte) error {
 
 	tsn.Product = product
 	tsn.Status = status
+
 	return nil
 }
 
@@ -675,6 +716,7 @@ func (n *AbstractNot) UnmarshalJSON(b []byte) error {
 
 	q, err := unmarshalQ(data.Not)
 	n.Arg = q
+
 	return err
 }
 
@@ -700,6 +742,7 @@ func (o *AbstractOr) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	o.Args = qs
+
 	return nil
 }
 
@@ -725,6 +768,7 @@ func (a *AbstractAnd) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	a.Args = qs
+
 	return nil
 }
 
@@ -750,6 +794,7 @@ func (e *AbstractExists) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	e.Args = qs
+
 	return nil
 }
 
@@ -775,6 +820,7 @@ func (e *AbstractAll) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	e.Args = qs
+
 	return nil
 }
 
@@ -800,6 +846,7 @@ func (e *AbstractNone) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	e.Args = qs
+
 	return nil
 }
 
@@ -825,6 +872,7 @@ func (e *AbstractSequential) UnmarshalJSON(b []byte) error {
 		qs = append(qs, q)
 	}
 	e.Args = qs
+
 	return nil
 }
 
@@ -852,6 +900,7 @@ func (c *AbstractCount) UnmarshalJSON(b []byte) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -880,6 +929,7 @@ func (l *AbstractLessThan) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -907,6 +957,7 @@ func (m *AbstractMoreThan) UnmarshalJSON(b []byte) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -927,6 +978,7 @@ func (l *AbstractLink) UnmarshalJSON(b []byte) error {
 	}
 
 	l.Pattern = pattern
+
 	return nil
 }
 
@@ -947,6 +999,7 @@ func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
 	}
 
 	t.Label = label
+
 	return nil
 }
 
@@ -978,6 +1031,7 @@ func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
 	}
 
 	t.Product = product
+
 	return nil
 }
 
@@ -998,6 +1052,7 @@ func (q *MetadataQuality) UnmarshalJSON(b []byte) (err error) {
 	}
 
 	*q, err = MetadataQualityFromString(quality)
+
 	return err
 }
 
@@ -1011,9 +1066,11 @@ func MetadataQualityFromString(quality string) (MetadataQuality, error) {
 	case "optional":
 		return MetadataQualityOptional, nil
 	}
+
 	return MetadataQualityUnknown, fmt.Errorf(`Unknown "is" quality "%s"`, quality)
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func unmarshalQ(b []byte) (AbstractQuery, error) {
 	{
 		var tnp TestNamePattern
@@ -1129,5 +1186,8 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 			return t, nil
 		}
 	}
-	return nil, errors.New(`Failed to parse query fragment as any of the exisiting search atoms in wpt.fyi/api/query/README.md`)
+	const docsFilePath = "wpt.fyi/api/query/README.md"
+	errorMsg := fmt.Sprintf("Failed to parse query fragment as any of the existing search atoms in %s", docsFilePath)
+
+	return nil, errors.New(errorMsg)
 }

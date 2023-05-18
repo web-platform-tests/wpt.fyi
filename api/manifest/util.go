@@ -24,5 +24,6 @@ func Filter(body []byte, paths []string) (result []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return body, nil
 }

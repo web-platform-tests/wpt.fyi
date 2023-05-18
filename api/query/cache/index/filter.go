@@ -146,12 +146,12 @@ type index struct {
 func (i index) idx() index { return i }
 
 // Filter always returns true for true.
-func (True) Filter(t TestID) bool {
+func (True) Filter(_ TestID) bool {
 	return true
 }
 
 // Filter always returns false for false.
-func (False) Filter(t TestID) bool {
+func (False) Filter(_ TestID) bool {
 	return false
 }
 
@@ -161,6 +161,7 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 	if err != nil {
 		return false
 	}
+
 	return strings.Contains(name, tnp.q.Pattern)
 }
 
@@ -170,6 +171,7 @@ func (tnp SubtestNamePattern) Filter(t TestID) bool {
 	if err != nil || subtest == nil {
 		return false
 	}
+
 	return strings.Contains(
 		strings.ToLower(*subtest),
 		strings.ToLower(tnp.q.Subtest),
@@ -182,6 +184,7 @@ func (tp TestPath) Filter(t TestID) bool {
 	if err != nil {
 		return false
 	}
+
 	return strings.HasPrefix(name, tp.q.Path)
 }
 
@@ -204,6 +207,7 @@ func (c Count) Filter(t TestID) bool {
 			matches++
 		}
 	}
+
 	return matches == c.count
 }
 
@@ -216,6 +220,7 @@ func (c LessThan) Filter(t TestID) bool {
 			matches++
 		}
 	}
+
 	return matches < c.count
 }
 
@@ -228,6 +233,7 @@ func (c MoreThan) Filter(t TestID) bool {
 			matches++
 		}
 	}
+
 	return matches > c.count
 }
 
@@ -241,7 +247,7 @@ func (l Link) Filter(t TestID) bool {
 	// WPT metadata can contain wildcards that match arbitrary
 	// subdirectories, so if we fail to lookup the map we keep stripping
 	// directories and try again.
-	// TODO: Verify whether this is too slow; if so, try building a trie
+	// nolint:godox // TODO: Verify whether this is too slow; if so, try building a trie
 	// from the wildcards only and match to that as a fallback.
 	urls, ok := l.metadata[name]
 	dir := filepath.Dir(name)
@@ -264,6 +270,7 @@ func (l Link) Filter(t TestID) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -277,7 +284,7 @@ func (tr Triaged) Filter(t TestID) bool {
 	// WPT metadata can contain wildcards that match arbitrary
 	// subdirectories, so if we fail to lookup the map we keep stripping
 	// directories and try again.
-	// TODO: Verify whether this is too slow; if so, try building a trie
+	// nolint:godox // TODO: Verify whether this is too slow; if so, try building a trie
 	// from the wildcards only and match to that as a fallback.
 	val, ok := tr.metadata[name]
 	dir := filepath.Dir(name)
@@ -341,6 +348,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		for _, result := range q.runResults {
 			set.Add(result.GetResult(t))
 		}
+
 		return set.Cardinality() > 1
 	case query.MetadataQualityTentative:
 		// is:tentative only returns rows from tests with .tentative.
@@ -350,18 +358,22 @@ func (q MetadataQuality) Filter(t TestID) bool {
 		if err != nil {
 			return false
 		}
+
 		return strings.Contains(name, ".tentative.")
 	case query.MetadataQualityOptional:
 		// is:optional only returns rows from tests with .optional.
 		// in their name. See
 		// https://web-platform-tests.org/writing-tests/file-names.html
-		// TODO(gh-1619): Handle the CSS meta flags; see
+		// nolint:godox // TODO(gh-1619): Handle the CSS meta flags; see
 		// https://web-platform-tests.org/writing-tests/css-metadata.html#requirement-flags
 		name, _, err := q.tests.GetName(t)
 		if err != nil {
 			return false
 		}
+
 		return strings.Contains(name, ".optional.")
+	case query.MetadataQualityUnknown:
+		return false
 	default:
 		return false
 	}
@@ -375,6 +387,7 @@ func (a And) Filter(t TestID) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -386,6 +399,7 @@ func (o Or) Filter(t TestID) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -394,6 +408,7 @@ func (n Not) Filter(t TestID) bool {
 	return !n.arg.Filter(t)
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	if q == nil {
 		return nil, errors.New("Nil ConcreteQuery provided")
@@ -418,18 +433,21 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return Count{idx, v.Count, fs}, nil
 	case query.LessThan:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
+
 		return LessThan{idx, v.Count.Count, fs}, nil
 	case query.MoreThan:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
+
 		return MoreThan{idx, v.Count.Count, fs}, nil
 	case query.Link:
 		return Link{idx, v.Pattern, v.Metadata}, nil
@@ -444,18 +462,21 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return And{idx, fs}, nil
 	case query.Or:
 		fs, err := filters(idx, v.Args)
 		if err != nil {
 			return nil, err
 		}
+
 		return Or{idx, fs}, nil
 	case query.Not:
 		f, err := newFilter(idx, v.Arg)
 		if err != nil {
 			return nil, err
 		}
+
 		return Not{idx, f}, nil
 	default:
 		return nil, fmt.Errorf("Unknown ConcreteQuery type %s", reflect.TypeOf(q))
@@ -490,7 +511,7 @@ func (fs ShardedFilter) Execute(runs []shared.TestRun, opts query.AggregationOpt
 	if len(errs) > 0 {
 		go func() {
 			for err := range errs {
-				// TODO: Should this use a context-based logger?
+				// nolint:godox // TODO: Should this use a context-based logger?
 				logrus.Errorf("Error executing filter query: %v: %v", fs, err)
 			}
 		}()
@@ -512,6 +533,7 @@ func syncRunFilter(rus []RunID, f filter, opts query.AggregationOpts, res chan [
 				errs <- err
 			}
 		}
+
 		return true
 	})
 	res <- agg.Done()
@@ -526,5 +548,6 @@ func filters(idx index, qs []query.ConcreteQuery) ([]filter, error) {
 			return nil, err
 		}
 	}
+
 	return fs, nil
 }

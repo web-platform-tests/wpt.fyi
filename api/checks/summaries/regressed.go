@@ -15,7 +15,7 @@ type BeforeAndAfter map[string]TestBeforeAndAfter
 
 // Add the given before/after counts to the totals.
 func (bna BeforeAndAfter) Add(p string, before, after shared.TestSummary) {
-	sum := TestBeforeAndAfter{}
+	sum := TestBeforeAndAfter{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 	if existing, ok := bna[p]; ok {
 		sum = existing
 	}
@@ -38,7 +38,7 @@ type TestBeforeAndAfter struct {
 	TotalAfter    int
 }
 
-// Regressed is the struct for regressed.md
+// Regressed is the struct for regressed.md.
 type Regressed struct {
 	CheckState
 	ResultsComparison

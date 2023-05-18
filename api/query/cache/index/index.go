@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// TODO(Hexcles): Extract type RunID to another package (shared) so that Index
+// nolint:godox // TODO(Hexcles): Extract type RunID to another package (shared) so that Index
 // can be mocked into a different package without cyclic imports.
 
 package index
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -177,11 +178,15 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 	if err := i.syncMarkInProgress(r); err != nil {
 		return err
 	}
-	defer i.syncClearInProgress(r)
+	defer func() {
+		if err := i.syncClearInProgress(r); err != nil {
+			logrus.Warningf("Sync clear error: %s", err.Error())
+		}
+	}()
 
 	// Delegate loader to construct complete run report.
 	report, err := i.loader.Load(r)
-	if err != nil && err != errEmptyReport {
+	if err != nil && !errors.Is(err, errEmptyReport) {
 		return err
 	}
 
@@ -219,6 +224,7 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 		for _, sub := range res.Subtests {
 			if _, ok := subs[sub.Name]; ok {
 				logrus.Warningf("Duplicate subtests with the same name: %s %s", res.Test, sub.Name)
+
 				continue
 			}
 			subs[sub.Name] = sub
@@ -244,7 +250,9 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 		}
 	}
 
-	i.syncStoreRun(r, shardData)
+	if err := i.syncStoreRun(r, shardData); err != nil {
+		logrus.Warningf("Sync store run error: %s", err.Error())
+	}
 
 	return nil
 }
@@ -253,6 +261,7 @@ func (i *shardedWPTIndex) EvictRuns(percent float64) (int, error) {
 	return i.syncEvictRuns(math.Max(0.0, math.Min(1.0, percent)))
 }
 
+// nolint:ireturn // TODO: Fix ireturn lint error
 func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (query.Plan, error) {
 	if len(runs) == 0 {
 		return nil, errNoRuns
@@ -277,6 +286,7 @@ func (i *shardedWPTIndex) Bind(runs []shared.TestRun, q query.ConcreteQuery) (qu
 		}
 		fs[j] = f
 	}
+
 	return fs, nil
 }
 
@@ -288,13 +298,19 @@ func (i *shardedWPTIndex) SetIngestChan(c chan bool) {
 // in test run metadata.
 func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, error) {
 	// Attempt to fetch-and-unmarshal run from run.RawResultsURL.
-	resp, err := http.Get(run.RawResultsURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, run.RawResultsURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GET request for Results URL: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(`Non-OK HTTP status code of %d from "%s" for run ID=%d`, resp.StatusCode, run.RawResultsURL, run.ID)
+		err = fmt.Errorf(`Non-OK HTTP status code of %d from "%s" for run ID=%d`, resp.StatusCode, run.RawResultsURL, run.ID)
+
+		return nil, err
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -308,10 +324,12 @@ func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, 
 	if len(report.Results) == 0 {
 		return &report, errEmptyReport
 	}
+
 	return &report, nil
 }
 
 // NewShardedWPTIndex creates a new empty Index for WPT test run results.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 	if numShards <= 0 {
 		return nil, errSomeShardsRequired
@@ -323,6 +341,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 		shards = append(shards, newWPTIndex(tests))
 	}
 
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	return &shardedWPTIndex{
 		runs:     make(map[RunID]shared.TestRun),
 		lru:      lru.NewLRU(),
@@ -335,6 +354,7 @@ func NewShardedWPTIndex(loader ReportLoader, numShards int) (Index, error) {
 
 // NewReportLoader constructs a loader that loads result reports over HTTP from
 // a shared.TestRun.RawResultsURL.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewReportLoader() ReportLoader {
 	return HTTPReportLoader{}
 }
@@ -364,6 +384,7 @@ func (i *shardedWPTIndex) syncGetRuns(ids []RunID) ([]shared.TestRun, error) {
 
 		runs[j] = run
 	}
+
 	return runs, nil
 }
 
@@ -424,6 +445,7 @@ func syncStoreRunOnShard(shard *wptIndex, id RunID, shardData map[TestID]testDat
 		shard.tests.Add(t, data.testName.name, data.testName.subName)
 		runResults.Add(data.ResultID, t)
 	}
+
 	return shard.results.Add(id, runResults)
 }
 
@@ -495,6 +517,7 @@ func syncMakeIndex(shard *wptIndex, ids []RunID) (index, error) {
 		}
 		runResults[id] = shard.results.ForRun(id)
 	}
+
 	return index{
 		tests:      tests,
 		runResults: runResults,

@@ -46,7 +46,8 @@ type checksAPIImpl struct {
 	queue string
 }
 
-// NewAPI returns a real implementation of the API
+// NewAPI returns a real implementation of the API.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewAPI(ctx context.Context) API {
 	return checksAPIImpl{
 		AppEngineAPI: shared.NewAppEngineAPI(ctx),
@@ -67,19 +68,26 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 	} else {
 		log.Infof("Added %s @ %s to checks processing queue", product.String(), sha[:7])
 	}
+
 	return err
 }
 
-// GetSuitesForSHA gets all existing check suites for the given Head SHA
+// GetSuitesForSHA gets all existing check suites for the given Head SHA.
 func (s checksAPIImpl) GetSuitesForSHA(sha string) ([]shared.CheckSuite, error) {
 	var suites []shared.CheckSuite
 	store := shared.NewAppEngineDatastore(s.Context(), false)
 	_, err := store.GetAll(store.NewQuery("CheckSuite").Filter("SHA =", sha), &suites)
+
 	return suites, err
 }
 
 // IgnoreFailure updates the given CheckRun's outcome to success, even if it failed.
-func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
+func (s checksAPIImpl) IgnoreFailure(
+	sender,
+	owner, repo string,
+	run *github.CheckRun,
+	installation *github.Installation,
+) error {
 	client, err := getGitHubClient(s.Context(), run.GetApp().GetID(), installation.GetID())
 	if err != nil {
 		return err
@@ -96,6 +104,7 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 	output.Summary = &summary
 
 	success := "success"
+	// nolint:exhaustruct // WONTFIX: Name only required.
 	opts := github.UpdateCheckRunOptions{
 		Name:        run.GetName(),
 		Output:      output,
@@ -106,11 +115,18 @@ func (s checksAPIImpl) IgnoreFailure(sender, owner, repo string, run *github.Che
 		},
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.Context(), owner, repo, run.GetID(), opts)
+
 	return err
 }
 
 // CancelRun updates the given CheckRun's outcome to cancelled, even if it failed.
-func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
+func (s checksAPIImpl) CancelRun(
+	sender,
+	owner,
+	repo string,
+	run *github.CheckRun,
+	installation *github.Installation,
+) error {
 	client, err := getGitHubClient(s.Context(), run.GetApp().GetID(), installation.GetID())
 	if err != nil {
 		return err
@@ -126,6 +142,7 @@ func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRu
 	}
 
 	cancelled := "cancelled"
+	// nolint:exhaustruct // WONTFIX: Name only required.
 	opts := github.UpdateCheckRunOptions{
 		Name:        run.GetName(),
 		Output:      output,
@@ -137,6 +154,7 @@ func (s checksAPIImpl) CancelRun(sender, owner, repo string, run *github.CheckRu
 		},
 	}
 	_, _, err = client.Checks.UpdateCheckRun(s.Context(), owner, repo, run.GetID(), opts)
+
 	return err
 }
 
@@ -151,6 +169,7 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		return false, err
 	}
 
+	// nolint:exhaustruct // WONTFIX: HeadSHA only required.
 	opts := github.CreateCheckSuiteOptions{
 		HeadSHA: sha,
 	}
@@ -159,8 +178,20 @@ func (s checksAPIImpl) CreateWPTCheckSuite(appID, installationID int64, sha stri
 		log.Errorf("Failed to create GitHub check suite: %s", err.Error())
 	} else if suite != nil {
 		log.Infof("check_suite %v created", suite.GetID())
-		getOrCreateCheckSuite(s.Context(), sha, shared.WPTRepoOwner, shared.WPTRepoName, appID, installationID, prNumbers...)
+		_, err = getOrCreateCheckSuite(
+			s.Context(),
+			sha,
+			shared.WPTRepoOwner,
+			shared.WPTRepoName,
+			appID,
+			installationID,
+			prNumbers...,
+		)
+		if err != nil {
+			log.Infof("Error while getting check suite: %s", err.Error())
+		}
 	}
+
 	return suite != nil, err
 }
 

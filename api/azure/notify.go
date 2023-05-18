@@ -20,6 +20,7 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if buildID, err = strconv.ParseInt(id, 0, 0); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid build id: %s", id), http.StatusBadRequest)
+
 		return
 	}
 
@@ -33,13 +34,14 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 		azureAPI,
 		shared.WPTRepoOwner,
 		shared.WPTRepoName,
-		"", // No sender info.
+		"",                      // No sender info.
 		r.FormValue("artifact"), // artifact=foo will only process foo.
 		buildID)
 
 	if err != nil {
 		log.Errorf("%v", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	if processed {
@@ -49,5 +51,6 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Notification of build artifacts was ignored")
 	}
+
 	return
 }

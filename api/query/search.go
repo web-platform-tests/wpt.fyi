@@ -50,17 +50,18 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
+
 		return
 	}
 
 	ctx := sh.api.Context()
 	mc := shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 48*time.Hour))
-	qh := queryHandler{
+	qh := queryHandler{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		store:      shared.NewAppEngineDatastore(ctx, true),
 		dataSource: shared.NewByteCachedStore(ctx, mc, shared.NewHTTPReadable(ctx)),
 	}
 	var delegate http.Handler
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		delegate = unstructuredSearchHandler{queryHandler: qh}
 	} else {
 		delegate = structuredSearchHandler{queryHandler: qh, api: sh.api}
@@ -83,6 +84,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	err = json.Unmarshal(data, &rq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -147,6 +149,7 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 				logger.Errorf("Error forwarding response payload from search cache: %v", err)
 			}
 		}
+
 		return
 	}
 
@@ -159,10 +162,10 @@ func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	unstructuredSearchHandler{queryHandler: sh.queryHandler}.ServeHTTP(w, r2)
 }
 
-func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.Request,
+func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.Request,
 	data []byte, logger shared.Logger) (*http.Response, error) {
 	hostname := sh.api.GetServiceHostname("searchcache")
-	// TODO(Issue #2941): This will not work when hostname is localhost (http scheme needed).
+	// nolint:godox // TODO(Issue #2941): This will not work when hostname is localhost (http scheme needed).
 	fwdURL, err := url.Parse(fmt.Sprintf("https://%s/api/search/cache", hostname))
 	if err != nil {
 		logger.Debugf("Error parsing hostname.")
@@ -172,9 +175,10 @@ func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.
 	logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
 	client := sh.api.GetHTTPClientWithTimeout(time.Second * 15)
-	req, err := http.NewRequest("POST", fwdURL.String(), bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, fwdURL.String(), bytes.NewBuffer(data))
 	if err != nil {
 		logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
+
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
@@ -182,6 +186,7 @@ func (sh structuredSearchHandler) useSearchcache(w http.ResponseWriter, r *http.
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Errorf("Error connecting to search API cache: %v", err)
+
 		return nil, err
 	}
 
@@ -211,11 +216,18 @@ func (sh unstructuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Write(data)
+	_, err = w.Write(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRun, summaries []summary) shared.SearchResponse {
-	resp := shared.SearchResponse{
+func prepareSearchResponse(
+	filters *shared.QueryFilter,
+	testRuns []shared.TestRun,
+	summaries []summary,
+) shared.SearchResponse {
+	resp := shared.SearchResponse{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		Runs: testRuns,
 	}
 	q := canonicalizeStr(filters.Q)
@@ -228,7 +240,7 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 				continue
 			}
 			if _, ok := resMap[filename]; !ok {
-				resMap[filename] = shared.SearchResult{
+				resMap[filename] = shared.SearchResult{ // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 					Test:         filename,
 					LegacyStatus: make([]shared.LegacySearchRunResult, len(testRuns)),
 				}
@@ -251,8 +263,9 @@ func prepareSearchResponse(filters *shared.QueryFilter, testRuns []shared.TestRu
 	return resp
 }
 
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var cacheKey = func(r *http.Request) interface{} {
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		return shared.URLAsCacheKey(r)
 	}
 
@@ -271,11 +284,13 @@ var cacheKey = func(r *http.Request) interface{} {
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }
 
-// TODO: Sometimes an empty result set is being cached for a query over
+// nolint:godox // TODO: Sometimes an empty result set is being cached for a query over
 // legitimate runs. For now, prevent serving empty result sets from cache.
 // Eventually, a more durable fix to
 // https://github.com/web-platform-tests/wpt.fyi/issues/759 should replace this
 // approximation.
+
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payload []byte) bool {
 	if !shared.CacheStatusOK(ctx, statusCode, payload) {
 		return false
@@ -285,11 +300,13 @@ var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payloa
 	err := json.Unmarshal(payload, &resp)
 	if err != nil {
 		shared.GetLogger(ctx).Errorf("Malformed search response")
+
 		return false
 	}
 
 	if len(resp.Results) == 0 {
 		shared.GetLogger(ctx).Errorf("Query yielded no results; not caching")
+
 		return false
 	}
 

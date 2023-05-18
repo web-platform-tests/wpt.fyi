@@ -25,12 +25,15 @@ VERBOSE := -v
 
 GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
+# Golangci version should be updated periodically.
+# See: https://golangci-lint.run/usage/install/#other-ci
+GOLANGCI_LINT_VERSION := v1.52.2
 
 build: go_build
 
 test: go_test python_test
 
-lint: go_lint eslint
+lint: eslint go_lint golangci_lint # TODO: Replace go_lint with golangci_lint
 
 prepush: VERBOSE := $() # Empty out the verbose flag.
 prepush: go_build go_test lint
@@ -69,6 +72,10 @@ go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./webapp/...
 	golint -set_exit_status ./webdriver/...
 
+# TODO: run on /shared/, /util/, /webapp/, /webdriver/
+golangci_lint: golangci-lint
+	golangci-lint run ./api/...
+	
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
@@ -160,6 +167,11 @@ firefox: bzip2 wget
 	fi
 
 geckodriver: node-wct-local
+
+golangci-lint: curl gpg
+	if [ "$$(which golangci-lint)" == "" ]; then \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCI_LINT_VERSION}/install.sh | sh -s -- -b $$(go env GOPATH)/bin; \
+	fi
 
 golint: git
 	if [ "$$(which golint)" == "" ]; then \

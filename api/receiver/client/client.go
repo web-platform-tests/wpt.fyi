@@ -7,6 +7,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -32,6 +33,7 @@ type Client interface {
 }
 
 // NewClient returns a client impl.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewClient(aeAPI shared.AppEngineAPI) Client {
 	return client{
 		aeAPI: aeAPI,
@@ -71,7 +73,12 @@ func (c client) CreateRun(
 	payload.Add("callback_url", fmt.Sprintf("https://%s/api/results/create", host))
 
 	uploadURL := c.aeAPI.GetResultsUploadURL()
-	req, err := http.NewRequest("POST", uploadURL.String(), strings.NewReader(payload.Encode()))
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		uploadURL.String(),
+		strings.NewReader(payload.Encode()),
+	)
 	if err != nil {
 		return err
 	}

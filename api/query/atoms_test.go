@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -684,11 +685,11 @@ func TestStructuredQuery_bindBrowserStatusSingleRun(t *testing.T) {
 		Status:  1,
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Firefox").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                2,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},
@@ -708,11 +709,11 @@ func TestStructuredQuery_bindBrowserStatusSingleRunNeq(t *testing.T) {
 		Status:  1,
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Firefox").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                2,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},
@@ -762,15 +763,15 @@ func TestStructuredQuery_bindBrowserStatusSomeRuns(t *testing.T) {
 		Status:  1,
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Firefox").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                2,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                3,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Firefox").ProductAtRevision,
 		},
@@ -1115,7 +1116,7 @@ func TestStructuredQuery_bindAnd(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1149,7 +1150,7 @@ func TestStructuredQuery_bindOr(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1178,7 +1179,7 @@ func TestStructuredQuery_bindNot(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1207,7 +1208,7 @@ func TestStructuredQuery_bindAndReduce(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1233,7 +1234,7 @@ func TestStructuredQuery_bindAndReduceToTrue(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1256,7 +1257,7 @@ func TestStructuredQuery_bindOrReduce(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
@@ -1295,15 +1296,15 @@ func TestStructuredQuery_bindComplex(t *testing.T) {
 		},
 	}
 	runs := []shared.TestRun{
-		shared.TestRun{
+		{
 			ID:                1,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                2,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Edge").ProductAtRevision,
 		},
-		shared.TestRun{
+		{
 			ID:                3,
 			ProductAtRevision: shared.ParseProductSpecUnsafe("Chrome").ProductAtRevision,
 		},

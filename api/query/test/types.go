@@ -24,6 +24,7 @@ type MockWriteCloser struct {
 // buffer for writing.
 func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
 	assert.False(mwc.t, mwc.closed)
+
 	return mwc.b.Write(p)
 }
 
@@ -33,6 +34,7 @@ func (mwc *MockWriteCloser) Write(p []byte) (n int, err error) {
 // goroutine receives the message.
 func (mwc *MockWriteCloser) Close() error {
 	mwc.closed = true
+
 	return nil
 }
 
@@ -57,12 +59,14 @@ type MockReadCloser struct {
 // reader that wraps a predefined byte slice.
 func (mrc *MockReadCloser) Read(p []byte) (n int, err error) {
 	assert.False(mrc.t, mrc.closed)
+
 	return mrc.rc.Read(p)
 }
 
 // Close tracks closed state and returns nil.
 func (mrc *MockReadCloser) Close() error {
 	mrc.closed = true
+
 	return nil
 }
 

@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -437,10 +438,10 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 		"https://example.com/2-summary_v2.json.gz",
 	}
 	testRuns := []shared.TestRun{
-		shared.TestRun{
+		{
 			ResultsURL: urls[0],
 		},
-		shared.TestRun{
+		{
 			ResultsURL: urls[1],
 		},
 	}

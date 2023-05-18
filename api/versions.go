@@ -17,7 +17,7 @@ import (
 
 // VersionsHandler is an http.Handler for the /api/versions endpoint.
 type VersionsHandler struct {
-	ctx context.Context
+	ctx context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 }
 
 // apiVersionsHandler is responsible for emitting just the browser versions for the test runs.
@@ -25,16 +25,25 @@ func apiVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Serve cached with 5 minute expiry. Delegate to VersionsHandler on cache
 	// miss.
 	ctx := r.Context()
-	shared.NewCachingHandler(ctx, VersionsHandler{ctx}, shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 5*time.Minute)), shared.AlwaysCachable, shared.URLAsCacheKey, shared.CacheStatusOK).ServeHTTP(w, r)
+	shared.NewCachingHandler(
+		ctx,
+		VersionsHandler{ctx},
+		shared.NewGZReadWritable(shared.NewRedisReadWritable(ctx, 5*time.Minute)),
+		shared.AlwaysCachable,
+		shared.URLAsCacheKey,
+		shared.CacheStatusOK,
+	).ServeHTTP(w, r)
 }
 
 func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	product, err := shared.ParseProductParam(r.URL.Query())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	} else if product == nil {
 		http.Error(w, fmt.Sprintf("Invalid product param: %s", r.URL.Query().Get("product")), http.StatusBadRequest)
+
 		return
 	}
 
@@ -62,6 +71,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var someRuns shared.TestRuns
 		if _, err := store.GetAll(query, &someRuns); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 		runs = append(runs, someRuns...)
@@ -70,6 +80,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(runs) < 1 {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("[]"))
+
 		return
 	}
 
@@ -77,12 +88,13 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for i := range runs {
 		versions[i] = runs[i].BrowserVersion
 	}
-	// TODO(lukebjerring): Fix this, it will put 100 before 11..., etc.
+	// nolint:godox // TODO(lukebjerring): Fix this, it will put 100 before 11..., etc.
 	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 
 	versionsBytes, err := json.Marshal(versions)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(versionsBytes)

@@ -39,6 +39,7 @@ type testName struct {
 }
 
 // NewTests constructs an empty Tests instance.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewTests() Tests {
 	return &testsMap{tests: make(map[TestID]testName)}
 }
@@ -52,6 +53,7 @@ func (ts *testsMap) GetName(id TestID) (string, *string, error) {
 	if !ok {
 		return "", nil, fmt.Errorf(`Test not found; ID: %v`, id)
 	}
+
 	return name.name, name.subName, nil
 }
 
@@ -72,5 +74,6 @@ func computeTestID(name string, subPtr *string) (TestID, error) {
 			return TestID{}, fmt.Errorf(`Subtest ID for string "%s" is 0`, *subPtr)
 		}
 	}
+
 	return TestID{t, s}, nil
 }

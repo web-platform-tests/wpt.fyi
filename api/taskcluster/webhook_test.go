@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -575,7 +576,7 @@ func TestGetCheckSuiteEventInfo_sourceRepo(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 
 	runs := []*github.CheckRun{
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
@@ -617,7 +618,7 @@ func TestGetCheckSuiteEventInfo_sha(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 
 	runs := []*github.CheckRun{
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
@@ -653,7 +654,7 @@ func TestGetCheckSuiteEventInfo_master(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 
 	runs := []*github.CheckRun{
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
@@ -690,7 +691,7 @@ func TestGetCheckSuiteEventInfo_sender(t *testing.T) {
 	api := mock_tc.NewMockAPI(mockC)
 
 	runs := []*github.CheckRun{
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
@@ -735,13 +736,13 @@ func TestGetCheckSuiteEventInfo_checkRuns(t *testing.T) {
 	//		TaskGroupID is the wpt-decision-tasks's taskID
 	//		Tasks is filled with each check_run's name, taskID, and status.
 	runs := []*github.CheckRun{
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-decision-task"),
 			Status:     strPtr("completed"),
 			Conclusion: strPtr("success"),
 			DetailsURL: strPtr("https://community-tc.services.mozilla.com/tasks/Jq4HzLz0R2eKkJFdmf47Bg"),
 		},
-		&github.CheckRun{
+		{
 			Name:       strPtr("wpt-chrome-dev-testharness-1"),
 			Status:     strPtr("completed"),
 			Conclusion: strPtr("failed"),

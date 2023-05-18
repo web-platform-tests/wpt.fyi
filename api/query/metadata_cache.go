@@ -11,8 +11,8 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// MetadataMapCached is the local cache of Metadata in searchcache.
-var MetadataMapCached map[string][]byte = nil
+// MetadataMapCached is the local cache of Metadata in searchcache. Zero value is nil.
+var MetadataMapCached map[string][]byte // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 
 type searchcacheMetadataFetcher struct{}
 
@@ -25,8 +25,9 @@ func (f searchcacheMetadataFetcher) Fetch() (sha *string, res map[string][]byte,
 		Timeout: time.Second * 5,
 	}
 
-	// TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
+	// nolint:godox // TODO(kyleju): utilize the SHA information here to potentially resolve the metadata cache
 	// out-of-sync issue between searchcache and webapp.
 	res, err = shared.GetWPTMetadataArchive(netClient, nil)
+
 	return nil, res, err
 }

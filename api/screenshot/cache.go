@@ -7,6 +7,7 @@ package screenshot
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
@@ -22,6 +23,7 @@ func parseParams(r *http.Request) (browser, browserVersion, os, osVersion string
 	browserVersion = r.FormValue("browser_version")
 	os = r.FormValue("os")
 	osVersion = r.FormValue("os_version")
+
 	return browser, browserVersion, os, osVersion
 }
 
@@ -33,19 +35,22 @@ func getHashesHandler(w http.ResponseWriter, r *http.Request) {
 	hashes, err := RecentScreenshotHashes(ds, browser, browserVersion, os, osVersion, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	response, err := json.Marshal(hashes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(response)
 }
 
 func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+
 		return
 	}
 
@@ -53,13 +58,15 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if receiver.AuthenticateUploader(aeAPI, r) != receiver.InternalUsername {
 		http.Error(w, "This is a private API.", http.StatusUnauthorized)
+
 		return
 	}
 
-	// TODO(Hexcles): Abstract and mock the GCS utilities in shared.
+	// nolint:godox // TODO(Hexcles): Abstract and mock the GCS utilities in shared.
 	gcs, err := storage.NewClient(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	bucketName := "wptd-screenshots-staging"
@@ -72,6 +79,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	hashMethod := r.FormValue("hash_method")
 	if r.MultipartForm == nil || r.MultipartForm.File == nil || len(r.MultipartForm.File["screenshot"]) == 0 {
 		http.Error(w, "no screenshot file found", http.StatusBadRequest)
+
 		return
 	}
 
@@ -85,6 +93,7 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 			f, err := fhs[i].Open()
 			if err != nil {
 				errors <- err
+
 				return
 			}
 			defer f.Close()
@@ -99,12 +108,22 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 	me := shared.NewMultiErrorFromChan(errors, "storing screenshots to GCS")
 	if me != nil {
 		http.Error(w, me.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 }
 
-func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMethod, browser, browserVersion, os, osVersion string, f io.ReadSeeker) error {
+func storeScreenshot(
+	ctx context.Context,
+	bucket *storage.BucketHandle,
+	hashMethod,
+	browser,
+	browserVersion,
+	os,
+	osVersion string,
+	f io.ReadSeeker,
+) error {
 	if hashMethod == "" {
 		hashMethod = "sha1"
 	}
@@ -113,12 +132,15 @@ func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMeth
 		return err
 	}
 	// Need to reset the file after hashing it.
-	f.Seek(0, io.SeekStart)
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		logger := shared.GetLogger(ctx)
+		logger.Warningf("Failed to reset file: %s", err.Error())
+	}
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
 
 	o := bucket.Object(s.Hash() + ".png")
-	if _, err := o.Attrs(ctx); err == storage.ErrObjectNotExist {
+	if _, err := o.Attrs(ctx); errors.Is(err, storage.ErrObjectNotExist) {
 		w := o.NewWriter(ctx)
 		// Screenshots are small; disable chunking for better performance.
 		w.ChunkSize = 0
@@ -131,8 +153,5 @@ func storeScreenshot(ctx context.Context, bucket *storage.BucketHandle, hashMeth
 	}
 
 	// Write to Datastore last.
-	if err := s.Store(ds); err != nil {
-		return err
-	}
-	return nil
+	return s.Store(ds)
 }

@@ -25,17 +25,20 @@ const InternalUsername = "_processor"
 func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
 	if AuthenticateUploader(a, r) != InternalUsername {
 		http.Error(w, "This is a private API.", http.StatusUnauthorized)
+
 		return
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	var testRun shared.TestRun
 	if err := json.Unmarshal(body, &testRun); err != nil {
 		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -49,11 +52,17 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 	if len(testRun.FullRevisionHash) != 40 {
 		http.Error(w, "full_revision_hash must be the full SHA (40 chars)", http.StatusBadRequest)
+
 		return
 	} else if testRun.Revision != "" && strings.Index(testRun.FullRevisionHash, testRun.Revision) != 0 {
 		http.Error(w,
-			fmt.Sprintf("Mismatch of full_revision_hash and revision fields: %s vs %s", testRun.FullRevisionHash, testRun.Revision),
+			fmt.Sprintf(
+				"Mismatch of full_revision_hash and revision fields: %s vs %s",
+				testRun.FullRevisionHash,
+				testRun.Revision,
+			),
 			http.StatusBadRequest)
+
 		return
 	}
 	testRun.Revision = testRun.FullRevisionHash[:10]
@@ -61,6 +70,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	key, err := a.AddTestRun(&testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	// Copy int64 representation of key into TestRun.ID so that clients can
@@ -69,13 +79,14 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 	// Do not schedule on pr_base to avoid redundancy with pr_head.
 	if !testRun.LabelsSet().Contains(shared.PRBaseLabel) {
-		spec := shared.ProductSpec{}
+		spec := shared.ProductSpec{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		spec.BrowserName = testRun.BrowserName
 		spec.Labels = mapset.NewSet(testRun.Channel())
 		s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
 	}
 
 	log := shared.GetLogger(a.Context())
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	pendingRun := shared.PendingTestRun{
 		ID:                testRun.ID,
 		Stage:             shared.StageValid,
@@ -89,6 +100,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	jsonOutput, err := json.Marshal(testRun)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())

@@ -17,10 +17,10 @@ import (
 // BufferBucket is the GCS bucket to temporarily store results until they are proccessed.
 const BufferBucket = "wptd-results-buffer"
 
-// ResultsQueue is the name of the results proccessing TaskQueue.
+// ResultsQueue is the name of the results processing TaskQueue.
 const ResultsQueue = "results-arrival"
 
-// ResultsTarget is the target URL for results proccessing tasks.
+// ResultsTarget is the target URL for results processing tasks.
 const ResultsTarget = "/api/results/process"
 
 // HandleResultsUpload handles the POST requests for uploading results.
@@ -37,12 +37,14 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		uploader = r.FormValue("user")
 		if uploader == "" {
 			http.Error(w, "Please specify uploader", http.StatusBadRequest)
+
 			return
 		}
 	} else {
 		uploader = AuthenticateUploader(a, r)
 		if uploader == "" {
 			http.Error(w, "Authentication error", http.StatusUnauthorized)
+
 			return
 		}
 	}
@@ -72,6 +74,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Errorf("Failed to save files to GCS: %v", err)
 			http.Error(w, "Failed to save files to GCS", http.StatusInternalServerError)
+
 			return
 		}
 	} else if artifactName := getAzureArtifactName(r.PostForm.Get("result_url")); artifactName != "" {
@@ -87,6 +90,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Errorf("No results found")
 		http.Error(w, "No results found", http.StatusBadRequest)
+
 		return
 	}
 
@@ -94,6 +98,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Failed to schedule task: %v", err)
 		http.Error(w, "Failed to schedule task", http.StatusInternalServerError)
+
 		return
 	}
 	log.Infof("Task %s added to queue", t)
@@ -118,11 +123,12 @@ func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart
 		f, err := file.Open()
 		if err != nil {
 			errors <- err
+
 			return
 		}
 		defer f.Close()
-		// TODO(Hexcles): Detect whether the file is gzipped.
-		// TODO(Hexcles): Retry after failures.
+		// nolint:godox // TODO(Hexcles): Detect whether the file is gzipped.
+		// nolint:godox // TODO(Hexcles): Retry after failures.
 		if err := a.UploadToGCS(gcsPath, f, true); err != nil {
 			errors <- err
 		}
@@ -145,6 +151,7 @@ func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart
 	if mErr != nil {
 		// Result errors are fatal.
 		shared.GetLogger(a.Context()).Errorf(mErr.Error())
+
 		return nil, nil, mErr
 	}
 	mErr = shared.NewMultiErrorFromChan(errors2, fmt.Sprintf("storing screenshots from %s to GCS", uploader))
@@ -153,5 +160,6 @@ func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart
 		shared.GetLogger(a.Context()).Warningf(mErr.Error())
 		screenshotGCS = nil
 	}
+
 	return resultGCS, screenshotGCS, nil
 }

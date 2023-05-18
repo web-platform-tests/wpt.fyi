@@ -19,17 +19,20 @@ import (
 func HandleUpdatePendingTestRun(a API, w http.ResponseWriter, r *http.Request) {
 	if AuthenticateUploader(a, r) != InternalUsername {
 		http.Error(w, "This is a private API.", http.StatusUnauthorized)
+
 		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	var run shared.PendingTestRun
 	if err := json.Unmarshal(body, &run); err != nil {
 		http.Error(w, "Failed to parse JSON: "+err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -38,15 +41,18 @@ func HandleUpdatePendingTestRun(a API, w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(idParam, 10, 0)
 	if err != nil {
 		http.Error(w, "Invalid ID: "+idParam, http.StatusBadRequest)
+
 		return
 	}
 	if id != run.ID {
 		http.Error(w, fmt.Sprintf("Inconsistent ID: %d != %d", id, run.ID), http.StatusBadRequest)
+
 		return
 	}
 
 	if err := a.UpdatePendingTestRun(run); err != nil {
 		http.Error(w, "Failed to update run: "+err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.WriteHeader(http.StatusCreated)

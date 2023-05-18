@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -13,8 +14,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 const (

@@ -21,6 +21,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	shas, err := shared.ParseSHAParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 	paths := shared.ParsePathsParam(q)
@@ -31,6 +32,7 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	sha, manifest, err := getManifest(shared.GetLogger(ctx), manifestAPI, sha, paths)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
+
 		return
 	}
 	w.Header().Add("X-WPT-SHA", sha)
@@ -103,6 +105,7 @@ func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths 
 			return fetchedSHA, nil, err
 		}
 	}
+
 	return fetchedSHA, unzipped, err
 }
 
@@ -116,6 +119,7 @@ func readByKey(readable shared.Readable, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ioutil.ReadAll(reader)
 }
 
@@ -132,5 +136,6 @@ func writeByKey(writable shared.ReadWritable, key string, body []byte) error {
 	if n != len(body) {
 		return fmt.Errorf("incomplete write; expected %d bytes but %d written", len(body), n)
 	}
+
 	return writer.Close()
 }

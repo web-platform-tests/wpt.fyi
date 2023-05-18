@@ -87,4 +87,5 @@ require (
 )
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
-replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
+replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 
+

@@ -29,7 +29,7 @@ type LRU interface {
 
 type lru struct {
 	values map[int64]time.Time
-	m       *sync.Mutex
+	m      *sync.Mutex
 }
 
 type lruEntry struct {
@@ -61,10 +61,11 @@ func (l *lru) EvictLRU(percent float64) []int64 {
 }
 
 // NewLRU constructs a new empty LRU.
+// nolint:ireturn // TODO: Fix ireturn lint error
 func NewLRU() LRU {
 	return &lru{
 		values: make(map[int64]time.Time),
-		m:       &sync.Mutex{},
+		m:      &sync.Mutex{},
 	}
 }
 

@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2018 The WPT Dashboard Project. All rights reserved.
@@ -17,8 +18,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 	"github.com/web-platform-tests/wpt.fyi/shared"
+	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
 )
 
 func TestInvalidNumShards(t *testing.T) {
@@ -130,16 +131,16 @@ func TestEvictNonEmpty(t *testing.T) {
 	}
 	results := &metrics.TestResultsReport{
 		Results: []*metrics.TestResults{
-			&metrics.TestResults{
+			{
 				Test:     "a",
 				Status:   "PASS",
 				Subtests: []metrics.SubTest{},
 			},
-			&metrics.TestResults{
+			{
 				Test:   "b",
 				Status: "OK",
 				Subtests: []metrics.SubTest{
-					metrics.SubTest{
+					{
 						Name:   "sub",
 						Status: "FAIL",
 					},
@@ -167,16 +168,16 @@ func TestEvictMultiple(t *testing.T) {
 	}
 	results1 := &metrics.TestResultsReport{
 		Results: []*metrics.TestResults{
-			&metrics.TestResults{
+			{
 				Test:     "a",
 				Status:   "PASS",
 				Subtests: []metrics.SubTest{},
 			},
-			&metrics.TestResults{
+			{
 				Test:   "b",
 				Status: "OK",
 				Subtests: []metrics.SubTest{
-					metrics.SubTest{
+					{
 						Name:   "sub",
 						Status: "FAIL",
 					},
@@ -190,16 +191,16 @@ func TestEvictMultiple(t *testing.T) {
 	}
 	results2 := &metrics.TestResultsReport{
 		Results: []*metrics.TestResults{
-			&metrics.TestResults{
+			{
 				Test:     "a",
 				Status:   "FAIL",
 				Subtests: []metrics.SubTest{},
 			},
-			&metrics.TestResults{
+			{
 				Test:   "b",
 				Status: "OK",
 				Subtests: []metrics.SubTest{
-					metrics.SubTest{
+					{
 						Name:   "sub",
 						Status: "TIMEOUT",
 					},
@@ -213,12 +214,12 @@ func TestEvictMultiple(t *testing.T) {
 	}
 	results3 := &metrics.TestResultsReport{
 		Results: []*metrics.TestResults{
-			&metrics.TestResults{
+			{
 				Test:     "a",
 				Status:   "PASS",
 				Subtests: []metrics.SubTest{},
 			},
-			&metrics.TestResults{
+			{
 				Test:     "b",
 				Status:   "TIMEOUT",
 				Subtests: []metrics.SubTest{},
@@ -252,11 +253,11 @@ func TestSync(t *testing.T) {
 		strStatus := shared.TestStatus(run.ID % 7).String()
 		return &metrics.TestResultsReport{
 			Results: []*metrics.TestResults{
-				&metrics.TestResults{
+				{
 					Test:   "shared",
 					Status: strStatus,
 				},
-				&metrics.TestResults{
+				{
 					Test:   "test" + strID,
 					Status: "PASS",
 				},

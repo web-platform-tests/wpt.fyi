@@ -11,9 +11,12 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-type loginResponse struct {
-	User  *shared.User `json:"user,omitempty"`
-	Error string       `json:"error,omitempty"`
+type loginSuccessResponse struct {
+	User *shared.User `json:"user"`
+}
+
+type loginFailureResponse struct {
+	Error string `json:"error"`
 }
 
 func apiUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,28 +24,32 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 	aeAPI := shared.NewAppEngineAPI(ctx)
 	if !aeAPI.IsFeatureEnabled("githubLogin") {
 		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
+
 		return
 	}
 
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, _ := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil {
-		response := loginResponse{Error: "Unable to retrieve login information, please log in again"}
+		response := loginFailureResponse{Error: "Unable to retrieve login information, please log in again"}
 		marshalled, err := json.Marshal(response)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(marshalled)
+
 		return
 	}
 
-	response := loginResponse{User: user}
+	response := loginSuccessResponse{User: user}
 	marshalled, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(marshalled)

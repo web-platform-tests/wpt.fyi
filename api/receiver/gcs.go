@@ -11,14 +11,14 @@ import (
 	"cloud.google.com/go/storage"
 )
 
-// TODO: This interface might also be useful to other APIs.
+// nolint:godox // TODO: This interface might also be useful to other APIs.
 
 type gcs interface {
 	NewWriter(bucketName, fileName, contentType, contentEncoding string) (io.WriteCloser, error)
 }
 
 type gcsImpl struct {
-	ctx    context.Context
+	ctx    context.Context // nolint:containedctx // TODO: Fix containedctx lint error
 	client *storage.Client
 }
 
@@ -38,5 +38,6 @@ func (g *gcsImpl) NewWriter(bucketName, fileName, contentType, contentEncoding s
 	if contentEncoding != "" {
 		w.ContentEncoding = contentEncoding
 	}
+
 	return w, nil
 }

@@ -5,4 +5,5 @@
 package api
 
 // CORSList is a list of trusted third-party origins.
+// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var CORSList = []string{"https://jgraham.github.io"}

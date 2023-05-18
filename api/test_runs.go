@@ -6,19 +6,21 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// nolint:gosec // TODO: Fix gosec lint error (G101)
 const nextPageTokenHeaderName = "wpt-next-page"
 const paginationTokenFeatureFlagName = "paginationTokens"
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
 // URL Params:
-//     sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
+// sha: SHA[0:10] of the repo when the tests were executed (or 'latest')
 func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := shared.GetLogger(ctx)
@@ -28,6 +30,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	ids, err := shared.ParseRunIDsParam(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -38,9 +41,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var testRuns shared.TestRuns
 	var nextPageToken string
+	// nolint:nestif // TODO: Fix nestif lint error
 	if len(ids) > 0 {
 		testRuns, err = ids.LoadTestRuns(store)
-		if err == shared.ErrNoSuchEntity {
+		if errors.Is(err, shared.ErrNoSuchEntity) {
 			w.WriteHeader(http.StatusNotFound)
 			err = nil
 		}
@@ -49,6 +53,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		filters, err = shared.ParseTestRunFilterParams(r.URL.Query())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+
 			return
 		}
 		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
@@ -75,10 +80,12 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	} else if len(testRuns) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("[]"))
+
 		return
 	}
 
@@ -89,6 +96,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	testRunsBytes, err := json.Marshal(testRuns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(testRunsBytes)
@@ -96,7 +104,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding
 // query to load the TestRun keys.
-func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFilter) (result shared.KeysByProduct, err error) {
+func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFilter) (
+	result shared.KeysByProduct,
+	err error,
+) {
 	q := store.TestRunQuery()
 	limit := filters.MaxCount
 	offset := filters.Offset
@@ -124,18 +135,24 @@ func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFil
 				keys[i].Keys = append(keys[i].Keys, shaKeys[sha][i].Keys...)
 			}
 		}
+
 		return keys, err
 	}
+
 	return q.LoadTestRunKeys(products, filters.Labels, filters.SHAs, from, filters.To, limit, offset)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load
 // the TestRuns.
-func LoadTestRunsForFilters(store shared.Datastore, filters shared.TestRunFilter) (result shared.TestRunsByProduct, err error) {
+func LoadTestRunsForFilters(
+	store shared.Datastore,
+	filters shared.TestRunFilter,
+) (result shared.TestRunsByProduct, err error) {
 	var keys shared.KeysByProduct
 	if keys, err = LoadTestRunKeysForFilters(store, filters); err != nil {
 		return nil, err
 	}
+
 	return store.TestRunQuery().LoadTestRunsByKeys(keys)
 }
 
@@ -145,16 +162,25 @@ func getPRCommits(aeAPI shared.AppEngineAPI, pr int) shared.SHAs {
 	githubClient, err := aeAPI.GetGitHubClient()
 	if err != nil {
 		log.Errorf("Failed to get github client: %s", err.Error())
+
 		return nil
 	}
-	commits, _, err := githubClient.PullRequests.ListCommits(aeAPI.Context(), shared.WPTRepoOwner, shared.WPTRepoName, pr, nil)
+	commits, _, err := githubClient.PullRequests.ListCommits(
+		aeAPI.Context(),
+		shared.WPTRepoOwner,
+		shared.WPTRepoName,
+		pr,
+		nil,
+	)
 	if err != nil || commits == nil {
 		log.Errorf("Failed to fetch PR #%v: %s", pr, err.Error())
+
 		return nil
 	}
 	shas := make([]string, len(commits))
 	for i := range commits {
 		shas[i] = commits[i].GetSHA()
 	}
+
 	return shas
 }
