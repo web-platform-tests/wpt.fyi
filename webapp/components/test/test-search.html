@@ -114,6 +114,24 @@ suite('<test-search>', () => {
           {product: 'firefox', status: 'TIMEOUT'},
         ],
       });
+
+      assertQueryParse('cssom AND firefox:timeout', {
+        exists: [{
+          and: [
+            {pattern: 'cssom'},
+            {product: 'firefox', status: 'TIMEOUT'},
+          ]
+        }],
+      });
+
+      assertQueryParse('cssom & firefox:timeout', {
+        exists: [{
+          and: [
+            {pattern: 'cssom'},
+            {product: 'firefox', status: 'TIMEOUT'},
+          ]
+        }],
+      });
     });
 
     test('pattern | test status', () => {

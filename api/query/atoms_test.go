@@ -625,6 +625,38 @@ func TestStructuredQuery_combinednotlink(t *testing.T) {
 		AbstractQuery: AbstractExists{Args: []AbstractQuery{AbstractAnd{Args: []AbstractQuery{TestNamePattern{Pattern: "cssom"}, AbstractNot{Arg: AbstractLink{Pattern: "chromium.bug"}}}}}}}, rq)
 }
 
+func TestStructuredQuery_existsSimple(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"and": [
+					{"pattern": "cssom"}
+				  ]
+				}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2},
+		AbstractQuery: AbstractExists{Args: []AbstractQuery{AbstractAnd{Args: []AbstractQuery{TestNamePattern{Pattern: "cssom"}}}}}}, rq)
+}
+
+func TestStructuredQuery_existsWithAnd(t *testing.T) {
+	var rq RunQuery
+	err := json.Unmarshal([]byte(`{
+		"run_ids": [0, 1, 2],
+		"query": {
+			"exists": [
+				{"pattern": "cssom"}
+			]
+		}
+	}`), &rq)
+	assert.Nil(t, err)
+	assert.Equal(t, RunQuery{RunIDs: []int64{0, 1, 2}, AbstractQuery: AbstractExists{[]AbstractQuery{TestNamePattern{"cssom"}}}}, rq)
+}
+
 func TestStructuredQuery_nested(t *testing.T) {
 	var rq RunQuery
 	err := json.Unmarshal([]byte(`{
@@ -842,6 +874,59 @@ func TestStructuredQuery_bindExists(t *testing.T) {
 		} else { // Odds are firefox
 			or2.Args = append(or2.Args,
 				RunTestStatusNeq{
+					Run:    int64(i),
+					Status: 1,
+				},
+			)
+		}
+	}
+	expected := And{
+		Args: []ConcreteQuery{or1, or2},
+	}
+	assert.Equal(t, expected, q.BindToRuns(runs...))
+}
+
+func TestStructuredQuery_bindExistsWithTwoProducts(t *testing.T) {
+	e := shared.ParseProductSpecUnsafe("edge")
+	f := shared.ParseProductSpecUnsafe("firefox")
+	q := AbstractExists{
+		Args: []AbstractQuery{
+			AbstractAnd{
+				Args: []AbstractQuery{
+					TestStatusEq{
+						Product: &e,
+						Status:  1,
+					},
+					TestStatusEq{
+						Product: &f,
+						Status:  1,
+					},
+				},
+			},
+		},
+	}
+
+	runs := shared.TestRuns{}
+	or1 := Or{}
+	or2 := Or{}
+	products := []shared.ProductSpec{e, f}
+	for i := 1; i <= 10; i++ {
+		runs = append(
+			runs,
+			shared.TestRun{
+				ID:                int64(i),
+				ProductAtRevision: products[i%2].ProductAtRevision,
+			})
+		if i%2 == 0 { // Evens are edge
+			or1.Args = append(or1.Args,
+						RunTestStatusEq{
+							Run:    int64(i),
+							Status: 1,
+						},
+				)
+		} else { // Odds are firefox
+			or2.Args = append(or2.Args,
+				RunTestStatusEq{
 					Run:    int64(i),
 					Status: 1,
 				},
