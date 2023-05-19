@@ -6,7 +6,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -59,7 +59,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
-	body, _ := ioutil.ReadAll(resp.Result().Body)
+	body, _ := io.ReadAll(resp.Result().Body)
 	assert.Equalf(t, http.StatusOK, resp.Code, string(body))
 	var result66 shared.TestRun
 	json.Unmarshal(body, &result66)
@@ -68,7 +68,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.139", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var result66139 shared.TestRun
 	json.Unmarshal(body, &result66139)
@@ -77,7 +77,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-66.0.3359.181%20beta", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	json.Unmarshal(body, &result66139)
 	assert.Equal(t, "66.0.3359.181 beta", result66139.BrowserVersion)
@@ -85,7 +85,7 @@ func TestGetTestRuns_VersionPrefix(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/run?product=chrome-68", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var result68 shared.TestRun
 	json.Unmarshal(body, &result68)
@@ -117,13 +117,13 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	// run_id=123 from above should 404.
 	resp := httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ := ioutil.ReadAll(resp.Result().Body)
+	body, _ := io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?run_id=%v", keys[0].IntID()), nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var results shared.TestRuns
 	json.Unmarshal(body, &results)
@@ -133,7 +133,7 @@ func TestGetTestRuns_RunIDs(t *testing.T) {
 	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?run_ids=%v,%v", keys[1].IntID(), keys[0].IntID()), nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	json.Unmarshal(body, &results)
 	assert.Equal(t, 2, len(results))
@@ -175,7 +175,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/runs?sha=abcdef0123", nil)
 	resp := httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ := ioutil.ReadAll(resp.Result().Body)
+	body, _ := io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var results shared.TestRuns
 	json.Unmarshal(body, &results)
@@ -186,7 +186,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/runs?sha=abcdef0123&aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	json.Unmarshal(body, &results)
 	assert.Equal(t, 2, len(results))
@@ -196,7 +196,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/runs?aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 	run.FullRevisionHash = strings.Repeat("1111111111", 4)
@@ -208,7 +208,7 @@ func TestGetTestRuns_SHA(t *testing.T) {
 	r, _ = i.NewRequest("GET", "/api/runs?aligned", nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	json.Unmarshal(body, &results)
 	assert.Equal(t, 4, len(results))
@@ -247,7 +247,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	next = resp.Header().Get(nextPageTokenHeaderName)
 	assert.NotEqual(t, "", next)
 
-	body, _ := ioutil.ReadAll(resp.Result().Body)
+	body, _ := io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var pageOne shared.TestRuns
 	json.Unmarshal(body, &pageOne)
@@ -256,7 +256,7 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 	r, _ = i.NewRequest("GET", fmt.Sprintf("/api/runs?page=%s", url.QueryEscape(next)), nil)
 	resp = httptest.NewRecorder()
 	apiTestRunsHandler(resp, r)
-	body, _ = ioutil.ReadAll(resp.Result().Body)
+	body, _ = io.ReadAll(resp.Result().Body)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var pageTwo shared.TestRuns
 	json.Unmarshal(body, &pageTwo)

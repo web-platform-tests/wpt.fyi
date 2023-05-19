@@ -5,7 +5,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +29,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	apiVersionsHandler(w, r)
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	bytes, _ := ioutil.ReadAll(w.Result().Body)
+	bytes, _ := io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &versions)
 	assert.Equal(t, []string{}, versions)
 
@@ -52,7 +52,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	apiVersionsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, _ = ioutil.ReadAll(w.Result().Body)
+	bytes, _ = io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &versions)
 	// Duplication should be removed.
 	assert.Equal(t, []string{"2", "1.1.1", "1.1", "1.0", "1"}, versions)
@@ -62,7 +62,7 @@ func TestApiVersionsHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	apiVersionsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, _ = ioutil.ReadAll(w.Result().Body)
+	bytes, _ = io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &versions)
 	assert.Equal(t, []string{"1.1.1", "1.1", "1.0", "1"}, versions)
 

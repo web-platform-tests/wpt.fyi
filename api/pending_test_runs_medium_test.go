@@ -6,7 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -78,7 +78,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		r, _ = i.NewRequest("GET", "/api/status", nil)
 		resp := httptest.NewRecorder()
 		apiPendingTestRunsHandler(resp, r)
-		body, _ := ioutil.ReadAll(resp.Result().Body)
+		body, _ := io.ReadAll(resp.Result().Body)
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
@@ -96,7 +96,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		r = mux.SetURLVars(r, map[string]string{"filter": "pending"})
 		resp := httptest.NewRecorder()
 		apiPendingTestRunsHandler(resp, r)
-		body, _ := ioutil.ReadAll(resp.Result().Body)
+		body, _ := io.ReadAll(resp.Result().Body)
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
@@ -115,7 +115,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 			r = mux.SetURLVars(r, map[string]string{"filter": filter})
 			resp := httptest.NewRecorder()
 			apiPendingTestRunsHandler(resp, r)
-			body, _ := ioutil.ReadAll(resp.Result().Body)
+			body, _ := io.ReadAll(resp.Result().Body)
 			assert.Equal(t, http.StatusOK, resp.Code, string(body))
 			var results []shared.PendingTestRun
 			json.Unmarshal(body, &results)

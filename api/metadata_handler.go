@@ -7,8 +7,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -111,7 +110,7 @@ func handleMetadataTriage(
 		return
 	}
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read PATCH request body", http.StatusInternalServerError)
 
@@ -179,14 +178,18 @@ func handleMetadataTriage(
 		logger.Errorf("Unable to cache %s to Redis: %s", prURL, err.Error())
 	}
 
-	w.Write([]byte(prURL))
+	_, err = w.Write([]byte(prURL))
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in metadata handler: %s", err.Error())
+	}
 }
 
 func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var abstractLink query.AbstractLink
 	// nolint:nestif // TODO: Fix nestif lint error
 	if r.Method == http.MethodPost {
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 
@@ -228,7 +231,7 @@ func (h MetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	} else if len(productSpecs) == 0 {
-		http.Error(w, fmt.Sprintf("Missing required 'product' param"), http.StatusBadRequest)
+		http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
 
 		return
 	}
@@ -333,5 +336,9 @@ func handlePendingMetadata(
 
 		return
 	}
-	w.Write(marshalled)
+
+	_, err = w.Write(marshalled)
+	if err != nil {
+		logger.Warningf("Failed to write data in pending metadata handler: %s", err.Error())
+	}
 }

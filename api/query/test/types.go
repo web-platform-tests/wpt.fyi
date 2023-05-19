@@ -7,7 +7,6 @@ package test
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -74,7 +73,7 @@ func (mrc *MockReadCloser) Close() error {
 // slice.
 func NewMockReadCloser(t *testing.T, data []byte) *MockReadCloser {
 	return &MockReadCloser{
-		rc:     ioutil.NopCloser(bytes.NewReader(data)),
+		rc:     io.NopCloser(bytes.NewReader(data)),
 		closed: false,
 		t:      t,
 	}

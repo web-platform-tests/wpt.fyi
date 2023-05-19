@@ -45,7 +45,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
+// nolint:gochecknoglobals,unused // TODO: Fix gochecknoglobals and unused lint error
 var browsers = shared.GetDefaultBrowserNames()
 
 // AbstractQuery is an intermetidate representation of a test results query that
@@ -188,9 +188,7 @@ type AbstractNone struct {
 // nolint:ireturn // TODO: Fix ireturn lint error
 func (e AbstractNone) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
 	return Not{
-		AbstractExists{
-			Args: e.Args,
-		}.BindToRuns(runs...),
+		AbstractExists(e).BindToRuns(runs...),
 	}
 }
 

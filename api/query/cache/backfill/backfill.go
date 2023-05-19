@@ -127,6 +127,7 @@ func startBackfillMonitor(store shared.Datastore, logger shared.Logger, maxBytes
 	}
 
 	// Start the monitor to ensure that memory pressure is tracked.
+	// nolint:errcheck // TODO: Fix errcheck lint error.
 	go m.Start()
 
 	// Backfill index until its backfilling parameter is set to false, or

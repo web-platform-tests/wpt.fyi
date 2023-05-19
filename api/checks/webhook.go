@@ -91,8 +91,6 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
 	}
-
-	return
 }
 
 // handleCheckSuiteEvent handles a check_suite (re)requested event by ensuring

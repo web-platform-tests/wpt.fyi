@@ -44,7 +44,11 @@ func getHashesHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		logger := shared.GetLogger(ctx)
+		logger.Warningf("Failed to write data in api/screenshots/hashes handler: %s", err.Error())
+	}
 }
 
 func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {

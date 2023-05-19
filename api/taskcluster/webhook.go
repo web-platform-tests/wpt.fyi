@@ -28,7 +28,6 @@ import (
 const AppID = int64(40788)
 
 const uploaderName = "taskcluster"
-const flagPendingChecks = "pendingChecks"
 const completedState = "completed"
 
 var (
@@ -337,8 +336,6 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintln(w, "Status was ignored")
 	}
-
-	return
 }
 
 // StatusEventPayload wraps a github.StatusEvent so we can declare methods on it

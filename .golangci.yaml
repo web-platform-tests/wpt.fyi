@@ -5,13 +5,12 @@ linters:
   # Enabling specified linters.
   # See: https://github.com/web-platform-tests/wpt.fyi/issues/2983
   enable: 
-    # TODO(LeonardYam): Enable the linters below and fix the errors.
-    # - staticcheck
-    # - errcheck
-    # - gosimple
-    # - govet
-    # - typecheck
-    # - unused
+    - staticcheck
+    - errcheck
+    - gosimple
+    - govet
+    - typecheck
+    - unused
     - ineffassign
     - containedctx
     - dupl

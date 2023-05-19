@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"sync"
@@ -33,7 +33,7 @@ var (
 	errRunExists          = errors.New("Run already exists in index")
 	errRunLoading         = errors.New("Run currently being loaded into index")
 	errSomeShardsRequired = errors.New("Index must have at least one shard")
-	errUnexpectedRuns     = errors.New("Unexpected number of runs")
+	errUnexpectedRuns     = errors.New("Unexpected number of runs") // nolint:unused // TODO: Fix unused lint error.
 	errZeroRun            = errors.New("Cannot ingest run with ID of 0")
 	errEmptyReport        = errors.New("Report contains no results")
 )
@@ -312,7 +312,7 @@ func (l HTTPReportLoader) Load(run shared.TestRun) (*metrics.TestResultsReport, 
 
 		return nil, err
 	}
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

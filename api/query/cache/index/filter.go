@@ -329,7 +329,7 @@ func (tl TestLabel) Filter(t TestID) bool {
 	}
 
 	for _, label := range labels {
-		if strings.ToLower(label) == strings.ToLower(tl.label) {
+		if strings.EqualFold(label, tl.label) {
 			return true
 		}
 	}

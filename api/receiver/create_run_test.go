@@ -9,7 +9,7 @@ package receiver
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,7 +86,7 @@ func TestHandleResultsCreate(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	var testRunOut shared.TestRun
-	body, _ = ioutil.ReadAll(resp.Body)
+	body, _ = io.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &testRunOut)
 	assert.Nil(t, err)
 	// Fields outside of ProductAtRevision are not included in the matcher, so check them now:
@@ -145,7 +145,7 @@ func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	var testRun shared.TestRun
-	body, _ = ioutil.ReadAll(resp.Body)
+	body, _ = io.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &testRun)
 	assert.Nil(t, err)
 	assert.False(t, testRun.CreatedAt.IsZero())

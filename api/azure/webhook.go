@@ -7,7 +7,7 @@ package azure
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 
@@ -64,7 +64,7 @@ func processBuild(
 	}
 
 	var artifacts BuildArtifacts
-	if body, err := ioutil.ReadAll(resp.Body); err != nil {
+	if body, err := io.ReadAll(resp.Body); err != nil {
 		return false, fmt.Errorf("failed to read response body: %w", err)
 	} else if err = json.Unmarshal(body, &artifacts); err != nil {
 		return false, fmt.Errorf("failed to unmarshal JSON: %w", err)

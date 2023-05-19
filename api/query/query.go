@@ -29,6 +29,7 @@ type SummaryResult struct {
 // summary is the golang type for the JSON format in pass/total summary files.
 type summary map[string]SummaryResult
 
+// nolint:unused // TODO: Investigate if client and logger can be deleted.
 type queryHandler struct {
 	store      shared.Datastore
 	dataSource shared.CachedStore

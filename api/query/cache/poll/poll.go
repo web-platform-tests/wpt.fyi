@@ -86,7 +86,7 @@ func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time
 }
 
 func wait(start time.Time, total time.Duration) {
-	t := total - time.Now().Sub(start)
+	t := total - time.Since(start)
 	if t > 0 {
 		time.Sleep(t)
 	}

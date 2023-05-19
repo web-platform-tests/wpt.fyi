@@ -34,7 +34,7 @@ func apiLabelsHandler(w http.ResponseWriter, r *http.Request) {
 	).ServeHTTP(w, r)
 }
 
-func (h LabelsHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+func (h LabelsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	store := shared.NewAppEngineDatastore(h.ctx, false)
 	var runs shared.TestRuns
 	_, err := store.GetAll(store.NewQuery("TestRun").Project("Labels").Distinct(), &runs)
@@ -58,5 +58,9 @@ func (h LabelsHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
 		return
 	}
-	w.Write(data)
+	_, err = w.Write(data)
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in api/labels handler: %s", err.Error())
+	}
 }

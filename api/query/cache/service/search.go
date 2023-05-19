@@ -7,7 +7,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
@@ -44,7 +44,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 		}
 	}
 
-	reqData, err := ioutil.ReadAll(r.Body)
+	reqData, err := io.ReadAll(r.Body)
 	if err != nil {
 		return &searchError{
 			Detail:  err,
@@ -114,6 +114,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 				}
 			}
 			runPtr.ID = int64(id)
+			// nolint:errcheck // TODO: Fix errcheck lint error.
 			go idx.IngestRun(*runPtr)
 			missing = append(missing, *runPtr)
 		} else {
@@ -137,7 +138,10 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 			}
 		}
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		w.Write(data)
+		_, err = w.Write(data)
+		if err != nil {
+			log.Warningf("Failed to write data in api/search/cache handler: %s", err.Error())
+		}
 
 		return nil
 	}
@@ -220,7 +224,10 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 
-	w.Write(respData)
+	_, err = w.Write(respData)
+	if err != nil {
+		log.Warningf("Failed to write data in api/search/cache handler: %s", err.Error())
+	}
 
 	return nil
 }
