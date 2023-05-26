@@ -145,7 +145,7 @@ func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 		if newRun.OSVersion != "" {
 			run.OSVersion = newRun.OSVersion
 		}
-		// nolint:staticcheck // TODO: Fix staticcheck lint error.
+		// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 		if newRun.FullRevisionHash != "" {
 			run.Revision = newRun.FullRevisionHash[:10]
 			run.FullRevisionHash = newRun.FullRevisionHash

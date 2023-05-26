@@ -22,7 +22,6 @@ import (
 const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
-// nolint:staticcheck // TODO: Fix staticcheck lint error (testRun.Revision).
 func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
 	logger := shared.GetLogger(a.Context())
 
@@ -53,6 +52,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	}
 	testRun.CreatedAt = time.Now()
 
+	// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 	if len(testRun.FullRevisionHash) != 40 {
 		http.Error(w, "full_revision_hash must be the full SHA (40 chars)", http.StatusBadRequest)
 
@@ -68,6 +68,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 		return
 	}
+	// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 	testRun.Revision = testRun.FullRevisionHash[:10]
 
 	key, err := a.AddTestRun(&testRun)

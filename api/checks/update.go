@@ -232,7 +232,7 @@ func getDiffSummary(
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ProductAtRevision: shared.ProductAtRevision{
 			Product:  shared.Product{BrowserName: headRun.BrowserName},
-			Revision: headRun.Revision, // nolint:staticcheck // TODO: Fix staticcheck lint error.
+			Revision: headRun.Revision, // nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 		},
 		Labels: mapset.NewSetWith(baseRun.Channel()),
 	}

@@ -5,6 +5,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"sort"
@@ -58,11 +59,11 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// When we filter by status (pending) we need to re-sort.
 	sort.Sort(sort.Reverse(shared.PendingTestRunByUpdated(runs)))
-	emit(w, r, runs)
+	emit(r.Context(), w, runs)
 }
 
 // emit to the given writer the JSON marshalled output of the given interface.
-func emit(w http.ResponseWriter, r *http.Request, i interface{}) {
+func emit(ctx context.Context, w http.ResponseWriter, i interface{}) {
 	data, err := json.Marshal(i)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -71,7 +72,7 @@ func emit(w http.ResponseWriter, r *http.Request, i interface{}) {
 	}
 	_, err = w.Write(data)
 	if err != nil {
-		logger := shared.GetLogger(r.Context())
+		logger := shared.GetLogger(ctx)
 		logger.Warningf("Failed to write data in api/status handler: %s", err.Error())
 	}
 }

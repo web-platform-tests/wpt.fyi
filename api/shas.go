@@ -79,7 +79,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		seen := mapset.NewSet()
 		for _, testRun := range testRuns.AllRuns() {
-			// nolint:staticcheck // TODO: Fix staticcheck lint error.
+			// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 			if !seen.Contains(testRun.Revision) {
 				shas = append(shas, testRun.Revision)
 				seen.Add(testRun.Revision)

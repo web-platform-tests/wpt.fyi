@@ -114,8 +114,14 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 				}
 			}
 			runPtr.ID = int64(id)
-			// nolint:errcheck // TODO: Fix errcheck lint error.
-			go idx.IngestRun(*runPtr)
+
+			go func() {
+				err := idx.IngestRun(*runPtr)
+				if err != nil {
+					log.Warningf("Failed to ingest runs: %s", err.Error())
+				}
+			}()
+
 			missing = append(missing, *runPtr)
 		} else {
 			// Ensure that both `ids` and `runs` correspond to the same test runs.
