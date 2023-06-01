@@ -50,7 +50,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
 
     <test-file-results-table test-runs="[[testRuns]]"
                              diff-run="[[diffRun]]"
-                             only-show-differences="{{onlyShowDifferences}}"
+                             only-show-differences="[[onlyShowDifferences]]"
                              path="[[path]]"
                              rows="[[rows]]"
                              verbose="[[isVerbose]]"
