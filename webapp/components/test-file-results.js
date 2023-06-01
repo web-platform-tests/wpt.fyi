@@ -87,7 +87,6 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       subtestRowCount: {
         type: Number,
         value: 0,
-        notify: true
       },
       isTriageMode: Boolean,
       metadataMap: Object,

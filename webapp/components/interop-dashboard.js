@@ -553,10 +553,7 @@ class InteropDashboard extends PolymerElement {
       embedded: Boolean,
       stable: Boolean,
       feature: String,
-      features: {
-        type: Array,
-        notify: true
-      },
+      features: Array,
       dataManager: Object,
       scores: Object,
       sortColumn: {

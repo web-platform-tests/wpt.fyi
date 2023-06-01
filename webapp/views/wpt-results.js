@@ -242,7 +242,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
-                           subtest-row-count={{subtestRowCount}}
+                           subtest-row-count=[[subtestRowCount]]
                            path="[[path]]"
                            structured-search="[[structuredSearch]]"
                            labels="[[labels]]"
@@ -430,12 +430,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       },
       subtestRowCount: {
         type: Number,
-        notify: true
       },
       testPaths: {
         type: Set,
         computed: 'computeTestPaths(searchResults)',
-        notify: true,
       },
       displayedNodes: {
         type: Array,

@@ -208,7 +208,6 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
       onlyShowDifferences: {
         type: Boolean,
         value: false,
-        notify: true,
       },
       statusesAsMessage: {
         type: Array,
