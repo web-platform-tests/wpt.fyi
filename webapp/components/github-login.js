@@ -48,7 +48,7 @@ class GitHubLogin extends PolymerElement {
     <template is="dom-if" if="[[user]]">
       <div class="logged-in">
         <template is="dom-if" if="[[showTriage]]">
-          <paper-toggle-button checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></paper-toggle-button>
+          <paper-toggle-button on-click="handleTriageToggle" checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></paper-toggle-button>
           Triage Mode
         </template>
         <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
@@ -80,7 +80,6 @@ class GitHubLogin extends PolymerElement {
       },
       isTriageMode: {
         type: Boolean,
-        notify: true,
       },
       showTriage: {
         type: Boolean,
@@ -99,6 +98,19 @@ class GitHubLogin extends PolymerElement {
     const url = new URL('/logout', window.location);
     url.searchParams.set('return', window.location);
     window.location = url;
+  }
+
+  handleTriageToggle() {
+    this._fireEvent('triagemode', { val: this.isTriageMode });
+  }
+
+  _fireEvent(eventName, detail) {
+    const event = new CustomEvent(eventName, {
+      bubbles: true,
+      composed: true,
+      detail,
+    });
+    this.dispatchEvent(event);
   }
 
   openHelpDialog() {

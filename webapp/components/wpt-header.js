@@ -91,7 +91,6 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       user: String,
       isTriageMode: {
         type: Boolean,
-        notify: true,
       }
     };
   }

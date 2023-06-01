@@ -292,6 +292,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
     testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
     document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    this.addEventListener('triagemode', this.handleTriageToggle.bind(this));
   }
 
   disconnectedCallback() {
@@ -376,6 +377,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     builder.master = true;
     this.handleSubmitQuery();
     this.dismissToast(e);
+  }
+
+  handleTriageToggle(e) {
+    this.isTriageMode = e.detail.val;
   }
 
   computeEditable(queryParams) {
