@@ -19,7 +19,6 @@ const TestRunsQueryLoader = (superClass) =>
         // Fetched + parsed JSON blobs for the runs
         testRuns: {
           type: Array,
-          notify: true,
         },
         nextPageToken: String,
         displayedProducts: Array,
