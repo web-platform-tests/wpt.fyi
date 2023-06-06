@@ -15,7 +15,6 @@ const PathInfo = (superClass) => class extends superClass {
     return {
       path: {
         type: String,
-        notify: true,
       },
       encodedPath: {
         type: String,

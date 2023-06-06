@@ -296,7 +296,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 <td onclick="[[handleTriageSelect(null, node, testRun)]]" onmouseover="[[handleTriageHover(null, node, testRun)]]">
                   <path-part
                       prefix="/results"
-                      path="{{ node.path }}"
+                      path="[[ node.path ]]"
                       query="{{ query }}"
                       is-dir="{{ node.isDir }}"
                       is-triage-mode=[[isTriageMode]]>

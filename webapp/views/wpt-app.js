@@ -153,7 +153,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-results name="results"
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
-                     path="{{subroute.path}}"
+                     path="[[subroute.path]]"
                      test-runs="[[testRuns]]"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
