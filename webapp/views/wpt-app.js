@@ -73,7 +73,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <app-location route="{{route}}" url-space-regex="^/(results)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
+      <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="[[isTriageMode]]"></wpt-header>
 
       <section class="search">
         <div class="path">
