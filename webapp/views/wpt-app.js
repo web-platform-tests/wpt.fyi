@@ -154,7 +154,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
                      path="{{subroute.path}}"
-                     test-runs="{{testRuns}}"
+                     test-runs="[[testRuns]]"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
                      subtest-row-count={{subtestRowCount}}
