@@ -94,4 +94,9 @@ func RegisterRoutes() {
 		"api-bsf",
 		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)),
 	)
+
+	// Test for practice
+	shared.AddRoute("/api/hello", "api-hello",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(sayHello)))
 }
