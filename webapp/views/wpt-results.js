@@ -264,7 +264,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <thead>
             <tr>
               <th>Path</th>
-              <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+              <template is="dom-repeat" items="[[testRuns]]" as="testRun">
                 <!-- Repeats for as many different browser test runs are available -->
                 <th><test-run test-run="[[testRun]]" show-source show-platform></test-run></th>
               </template>
@@ -309,7 +309,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                   </template>
                 </td>
 
-                <template is="dom-repeat" items="{{testRuns}}" as="testRun">
+                <template is="dom-repeat" items="[[testRuns]]" as="testRun">
                   <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
                     <template is="dom-if" if="[[diffRun]]">
                       <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_passes') }}</span>
