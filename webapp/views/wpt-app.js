@@ -73,7 +73,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <app-location route="{{route}}" url-space-regex="^/(results)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
-      <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="{{isTriageMode}}"></wpt-header>
+      <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="[[isTriageMode]]"></wpt-header>
 
       <section class="search">
         <div class="path">
@@ -154,7 +154,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
                      path="[[subroute.path]]"
-                     test-runs="{{testRuns}}"
+                     test-runs="[[testRuns]]"
                      test-paths="{{testPaths}}"
                      search-results="{{searchResults}}"
                      subtest-row-count={{subtestRowCount}}
@@ -292,6 +292,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
     testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
     document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    this.addEventListener('triagemode', this.handleTriageToggle.bind(this));
   }
 
   disconnectedCallback() {
@@ -376,6 +377,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     builder.master = true;
     this.handleSubmitQuery();
     this.dismissToast(e);
+  }
+
+  handleTriageToggle(e) {
+    this.isTriageMode = e.detail.val;
   }
 
   computeEditable(queryParams) {
