@@ -335,9 +335,3 @@ func handlePendingMetadata(
 	}
 	w.Write(marshalled)
 }
-
-// test function
-func sayHello(w http.ResponseWriter, r *http.Request) {
-
-	w.Write([]byte("Hello World"))
-}

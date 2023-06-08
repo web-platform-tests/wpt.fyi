@@ -519,6 +519,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   computeDisplayedTests(path, searchResults) {
+    this.getTestHistory()
     return searchResults
       && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
@@ -534,6 +535,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     }
     url.searchParams.set('filter', this.diffFilter);
     return url;
+  }
+
+  getTestHistory() {
+    const url = new URL('/api/history', window.location)
+
+    this.load(window.fetch(url)).then(r => r.json()).then(thing => {
+      console.log(thing)
+    })
   }
 
   constructor() {
