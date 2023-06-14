@@ -1,23 +1,24 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
+	"os"
+
+	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // test function
 func testHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := shared.GetLogger(ctx)
 
-	mockData := map[string]string{"data": "here is some mock data"}
+	jsonData, jsonErr := os.ReadFile("./api/mock_json.json")
 
-	marshalled, err := json.Marshal(mockData)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if jsonErr != nil {
+		logger.Errorf("Unable to get json %s", jsonErr.Error())
 	}
 
-	_, err = w.Write(marshalled)
+	_, err := w.Write(jsonData)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
