@@ -240,7 +240,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </iron-collapse>
     </template>
 
-    <new-test-results-history-grid></new-test-results-history-grid>
+    <new-test-results-history-grid
+      data="[[mockData]]"
+    ></new-test-results-history-grid>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -522,7 +524,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   computeDisplayedTests(path, searchResults) {
-    this.getTestHistory()
+    // this.getTestHistory()
     return searchResults
       && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
@@ -540,13 +542,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return url;
   }
 
-  getTestHistory() {
-    const url = new URL('/api/history', window.location)
+  // getTestHistory() {
+  //   const url = new URL('/api/history', window.location)
 
-    this.load(window.fetch(url)).then(r => r.json()).then(thing => {
-      console.log(thing)
-    })
-  }
+  //   let data = ""
+
+  //   this.load(window.fetch(url)).then(r => r.json()).then(thing => {
+  //     console.log({thing})
+  //     data = thing
+  //   })
+  //   return data
+  // }
 
   constructor() {
     super();
