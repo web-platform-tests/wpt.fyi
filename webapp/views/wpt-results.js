@@ -34,6 +34,7 @@ import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
+import '../components/new-test-results-history-grid.js'
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -238,6 +239,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         </test-runs-query-builder>
       </iron-collapse>
     </template>
+
+    <new-test-results-history-grid></new-test-results-history-grid>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
