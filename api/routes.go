@@ -94,4 +94,9 @@ func RegisterRoutes() {
 		"api-bsf",
 		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)),
 	)
+
+	// API endpoint for fetching test history
+	shared.AddRoute("/api/history", "api-history",
+		shared.WrapApplicationJSON(
+			shared.WrapPermissiveCORS(testHistory)))
 }
