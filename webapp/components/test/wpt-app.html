@@ -95,6 +95,25 @@ suite('<wpt-app>', () => {
         assert.isFalse(appFixture.computePathIsRootDir('/a/b'));
       });
     });
+
+    suite('wpt-permalinks', () => {
+      // Background: Test for regression in issue 3370
+      test('testRuns from sibling wpt-results propagates to wpt-permalinks', () => {
+        const wptResults = appFixture.shadowRoot.querySelector('wpt-results');
+        const wptPermalinks = appFixture.shadowRoot.querySelector('wpt-results');
+        // Reset the testRuns
+        wptResults.testRuns = [];
+        wptResults._fireTestRunsLoadEvent();
+        assert.equal(wptPermalinks.testRuns.length, 0);
+
+        // Set the wptResults testRuns. This simulates when loadRuns completes.
+        // Afterwards, fire an event.
+        wptResults.testRuns = Array.from(TEST_RUNS_DATA);
+        wptResults._fireTestRunsLoadEvent();
+        // wptPermalinks should have the test runs now.
+        assert.equal(wptPermalinks.testRuns.length, 4);
+      });
+    });
   });
 });
 </script>
