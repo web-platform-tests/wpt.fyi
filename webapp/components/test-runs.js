@@ -51,6 +51,13 @@ const TestRunsQueryLoader = (superClass) =>
       }, []);
       this.testRuns = flattened;
       this.displayedProducts = this.testRuns.map(productFromRun);
+      // Dispatch testrunsload event. Components that consume the event:
+      // - wpt-permalinks
+      this.dispatchEvent(
+        new CustomEvent('testrunsload', {
+          detail: {testRuns: this.testRuns},
+        })
+      );
       return flattened;
     }
 

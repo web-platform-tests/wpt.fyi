@@ -159,6 +159,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      search-results="{{searchResults}}"
                      subtest-row-count={{subtestRowCount}}
                      is-triage-mode="[[isTriageMode]]"
+                     on-testrunsload="handleTestRunsLoad"
                      view="[[view]]"></wpt-results>
 
         <wpt-404 name="404" ></wpt-404>
@@ -381,6 +382,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   handleTriageToggle(e) {
     this.isTriageMode = e.detail.val;
+  }
+
+  handleTestRunsLoad(e) {
+    this.testRuns = e.detail.testRuns;
   }
 
   computeEditable(queryParams) {
