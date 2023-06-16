@@ -11,16 +11,17 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
                 border: 2px dotted orange;
             }
         </style>
+        <template is="dom-repeat" items="[[dataKeys]]">
         <div
         class="browser"
-        onclick="[[getTestHistory]]"
-        >Hello this is the browser</div>
+        >[[dataKeys]]</div>
+        </template>
         `
     }
 
     constructor() {
         super();
-        this.getTestHistory
+        this.getTestHistory()
     }
 
     static get is() {
@@ -29,6 +30,10 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
 
     static get properties() {
         return {
+            data: {
+                type: Object,
+                value: {},
+            },
             dataKeys: {
                 type: Array,
                 value: [],
@@ -36,24 +41,15 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
         }
     }
 
-    //   static get observers() {
-    //     return ['getTestHistory()']
-    //   }
-
-    getTestHistory() {
+    async getTestHistory() {
         const url = new URL('/api/history', window.location)
 
-        this.load(
-            window.fetch(url).then(r => r.json()).then(dataKeys => {
-              this.dataKeys = dataKeys;
+        this.data = await this.load(
+            window.fetch(url).then(r => r.json()).then(data => {
+              return data
             })
           );
-
-        // this.load(
-        //     window.fetch(url).then(r => r.json()).then(data => {
-        //         this.dataKeys = Object.keys(data)
-        //     })
-        // )
+        this.dataKeys = Object.keys(this.data)
         console.log("data keys", this.dataKeys)
     }
 }
