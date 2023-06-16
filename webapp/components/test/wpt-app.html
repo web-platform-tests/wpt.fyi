@@ -96,22 +96,24 @@ suite('<wpt-app>', () => {
       });
     });
 
-    suite('wpt-permalinks', () => {
+    suite('wpt-results', () => {
       // Background: Test for regression in issue 3370
-      test('testRuns from sibling wpt-results propagates to wpt-permalinks', () => {
+      // wpt-results is a sibling of wpt-permalinks and it needs testRuns.
+      // When wpt-results loads testRuns, it needs to push it up to the parent
+      // wpt-app via dispatchEvent. Then wpt-app can push it down to wpt-permalinks.
+      test('testRuns from child wpt-results propagates to wpt-app testRuns', () => {
         const wptResults = appFixture.shadowRoot.querySelector('wpt-results');
-        const wptPermalinks = appFixture.shadowRoot.querySelector('wpt-results');
         // Reset the testRuns
         wptResults.testRuns = [];
         wptResults._fireTestRunsLoadEvent();
-        assert.equal(wptPermalinks.testRuns.length, 0);
+        assert.equal(appFixture.testRuns.length, 0);
 
         // Set the wptResults testRuns. This simulates when loadRuns completes.
         // Afterwards, fire an event.
         wptResults.testRuns = Array.from(TEST_RUNS_DATA);
         wptResults._fireTestRunsLoadEvent();
-        // wptPermalinks should have the test runs now.
-        assert.equal(wptPermalinks.testRuns.length, 4);
+        // wpt-app should have the test runs now.
+        assert.equal(appFixture.testRuns.length, 4);
       });
     });
   });
