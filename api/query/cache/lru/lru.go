@@ -5,7 +5,6 @@
 package lru
 
 import (
-	"errors"
 	"math"
 	"sort"
 	"sync"
@@ -43,8 +42,6 @@ type lruEntries []lruEntry
 func (s lruEntries) Len() int           { return len(s) }
 func (s lruEntries) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s lruEntries) Less(i, j int) bool { return s[i].Time.Before(s[j].Time) }
-
-var errEmpty = errors.New("LRU is empty")
 
 func (l *lru) Access(v int64) {
 	l.syncAccess(v)

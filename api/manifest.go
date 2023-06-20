@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -28,8 +28,9 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	sha := shas.FirstOrLatest()
 
 	ctx := r.Context()
+	logger := shared.GetLogger(ctx)
 	manifestAPI := manifest.NewAPI(ctx)
-	sha, manifest, err := getManifest(shared.GetLogger(ctx), manifestAPI, sha, paths)
+	sha, manifest, err := getManifest(logger, manifestAPI, sha, paths)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 
@@ -37,7 +38,10 @@ func apiManifestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add("X-WPT-SHA", sha)
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(manifest)
+	_, err = w.Write(manifest)
+	if err != nil {
+		logger.Warningf("Failed to write data in api/manifest handler: %s", err.Error())
+	}
 }
 
 func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths []string) (string, []byte, error) {
@@ -95,7 +99,7 @@ func getManifest(log shared.Logger, manifestAPI manifest.API, sha string, paths 
 		return fetchedSHA, nil, err
 	}
 	defer gzReader.Close()
-	unzipped, err := ioutil.ReadAll(gzReader)
+	unzipped, err := io.ReadAll(gzReader)
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
@@ -120,7 +124,7 @@ func readByKey(readable shared.Readable, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	return ioutil.ReadAll(reader)
+	return io.ReadAll(reader)
 }
 
 func writeByKey(writable shared.ReadWritable, key string, body []byte) error {

@@ -79,6 +79,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		seen := mapset.NewSet()
 		for _, testRun := range testRuns.AllRuns() {
+			// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 			if !seen.Contains(testRun.Revision) {
 				shas = append(shas, testRun.Revision)
 				seen.Add(testRun.Revision)
@@ -87,7 +88,11 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(shas) < 1 {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("[]"))
+		_, err = w.Write([]byte("[]"))
+		if err != nil {
+			logger := shared.GetLogger(ctx)
+			logger.Warningf("Failed to write data in api/shas handler: %s", err.Error())
+		}
 
 		return
 	}
@@ -98,5 +103,10 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(shasBytes)
+
+	_, err = w.Write(shasBytes)
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in api/shas handler: %s", err.Error())
+	}
 }

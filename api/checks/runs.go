@@ -42,8 +42,12 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 	}
 
 	var created bool
+	// nolint:nestif // TODO: Fix nestif lint error
 	if existing != nil {
 		created, err = updateExistingCheckRunSummary(ctx, summary, suite, existing)
+		if err != nil {
+			log.Warningf("Failed to update existing check run summary for %s: %s", *existing.HeadSHA, err.Error())
+		}
 	} else {
 		state := summary.GetCheckState()
 		actions := summary.GetActions()
@@ -75,6 +79,9 @@ func updateCheckRunSummary(ctx context.Context, summary summaries.Summary, suite
 			opts.CompletedAt = &github.Timestamp{Time: time.Now()}
 		}
 		created, err = createCheckRun(ctx, suite, opts)
+		if err != nil {
+			log.Warningf("Failed to create check run summary for %s: %s", suite.SHA, err.Error())
+		}
 	}
 	if created {
 		log.Debugf("Check for %s/%s @ %s (%s) updated", suite.Owner, suite.Repo, suite.SHA[:7], product.String())

@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sort"
@@ -71,7 +70,7 @@ func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh structuredSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 	}
@@ -192,10 +191,10 @@ func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		msg := fmt.Sprintf("Error from request: POST %s: STATUS %d", fwdURL.String(), resp.StatusCode)
-		errBody, err2 := ioutil.ReadAll(resp.Body)
+		errBody, err2 := io.ReadAll(resp.Body)
 		if err2 == nil {
 			msg = fmt.Sprintf("%s: %s", msg, string(errBody))
-			resp.Body = ioutil.NopCloser(bytes.NewBuffer(errBody))
+			resp.Body = io.NopCloser(bytes.NewBuffer(errBody))
 		}
 		logger.Errorf(msg)
 	}
@@ -270,7 +269,7 @@ var cacheKey = func(r *http.Request) interface{} {
 	}
 
 	body := r.Body
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
 		shared.GetLogger(r.Context()).Errorf(msg)
@@ -279,7 +278,7 @@ var cacheKey = func(r *http.Request) interface{} {
 	defer body.Close()
 
 	// Ensure that r.Body can be read again by other request handling routines.
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	r.Body = io.NopCloser(bytes.NewBuffer(data))
 
 	return fmt.Sprintf("%s#%s", r.URL.String(), string(data))
 }

@@ -5,7 +5,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -44,7 +44,7 @@ func TestGetTestRunByID(t *testing.T) {
 	apiTestRunHandler(resp, r)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	var bodyTestRun shared.TestRun
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &bodyTestRun)
 	assert.Equal(t, int64(123), bodyTestRun.ID)
 }

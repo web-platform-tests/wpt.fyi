@@ -7,7 +7,7 @@ package receiver
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -23,12 +23,14 @@ const InternalUsername = "_processor"
 
 // HandleResultsCreate handles the POST requests for creating test runs.
 func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Request) {
+	logger := shared.GetLogger(a.Context())
+
 	if AuthenticateUploader(a, r) != InternalUsername {
 		http.Error(w, "This is a private API.", http.StatusUnauthorized)
 
 		return
 	}
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -50,6 +52,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	}
 	testRun.CreatedAt = time.Now()
 
+	// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 	if len(testRun.FullRevisionHash) != 40 {
 		http.Error(w, "full_revision_hash must be the full SHA (40 chars)", http.StatusBadRequest)
 
@@ -65,6 +68,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 		return
 	}
+	// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 	testRun.Revision = testRun.FullRevisionHash[:10]
 
 	key, err := a.AddTestRun(&testRun)
@@ -82,10 +86,12 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 		spec := shared.ProductSpec{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
 		spec.BrowserName = testRun.BrowserName
 		spec.Labels = mapset.NewSet(testRun.Channel())
-		s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
+		err = s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
+		if err != nil {
+			logger.Warningf("Failed to schedule results: %s", err.Error())
+		}
 	}
 
-	log := shared.GetLogger(a.Context())
 	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	pendingRun := shared.PendingTestRun{
 		ID:                testRun.ID,
@@ -94,7 +100,7 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	}
 	if err := a.UpdatePendingTestRun(pendingRun); err != nil {
 		// This is a non-fatal error; don't return.
-		log.Errorf("Failed to update pending test run: %s", err.Error())
+		logger.Errorf("Failed to update pending test run: %s", err.Error())
 	}
 
 	jsonOutput, err := json.Marshal(testRun)
@@ -103,7 +109,10 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 
 		return
 	}
-	log.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
+	logger.Infof("Successfully created run %v (%s)", testRun.ID, testRun.String())
 	w.WriteHeader(http.StatusCreated)
-	w.Write(jsonOutput)
+	_, err = w.Write(jsonOutput)
+	if err != nil {
+		logger.Warningf("Failed to write data in api/results/create handler: %s", err.Error())
+	}
 }

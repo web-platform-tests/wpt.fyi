@@ -74,6 +74,6 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// We should investigate if we should return a HTTP error or not. In the meantime, we log the error.
 	if err != nil {
 		logger := shared.GetLogger(r.Context())
-		logger.Warningf("Failed to write data: %w", err.Error())
+		logger.Warningf("Failed to write data: %s", err.Error())
 	}
 }

@@ -10,7 +10,7 @@ package taskcluster_test
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -387,7 +387,7 @@ func TestCreateAllRuns_pr_labels_exclude_master(t *testing.T) {
 		// We should not see a master label here, even though we
 		// specify one in the call to tc.CreateAllRuns.
 		defer r.Body.Close()
-		body, _ := ioutil.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
 		assert.NotContains(t, string(body), "master")
 		w.Write([]byte("OK"))
 	}

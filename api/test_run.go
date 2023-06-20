@@ -57,11 +57,11 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 
 			return
 		} else if len(filters.Products) == 0 {
-			http.Error(w, fmt.Sprintf("Missing required 'product' param"), http.StatusBadRequest)
+			http.Error(w, "Missing required 'product' param", http.StatusBadRequest)
 
 			return
 		} else if len(filters.Products) > 1 {
-			http.Error(w, fmt.Sprintf("Only one 'product' param value is allowed"), http.StatusBadRequest)
+			http.Error(w, "Only one 'product' param value is allowed", http.StatusBadRequest)
 
 			return
 		}
@@ -97,5 +97,9 @@ func apiTestRunHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(testRunsBytes)
+	_, err = w.Write(testRunsBytes)
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in api/run handler: %s", err.Error())
+	}
 }

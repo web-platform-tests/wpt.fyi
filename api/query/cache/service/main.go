@@ -54,18 +54,26 @@ var (
 	mon monitor.Monitor
 )
 
-func livenessCheckHandler(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("Alive"))
+func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Alive"))
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in liveness check handler: %s", err.Error())
+	}
 }
 
-func readinessCheckHandler(w http.ResponseWriter, _ *http.Request) {
+func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if idx == nil || mon == nil {
 		http.Error(w, "Cache not yet ready", http.StatusServiceUnavailable)
 
 		return
 	}
 
-	w.Write([]byte("Ready"))
+	_, err := w.Write([]byte("Ready"))
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in readiness check handler: %s", err.Error())
+	}
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {

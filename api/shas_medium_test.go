@@ -5,7 +5,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -30,7 +30,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	bytes, _ := ioutil.ReadAll(w.Result().Body)
+	bytes, _ := io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &shas)
 	assert.Equal(t, []string{}, shas)
 
@@ -56,7 +56,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, _ = ioutil.ReadAll(w.Result().Body)
+	bytes, _ = io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &shas)
 	assert.Equal(t, []string{"abcdef0123"}, shas)
 
@@ -66,7 +66,7 @@ func TestApiSHAsHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	apiSHAsHandler(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, _ = ioutil.ReadAll(w.Result().Body)
+	bytes, _ = io.ReadAll(w.Result().Body)
 	json.Unmarshal(bytes, &shas)
 	assert.Equal(t, []string{"abcdef0123", "abcdef0000"}, shas)
 

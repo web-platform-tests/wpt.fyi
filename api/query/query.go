@@ -32,8 +32,6 @@ type summary map[string]SummaryResult
 type queryHandler struct {
 	store      shared.Datastore
 	dataSource shared.CachedStore
-	client     *http.Client
-	logger     shared.Logger
 }
 
 // ErrBadSummaryVersion occurs when the summary file URL is not the correct version.

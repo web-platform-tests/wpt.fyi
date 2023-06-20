@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -125,7 +125,7 @@ func handleAPIDiffGet(w http.ResponseWriter, r *http.Request) {
 	// We should investigate if we should return a HTTP error or not. In the meantime, we log the error.
 	if err != nil {
 		logger := shared.GetLogger(r.Context())
-		logger.Warningf("Failed to write data in diff API: %w", err.Error())
+		logger.Warningf("Failed to write data in api/diff GET handler: %s", err.Error())
 	}
 }
 
@@ -159,7 +159,7 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body []byte
-	if body, err = ioutil.ReadAll(r.Body); err != nil {
+	if body, err = io.ReadAll(r.Body); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
@@ -187,5 +187,9 @@ func handleAPIDiffPost(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(bytes)
+	_, err = w.Write(bytes)
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in api/diff POST handler: %s", err.Error())
+	}
 }

@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -104,7 +104,7 @@ func (a apiImpl) GetBuild(owner, repo string, buildID int64) (*Build, error) {
 		return nil, fmt.Errorf("failed to handle fetch build: %w", err)
 	}
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read request response: %w", err)
 	}

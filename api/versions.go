@@ -79,7 +79,11 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if len(runs) < 1 {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("[]"))
+		_, err = w.Write([]byte("[]"))
+		if err != nil {
+			logger := shared.GetLogger(ctx)
+			logger.Warningf("Failed to write data in api/versions handler: %s", err.Error())
+		}
 
 		return
 	}
@@ -97,5 +101,10 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(versionsBytes)
+
+	_, err = w.Write(versionsBytes)
+	if err != nil {
+		logger := shared.GetLogger(ctx)
+		logger.Warningf("Failed to write data in api/versions handler: %s", err.Error())
+	}
 }

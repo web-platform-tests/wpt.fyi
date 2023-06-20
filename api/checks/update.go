@@ -88,7 +88,8 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	updatedAny := false
 	for _, suite := range suites {
-		summaryData, err := getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
+		var summaryData summaries.Summary
+		summaryData, err = getDiffSummary(aeAPI, diffAPI, suite, *baseRun, *headRun)
 		if errors.Is(err, shared.ErrRunNotInSearchCache) {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 
@@ -109,9 +110,13 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Failed to update check_run(s): %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else if updatedAny {
-		w.Write([]byte("Check(s) updated"))
+		_, err = w.Write([]byte("Check(s) updated"))
 	} else {
-		w.Write([]byte("No check(s) updated"))
+		_, err = w.Write([]byte("No check(s) updated"))
+	}
+
+	if err != nil {
+		log.Warningf("Failed to write data in api/checks handler: %s", err.Error())
 	}
 }
 
@@ -227,7 +232,7 @@ func getDiffSummary(
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ProductAtRevision: shared.ProductAtRevision{
 			Product:  shared.Product{BrowserName: headRun.BrowserName},
-			Revision: headRun.Revision,
+			Revision: headRun.Revision, // nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 		},
 		Labels: mapset.NewSetWith(baseRun.Channel()),
 	}
@@ -246,7 +251,7 @@ func getDiffSummary(
 	}
 
 	var regressions mapset.Set
-	if aeAPI.IsFeatureEnabled("onlyChangesAsRegressions") {
+	if aeAPI.IsFeatureEnabled(onlyChangesAsRegressionsFeature) {
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		regressionFilter := shared.DiffFilterParam{Changed: true} // Only changed items
 		changeOnlyDiff, err := diffAPI.GetRunsDiff(baseRun, headRun, regressionFilter, nil)
@@ -342,24 +347,6 @@ func (e pathKeys) Len() int      { return len(e) }
 func (e pathKeys) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
 func (e pathKeys) Less(i, j int) bool {
 	return len(strings.Split(e[i], "/")) > len(strings.Split(e[j], "/"))
-}
-
-// collapseDiff collapses a tree of file paths into a smaller tree of folders.
-func collapseDiff(diff shared.ResultsDiff, limit int) shared.ResultsDiff {
-	keys, _ := shared.MapStringKeys(diff)
-	paths := shared.ToStringSlice(collapsePaths(keys, limit))
-	result := make(shared.ResultsDiff)
-	for k, v := range diff {
-		for _, p := range paths {
-			if strings.HasPrefix(k, p) {
-				result.Add(p, v)
-
-				break
-			}
-		}
-	}
-
-	return result
 }
 
 // collapseSummary collapses a tree of file paths into a smaller tree of folders.

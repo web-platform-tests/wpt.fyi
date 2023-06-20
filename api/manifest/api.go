@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"time"
 
@@ -48,7 +47,7 @@ func (a apiImpl) GetManifestForSHA(sha string) (fetchedSHA string, manifest []by
 	if err != nil {
 		return fetchedSHA, nil, err
 	}
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return fetchedSHA, nil, err
 	}

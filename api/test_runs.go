@@ -84,7 +84,10 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if len(testRuns) == 0 {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("[]"))
+		_, err = w.Write([]byte("[]"))
+		if err != nil {
+			log.Warningf("Failed to write data in api/runs handler: %s", err.Error())
+		}
 
 		return
 	}
@@ -99,7 +102,11 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(testRunsBytes)
+
+	_, err = w.Write(testRunsBytes)
+	if err != nil {
+		log.Warningf("Failed to write data in api/runs handler: %s", err.Error())
+	}
 }
 
 // LoadTestRunKeysForFilters deciphers the filters and executes a corresponding

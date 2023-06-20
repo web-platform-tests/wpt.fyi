@@ -12,7 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -118,7 +118,7 @@ func TestUnstructuredSearchHandler(t *testing.T) {
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
 	ch.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, err := ioutil.ReadAll(w.Result().Body)
+	bytes, err := io.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
 	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
@@ -268,7 +268,7 @@ func TestStructuredSearchHandler_equivalentToUnstructured(t *testing.T) {
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
 	ch.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, err := ioutil.ReadAll(w.Result().Body)
+	bytes, err := io.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
 	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
@@ -415,7 +415,7 @@ func TestUnstructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
 	ch.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, err := ioutil.ReadAll(w.Result().Body)
+	bytes, err := io.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
 	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)
@@ -513,7 +513,7 @@ func TestStructuredSearchHandler_doNotCacheEmptyResult(t *testing.T) {
 	ch := shared.NewCachingHandler(ctx, sh, mc, isRequestCacheable, shared.URLAsCacheKey, sc.ShouldCache)
 	ch.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
-	bytes, err := ioutil.ReadAll(w.Result().Body)
+	bytes, err := io.ReadAll(w.Result().Body)
 	assert.Nil(t, err)
 	var data shared.SearchResponse
 	err = json.Unmarshal(bytes, &data)

@@ -9,7 +9,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,7 +40,7 @@ func TestLabelsHandler(t *testing.T) {
 
 func parseLabelsResponse(t *testing.T, w *httptest.ResponseRecorder) []string {
 	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
-	out, _ := ioutil.ReadAll(w.Body)
+	out, _ := io.ReadAll(w.Body)
 	var labels []string
 	json.Unmarshal(out, &labels)
 	return labels

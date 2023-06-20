@@ -40,7 +40,11 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(marshalled)
+		_, err = w.Write(marshalled)
+		if err != nil {
+			logger := shared.GetLogger(ctx)
+			logger.Warningf("Failed to write data in api/user handler: %s", err.Error())
+		}
 
 		return
 	}
@@ -52,5 +56,10 @@ func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Write(marshalled)
+
+	_, err = w.Write(marshalled)
+	if err != nil {
+		logger := shared.GetLogger(ctx)
+		logger.Warningf("Failed to write data in api/user handler: %s", err.Error())
+	}
 }
