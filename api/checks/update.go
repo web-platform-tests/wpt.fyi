@@ -349,25 +349,6 @@ func (e pathKeys) Less(i, j int) bool {
 	return len(strings.Split(e[i], "/")) > len(strings.Split(e[j], "/"))
 }
 
-// collapseDiff collapses a tree of file paths into a smaller tree of folders.
-// nolint:unused // TODO: Investigate if this is necessary
-func collapseDiff(diff shared.ResultsDiff, limit int) shared.ResultsDiff {
-	keys, _ := shared.MapStringKeys(diff)
-	paths := shared.ToStringSlice(collapsePaths(keys, limit))
-	result := make(shared.ResultsDiff)
-	for k, v := range diff {
-		for _, p := range paths {
-			if strings.HasPrefix(k, p) {
-				result.Add(p, v)
-
-				break
-			}
-		}
-	}
-
-	return result
-}
-
 // collapseSummary collapses a tree of file paths into a smaller tree of folders.
 func collapseSummary(diff shared.RunDiff, limit int) summaries.BeforeAndAfter {
 	beforeKeys, _ := shared.MapStringKeys(diff.BeforeSummary)
