@@ -25,6 +25,16 @@ const TestRunsQueryLoader = (superClass) =>
       };
     }
 
+    _fireTestRunsLoadEvent() {
+      // Dispatch testrunsload event. Components that consume the event:
+      // - wpt-permalinks
+      this.dispatchEvent(
+        new CustomEvent('testrunsload', {
+          detail: {testRuns: this.testRuns},
+        })
+      );
+    }
+
     async loadRuns() {
       const preloaded = this.testRuns;
       const runs = [];
@@ -51,6 +61,7 @@ const TestRunsQueryLoader = (superClass) =>
       }, []);
       this.testRuns = flattened;
       this.displayedProducts = this.testRuns.map(productFromRun);
+      this._fireTestRunsLoadEvent();
       return flattened;
     }
 
@@ -70,6 +81,7 @@ const TestRunsQueryLoader = (superClass) =>
       }
       const runs = await r.json();
       this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
+      this._fireTestRunsLoadEvent();
       this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
       return runs;
     }
