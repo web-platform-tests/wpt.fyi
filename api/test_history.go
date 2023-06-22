@@ -8,7 +8,7 @@ import (
 )
 
 // test function
-func testHistory(w http.ResponseWriter, r *http.Request) {
+func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := shared.GetLogger(ctx)
 
