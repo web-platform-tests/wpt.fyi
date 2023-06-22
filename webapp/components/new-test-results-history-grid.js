@@ -69,18 +69,18 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
   // timeline of historical tests
   getSquareClass(subtestName, run) {
     const runDate = new Date(run.time_start);
-    const historyResults = this.historicalData[subtestName]
+    const historyResults = this.historicalData[subtestName];
 
     let colorClass;
     for (let i = historyResults.length - 1; i >= 0; i--) {
-      const historicalDate = new Date(Number(historyResults[i].date))
+      const historicalDate = new Date(Number(historyResults[i].date));
 
       if (runDate > historicalDate || i === 0) {
-        colorClass = historyResults[i].status
-        break
+        colorClass = historyResults[i].status;
+        break;
       }
     }
-    return `square ${colorClass}`
+    return `square ${colorClass}`;
   }
 
   // get test history and aligned run data
@@ -88,9 +88,9 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
     this.historicalData = await fetch('/api/history').then(r => r.json()).then(data => data);
     this.subtestNames = Object.keys(this.historicalData);
 
-    this.runs = await fetch(`/api/runs?label=master&label=experimental&max-count=100&aligned`)
+    this.runs = await fetch('/api/runs?label=master&label=experimental&max-count=100&aligned')
       .then(r => r.json());
-    this.runs = this.runs.filter(run => run.browser_name === 'chrome')
+    this.runs = this.runs.filter(run => run.browser_name === 'chrome');
   }
 
   getSubTests(key) {
