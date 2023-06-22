@@ -7,7 +7,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// test function
+// Handler for fetching historical data of a specific test for each of the four major browsers.
 func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := shared.GetLogger(ctx)
