@@ -19,20 +19,22 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
             .square.OK, .square.PASS {
                 background-color: var(--paper-green-300);
             }
-            .square.FAIL {
+            .square.FAIL, .square.TIMEOUT {
                 background-color: var(--paper-red-300)
             }
 						.subtest-row {
 							display: flex;
 						}
         </style>
-        <template is="dom-repeat" items="[[dataKeys]]" as="dataKey" index-as="i">
-				<h2>[[dataKey]]</h2>
-				<div class="subtest-row">
-						<template is="dom-repeat" items="[[getSubTests(dataKey)]]" as="subTest">
-							<div class$="square [[subTest.status]]"></div>
-							</template>
-							</div>
+        <template is="dom-repeat" items="[[subtestNames]]" as="subtestName">
+        <div class="subtest-row">
+        <span>[[subtestName]]</span>
+            <template is="dom-repeat" items="[[runs]]" as="run">
+              <a href="[[getRunLink(run)]]">
+              <div class$="[[getSquareClass(subtestName, run)]]"></div>
+              </a>
+            </template>
+          </div>
         </template>
         `;
   }
@@ -59,15 +61,35 @@ class TestResultsGrid extends LoadingState(PolymerElement) {
     };
   }
 
-  async getTestHistory() {
-    const url = new URL('/api/history', window.location);
+  getRunLink(run) {
+    return `/results/?run_id=${run.id}`;
+  }
 
-    this.data = await this.load(
-      window.fetch(url).then(r => r.json()).then(data => {
-        return data;
-      })
-    );
-    this.dataKeys = Object.keys(this.data);
+  getSquareClass(subtestName, run) {
+    const runDate = new Date(run.time_start);
+    const historyResults = this.historicalData[subtestName]
+
+    let colorClass;
+    for (let i = historyResults.length - 1; i >= 0; i--) {
+      const historicalDate = new Date(Number(historyResults[i].date))
+
+      if (runDate > historicalDate || i === 0) {
+        colorClass = historyResults[i].status
+        break
+      }
+    }
+    return `square ${colorClass}`
+  }
+
+  async getTestHistory() {
+    this.historicalData = await fetch('/api/history').then(r => r.json()).then(data => data);
+    this.subtestNames = Object.keys(this.historicalData);
+    console.log(this.historicalData)
+
+    this.runs = await fetch(`/api/runs?label=master&label=experimental&max-count=100&aligned`)
+      .then(r => r.json());
+    this.runs = this.runs.filter(run => run.browser_name === 'chrome')
+    console.log(this.runs)
   }
 
   getSubTests(key) {
