@@ -240,10 +240,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </iron-collapse>
     </template>
 
-    <new-test-results-history-grid
-      data="[[mockData]]"
-    ></new-test-results-history-grid>
-
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
@@ -373,10 +369,25 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[pathIsATestFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
-            Show history
+          <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
+            Show New history
           </paper-button>
+          <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
+          Show history
+        </paper-button>
         </template>
+        <!-- New Test History Implementation -->
+        <template is="dom-if" if="[[showNewHistory]]">
+        <h3>
+          History <span>(Experimental)</span>
+        </h3>
+        <template is="dom-if" if="[[pathIsATestFile]]">
+          <new-test-results-history-grid
+          data="[[mockData]]">
+          </new-test-results-history-grid>
+        </template>
+      </template>
+      <!-- Previous Test History Implementation -->
         <template is="dom-if" if="[[showHistory]]">
           <h3>
             History <span>(Experimental)</span>
@@ -470,6 +481,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
+      showNewHistory: {
+        type: Boolean,
+        value: false,
+      },
       resultsLoadFailed: Boolean,
       noResults: Boolean,
       editingQuery: {
@@ -524,7 +539,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   computeDisplayedTests(path, searchResults) {
-    // this.getTestHistory()
     return searchResults
       && searchResults.map(r => r.test).filter(name => name.startsWith(path))
       || [];
@@ -541,18 +555,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     url.searchParams.set('filter', this.diffFilter);
     return url;
   }
-
-  // getTestHistory() {
-  //   const url = new URL('/api/history', window.location)
-
-  //   let data = ""
-
-  //   this.load(window.fetch(url)).then(r => r.json()).then(thing => {
-  //     console.log({thing})
-  //     data = thing
-  //   })
-  //   return data
-  // }
 
   constructor() {
     super();
@@ -1260,6 +1262,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   showHistoryClicked() {
     return () => {
       this.showHistory = true;
+    };
+  }
+
+  showNewHistoryClicked() {
+    return () => {
+      this.showNewHistory = true;
     };
   }
 
