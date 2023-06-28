@@ -317,7 +317,8 @@ export const interopData = {
         'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
         'scores_over_time': [
           { 'date': '2023-03-08', 'score': 600 },
-          { 'date': '2023-05-13', 'score': 700 }
+          { 'date': '2023-05-13', 'score': 700 },
+          { 'date': '2023-06-27', 'score': 780 }
         ]
       },
       {
