@@ -1,3 +1,9 @@
+/**
+ * Copyright 2023 The WPT Dashboard Project. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 const PASS_COLOR = '#81c784';
@@ -71,8 +77,10 @@ class TestResultsGrid extends PolymerElement {
     super();
 
     // Get the test history data and then populate the chart
-    this.getTestHistory();
-    this.loadCharts().then(() => this.updateAllCharts(this.historicalData));
+    Promise.all([
+      this.getTestHistory(),
+      this.loadCharts()
+    ]).then(() => this.updateAllCharts(this.historicalData));
 
     // Google Charts is not responsive, even if one sets a percentage-width, so
     // we add a resize observer to redraw the chart if the size changes.
