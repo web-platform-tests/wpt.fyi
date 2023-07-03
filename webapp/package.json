@@ -30,7 +30,7 @@
     "@browser-logos/uc": "1.1.0",
     "@browser-logos/webkit-nightly": "2.0.2",
     "@polymer/test-fixture": "4.0.2",
-    "cpy-cli": "4.2.0",
+    "cpy-cli": "5.0.0",
     "eslint": "8.43.0",
     "eslint-plugin-html": "7.1.0",
     "wct-browser-legacy": "1.0.2",
