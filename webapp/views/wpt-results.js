@@ -369,9 +369,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[pathIsATestFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-          <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
-            Show New history
-          </paper-button>
+          <template is="dom-if" if="[[!historyTimeline]]">
+            <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
+              Show New history
+            </paper-button>
+          </template>
           <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
           Show history
         </paper-button>
