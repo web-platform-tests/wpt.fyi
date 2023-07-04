@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/cloudtasks v1.11.1
-	cloud.google.com/go/datastore v1.11.0
+	cloud.google.com/go/datastore v1.12.0
 	cloud.google.com/go/logging v1.7.0
 	cloud.google.com/go/secretmanager v1.11.1
 	cloud.google.com/go/storage v1.30.1
@@ -40,7 +40,7 @@ require (
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.0 // indirect
-	cloud.google.com/go/longrunning v0.4.2 // indirect
+	cloud.google.com/go/longrunning v0.5.0 // indirect
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
