@@ -44,7 +44,7 @@ googleapis-common-protos==1.55.0
     # via
     #   google-api-core
     #   grpcio-status
-grpcio==1.44.0
+grpcio==1.53.0
     # via
     #   google-api-core
     #   grpcio-status
@@ -97,9 +97,7 @@ requests==2.28.2
 rsa==4.8
     # via google-auth
 six==1.16.0
-    # via
-    #   google-auth
-    #   grpcio
+    # via google-auth
 tomli==2.0.1
     # via mypy
 typing-extensions==4.1.1
