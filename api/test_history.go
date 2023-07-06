@@ -12,7 +12,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := shared.GetLogger(ctx)
 
-	jsonData, jsonErr := os.ReadFile("./api/mock_json.json")
+	jsonData, jsonErr := os.ReadFile("./api/test-data/mock_history_data.json")
 
 	if jsonErr != nil {
 		logger.Errorf("Unable to get json %s", jsonErr.Error())
