@@ -5,10 +5,11 @@
  */
 
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
+const pageStyle = getComputedStyle(document.body);
 
-const PASS_COLOR = '#81c784';
-const FAIL_COLOR = '#e57373';
-const NEUTRAL_COLOR = '#eeeeee';
+const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
+const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
+const NEUTRAL_COLOR = pageStyle.getPropertyValue('--paper-grey-300');
 const COLOR_MAPPING = {
   // Passing statuses
   OK: PASS_COLOR,
@@ -44,20 +45,27 @@ class TestResultsGrid extends PolymerElement {
           }
         </style>
         <h2>
-        <img class="browser" alt="chrome chrome,dev,experimental,master,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/chrome-dev_64x64.png">
-        Chrome</h2>
+          <img class="browser" alt="chrome chrome,dev,experimental,master,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/chrome-dev_64x64.png">
+          Chrome
+        </h2>
         <div class="chart" id="chrome"></div>
+
         <h2>
-        <img class="browser" alt="edge azure,dev,edge,edgechromium,experimental,master,prod logo" src="/static/edge-dev_64x64.png">
-        Edge</h2>
+          <img class="browser" alt="edge azure,dev,edge,edgechromium,experimental,master,prod logo" src="/static/edge-dev_64x64.png">
+          Edge
+        </h2>
         <div class="chart" id="edge"></div>
+
         <h2>
-        <img class="browser" alt="firefox experimental,firefox,master,nightly,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/firefox-nightly_64x64.png">
-        Firefox</h2>
+          <img class="browser" alt="firefox experimental,firefox,master,nightly,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/firefox-nightly_64x64.png">
+          Firefox
+        </h2>
         <div class="chart" id="firefox"></div>
+
         <h2>
-        <img class="browser" alt="safari azure,experimental,master,preview,safari,prod logo" src="/static/safari-preview_64x64.png">
-        Safari</h2>
+          <img class="browser" alt="safari azure,experimental,master,preview,safari,prod logo" src="/static/safari-preview_64x64.png">
+          Safari
+        </h2>
         <div class="chart" id="safari"></div>
         `;
   }
