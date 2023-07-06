@@ -48,25 +48,25 @@ class TestResultsGrid extends PolymerElement {
           <img class="browser" alt="chrome chrome,dev,experimental,master,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/chrome-dev_64x64.png">
           Chrome
         </h2>
-        <div class="chart" id="chrome"></div>
+        <div class="chart" id="chromeHistoryChart"></div>
 
         <h2>
           <img class="browser" alt="edge azure,dev,edge,edgechromium,experimental,master,prod logo" src="/static/edge-dev_64x64.png">
           Edge
         </h2>
-        <div class="chart" id="edge"></div>
+        <div class="chart" id="edgeHistoryChart"></div>
 
         <h2>
           <img class="browser" alt="firefox experimental,firefox,master,nightly,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/firefox-nightly_64x64.png">
           Firefox
         </h2>
-        <div class="chart" id="firefox"></div>
+        <div class="chart" id="firefoxHistoryChart"></div>
 
         <h2>
           <img class="browser" alt="safari azure,experimental,master,preview,safari,prod logo" src="/static/safari-preview_64x64.png">
           Safari
         </h2>
-        <div class="chart" id="safari"></div>
+        <div class="chart" id="safariHistoryChart"></div>
         `;
   }
 
@@ -104,10 +104,10 @@ class TestResultsGrid extends PolymerElement {
 
   updateAllCharts(historicalData) {
     const divNames = [
-      'chrome',
-      'edge',
-      'firefox',
-      'safari'
+      'chromeHistoryChart',
+      'edgeHistoryChart',
+      'firefoxHistoryChart',
+      'safariHistoryChart'
     ];
 
     divNames.forEach((name, i) => {
