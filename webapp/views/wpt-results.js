@@ -34,6 +34,7 @@ import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
+import '../components/new-test-results-history-grid.js'
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
 
@@ -368,10 +369,26 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[pathIsATestFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
+          <template is="dom-if" if="[[historyTimeline]]">
+            <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
+              Show New history
+            </paper-button>
+          </template>
           <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
-            Show history
-          </paper-button>
+          Show history
+        </paper-button>
         </template>
+        <!-- New Test History Implementation -->
+        <template is="dom-if" if="[[showNewHistory]]">
+        <h3>
+          History <span>(Experimental)</span>
+        </h3>
+        <template is="dom-if" if="[[pathIsATestFile]]">
+          <new-test-results-history-grid>
+          </new-test-results-history-grid>
+        </template>
+      </template>
+      <!-- Previous Test History Implementation -->
         <template is="dom-if" if="[[showHistory]]">
           <h3>
             History <span>(Experimental)</span>
@@ -462,6 +479,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         computed: 'computeDiffURL(testRuns)',
       },
       showHistory: {
+        type: Boolean,
+        value: false,
+      },
+      showNewHistory: {
         type: Boolean,
         value: false,
       },
@@ -1242,6 +1263,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   showHistoryClicked() {
     return () => {
       this.showHistory = true;
+    };
+  }
+
+  showNewHistoryClicked() {
+    return () => {
+      this.showNewHistory = true;
     };
   }
 

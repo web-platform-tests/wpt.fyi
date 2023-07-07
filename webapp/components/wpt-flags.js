@@ -42,6 +42,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'displayMetadata',
       'githubCommitLinks',
       'githubLogin',
+      'historyTimeline',
       'permalinks',
       'processorTab',
       'queryBuilder',
@@ -258,6 +259,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         Enable Browser Specific Failures graph
       </paper-checkbox>
     </paper-item>
+    <paper-item>
+    <paper-checkbox checked="{{historyTimeline}}">
+      Show Button to get New History Timeline
+    </paper-checkbox>
+  </paper-item>
 `;
   }
 
