@@ -110,12 +110,17 @@ class TestResultsGrid extends PolymerElement {
       'safariHistoryChart'
     ];
 
+    // Render charts using an array
+    this.charts = [null, null, null, null];
+    // Store run IDs for creating URLs
+    this.chartRunIDs = [[],[],[],[]];
+
     divNames.forEach((name, i) => {
-      this.updateChart(historicalData[i], name);
+      this.updateChart(historicalData[i], name, i);
     });
   }
 
-  updateChart(browserTestData, divID) {
+  updateChart(browserTestData, divID, chartIndex) {
     // Our observer may be called before the historical data has been fetched,
     // so debounce that.
     if (!browserTestData) {
@@ -126,7 +131,7 @@ class TestResultsGrid extends PolymerElement {
     // Using timeline chart
     // https://developers.google.com/chart/interactive/docs/gallery/timeline
     const div = this.$[divID];
-    this.chart = new window.google.visualization.Timeline(div);
+    this.charts[chartIndex] = new window.google.visualization.Timeline(div);
 
     this.dataTable = new window.google.visualization.DataTable();
 
@@ -143,7 +148,7 @@ class TestResultsGrid extends PolymerElement {
 
     const dataTableRows = [];
     const now = new Date();
-    this.runIDs = [];
+    this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
     this.subtestNames.forEach(subtestName => {
@@ -170,7 +175,7 @@ class TestResultsGrid extends PolymerElement {
         const statusColor = COLOR_MAPPING[dataPoint.status] || COLOR_MAPPING.default;
 
         // Add the run ID to array of run IDs to use for links
-        this.runIDs.push(dataPoint.run_id);
+        this.chartRunIDs[chartIndex].push(dataPoint.run_id);
 
         dataTableRows.push([
           subtestDisplayName,
@@ -192,18 +197,21 @@ class TestResultsGrid extends PolymerElement {
 
     // handler to allow rows to be clicked and navigate to the run url
     // https://stackoverflow.com/questions/40928971/how-to-customize-google-chart-with-hyperlink-in-the-label
-    const statusSelectHandler = () => {
-      const selection = this.chart.getSelection();
+    const statusSelectHandler = (chartIndex) => {
+      const selection = this.charts[chartIndex].getSelection();
       if (selection.length > 0) {
         const index = selection[0].row;
-        if (index !== undefined && this.runIDs.length > index) {
-          window.open(`/results/?run_id=${this.runIDs[index]}`, '_blank');
+        const runIDs = this.chartRunIDs[chartIndex];
+
+        if (index !== undefined && runIDs.length > index) {
+          window.open(`/results/?run_id=${runIDs[index]}`, '_blank');
         }
       }
     };
-    window.google.visualization.events.addListener(this.chart, 'select', statusSelectHandler);
+    window.google.visualization.events.addListener(
+      this.charts[chartIndex], 'select', () => statusSelectHandler(chartIndex));
 
-    this.chart.draw(this.dataTable, options);
+    this.charts[chartIndex].draw(this.dataTable, options);
   }
 
   // get test history and aligned run data
