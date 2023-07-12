@@ -74,16 +74,25 @@ class TestResultsGrid extends PolymerElement {
     return {
       dataTable: Object,
       runIDs: Array,
+      path: String,
+      showTestHistory: { type: Boolean, value: false }
     };
+  }
+
+  static get observers() {
+    return [
+      'displayCharts(showTestHistory)'
+    ];
   }
 
   static get is() {
     return 'new-test-results-history-grid';
   }
 
-  constructor() {
-    super();
-
+  displayCharts(showTestHistory) {
+    if (!showTestHistory || this.historicalData !== undefined) {
+      return;
+    }
     // Get the test history data and then populate the chart
     Promise.all([
       this.getTestHistory(),
@@ -216,7 +225,19 @@ class TestResultsGrid extends PolymerElement {
 
   // get test history and aligned run data
   async getTestHistory() {
-    this.historicalData = await fetch('/api/history')
+    if (!this.path) {
+      throw new Error('Test path is undefined');
+    }
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ testName: this.path})
+    };
+
+    this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
     this.subtestNames = Object.keys(this.historicalData[0]);
   }

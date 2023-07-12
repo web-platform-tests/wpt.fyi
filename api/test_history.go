@@ -9,6 +9,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
 	TestName string `json:"testName"`
 }
@@ -17,6 +18,7 @@ type RequestBody struct {
 func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
+
 		return
 	}
 
@@ -26,11 +28,13 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if len(data) == 0 {
 		http.Error(w, "Data array is empty", http.StatusInternalServerError)
+
 		return
 	}
 
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+
 		return
 	}
 
@@ -38,6 +42,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(data, &reqBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
