@@ -237,6 +237,21 @@ func main() {
 		log.Print("Adding latest production PendingTestRun...")
 		copyProdPendingRuns(store, *numRemoteRuns)
 	}
+
+	log.Print("Adding test history data...")
+	addFakeHistoryData(store)
+
+	q := store.NewQuery("TestHistory")
+
+	var runs []shared.TestHistoryEntry
+	_, err := store.GetAll(q, &runs)
+
+	if err != nil {
+		log.Print("I got here")
+		log.Print(err)
+	}
+	log.Print(runs[0].RunID)
+
 }
 
 func copyProdRuns(store shared.Datastore, filters shared.TestRunFilter) {
@@ -317,4 +332,153 @@ func FetchPendingRuns(wptdHost string) ([]shared.PendingTestRun, error) {
 	var pendingRuns []shared.PendingTestRun
 	err := shared.FetchJSON(url, &pendingRuns)
 	return pendingRuns, err
+}
+
+func addFakeHistoryData(store shared.Datastore) {
+	// browser_name,browser_version,date,test_name,subtest_name,status
+	dev_data := []map[string]string{
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1654149775000",
+			"test_name":    "example test name",
+			"subtest_name": "",
+			"status":       "OK",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1676948895000",
+			"test_name":    "example test name",
+			"subtest_name": "",
+			"status":       "TIMEOUT",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1680208052000",
+			"test_name":    "example test name",
+			"subtest_name": "",
+			"status":       "OK",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1654149775000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_1",
+			"status":       "PASS",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1660456975000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_1",
+			"status":       "FAIL",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1676948895000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_1",
+			"status":       "NOTRUN",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1680208052611",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_1",
+			"status":       "FAIL",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1687208052611",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_1",
+			"status":       "PASS",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1654149775000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_2",
+			"status":       "TIMEOUT",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1664149775000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_2",
+			"status":       "PASS",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1676948895000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_2",
+			"status":       "NOTRUN",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1680208052611",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_2",
+			"status":       "PASS",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1654149775000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_3",
+			"status":       "PASS",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1676948895000",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_3",
+			"status":       "NOTRUN",
+		},
+		{
+			"run_id":       "5074677897101312",
+			"date":         "1680208052611",
+			"test_name":    "example test name",
+			"subtest_name": "subtest_name_3",
+			"status":       "PASS",
+		},
+	}
+
+	browserMetadata := []map[string]string{
+		{
+			"browser":         "chrome",
+			"browser_version": "100",
+		},
+		{
+			"browser":         "edge",
+			"browser_version": "101e",
+		},
+
+		{
+			"browser":         "firefox",
+			"browser_version": "103.5962",
+		},
+
+		{
+			"browser":         "safari",
+			"browser_version": "1203 example",
+		},
+	}
+
+	browserEntries := make([]interface{}, 0, len(dev_data))
+	for _, metadata := range browserMetadata {
+		for _, entry := range dev_data {
+			testHistoryEntry := shared.TestHistoryEntry{
+				Browser:        metadata["browser"],
+				BrowserVersion: metadata["browser_version"],
+				RunID:          entry["run_id"],
+				Date:           entry["date"],
+				TestName:       entry["test_name"],
+				SubtestName:    entry["subtest_name"],
+				Status:         entry["status"],
+			}
+			browserEntries = append(browserEntries, &testHistoryEntry)
+		}
+	}
+	addData(store, "TestHistory", browserEntries)
 }
