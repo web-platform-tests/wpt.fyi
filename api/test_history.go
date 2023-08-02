@@ -56,67 +56,40 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	log.Print(runs[0])
-
-	// Convert datastore data to correct format
-
+	// Convert datastore data to correct JSON format
 	type Subtest map[string]string
 	type Browser map[string][]Subtest
 
 	resultsSlice := []Browser{}
-	chromeBrowser := Browser{}
-	edgeBrowser := Browser{}
-	firefoxBrowser := Browser{}
-	safariBrowser := Browser{}
+	testsByBrowser := map[string]Browser{}
 
-	for i := 0; i < len(runs); i++ {
-		run := runs[i]
-		if run.Browser == "chrome" {
-			subdata := Subtest{
-				"date":   run.Date,
-				"status": run.Status,
-				"run_id": run.RunID,
-			}
-			chromeBrowser[run.SubtestName] = append(chromeBrowser[run.SubtestName], subdata)
+	for _, run := range runs {
+
+		_, ok := testsByBrowser[run.Browser]
+
+		if !ok {
+			testsByBrowser[run.Browser] = Browser{}
 		}
-		if run.Browser == "edge" {
-			subdata := Subtest{
-				"date":   run.Date,
-				"status": run.Status,
-				"run_id": run.RunID,
-			}
-			edgeBrowser[run.SubtestName] = append(edgeBrowser[run.SubtestName], subdata)
+
+		subdata := Subtest{
+			"date":   run.Date,
+			"status": run.Status,
+			"run_id": run.RunID,
 		}
-		if run.Browser == "firefox" {
-			subdata := Subtest{
-				"date":   run.Date,
-				"status": run.Status,
-				"run_id": run.RunID,
-			}
-			firefoxBrowser[run.SubtestName] = append(firefoxBrowser[run.SubtestName], subdata)
-		}
-		if run.Browser == "safari" {
-			subdata := Subtest{
-				"date":   run.Date,
-				"status": run.Status,
-				"run_id": run.RunID,
-			}
-			safariBrowser[run.SubtestName] = append(safariBrowser[run.SubtestName], subdata)
-		}
+
+		testsByBrowser[run.Browser][run.SubtestName] =
+			append(testsByBrowser[run.Browser][run.SubtestName], subdata)
 	}
-	resultsSlice = append(resultsSlice, chromeBrowser)
-	resultsSlice = append(resultsSlice, edgeBrowser)
-	resultsSlice = append(resultsSlice, firefoxBrowser)
-	resultsSlice = append(resultsSlice, safariBrowser)
+
+	for _, browser := range testsByBrowser {
+		resultsSlice = append(resultsSlice, browser)
+	}
 
 	resultMap := map[string][]Browser{
 		"results": resultsSlice,
 	}
 
 	jsonStr, jsonErr := json.Marshal(resultMap)
-	// log.Print(jsonStr)
-
-	// jsonData, jsonErr := os.ReadFile("./api/test-data/mock_history_data.json")
 
 	if jsonErr != nil {
 		logger.Errorf("Unable to get json %s", jsonErr.Error())

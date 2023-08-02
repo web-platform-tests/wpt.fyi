@@ -240,18 +240,6 @@ func main() {
 
 	log.Print("Adding test history data...")
 	addFakeHistoryData(store)
-
-	// q := store.NewQuery("TestHistory")
-
-	// var runs []shared.TestHistoryEntry
-	// _, err := store.GetAll(q, &runs)
-
-	// if err != nil {
-	// 	log.Print("I got here")
-	// 	log.Print(err)
-	// }
-	// log.Print(runs[0].RunID)
-
 }
 
 func copyProdRuns(store shared.Datastore, filters shared.TestRunFilter) {
