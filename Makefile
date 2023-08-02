@@ -148,13 +148,18 @@ chrome: wget
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
-# https://sites.google.com/a/chromium.org/chromedriver/downloads/version-selection
-chromedriver: wget unzip chrome
+# Pull ChromeDriver from Chrome For Testing
+# Need to create the CHROMEDRIVER_PATH and then move the files in because the
+# directory structure in chromedriver_linux64.zip has changed.
+# https://stackoverflow.com/a/76729048
+chromedriver: wget unzip chrome jq
 	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
-		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
-		CHROMEDRIVER_VERSION=$$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$${CHROME_VERSION}); \
-		wget -q https://chromedriver.storage.googleapis.com/$${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip; \
-		sudo unzip chromedriver_linux64.zip -d $$(dirname $(CHROMEDRIVER_PATH)); \
+		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"); \
+		CHROMEDRIVER_URL=$$(curl -s https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | jq -r ".versions[] | select(.version == \"$${CHROME_VERSION}\") | .downloads.chromedriver[] | select(.platform == \"linux64\") | .url"); \
+		TEMP_DIR=$$(mktemp -d); \
+		wget -q -O $${TEMP_DIR}/chromedriver_linux64.zip $${CHROMEDRIVER_URL}; \
+		unzip -j $${TEMP_DIR}/chromedriver_linux64.zip -d $${TEMP_DIR}; \
+		sudo mv $${TEMP_DIR}/chromedriver $(CHROMEDRIVER_PATH); \
 		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
@@ -216,6 +221,7 @@ bzip2: apt-get-bzip2
 curl: apt-get-curl
 gcc: apt-get-gcc
 git: apt-get-git
+jq: apt-get-jq
 psmisc: apt-get-psmisc
 python3: apt-get-python3.9
 tox: apt-get-tox
