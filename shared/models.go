@@ -299,6 +299,7 @@ func (a PendingTestRunByUpdated) Len() int           { return len(a) }
 func (a PendingTestRunByUpdated) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a PendingTestRunByUpdated) Less(i, j int) bool { return a[i].Updated.Before(a[j].Updated) }
 
+// TestHistoryEntry formats Test History data for the datastore.
 type TestHistoryEntry struct {
 	Browser        string
 	BrowserVersion string

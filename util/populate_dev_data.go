@@ -324,7 +324,7 @@ func FetchPendingRuns(wptdHost string) ([]shared.PendingTestRun, error) {
 
 func addFakeHistoryData(store shared.Datastore) {
 	// browser_name,browser_version,date,test_name,subtest_name,status
-	dev_data := []map[string]string{
+	devData := []map[string]string{
 		{
 			"run_id":       "5074677897101312",
 			"date":         "1654149775000",
@@ -453,9 +453,9 @@ func addFakeHistoryData(store shared.Datastore) {
 		},
 	}
 
-	browserEntries := make([]interface{}, 0, len(dev_data))
+	browserEntries := make([]interface{}, 0, len(devData))
 	for _, metadata := range browserMetadata {
-		for _, entry := range dev_data {
+		for _, entry := range devData {
 			testHistoryEntry := shared.TestHistoryEntry{
 				Browser:        metadata["browser"],
 				BrowserVersion: metadata["browser_version"],
