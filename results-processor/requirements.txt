@@ -50,7 +50,7 @@ grpcio==1.53.0
     #   grpcio-status
 grpcio-status==1.44.0
     # via google-api-core
-gunicorn==20.1.0
+gunicorn==21.2.0
     # via -r requirements.in
 idna==3.3
     # via requests
@@ -70,6 +70,8 @@ mypy==1.4.1
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
+packaging==23.1
+    # via gunicorn
 proto-plus==1.20.3
     # via google-cloud-datastore
 protobuf==3.19.5
@@ -108,6 +110,3 @@ werkzeug==2.2.3
     # via flask
 zipp==3.16.0
     # via importlib-metadata
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
