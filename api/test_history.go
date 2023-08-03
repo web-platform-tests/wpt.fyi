@@ -47,7 +47,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := shared.NewAppEngineDatastore(ctx, false)
-	q := store.NewQuery("TestHistory")
+	q := store.NewQuery("TestHistory").Filter("TestName =", reqBody.TestName)
 
 	var runs []shared.TestHistoryEntry
 	_, err = store.GetAll(q, &runs)
@@ -101,10 +101,3 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-
-/*
-	TODO:
-	[x] get the data from the datastore instead of the json
-	[x] format said data to look like our old json
-	[] pass in a run id to get the results that we want
-*/
