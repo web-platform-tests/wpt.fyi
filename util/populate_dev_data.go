@@ -322,6 +322,7 @@ func FetchPendingRuns(wptdHost string) ([]shared.PendingTestRun, error) {
 	return pendingRuns, err
 }
 
+// TODO: Import real data here when staging is populated with real data
 func addFakeHistoryData(store shared.Datastore) {
 	// browser_name,browser_version,date,test_name,subtest_name,status
 	devData := []map[string]string{

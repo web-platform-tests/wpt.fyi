@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -54,6 +55,23 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Print(err)
+	}
+
+	// If there are no runs returned, return backup mock JSON
+	if len(runs) == 0 {
+		jsonData, jsonErr := os.ReadFile("./api/test-data/mock_history_data.json")
+
+		if jsonErr != nil {
+			logger.Errorf("Unable to get json %s", jsonErr.Error())
+		}
+
+		_, err = w.Write(jsonData)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		return
 	}
 
 	// Convert datastore data to correct JSON format
