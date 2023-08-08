@@ -83,10 +83,10 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, run := range runs {
 
-		_, ok := testsByBrowser[run.Browser]
+		_, ok := testsByBrowser[run.BrowserName]
 
 		if !ok {
-			testsByBrowser[run.Browser] = Browser{}
+			testsByBrowser[run.BrowserName] = Browser{}
 		}
 
 		subdata := Subtest{
@@ -95,8 +95,8 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			"run_id": run.RunID,
 		}
 
-		testsByBrowser[run.Browser][run.SubtestName] =
-			append(testsByBrowser[run.Browser][run.SubtestName], subdata)
+		testsByBrowser[run.BrowserName][run.SubtestName] =
+			append(testsByBrowser[run.BrowserName][run.SubtestName], subdata)
 	}
 
 	for _, browser := range testsByBrowser {
