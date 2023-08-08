@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -46,13 +47,73 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, jsonErr := os.ReadFile("./api/test-data/mock_history_data.json")
+	store := shared.NewAppEngineDatastore(ctx, false)
+	q := store.NewQuery("TestHistory").Filter("TestName =", reqBody.TestName)
+
+	var runs []shared.TestHistoryEntry
+	_, err = store.GetAll(q, &runs)
+
+	if err != nil {
+		log.Print(err)
+	}
+
+	// If there are no runs returned, return backup mock JSON
+	if len(runs) == 0 {
+		jsonData, jsonErr := os.ReadFile("./api/test-data/mock_history_data.json")
+
+		if jsonErr != nil {
+			logger.Errorf("Unable to get json %s", jsonErr.Error())
+		}
+
+		_, err = w.Write(jsonData)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	// Convert datastore data to correct JSON format
+	type Subtest map[string]string
+	type Browser map[string][]Subtest
+
+	resultsSlice := []Browser{}
+	testsByBrowser := map[string]Browser{}
+
+	for _, run := range runs {
+
+		_, ok := testsByBrowser[run.Browser]
+
+		if !ok {
+			testsByBrowser[run.Browser] = Browser{}
+		}
+
+		subdata := Subtest{
+			"date":   run.Date,
+			"status": run.Status,
+			"run_id": run.RunID,
+		}
+
+		testsByBrowser[run.Browser][run.SubtestName] =
+			append(testsByBrowser[run.Browser][run.SubtestName], subdata)
+	}
+
+	for _, browser := range testsByBrowser {
+		resultsSlice = append(resultsSlice, browser)
+	}
+
+	resultMap := map[string][]Browser{
+		"results": resultsSlice,
+	}
+
+	jsonStr, jsonErr := json.Marshal(resultMap)
 
 	if jsonErr != nil {
 		logger.Errorf("Unable to get json %s", jsonErr.Error())
 	}
 
-	_, err = w.Write(jsonData)
+	_, err = w.Write(jsonStr)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
