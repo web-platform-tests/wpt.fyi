@@ -163,14 +163,14 @@ class TestResultsGrid extends PolymerElement {
     this.subtestNames.forEach(subtestName => {
       for (let i = 0; i < browserTestData[subtestName].length; i++) {
         const dataPoint = browserTestData[subtestName][i];
-        const startDate = new Date(Number(dataPoint.date));
+        const startDate = new Date(dataPoint.date);
 
         // Use the next entry as the end date, or use present time if this
         // is the last entry
         let endDate = now;
         if (i + 1 !== browserTestData[subtestName].length) {
           const nextDataPoint = browserTestData[subtestName][i + 1];
-          endDate = new Date(Number(nextDataPoint.date));
+          endDate = new Date(nextDataPoint.date);
         }
 
         // If this is the main test status, name it based on the amount of subtests
