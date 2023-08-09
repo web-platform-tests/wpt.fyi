@@ -464,5 +464,5 @@ func addFakeHistoryData(store shared.Datastore) {
 			browserEntries = append(browserEntries, &testHistoryEntry)
 		}
 	}
-	addData(store, "TestHistory", browserEntries)
+	addData(store, "TestHistoryEntry", browserEntries)
 }
