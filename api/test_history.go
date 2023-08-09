@@ -10,6 +10,12 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// Subtest represents the final format for subtest data.
+type Subtest map[string]string
+
+// Browser represents the final format for browser data.
+type Browser map[string][]Subtest
+
 // RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
 	TestName string `json:"testName"`
@@ -75,9 +81,6 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert datastore data to correct JSON format
-	type Subtest map[string]string
-	type Browser map[string][]Subtest
-
 	resultsSlice := []Browser{}
 	testsByBrowser := map[string]Browser{}
 
