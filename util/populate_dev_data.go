@@ -435,22 +435,18 @@ func addFakeHistoryData(store shared.Datastore) {
 
 	browserMetadata := []map[string]string{
 		{
-			"browser":         "chrome",
-			"browser_version": "100",
+			"browser": "chrome",
 		},
 		{
-			"browser":         "edge",
-			"browser_version": "101e",
+			"browser": "edge",
 		},
 
 		{
-			"browser":         "firefox",
-			"browser_version": "103.5962",
+			"browser": "firefox",
 		},
 
 		{
-			"browser":         "safari",
-			"browser_version": "1203 example",
+			"browser": "safari",
 		},
 	}
 
@@ -458,16 +454,15 @@ func addFakeHistoryData(store shared.Datastore) {
 	for _, metadata := range browserMetadata {
 		for _, entry := range devData {
 			testHistoryEntry := shared.TestHistoryEntry{
-				Browser:        metadata["browser"],
-				BrowserVersion: metadata["browser_version"],
-				RunID:          entry["run_id"],
-				Date:           entry["date"],
-				TestName:       entry["test_name"],
-				SubtestName:    entry["subtest_name"],
-				Status:         entry["status"],
+				BrowserName: metadata["browser"],
+				RunID:       entry["run_id"],
+				Date:        entry["date"],
+				TestName:    entry["test_name"],
+				SubtestName: entry["subtest_name"],
+				Status:      entry["status"],
 			}
 			browserEntries = append(browserEntries, &testHistoryEntry)
 		}
 	}
-	addData(store, "TestHistory", browserEntries)
+	addData(store, "TestHistoryEntry", browserEntries)
 }

@@ -10,6 +10,12 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// Subtest represents the final format for subtest data.
+type Subtest map[string]string
+
+// Browser represents the final format for browser data.
+type Browser map[string][]Subtest
+
 // RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
 	TestName string `json:"testName"`
@@ -48,7 +54,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := shared.NewAppEngineDatastore(ctx, false)
-	q := store.NewQuery("TestHistory").Filter("TestName =", reqBody.TestName)
+	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName)
 
 	var runs []shared.TestHistoryEntry
 	_, err = store.GetAll(q, &runs)
@@ -75,18 +81,15 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert datastore data to correct JSON format
-	type Subtest map[string]string
-	type Browser map[string][]Subtest
-
 	resultsSlice := []Browser{}
 	testsByBrowser := map[string]Browser{}
 
 	for _, run := range runs {
 
-		_, ok := testsByBrowser[run.Browser]
+		_, ok := testsByBrowser[run.BrowserName]
 
 		if !ok {
-			testsByBrowser[run.Browser] = Browser{}
+			testsByBrowser[run.BrowserName] = Browser{}
 		}
 
 		subdata := Subtest{
@@ -95,8 +98,8 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			"run_id": run.RunID,
 		}
 
-		testsByBrowser[run.Browser][run.SubtestName] =
-			append(testsByBrowser[run.Browser][run.SubtestName], subdata)
+		testsByBrowser[run.BrowserName][run.SubtestName] =
+			append(testsByBrowser[run.BrowserName][run.SubtestName], subdata)
 	}
 
 	for _, browser := range testsByBrowser {

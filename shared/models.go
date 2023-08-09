@@ -301,13 +301,12 @@ func (a PendingTestRunByUpdated) Less(i, j int) bool { return a[i].Updated.Befor
 
 // TestHistoryEntry formats Test History data for the datastore.
 type TestHistoryEntry struct {
-	Browser        string
-	BrowserVersion string
-	RunID          string
-	Date           string
-	TestName       string
-	SubtestName    string
-	Status         string
+	BrowserName string
+	RunID       string
+	Date        string
+	TestName    string
+	SubtestName string
+	Status      string
 }
 
 // CheckSuite entities represent a GitHub check request that has been noted by
