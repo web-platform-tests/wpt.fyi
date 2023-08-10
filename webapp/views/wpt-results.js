@@ -1443,7 +1443,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   shouldDisplayTestLabel(testname, labelMap) {
-    return !this.pathIsRootDir && this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+    return this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
   }
 
   shouldDisplayTotals(displayedTotals, diffRun) {
@@ -1461,6 +1461,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   getTestLabel(testname, labelMap) {
     if (!labelMap) {
       return '';
+    }
+
+    if (this.computePathIsASubfolder(testname)) {
+      testname = testname + '/*';
     }
 
     if (testname in labelMap) {
