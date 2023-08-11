@@ -324,6 +324,18 @@ func (tl TestLabel) Filter(t TestID) bool {
 	}
 
 	labels, ok := tl.metadata[name]
+	dir := filepath.Dir(name)
+	// Dir terminates with either '.' (when the top-level is a file) or '/'
+	// (when the top-level is a directory).
+	for !ok && len(dir) > 1 {
+		labels, ok = tl.metadata[dir+"/*"]
+		if ok {
+			break
+		}
+
+		dir = filepath.Dir(dir)
+	}
+
 	if !ok {
 		return false
 	}
