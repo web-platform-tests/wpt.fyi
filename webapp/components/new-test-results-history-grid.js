@@ -29,6 +29,13 @@ const COLOR_MAPPING = {
   default: NEUTRAL_COLOR,
 };
 
+const BROWSER_NAMES = [
+  'chrome',
+  'edge',
+  'firefox',
+  'safari'
+];
+
 class TestResultsGrid extends PolymerElement {
   static get template() {
     return html`
@@ -125,7 +132,7 @@ class TestResultsGrid extends PolymerElement {
     this.chartRunIDs = [[],[],[],[]];
 
     divNames.forEach((name, i) => {
-      this.updateChart(historicalData[i], name, i);
+      this.updateChart(historicalData[BROWSER_NAMES[i]], name, i);
     });
   }
 
@@ -239,7 +246,7 @@ class TestResultsGrid extends PolymerElement {
 
     this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
-    this.subtestNames = Object.keys(this.historicalData[0]);
+    this.subtestNames = Object.keys(this.historicalData[BROWSER_NAMES[0]]);
   }
 }
 

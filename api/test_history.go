@@ -81,7 +81,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert datastore data to correct JSON format
-	resultsSlice := []Browser{}
+	resultMap := map[string]map[string]Browser{}
 	testsByBrowser := map[string]Browser{}
 
 	for _, run := range runs {
@@ -102,13 +102,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			append(testsByBrowser[run.BrowserName][run.SubtestName], subdata)
 	}
 
-	for _, browser := range testsByBrowser {
-		resultsSlice = append(resultsSlice, browser)
-	}
-
-	resultMap := map[string][]Browser{
-		"results": resultsSlice,
-	}
+	resultMap["results"] = testsByBrowser
 
 	jsonStr, jsonErr := json.Marshal(resultMap)
 
