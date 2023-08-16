@@ -85,10 +85,11 @@ class TestResultsGrid extends PolymerElement {
       showTestHistory: { type: Boolean, value: false }
     };
   }
-
+  
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path)'
+      'displayCharts(showTestHistory, path)',
+      'updateForPath(showTestHistory, path)'
     ];
   }
 
@@ -105,7 +106,7 @@ class TestResultsGrid extends PolymerElement {
     }
     // Get the test history data and then populate the chart
     Promise.all([
-      this.getTestHistory(),
+      this.getTestHistory(path),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData));
 
@@ -234,7 +235,7 @@ class TestResultsGrid extends PolymerElement {
   }
 
   // get test history and aligned run data
-  async getTestHistory() {
+  async getTestHistory(path) {
     if (!this.path) {
       throw new Error('Test path is undefined');
     }
@@ -244,7 +245,7 @@ class TestResultsGrid extends PolymerElement {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ testName: this.path})
+      body: JSON.stringify({ testName: path})
     };
 
     this.historicalData = await fetch('/api/history', options)
