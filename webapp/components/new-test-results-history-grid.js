@@ -114,10 +114,6 @@ class TestResultsGrid extends PolymerElement {
     window.addEventListener('resize', () => {
       this.updateAllCharts(this.historicalData);
     });
-
-    window.addEventListener('load', () => {
-      this.updateAllCharts(this.historicalData);
-    })
   }
 
   // Load Google charts for test history display

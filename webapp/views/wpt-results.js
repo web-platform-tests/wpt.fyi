@@ -715,6 +715,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.sortCol = new Array(this.testRuns.length).fill(false);
       this.isPathSorted = false;
     }
+    this.showNewHistory = false
   }
 
   aggregateTestTotals(nodes, row, rs, diffRun) {
