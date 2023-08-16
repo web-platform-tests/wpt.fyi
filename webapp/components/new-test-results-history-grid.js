@@ -88,7 +88,7 @@ class TestResultsGrid extends PolymerElement {
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory)'
+      'displayCharts(showTestHistory, path)'
     ];
   }
 
@@ -96,7 +96,7 @@ class TestResultsGrid extends PolymerElement {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory) {
+  displayCharts(showTestHistory, path) {
     if (!showTestHistory || this.historicalData !== undefined) {
       return;
     }
@@ -111,6 +111,10 @@ class TestResultsGrid extends PolymerElement {
     window.addEventListener('resize', () => {
       this.updateAllCharts(this.historicalData);
     });
+
+    window.addEventListener('load', () => {
+      this.updateAllCharts(this.historicalData);
+    })
   }
 
   // Load Google charts for test history display
