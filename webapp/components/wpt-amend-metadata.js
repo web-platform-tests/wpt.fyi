@@ -292,9 +292,18 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   hasSearchURL(product) {
-    return product === 'chrome' || product === 'deno' || product === 'edge' ||
-      product === 'firefox' || product === 'node.js' || product === 'safari' ||
-      product === 'servo' || product === 'wktr' || product === 'webkitgtk';
+    return [
+      'chrome',
+      'chromium',
+      'deno',
+      'edge',
+      'firefox',
+      'node.js',
+      'safari',
+      'servo',
+      'wktr',
+      'webkitgtk',
+    ].includes(product);
   }
 
   getSearchURL(testName, product) {
@@ -305,7 +314,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       testName = testName.replace(/((\/\*)?$)/, '');
     }
 
-    if (product === 'chrome' || product === 'edge') {
+    if (product === 'chrome' || product === 'chromium' || product === 'edge') {
       return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
     }
 

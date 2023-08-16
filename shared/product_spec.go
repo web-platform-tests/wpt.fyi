@@ -72,6 +72,8 @@ func (p ProductSpec) DisplayName() string {
 	switch p.BrowserName {
 	case "chrome":
 		return "Chrome"
+	case "chromium":
+		return "Chromium"
 	case "chrome_android":
 		return "ChromeAndroid"
 	case "chrome_ios":
