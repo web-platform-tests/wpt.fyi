@@ -97,6 +97,9 @@ class TestResultsGrid extends PolymerElement {
   }
 
   displayCharts(showTestHistory, path) {
+    if (!path) {
+      return
+    }
     if (!showTestHistory || this.historicalData !== undefined) {
       return;
     }
