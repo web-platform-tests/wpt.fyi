@@ -4,28 +4,14 @@ from datetime import datetime, timedelta
 
 from google.cloud import ndb
 
-# class TestHistoryEntry(ndb.Model):
-#   BrowserName = ndb.StringProperty(required=True)
-#   RunID = ndb.IntegerProperty(required=True)
-#   Date = ndb.StringProperty(required=True)
-#   TestName = ndb.StringProperty(required=True)
-#   SubtestName = ndb.StringProperty(required=True)
-#   Status = ndb.StringProperty(required=True)
 
-class SubtestHistoryEntry(ndb.Model):
-  Status = ndb.StringProperty(required=True)
-  RunID = ndb.StringProperty(required=True)
-  Date = ndb.StringProperty(required=True)
-
-
-class SubtestHistory(ndb.Model):
-  Name = ndb.StringProperty(required=True)
-  History = ndb.LocalStructuredProperty(SubtestHistoryEntry, repeated=True)
-
-class TestHistory(ndb.Model):
+class TestHistoryEntry(ndb.Model):
   BrowserName = ndb.StringProperty(required=True)
-  Name = ndb.StringProperty(required=True)
-  Subtests = ndb.LocalStructuredProperty(SubtestHistory, repeated=True)
+  RunID = ndb.IntegerProperty(required=True)
+  Date = ndb.StringProperty(required=True)
+  TestName = ndb.StringProperty(required=True)
+  SubtestName = ndb.StringProperty(required=True)
+  Status = ndb.StringProperty(required=True)
 
 
 class MostRecentHistoryProcessed(ndb.Model):
@@ -57,10 +43,10 @@ class TestRun(ndb.Model):
 def get_aligned_run_info(date_entity):
   date_start = date_entity.Date
   date_start_obj = datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ')
-  end_interval = date_start_obj + timedelta(weeks=2)
+  end_interval = date_start_obj + timedelta(days=1)
   end_interval_string = end_interval.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
   # Change the "max-count" to try this script with a smaller set.
-  url = ('https://staging.wpt.fyi/api/runs?label=master&label=experimental&max-count=500&aligned'
+  url = ('https://staging.wpt.fyi/api/runs?label=master&label=experimental&max-count=1&aligned'
          f'&from={date_start}&to={end_interval_string}')
 
   resp = requests.get(url)
@@ -86,44 +72,40 @@ def get_aligned_run_info(date_entity):
   return runs_list
 
 
-def print_loading_bar(i: int, run_count: int) -> None:
+def print_loading_bar(i, run_count):
   run_number = i + 1
   print(f'|{"#" * run_number}{"-" * (run_count - run_number)}| '
         f'({run_number}/{run_count})')
 
 
-def _build_subtest_history_entry(
-    run_metadata,
-    current_status,
-):
-  return SubtestHistoryEntry(
-    Status=current_status,
-    RunID=str(run_metadata['id']),
-    Date=run_metadata['time_start'],
-  )
-
-def _build_subtest_history(
+def _build_new_test_history_entry(
+    test_name,
     subtest_name,
     run_metadata,
+    run_date,
     current_status,
   ):
-  return SubtestHistory(
-    Name=subtest_name,
-    History=[_build_subtest_history_entry(run_metadata, current_status)]
+  return TestHistoryEntry(
+    RunID=run_metadata['id'],
+    BrowserName=run_metadata['browser_name'],
+    Date=run_date,
+    TestName=test_name,
+    SubtestName=subtest_name,
+    Status=current_status,
   )
 
 
-def _build_test_history(
+def _build_most_recent_test_status_entry(
     test_name,
     subtest_name,
     run_metadata,
     current_status
   ):
-  return TestHistory(
+  return MostRecentTestStatus(
     BrowserName=run_metadata['browser_name'],
-    Name=test_name,
-    Subtests=[
-        _build_subtest_history(subtest_name, run_metadata, current_status)]
+    TestName=test_name,
+    SubtestName=subtest_name,
+    Status=current_status,
   )
 
 
@@ -132,66 +114,49 @@ def determine_entities_to_write(
     subtest_name,
     prev_test_statuses,
     run_metadata,
+    run_date,
     current_status,
     entities_to_write,
-    unique_entities_to_write
+    unique_entities_to_write,
   ):
 
   # Test results are stored in dictionary with a tuple key
   # in the form of (testname, subtest_name).
   # The overall test status has an empty string as the subtest name.
-  should_create_new_test_entity = test_name not in prev_test_statuses
-  should_create_new_subtest_entity = (
-    not should_create_new_test_entity and
-    subtest_name not in prev_test_statuses[test_name]['subtests'])
-  should_create_new_subtest_history = (
-    not should_create_new_test_entity and
-    not should_create_new_subtest_entity and
-    prev_test_statuses[test_name]['subtests'][subtest_name]['status'] != current_status)
+  test_key = (test_name, subtest_name)
+  if test_key in unique_entities_to_write:
+    return
 
-  if should_create_new_test_entity:
-    test = _build_test_history(
+  should_create_new_recent_entity = test_key not in prev_test_statuses
+  should_update_recent_entity = (
+    not should_create_new_recent_entity and
+    prev_test_statuses[test_key].Status != current_status)
+
+  if should_create_new_recent_entity:
+    new_recent_status = _build_most_recent_test_status_entry(
       test_name,
       subtest_name=subtest_name,
       run_metadata=run_metadata,
       current_status=current_status
     )
-    prev_test_statuses[test_name] = {
-      'entity': test,
-      'subtests': {}
-    }
-    subtest = test.Subtests[0]
-    prev_test_statuses[test_name]['subtests'][subtest_name] = {
-      'history_list': subtest.History,
-      'status': current_status
-    }
-    entities_to_write.append(test)
+    entities_to_write.append(new_recent_status)
+    prev_test_statuses[test_key] = new_recent_status
 
-  if should_create_new_subtest_entity:
-    subtest = _build_subtest_history(subtest_name, run_metadata, current_status)
-    prev_test_statuses[test_name]['entity'].Subtests.append(subtest)
-    prev_test_statuses[test_name]['subtests'][subtest_name] = {
-      'history_list': subtest.History,
-      'status': current_status,
-    }
-    if test_name not in unique_entities_to_write:
-      entities_to_write.append(prev_test_statuses[test_name]['entity'])
+  if (should_update_recent_entity and
+      test_key not in unique_entities_to_write):
+    prev_test_statuses[test_key].Status = current_status
+    entities_to_write.append(prev_test_statuses[test_key])
 
-  if should_create_new_subtest_history:
-    subtest_entry = _build_subtest_history_entry(
+  if should_create_new_recent_entity or should_update_recent_entity:
+    test_status_entry = _build_new_test_history_entry(
+      test_name,
+      subtest_name=subtest_name,
       run_metadata=run_metadata,
+      run_date=run_date,
       current_status=current_status
     )
-    prev_test_statuses[test_name]['subtests'][subtest_name]['history_list'].append(subtest_entry)
-    if test_name not in unique_entities_to_write:
-      entities_to_write.append(prev_test_statuses[test_name]['entity'])
-
-  # If we've added the test to the entities to write,
-  # note that so we don't do it twice.
-  if (should_create_new_test_entity or
-      should_create_new_subtest_entity or
-      should_create_new_subtest_history):
-    unique_entities_to_write.add(test_name)
+    entities_to_write.append(test_status_entry)
+    unique_entities_to_write.add(test_key)
 
 
 def process_single_run(
@@ -214,11 +179,9 @@ def process_single_run(
   # Keep track of every single test result that's in the dataset of
   # runs we've previously seen. If they're not in the run we're processing,
   # we'll mark them as missing.
-  tests_not_seen = set()
-  for test_name, test_data in prev_test_statuses.items():
-    for subtest_name in test_data['subtests'].keys():
-      tests_not_seen.add((test_name, subtest_name))
+  tests_not_seen = set(prev_test_statuses.keys())
 
+  run_date = run_metadata["time_start"]
   # Iterate through each test.
   print(f'Number of tests: {len(run_data["results"])}')
   entities_to_write = []
@@ -235,6 +198,7 @@ def process_single_run(
       subtest_name='',
       prev_test_statuses=prev_test_statuses,
       run_metadata=run_metadata,
+      run_date=run_date,
       current_status=test_data['status'],
       entities_to_write=entities_to_write,
       unique_entities_to_write=unique_entities_to_write
@@ -243,6 +207,12 @@ def process_single_run(
     # Now that we've seen this test status, we can remove it from the
     # the set of tests we haven't seen yet.
     tests_not_seen.discard((test_name, ''))
+
+    if len(entities_to_write) >= 500:
+      print('.', end='', flush=True)
+      ndb.put_multi(entities_to_write)
+      entities_to_write = []
+      unique_entities_to_write = set()
 
     # Do the same basic process for each subtest.
     for subtest_data in test_data['subtests']:
@@ -255,18 +225,18 @@ def process_single_run(
         subtest_name=subtest_name,
         prev_test_statuses=prev_test_statuses,
         run_metadata=run_metadata,
+        run_date=run_date,
         current_status=subtest_data['status'],
         entities_to_write=entities_to_write,
-        unique_entities_to_write=unique_entities_to_write,
+        unique_entities_to_write=unique_entities_to_write
       )
 
       tests_not_seen.discard(subtest_key)
-
-    if len(entities_to_write) >= 1:
-      print('.', end='', flush=True)
-      ndb.put_multi(entities_to_write)
-      entities_to_write = []
-      unique_entities_to_write = set()
+      if len(entities_to_write) >= 500:
+        print('.', end='', flush=True)
+        ndb.put_multi(entities_to_write)
+        entities_to_write = []
+        unique_entities_to_write = set()
 
   # Write MISSING status for tests/subtests not seen.
   for test_name, subtest_name in tests_not_seen:
@@ -276,11 +246,12 @@ def process_single_run(
       subtest_name=subtest_name,
       prev_test_statuses=prev_test_statuses,
       run_metadata=run_metadata,
+      run_date=run_date,
       current_status='MISSING',
       entities_to_write=entities_to_write,
-      unique_entities_to_write=unique_entities_to_write,
+      unique_entities_to_write=unique_entities_to_write
     )
-    if len(entities_to_write) >= 1:
+    if len(entities_to_write) >= 500:
       print('.', end='', flush=True)
       ndb.put_multi(entities_to_write)
       entities_to_write = []
@@ -294,39 +265,25 @@ def process_single_run(
 
 
 def _populate_previous_statuses(browser_name):
-  tests = TestHistory.query(
-      TestHistory.BrowserName == browser_name)
+  recent_statuses = MostRecentTestStatus.query(
+      MostRecentTestStatus.BrowserName == browser_name)
 
+  start = time.time()
   prev_test_statuses = {}
   print('looping through existing recent statuses...')
   i = 0
-  for test in tests:
+  for recent_status in recent_statuses:
     i += 1
-    test_name = test.Name
-    prev_test_statuses[test_name] = {
-      'entity': test,
-      'subtests': {}
-    }
-    for subtest in test.Subtests:
-      subtest_name = subtest.Name
-      current_status = None
-      if len(subtest.History) > 0:
-        current_status = subtest.History[-1].Status
-      prev_test_statuses[test_name]['subtests'][subtest_name] = {
-        'history_list': subtest.History,
-        'status': current_status
-      }
-
+    test_name = recent_status.TestName
+    subtest_name = recent_status.SubtestName
+    prev_test_statuses[(test_name, subtest_name)] = recent_status
   print(f'{i} previous test statuses found for {browser_name}')
-
   print('Finished populating previous test status dict.')
+  print(f'Took {time.time() - start} seconds.')
   return prev_test_statuses
 
 
-def process_runs(
-    runs_list,
-    process_start_entity
-  ) -> None:
+def process_runs(runs_list, process_start_entity):
 
   revisions_processed = {}
   # Go through each aligned run.
@@ -356,7 +313,7 @@ def process_runs(
     print_loading_bar(i, len(runs_list))
 
 
-def update_recent_processed_date(date_entity: MostRecentHistoryProcessed, new_date: str):
+def update_recent_processed_date(date_entity, new_date):
   date_entity.Date = new_date
   date_entity.put()
 
@@ -365,8 +322,8 @@ class NoRecentDateError(Exception):
   pass
 
 
-def get_processing_start_date(client):
-  most_recent_processed: MostRecentHistoryProcessed = (
+def get_processing_start_date():
+  most_recent_processed = (
       MostRecentHistoryProcessed.query().get())
   
   if most_recent_processed is None:
@@ -378,7 +335,7 @@ def get_processing_start_date(client):
 def main():
   client = ndb.Client()
   with client.context():
-    process_start_entity = get_processing_start_date(client)
+    process_start_entity = get_processing_start_date()
     runs_list = get_aligned_run_info(process_start_entity)
     if len(runs_list) > 0:
       process_runs(runs_list, process_start_entity)
