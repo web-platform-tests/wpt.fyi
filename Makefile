@@ -138,6 +138,9 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
+# Note: If we change to downloading chrome from Chrome For Testing, modify the
+# `chromedriver` target below to use the `known-good-versions-with-downloads.json` endpoint.
+# More details can be found in the comment for the `chromedriver` target.
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
 		ARCHIVE=google-chrome-stable_current_amd64.deb; \
@@ -148,14 +151,20 @@ chrome: wget
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
 	fi
 
-# Pull ChromeDriver from Chrome For Testing
+# Pull ChromeDriver from Chrome For Testing (CfT)
 # Need to create the CHROMEDRIVER_PATH and then move the files in because the
 # directory structure in chromedriver_linux64.zip has changed.
-# https://stackoverflow.com/a/76729048
+#
+# CfT only has ChromeDriver URLs for chrome versions >=115. But assuming `chrome`
+# target above remains pulling the latest stable, this will not be a problem.
+#
+# Until we also pull chrome from CfT, we should use the latest-patch-versions-per-build-with-downloads.json.
+# When we make the switch, we can download from the known-good-versions-with-downloads.json endpoint too.
+# More details: https://github.com/web-platform-tests/wpt.fyi/pull/3433/files#r1282787489
 chromedriver: wget unzip chrome jq
 	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
-		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"); \
-		CHROMEDRIVER_URL=$$(curl -s https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json | jq -r ".versions[] | select(.version == \"$${CHROME_VERSION}\") | .downloads.chromedriver[] | select(.platform == \"linux64\") | .url"); \
+		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
+		CHROMEDRIVER_URL=$$(curl -s https://googlechromelabs.github.io/chrome-for-testing/latest-patch-versions-per-build-with-downloads.json | jq -r ".builds[\"$${CHROME_VERSION}\"].downloads.chromedriver[] | select(.platform == \"linux64\") | .url"); \
 		TEMP_DIR=$$(mktemp -d); \
 		wget -q -O $${TEMP_DIR}/chromedriver_linux64.zip $${CHROMEDRIVER_URL}; \
 		unzip -j $${TEMP_DIR}/chromedriver_linux64.zip -d $${TEMP_DIR}; \
