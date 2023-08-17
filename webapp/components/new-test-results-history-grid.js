@@ -101,7 +101,7 @@ class TestResultsGrid extends PolymerElement {
     if (!path) {
       return
     }
-    if (!showTestHistory || this.historicalData !== undefined) {
+    if (!showTestHistory) {
       return;
     }
     // Get the test history data and then populate the chart
