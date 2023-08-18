@@ -85,11 +85,10 @@ class TestResultsGrid extends PolymerElement {
       showTestHistory: { type: Boolean, value: false }
     };
   }
-  
+
   static get observers() {
     return [
       'displayCharts(showTestHistory, path)',
-      'clearCharts(path, this.historicalData)',
     ];
   }
 
@@ -99,7 +98,7 @@ class TestResultsGrid extends PolymerElement {
 
   displayCharts(showTestHistory, path) {
     if (!path) {
-      return
+      return;
     }
     if (!showTestHistory) {
       return;
@@ -115,15 +114,6 @@ class TestResultsGrid extends PolymerElement {
     window.addEventListener('resize', () => {
       this.updateAllCharts(this.historicalData);
     });
-    console.log(this.historicalData)
-  }
-
-  // Clear all charts so that data does not persist between tests
-  clearCharts(path, history) {
-    console.log("data:", path, history)
-    // var chart = document.getElementsByClassName('chart');
-    // console.log(chart)
-    // chart.clearChart(); 
   }
 
   // Load Google charts for test history display
@@ -249,9 +239,9 @@ class TestResultsGrid extends PolymerElement {
       throw new Error('Test path is undefined');
     }
 
+    // If there is existing data, clear it to make sure nothing is cached
     if(this.historicalData) {
-      console.log("existing history found", this.historicalData)
-      this.historicalData = {}
+      this.historicalData = {};
     }
 
     const options = {
