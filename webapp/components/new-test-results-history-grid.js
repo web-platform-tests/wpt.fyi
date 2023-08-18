@@ -89,7 +89,7 @@ class TestResultsGrid extends PolymerElement {
   static get observers() {
     return [
       'displayCharts(showTestHistory, path)',
-      'updateForPath(showTestHistory, path)'
+      'clearCharts(path, this.historicalData)',
     ];
   }
 
@@ -115,6 +115,15 @@ class TestResultsGrid extends PolymerElement {
     window.addEventListener('resize', () => {
       this.updateAllCharts(this.historicalData);
     });
+    console.log(this.historicalData)
+  }
+
+  // Clear all charts so that data does not persist between tests
+  clearCharts(path, history) {
+    console.log("data:", path, history)
+    // var chart = document.getElementsByClassName('chart');
+    // console.log(chart)
+    // chart.clearChart(); 
   }
 
   // Load Google charts for test history display
@@ -236,8 +245,13 @@ class TestResultsGrid extends PolymerElement {
 
   // get test history and aligned run data
   async getTestHistory(path) {
-    if (!this.path) {
+    if (!path) {
       throw new Error('Test path is undefined');
+    }
+
+    if(this.historicalData) {
+      console.log("existing history found", this.historicalData)
+      this.historicalData = {}
     }
 
     const options = {
