@@ -97,12 +97,10 @@ class TestResultsGrid extends PolymerElement {
   }
 
   displayCharts(showTestHistory, path) {
-    if (!path) {
+    if (!path || !showTestHistory) {
       return;
     }
-    if (!showTestHistory) {
-      return;
-    }
+
     // Get the test history data and then populate the chart
     Promise.all([
       this.getTestHistory(path),
@@ -235,10 +233,6 @@ class TestResultsGrid extends PolymerElement {
 
   // get test history and aligned run data
   async getTestHistory(path) {
-    if (!path) {
-      throw new Error('Test path is undefined');
-    }
-
     // If there is existing data, clear it to make sure nothing is cached
     if(this.historicalData) {
       this.historicalData = {};
