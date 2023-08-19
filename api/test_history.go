@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -62,6 +63,11 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	// Sort runs in chronological order
+	sort.Slice(runs, func(i, j int) bool {
+		return runs[i].Date < runs[j].Date
+	})
 
 	// If there are no runs returned, return backup mock JSON
 	if len(runs) == 0 {
