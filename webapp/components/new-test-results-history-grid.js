@@ -42,7 +42,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return html`
         <style>
           .chart {
-            height: 15rem;
           }
           .chart rect, .chart text {
             cursor: pointer;
@@ -206,7 +205,10 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       }
     });
 
+    console.log(this.subtestNames.length)
+
     let options = {
+      height: (this.subtestNames.length * 48), 
       tooltip: {
         isHtml: false,
       },
