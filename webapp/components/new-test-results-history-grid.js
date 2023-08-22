@@ -97,7 +97,7 @@ class TestResultsGrid extends PolymerElement {
   }
 
   displayCharts(showTestHistory, path) {
-    if (!path || !showTestHistory || path.split('?')[0].slice(-5) !== ".html") {
+    if (!path || !showTestHistory || path.split('?')[0].slice(-5) !== '.html') {
       return;
     }
 
