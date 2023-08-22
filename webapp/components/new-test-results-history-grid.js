@@ -208,7 +208,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     console.log(this.subtestNames.length)
 
     let options = {
-      height: (this.subtestNames.length * 48), 
+      height: (this.subtestNames.length * 41), 
       tooltip: {
         isHtml: false,
       },
