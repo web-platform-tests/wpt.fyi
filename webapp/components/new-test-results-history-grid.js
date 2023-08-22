@@ -6,6 +6,7 @@
 
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 const pageStyle = getComputedStyle(document.body);
+import { PathInfo } from './path.js';
 
 const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
 const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
@@ -36,7 +37,7 @@ const BROWSER_NAMES = [
   'safari'
 ];
 
-class TestResultsGrid extends PolymerElement {
+class TestResultsGrid extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
@@ -88,7 +89,7 @@ class TestResultsGrid extends PolymerElement {
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory)'
+      'displayCharts(showTestHistory, path)',
     ];
   }
 
@@ -96,13 +97,14 @@ class TestResultsGrid extends PolymerElement {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory) {
-    if (!showTestHistory || this.historicalData !== undefined) {
+  displayCharts(showTestHistory, path) {
+    if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
+
     // Get the test history data and then populate the chart
     Promise.all([
-      this.getTestHistory(),
+      this.getTestHistory(path),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData));
 
@@ -231,9 +233,10 @@ class TestResultsGrid extends PolymerElement {
   }
 
   // get test history and aligned run data
-  async getTestHistory() {
-    if (!this.path) {
-      throw new Error('Test path is undefined');
+  async getTestHistory(path) {
+    // If there is existing data, clear it to make sure nothing is cached
+    if(this.historicalData) {
+      this.historicalData = {};
     }
 
     const options = {
@@ -241,7 +244,7 @@ class TestResultsGrid extends PolymerElement {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ testName: this.path})
+      body: JSON.stringify({ testName: path})
     };
 
     this.historicalData = await fetch('/api/history', options)
