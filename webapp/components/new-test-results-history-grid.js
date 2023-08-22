@@ -6,6 +6,7 @@
 
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 const pageStyle = getComputedStyle(document.body);
+import { PathInfo } from './path.js';
 
 const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
 const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
@@ -36,7 +37,7 @@ const BROWSER_NAMES = [
   'safari'
 ];
 
-class TestResultsGrid extends PolymerElement {
+class TestResultsGrid extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
@@ -97,7 +98,7 @@ class TestResultsGrid extends PolymerElement {
   }
 
   displayCharts(showTestHistory, path) {
-    if (!path || !showTestHistory || path.split('?')[0].slice(-5) !== '.html') {
+    if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
 
