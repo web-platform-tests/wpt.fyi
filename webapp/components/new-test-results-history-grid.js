@@ -234,7 +234,7 @@ class TestResultsGrid extends PolymerElement {
   // get test history and aligned run data
   async getTestHistory(path) {
     // If there is existing data, clear it to make sure nothing is cached
-    if(this.historicalData) {
+    if(this.historicalData && path.split('?')[0].slice(-5) === ".html") {
       this.historicalData = {};
     }
 
