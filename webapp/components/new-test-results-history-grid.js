@@ -205,8 +205,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       }
     });
 
-    console.log(this.subtestNames.length)
-
     let options = {
       // height = # of tests * row height + x axis labels height
       height: ((this.subtestNames.length * 41) + 50),
