@@ -862,6 +862,7 @@ func TestBindExecute_LabelWithWildcards(t *testing.T) {
 		"/foo/bar/b.html": {"random"},
 		"/a/*":  {"interop1", "INTEROP2"},
 		"/d/e/f":          {""},
+		matchingTestName:  {"foo"},
 	}
 
 	// Create an execute a plan for `label:interop1 & label:interop2`. Inside the metadata
