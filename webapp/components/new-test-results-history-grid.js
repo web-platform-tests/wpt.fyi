@@ -41,8 +41,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
-          .chart {
-          }
           .chart rect, .chart text {
             cursor: pointer;
           }
