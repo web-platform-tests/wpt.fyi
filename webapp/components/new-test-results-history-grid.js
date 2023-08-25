@@ -204,17 +204,18 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     });
 
     const getChartHeight = numOfSubTests => {
+      console.log("number of subtests", numOfSubTests)
       const testHeight = 41
       const xAxisHeight = 50
       if(numOfSubTests <= 30) {
         return (numOfSubTests * testHeight) + xAxisHeight
       }
-      return (30 * testHeight) + xAxisHeight
+      return (20 * testHeight) + xAxisHeight
     }
 
     let options = {
       // height = # of tests * row height + x axis labels height
-      height: ((this.subtestNames.length * 41) + 50),
+      height: (getChartHeight(this.subtestNames.length)),
       tooltip: {
         isHtml: false,
       },
