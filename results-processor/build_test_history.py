@@ -68,7 +68,6 @@ def get_aligned_run_info(date_entity):
     _log.info('Runs to process:')
     for run in runs_list:
         _log.info(f'{run["browser_name"]} {run["time_start"]}')
-    _log.info()
     
     return runs_list
 
