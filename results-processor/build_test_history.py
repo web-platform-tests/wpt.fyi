@@ -331,8 +331,7 @@ def get_processing_start_date():
   return most_recent_processed
   
 
-
-def main():
+def build_test_history():
   client = ndb.Client()
   with client.context():
     process_start_entity = get_processing_start_date()
@@ -344,4 +343,4 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+  build_test_history()

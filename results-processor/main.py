@@ -10,6 +10,7 @@ import filelock
 import flask
 
 import processor
+from build_test_history import build_test_history
 
 
 # The file will be flock()'ed if a report is being processed.
@@ -117,6 +118,12 @@ def task_handler():
         app.logger.info(resp)
 
     return (resp, status)
+
+
+@app.route('/api/results/build_test_history', methods=['GET'])
+def build_test_history_handler():
+  app.logger.info('Processing test history.')
+  build_test_history(flask.request.form)
 
 
 # Run the script directly locally to start Flask dev server.
