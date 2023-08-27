@@ -1,347 +1,411 @@
+# Copyright 2023 The WPT Dashboard Project. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import json
+import re
 import requests
 import time
 from datetime import datetime, timedelta
+from typing import Any, TypedDict
 
-from google.cloud import ndb
+from google.cloud import ndb, storage
+
+
+BUCKET_NAME = 'wpt-recent-statuses-staging'
+PROJECT_NAME = 'wptdashboard-staging'
+RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
+SHOULD_GENERATE_NEW_STATUSES_JSON = False
+# Timeout after 1 hour.
+TIMEOUT_SECONDS = 3500
 
 
 class TestHistoryEntry(ndb.Model):
-  BrowserName = ndb.StringProperty(required=True)
-  RunID = ndb.IntegerProperty(required=True)
-  Date = ndb.StringProperty(required=True)
-  TestName = ndb.StringProperty(required=True)
-  SubtestName = ndb.StringProperty(required=True)
-  Status = ndb.StringProperty(required=True)
+    BrowserName = ndb.StringProperty(required=True)
+    RunID = ndb.IntegerProperty(required=True)
+    Date = ndb.StringProperty(required=True)
+    TestName = ndb.StringProperty(required=True)
+    SubtestName = ndb.StringProperty(required=True)
+    Status = ndb.StringProperty(required=True)
 
 
 class MostRecentHistoryProcessed(ndb.Model):
-  Date = ndb.StringProperty(required=True)
-
-
-class MostRecentTestStatus(ndb.Model):
-  BrowserName = ndb.StringProperty(required=True)
-  TestName = ndb.StringProperty(required=True)
-  SubtestName = ndb.StringProperty(required=True)
-  Status = ndb.StringProperty(required=True)
+    Date = ndb.StringProperty(required=True)
 
 
 class TestRun(ndb.Model):
-  BrowserName = ndb.StringProperty()
-  BrowserVersion = ndb.StringProperty()
-  FullRevisionHash = ndb.StringProperty()
-  Labels = ndb.StringProperty(repeated=True)
-  OSName = ndb.StringProperty()
-  OSVersion = ndb.StringProperty()
-  RawResultsURL = ndb.StringProperty()
-  ResultsUrl = ndb.StringProperty()
-  Revision = ndb.StringProperty()
-  TimeEnd = ndb.StringProperty()
-  TimeStart = ndb.StringProperty()
+    BrowserName = ndb.StringProperty()
+    BrowserVersion = ndb.StringProperty()
+    FullRevisionHash = ndb.StringProperty()
+    Labels = ndb.StringProperty(repeated=True)
+    OSName = ndb.StringProperty()
+    OSVersion = ndb.StringProperty()
+    RawResultsURL = ndb.StringProperty()
+    ResultsUrl = ndb.StringProperty()
+    Revision = ndb.StringProperty()
+    TimeEnd = ndb.StringProperty()
+    TimeStart = ndb.StringProperty()
 
 
-# Get the list of metadata for the most recent aligned runs.
-def get_aligned_run_info(date_entity):
-  date_start = date_entity.Date
-  date_start_obj = datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ')
-  end_interval = date_start_obj + timedelta(days=1)
-  end_interval_string = end_interval.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-  # Change the "max-count" to try this script with a smaller set.
-  url = ('https://staging.wpt.fyi/api/runs?label=master&label=experimental&max-count=1&aligned'
-         f'&from={date_start}&to={end_interval_string}')
-
-  resp = requests.get(url)
-  runs_list = resp.json()
-
-  # If we have no runs to process in this date interval,
-  # we can skip this interval for processing from now on.
-  if len(runs_list) == 0:
-    print('No runs found for this interval.')
-    update_recent_processed_date(date_entity, end_interval_string)
-
-  # Sort by revision -> then time start, so that the aligned runs are
-  # processed in groups with each other.
-  runs_list.sort(key=lambda run: run['revision'])
-  runs_list.sort(key=lambda run: run['time_start'])
-
-  # Print the dates just to get info on the list of runs we're working with.
-  print('Runs to process:')
-  for run in runs_list:
-    print(f'{run["browser_name"]} {run["time_start"]}')
-  print()
-  
-  return runs_list
-
-
-def print_loading_bar(i, run_count):
-  run_number = i + 1
-  print(f'|{"#" * run_number}{"-" * (run_count - run_number)}| '
-        f'({run_number}/{run_count})')
+# Type hint class for the run metadata return value from api/runs endpoint.
+class MetadataDict(TypedDict):
+  id: str
+  browser_name: str
+  browser_version: str
+  os_name: str
+  os_version: str
+  revision: str
+  full_revision_hash: str
+  results_url: str
+  created_at: str
+  time_start: str
+  time_end: str
+  raw_results_url: str
+  labels: list[str]
 
 
 def _build_new_test_history_entry(
-    test_name,
-    subtest_name,
-    run_metadata,
-    run_date,
-    current_status,
-  ):
-  return TestHistoryEntry(
-    RunID=run_metadata['id'],
-    BrowserName=run_metadata['browser_name'],
-    Date=run_date,
-    TestName=test_name,
-    SubtestName=subtest_name,
-    Status=current_status,
-  )
-
-
-def _build_most_recent_test_status_entry(
-    test_name,
-    subtest_name,
-    run_metadata,
-    current_status
-  ):
-  return MostRecentTestStatus(
-    BrowserName=run_metadata['browser_name'],
-    TestName=test_name,
-    SubtestName=subtest_name,
-    Status=current_status,
-  )
-
-
-def determine_entities_to_write(
-    test_name,
-    subtest_name,
-    prev_test_statuses,
-    run_metadata,
-    run_date,
-    current_status,
-    entities_to_write,
-    unique_entities_to_write,
-  ):
-
-  # Test results are stored in dictionary with a tuple key
-  # in the form of (testname, subtest_name).
-  # The overall test status has an empty string as the subtest name.
-  test_key = (test_name, subtest_name)
-  if test_key in unique_entities_to_write:
-    return
-
-  should_create_new_recent_entity = test_key not in prev_test_statuses
-  should_update_recent_entity = (
-    not should_create_new_recent_entity and
-    prev_test_statuses[test_key].Status != current_status)
-
-  if should_create_new_recent_entity:
-    new_recent_status = _build_most_recent_test_status_entry(
-      test_name,
-      subtest_name=subtest_name,
-      run_metadata=run_metadata,
-      current_status=current_status
-    )
-    entities_to_write.append(new_recent_status)
-    prev_test_statuses[test_key] = new_recent_status
-
-  if (should_update_recent_entity and
-      test_key not in unique_entities_to_write):
-    prev_test_statuses[test_key].Status = current_status
-    entities_to_write.append(prev_test_statuses[test_key])
-
-  if should_create_new_recent_entity or should_update_recent_entity:
-    test_status_entry = _build_new_test_history_entry(
-      test_name,
-      subtest_name=subtest_name,
-      run_metadata=run_metadata,
-      run_date=run_date,
-      current_status=current_status
-    )
-    entities_to_write.append(test_status_entry)
-    unique_entities_to_write.add(test_key)
-
-
-def process_single_run(
-    run_metadata,
-  ) -> None:
-
-  # Time the process
-  start = time.time()
-
-  try:
-    run_resp = requests.get(run_metadata['raw_results_url'])
-    run_data = run_resp.json()
-  except requests.exceptions.RequestException as e:
-    raise requests.exceptions.RequestException('Failed to fetch raw results', e)
-  
-
-  # Keep a dictionary of the previous test statuses from runs we've processed.
-  prev_test_statuses = _populate_previous_statuses(run_metadata['browser_name'])
-
-  # Keep track of every single test result that's in the dataset of
-  # runs we've previously seen. If they're not in the run we're processing,
-  # we'll mark them as missing.
-  tests_not_seen = set(prev_test_statuses.keys())
-
-  run_date = run_metadata["time_start"]
-  # Iterate through each test.
-  print(f'Number of tests: {len(run_data["results"])}')
-  entities_to_write = []
-  unique_entities_to_write = set()
-  # tests_filtered = [test for test in run_data['results']
-  #                   if test['test'] == '/document-policy/required-policy/document-policy.html' or test['test'] == '/keyboard-lock/idlharness.https.window.html']
-  for test_data in run_data['results']:
-    # Format the test name.
-    test_name = (test_data['test']
-        .replace('\"', '\"\"').replace('\n', ' ').replace('\t', ' '))
-
-    determine_entities_to_write(
-      test_name,
-      subtest_name='',
-      prev_test_statuses=prev_test_statuses,
-      run_metadata=run_metadata,
-      run_date=run_date,
-      current_status=test_data['status'],
-      entities_to_write=entities_to_write,
-      unique_entities_to_write=unique_entities_to_write
+        test_name: str,
+        subtest_name: str,
+        run_metadata: MetadataDict,
+        run_date: str,
+        current_status: str,
+    ) -> TestHistoryEntry:
+    return TestHistoryEntry(
+        RunID=run_metadata['id'],
+        BrowserName=run_metadata['browser_name'],
+        Date=run_date,
+        TestName=test_name,
+        SubtestName=subtest_name,
+        Status=current_status,
     )
 
-    # Now that we've seen this test status, we can remove it from the
-    # the set of tests we haven't seen yet.
-    tests_not_seen.discard((test_name, ''))
 
-    if len(entities_to_write) >= 500:
-      print('.', end='', flush=True)
-      ndb.put_multi(entities_to_write)
-      entities_to_write = []
-      unique_entities_to_write = set()
+def create_entity_if_needed(
+        test_name: str,
+        subtest_name: str,
+        prev_test_statuses: dict,
+        run_metadata: MetadataDict,
+        run_date: str,
+        current_status: str,
+        entities_to_write: list[TestHistoryEntry],
+        unique_entities_to_write: set[tuple[str, str]],
+    ) -> None:
+    """Check if an entity should be created for a test status delta,
+    and create one if necessary.
+    """
+    # Test results are stored in dictionary with a tuple key
+    # in the form of (testname, subtest_name).
+    # The overall test status has an empty string as the subtest name.
+    test_key = (test_name, subtest_name)
+    if test_key in unique_entities_to_write:
+        return
 
-    # Do the same basic process for each subtest.
-    for subtest_data in test_data['subtests']:
-      subtest_name = (subtest_data['name']
-        .replace('\"', '\"\"').replace('\n', ' ').replace('\t', ' '))
-      subtest_key = (test_name, subtest_name)
+    should_create_new_entry = (
+        test_key not in prev_test_statuses or
+        prev_test_statuses[test_key] != current_status)
 
-      determine_entities_to_write(
-        test_name,
-        subtest_name=subtest_name,
-        prev_test_statuses=prev_test_statuses,
-        run_metadata=run_metadata,
-        run_date=run_date,
-        current_status=subtest_data['status'],
-        entities_to_write=entities_to_write,
-        unique_entities_to_write=unique_entities_to_write
-      )
+    if should_create_new_entry:
+        test_status_entry = _build_new_test_history_entry(
+            test_name,
+            subtest_name=subtest_name,
+            run_metadata=run_metadata,
+            run_date=run_date,
+            current_status=current_status
+        )
+        entities_to_write.append(test_status_entry)
+        unique_entities_to_write.add(test_key)
+    prev_test_statuses[test_key] = current_status
 
-      tests_not_seen.discard(subtest_key)
-      if len(entities_to_write) >= 500:
-        print('.', end='', flush=True)
+def process_single_run(run_metadata: MetadataDict) -> None:
+    """Process a single aligned run and save and deltas to history."""
+
+    try:
+        run_resp = requests.get(run_metadata['raw_results_url'])
+        run_data = run_resp.json()
+    except requests.exceptions.RequestException as e:
+        raise requests.exceptions.RequestException(
+            'Failed to fetch raw results', e)
+
+    # Keep a dictionary of the previous test statuses from runs we've processed.
+    prev_test_statuses = _populate_previous_statuses(run_metadata['browser_name'])
+
+    # Keep track of every single test result that's in the dataset of
+    # runs we've previously seen. If they're not in the run we're processing,
+    # we'll mark them as missing.
+    tests_not_seen: set[tuple[str, str]] = set(prev_test_statuses.keys())
+
+    run_date = run_metadata["time_start"]
+    entities_to_write: list[TestHistoryEntry] = []
+    unique_entities_to_write: set[tuple[str, str]] = set()
+    # Iterate through each test.
+    for test_data in run_data['results']:
+        # Format the test name.
+        test_name = re.sub(r'\s', ' ', test_data['test'])
+
+        create_entity_if_needed(
+            test_name,
+            subtest_name='',
+            prev_test_statuses=prev_test_statuses,
+            run_metadata=run_metadata,
+            run_date=run_date,
+            current_status=test_data['status'],
+            entities_to_write=entities_to_write,
+            unique_entities_to_write=unique_entities_to_write
+        )
+
+        # Now that we've seen this test status, we can remove it from the
+        # the set of tests we haven't seen yet.
+        tests_not_seen.discard((test_name, ''))
+
+        # Do the same basic process for each subtest.
+        for subtest_data in test_data['subtests']:
+            # Format the subtest name.
+            subtest_name = re.sub(r'\s', ' ', subtest_data['name'])
+            # Truncate a subtest name if it's too long to be indexed in
+            # datastore. The subtest name stored can be at most 1500 bytes.
+            # At least 1 subtest violates this size.
+            if len(subtest_name) > 1000:
+                subtest_name = subtest_name[:1000]
+            subtest_key = (test_name, subtest_name)
+
+            create_entity_if_needed(
+                test_name,
+                subtest_name=subtest_name,
+                prev_test_statuses=prev_test_statuses,
+                run_metadata=run_metadata,
+                run_date=run_date,
+                current_status=subtest_data['status'],
+                entities_to_write=entities_to_write,
+                unique_entities_to_write=unique_entities_to_write
+            )
+
+            tests_not_seen.discard(subtest_key)
+
+    # Write MISSING status for tests/subtests not seen.
+    for test_name, subtest_name in tests_not_seen:
+        # Only write a row as missing if it's not already marked as missing.
+        create_entity_if_needed(
+            test_name,
+            subtest_name=subtest_name,
+            prev_test_statuses=prev_test_statuses,
+            run_metadata=run_metadata,
+            run_date=run_date,
+            current_status='MISSING',
+            entities_to_write=entities_to_write,
+            unique_entities_to_write=unique_entities_to_write
+        )
+
+    print(f'Entities to write: {len(entities_to_write)}')
+    if len(entities_to_write) > 0:
         ndb.put_multi(entities_to_write)
-        entities_to_write = []
-        unique_entities_to_write = set()
-
-  # Write MISSING status for tests/subtests not seen.
-  for test_name, subtest_name in tests_not_seen:
-    # Only write a row as missing if it's not already marked as missing.
-    determine_entities_to_write(
-      test_name,
-      subtest_name=subtest_name,
-      prev_test_statuses=prev_test_statuses,
-      run_metadata=run_metadata,
-      run_date=run_date,
-      current_status='MISSING',
-      entities_to_write=entities_to_write,
-      unique_entities_to_write=unique_entities_to_write
-    )
-    if len(entities_to_write) >= 500:
-      print('.', end='', flush=True)
-      ndb.put_multi(entities_to_write)
-      entities_to_write = []
-      unique_entities_to_write = set()
-
-  print('Finished run!')
-  print(f'Time taken = {round(time.time() - start, 0)} seconds.')
-  print(f'Entities to write: {len(entities_to_write)}')
-  if len(entities_to_write) > 0:
-    ndb.put_multi(entities_to_write)
+    update_previous_statuses(
+        prev_test_statuses, run_metadata['browser_name'])
+    print(f'Finished {run_metadata["browser_name"]} run!')
 
 
-def _populate_previous_statuses(browser_name):
-  recent_statuses = MostRecentTestStatus.query(
-      MostRecentTestStatus.BrowserName == browser_name)
-
-  start = time.time()
-  prev_test_statuses = {}
-  print('looping through existing recent statuses...')
-  i = 0
-  for recent_status in recent_statuses:
-    i += 1
-    test_name = recent_status.TestName
-    subtest_name = recent_status.SubtestName
-    prev_test_statuses[(test_name, subtest_name)] = recent_status
-  print(f'{i} previous test statuses found for {browser_name}')
-  print('Finished populating previous test status dict.')
-  print(f'Took {time.time() - start} seconds.')
-  return prev_test_statuses
+def get_previous_statuses(browser_name: str) -> Any:
+    """Fetch the JSON of most recent test statuses for comparison."""
+    storage_client = storage.Client(project=PROJECT_NAME)
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{browser_name}_recent_statuses.json')
+    try:
+        return blob.download_as_string()
+    except:
+        print('Failed to obtain previous statuses.')
+        return None
 
 
-def process_runs(runs_list, process_start_entity):
+def update_previous_statuses(
+        prev_test_statuses: dict, browser_name: str) -> None:
+    """Update the JSON of most recently seen statuses for use in the next invocation."""
+    new_statuses = []
+    print('Updating recent statuses JSON...')
+    for test_name, subtest_name in prev_test_statuses.keys():
+        new_statuses.append({
+            'test_name': test_name,
+            'subtest_name': subtest_name,
+            'status': prev_test_statuses[(test_name, subtest_name)]
+        })
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(BUCKET_NAME)
 
-  revisions_processed = {}
-  # Go through each aligned run.
-  for i, run_metadata in enumerate(runs_list):
-    browser_name = run_metadata['browser_name']
-    revision = run_metadata['full_revision_hash']
-
-    if revision not in revisions_processed:
-      revisions_processed[revision] = {
-        'chrome': False,
-        'edge': False,
-        'firefox': False,
-        'safari': False,
-      }
-
-    process_single_run(run_metadata)
-
-    revisions_processed[revision][browser_name] = True
-    print(f'Processed a {browser_name} run!')
-    if (revisions_processed[revision]['chrome'] and
-        revisions_processed[revision]['edge'] and
-        revisions_processed[revision]['firefox'] and
-        revisions_processed[revision]['safari']):
-      print(f'All browsers have been processed for {revision}. Updating date.')
-      update_recent_processed_date(process_start_entity, run_metadata['time_start'])
-
-    print_loading_bar(i, len(runs_list))
+    # Replace old revision number with new number.
+    blob = bucket.blob(f'{browser_name}_recent_statuses.json')
+    blob.upload_from_string(json.dumps(new_statuses))
 
 
-def update_recent_processed_date(date_entity, new_date):
-  date_entity.Date = new_date
-  date_entity.put()
+def _populate_previous_statuses(browser_name: str) -> dict:
+    """Create a dict with the most recent test statuses seen for browser."""
+    statuses_json_str = get_previous_statuses(browser_name)
+    # If the JSON file is not found, then an exception should be raised
+    # or the file should be generated, depending on the constant's value.
+    if statuses_json_str is None and SHOULD_GENERATE_NEW_STATUSES_JSON:
+        # Returning an empty dictionary of recent statuses will generate
+        # the initial recent statuses file and all of the first history entries.
+        return {}
+    if statuses_json_str is None:
+        # If this is not the first ever run for test statuses, then raise an
+        # exception if the JSON file was not found.
+        raise Exception(
+            f'Error obtaining recent statuses file for {browser_name}')
+
+    test_statuses = json.loads(statuses_json_str)
+    # Turn the list of recent statuses into a dictionary for quick referencing.
+    prev_test_statuses= {(t['test_name'], t['subtest_name']): t['status']
+                         for t in test_statuses}
+    return prev_test_statuses
+
+
+def should_process_run(run_metadata: MetadataDict) -> bool:
+    """Check if a run should be processed."""
+    # A run should be processed if no entities have been written for it.
+    test_entry = TestHistoryEntry.query(
+        TestHistoryEntry.RunID == run_metadata['id']).get()
+    return test_entry is None
+
+
+def process_runs(
+        runs_list: list[MetadataDict],
+        process_start_entity: MostRecentHistoryProcessed
+    ) -> None:
+    """Process each aligned run and update the most recent processed date afterward."""
+    revisions_processed = {}
+    # Go through each aligned run.
+
+    start = time.time()
+    for run_metadata in runs_list:
+        browser_name = run_metadata['browser_name']
+        revision = run_metadata['full_revision_hash']
+
+        # Keep track of the runs that have been processed.
+        # The process start date entity is only updated once all aligned runs
+        # for a given revision are processed.
+        if revision not in revisions_processed:
+            revisions_processed[revision] = {
+                'chrome': False,
+                'edge': False,
+                'firefox': False,
+                'safari': False,
+            }
+
+        if should_process_run(run_metadata):  
+            process_single_run(run_metadata)
+
+        revisions_processed[revision][browser_name] = True
+        # If all runs for this revision have been processed, we can update
+        # the most recently processed date to the run's start time.
+        if (revisions_processed[revision]['chrome'] and
+                revisions_processed[revision]['edge'] and
+                revisions_processed[revision]['firefox'] and
+                revisions_processed[revision]['safari']):
+            print(f'All browsers have been processed for {revision}. '
+                  'Updating date.')
+            update_recent_processed_date(
+                process_start_entity, run_metadata['time_start'])
+    print('Set of runs processed after '
+          f'{round(time.time() - start, 0)} seconds.')
+
+
+# Get the list of metadata for the most recent aligned runs.
+def get_aligned_run_info(date_entity: MostRecentHistoryProcessed) -> list|None:
+    date_start = date_entity.Date
+    date_start_obj = datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ')
+
+    # Since aligned runs need to all be completed runs to be fetched,
+    # a time window buffer of 24 hours is kept to allow runs to finish before
+    # assuming we've processed all aligned runs up to present time.
+    # Therefore, we only process runs up to (now - 24 hours).
+    yesterday = datetime.now() - timedelta(days=1)
+    end_interval = date_start_obj + timedelta(days=1)
+    if end_interval > yesterday:
+        end_interval = yesterday
+
+    end_interval_string = end_interval.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    url = (f'{RUNS_API_URL}?label=master&label=experimental&max-count=1&aligned'
+           f'&from={date_start}&to={end_interval_string}')
+
+    try:
+        resp = requests.get(url)
+    # Sometimes this request can time out. If it does, just return an empty list
+    # and attempt the fetch again.
+    except requests.exceptions.ReadTimeout:
+        return []
+    runs_list: list[MetadataDict] = resp.json()
+
+    # If we have no runs to process in this date interval,
+    # we can skip this interval for processing from now on.
+    if len(runs_list) == 0:
+        print('No runs found for this interval.')
+        update_recent_processed_date(date_entity, end_interval_string)
+        # If we've processed up to (now - 24 hours), then return null,
+        # which signals we're done processing.
+        if end_interval == yesterday:
+            return None
+
+    # Sort by revision -> then time start, so that the aligned runs are
+    # processed in groups with each other.
+    # Note that this technically doesn't have an impact if only 1 set of aligned
+    # runs are processed, but this sort will allow this script to function
+    # properly if multiple aligned run sets were to be processed together.
+    runs_list.sort(key=lambda run: run['revision'])
+    runs_list.sort(key=lambda run: run['time_start'])
+
+    # Print the dates just to get info on the list of runs we're working with.
+    print('Runs to process:')
+    for run in runs_list:
+        print(f'ID: {run["id"]}, {run["browser_name"]} {run["time_start"]}')
+
+    return runs_list
+
+
+def update_recent_processed_date(
+        date_entity: MostRecentHistoryProcessed, new_date: str) -> None:
+    """Update the most recently processed date after finishing processing."""
+    date_entity.Date = new_date
+    date_entity.put()
 
 
 class NoRecentDateError(Exception):
-  pass
+    """Exception raised when the MostRecentHistoryProcessed entity is not found."""
+    pass
 
 
-def get_processing_start_date():
-  most_recent_processed = (
-      MostRecentHistoryProcessed.query().get())
-  
-  if most_recent_processed is None:
-    raise NoRecentDateError('Most recently processed run date not found.')
-  return most_recent_processed
-  
+def get_processing_start_date() -> MostRecentHistoryProcessed:
+    most_recent_processed: MostRecentHistoryProcessed = (
+        MostRecentHistoryProcessed.query().get())
+    
+    if most_recent_processed is None:
+        raise NoRecentDateError('Most recently processed run date not found.')
+    return most_recent_processed
 
 
-def main():
-  client = ndb.Client()
-  with client.context():
-    process_start_entity = get_processing_start_date()
-    runs_list = get_aligned_run_info(process_start_entity)
-    if len(runs_list) > 0:
-      process_runs(runs_list, process_start_entity)
-    else:
-      print('No runs to process.')
+def main() -> str:
+    client = ndb.Client(project=PROJECT_NAME)
+    with client.context():
+        processing_start = time.time()
+        run_sets_processed = 0
+        while True:
+            process_start_entity = get_processing_start_date()
+            runs_list = get_aligned_run_info(process_start_entity)
+            # A return value of None means that the processing is complete
+            # and up-to-date. Stop the processing.
+            if runs_list is None:
+                break 
+            # A return value of an empty list means that no aligned runs
+            # were found at the given interval.
+            if len(runs_list) == 0: 
+                run_sets_processed += 1
+                continue
+            process_runs(runs_list, process_start_entity)
+            run_sets_processed += 1
+            # Check if we've passed the soft timeout marker
+            # and stop processing if so.
+            if round(time.time() - processing_start, 0) > TIMEOUT_SECONDS:
+                return ('Timed out after successfully processing '
+                        f'{run_sets_processed} sets of aligned runs.')
+    return 'Test history processing complete.'
 
 
 if __name__ == '__main__':
-  main()
+    main()
