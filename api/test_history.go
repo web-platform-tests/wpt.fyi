@@ -10,6 +10,10 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
+// type HistoryHandler struct {
+// 	ctx context.Context
+// }
+
 // Subtest represents the final format for subtest data.
 type Subtest map[string]string
 
