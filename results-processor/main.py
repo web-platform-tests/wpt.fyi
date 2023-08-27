@@ -123,7 +123,7 @@ def task_handler():
 @app.route('/api/results/build_test_history', methods=['GET'])
 def build_test_history_handler():
   app.logger.info('Processing test history.')
-  build_test_history(flask.request.form)
+  build_test_history()
 
 
 # Run the script directly locally to start Flask dev server.
