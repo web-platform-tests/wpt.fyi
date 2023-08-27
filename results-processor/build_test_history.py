@@ -1,9 +1,10 @@
+import logging
 import requests
 import time
 from datetime import datetime, timedelta
 
 from google.cloud import ndb
-
+_log = logging.getLogger(__name__)
 
 class TestHistoryEntry(ndb.Model):
     BrowserName = ndb.StringProperty(required=True)
@@ -55,7 +56,7 @@ def get_aligned_run_info(date_entity):
     # If we have no runs to process in this date interval,
     # we can skip this interval for processing from now on.
     if len(runs_list) == 0:
-        print('No runs found for this interval.')
+        _log.info('No runs found for this interval.')
         update_recent_processed_date(date_entity, end_interval_string)
 
     # Sort by revision -> then time start, so that the aligned runs are
@@ -64,17 +65,17 @@ def get_aligned_run_info(date_entity):
     runs_list.sort(key=lambda run: run['time_start'])
 
     # Print the dates just to get info on the list of runs we're working with.
-    print('Runs to process:')
+    _log.info('Runs to process:')
     for run in runs_list:
-        print(f'{run["browser_name"]} {run["time_start"]}')
-    print()
+        _log.info(f'{run["browser_name"]} {run["time_start"]}')
+    _log.info()
     
     return runs_list
 
 
 def print_loading_bar(i, run_count):
     run_number = i + 1
-    print(f'|{"#" * run_number}{"-" * (run_count - run_number)}| '
+    _log.info(f'|{"#" * run_number}{"-" * (run_count - run_number)}| '
                 f'({run_number}/{run_count})')
 
 
@@ -183,7 +184,7 @@ def process_single_run(
 
     run_date = run_metadata["time_start"]
     # Iterate through each test.
-    print(f'Number of tests: {len(run_data["results"])}')
+    _log.info(f'Number of tests: {len(run_data["results"])}')
     entities_to_write = []
     unique_entities_to_write = set()
     # tests_filtered = [test for test in run_data['results']
@@ -209,7 +210,7 @@ def process_single_run(
         tests_not_seen.discard((test_name, ''))
 
         if len(entities_to_write) >= 500:
-            print('.', end='', flush=True)
+            _log.info('.', end='', flush=True)
             ndb.put_multi(entities_to_write)
             entities_to_write = []
             unique_entities_to_write = set()
@@ -233,7 +234,7 @@ def process_single_run(
 
             tests_not_seen.discard(subtest_key)
             if len(entities_to_write) >= 500:
-                print('.', end='', flush=True)
+                _log.info('.', end='', flush=True)
                 ndb.put_multi(entities_to_write)
                 entities_to_write = []
                 unique_entities_to_write = set()
@@ -252,14 +253,14 @@ def process_single_run(
             unique_entities_to_write=unique_entities_to_write
         )
         if len(entities_to_write) >= 500:
-            print('.', end='', flush=True)
+            _log.info('.', end='', flush=True)
             ndb.put_multi(entities_to_write)
             entities_to_write = []
             unique_entities_to_write = set()
 
-    print('Finished run!')
-    print(f'Time taken = {round(time.time() - start, 0)} seconds.')
-    print(f'Entities to write: {len(entities_to_write)}')
+    _log.info('Finished run!')
+    _log.info(f'Time taken = {round(time.time() - start, 0)} seconds.')
+    _log.info(f'Entities to write: {len(entities_to_write)}')
     if len(entities_to_write) > 0:
         ndb.put_multi(entities_to_write)
 
@@ -270,16 +271,16 @@ def _populate_previous_statuses(browser_name):
 
     start = time.time()
     prev_test_statuses = {}
-    print('looping through existing recent statuses...')
+    _log.info('looping through existing recent statuses...')
     i = 0
     for recent_status in recent_statuses:
         i += 1
         test_name = recent_status.TestName
         subtest_name = recent_status.SubtestName
         prev_test_statuses[(test_name, subtest_name)] = recent_status
-    print(f'{i} previous test statuses found for {browser_name}')
-    print('Finished populating previous test status dict.')
-    print(f'Took {time.time() - start} seconds.')
+    _log.info(f'{i} previous test statuses found for {browser_name}')
+    _log.info('Finished populating previous test status dict.')
+    _log.info(f'Took {time.time() - start} seconds.')
     return prev_test_statuses
 
 
@@ -302,12 +303,12 @@ def process_runs(runs_list, process_start_entity):
         process_single_run(run_metadata)
 
         revisions_processed[revision][browser_name] = True
-        print(f'Processed a {browser_name} run!')
+        _log.info(f'Processed a {browser_name} run!')
         if (revisions_processed[revision]['chrome'] and
                 revisions_processed[revision]['edge'] and
                 revisions_processed[revision]['firefox'] and
                 revisions_processed[revision]['safari']):
-            print(f'All browsers have been processed for {revision}. Updating date.')
+            _log.info(f'All browsers have been processed for {revision}. Updating date.')
             update_recent_processed_date(process_start_entity, run_metadata['time_start'])
 
         print_loading_bar(i, len(runs_list))
@@ -323,7 +324,7 @@ class NoRecentDateError(Exception):
 
 
 def get_processing_start_date():
-    most_recent_processed = MostRecentHistoryProcessed.query().get())
+    most_recent_processed = MostRecentHistoryProcessed.query().get()
     
     if most_recent_processed is None:
         raise NoRecentDateError('Most recently processed run date not found.')
@@ -338,7 +339,7 @@ def build_test_history():
         if len(runs_list) > 0:
             process_runs(runs_list, process_start_entity)
         else:
-            print('No runs to process.')
+            _log.info('No runs to process.')
 
 
 if __name__ == '__main__':
