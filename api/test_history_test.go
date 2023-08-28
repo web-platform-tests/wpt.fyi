@@ -13,7 +13,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
 )
 
-func TestTestHistoryHandler(t *testing.T) {
+func TestHistoryHandler(t *testing.T) {
 	ctx, done, err := sharedtest.NewAEContext(true)
 	assert.Nil(t, err)
 	defer done()
