@@ -41,9 +41,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
-          .chart {
-            height: 15rem;
-          }
           .chart rect, .chart text {
             cursor: pointer;
           }
@@ -170,6 +167,9 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 
     // Create a row for each subtest
     this.subtestNames.forEach(subtestName => {
+      if (!browserTestData[subtestName]) {
+        return;
+      }
       for (let i = 0; i < browserTestData[subtestName].length; i++) {
         const dataPoint = browserTestData[subtestName][i];
         const startDate = new Date(dataPoint.date);
@@ -206,7 +206,18 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       }
     });
 
+    const getChartHeight = numOfSubTests => {
+      const testHeight = 41;
+      const xAxisHeight = 50;
+      if(numOfSubTests <= 30) {
+        return (numOfSubTests * testHeight) + xAxisHeight;
+      }
+      return (20 * testHeight) + xAxisHeight;
+    };
+
     let options = {
+      // height = # of tests * row height + x axis labels height
+      height: (getChartHeight(this.subtestNames.length)),
       tooltip: {
         isHtml: false,
       },
