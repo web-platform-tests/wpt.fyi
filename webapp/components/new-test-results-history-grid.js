@@ -167,7 +167,10 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 
     // Create a row for each subtest
     this.subtestNames.forEach(subtestName => {
-      for (let i = 0; i < browserTestData[subtestName]?.length; i++) {
+      if (!browserTestData[subtestName]) {
+        return;
+      }
+      for (let i = 0; i < browserTestData[subtestName].length; i++) {
         const dataPoint = browserTestData[subtestName][i];
         const startDate = new Date(dataPoint.date);
 
