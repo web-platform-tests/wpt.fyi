@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/cloudtasks v1.12.1
-	cloud.google.com/go/datastore v1.13.0
+	cloud.google.com/go/datastore v1.14.0
 	cloud.google.com/go/logging v1.8.1
 	cloud.google.com/go/secretmanager v1.11.1
 	cloud.google.com/go/storage v1.32.0
@@ -29,14 +29,14 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/api v0.138.0
-	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
+	google.golang.org/genproto v0.0.0-20230821184602-ccc8af3d0e93
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5
 	google.golang.org/grpc v1.57.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	cloud.google.com/go v0.110.6 // indirect
+	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.1 // indirect
