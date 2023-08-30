@@ -1,5 +1,5 @@
-//go:build medium
-// +build medium
+//go:build small
+// +build small
 
 // Copyright 2023 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -30,13 +30,13 @@ func TestHistoryHandler(t *testing.T) {
 		RunID:       "123",
 		Date:        "2022-06-02T06:02:55.000Z",
 		TestName:    "test name",
-		SubtestName: "",
+		SubtestName: "subtest",
 		Status:      "PASS",
 	}
 
 	body :=
 		`{
-			"testName": "test name"
+			"test_name": "test name"
 		}`
 
 	store := shared.NewAppEngineDatastore(ctx, false)
@@ -53,7 +53,7 @@ func TestHistoryHandler(t *testing.T) {
 	want := map[string]map[string]Browser{
 		"results": {
 			"chrome": {
-				"": {
+				"subtest": {
 					{
 						"date":   "2022-06-02T06:02:55.000Z",
 						"status": "PASS",
@@ -65,7 +65,6 @@ func TestHistoryHandler(t *testing.T) {
 	}
 
 	assert.Equal(t, want, results)
-
 }
 
 func parseHistoryResponse(t *testing.T, w *httptest.ResponseRecorder) map[string]map[string]Browser {
