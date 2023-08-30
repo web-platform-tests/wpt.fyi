@@ -386,7 +386,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         <template is="dom-if" if="[[pathIsATestFile]]">
           <new-test-results-history-grid
             path="[[path]]"
-            show-test-history="[[showNewHistory]]">
+            show-test-history="[[showNewHistory]]"
+            test-runs="[[testRuns]]">
           </new-test-results-history-grid>
         </template>
       </template>

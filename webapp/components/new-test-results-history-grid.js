@@ -7,6 +7,8 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 const pageStyle = getComputedStyle(document.body);
 import { PathInfo } from './path.js';
+import { TestRunsUIQuery } from './test-runs-query.js';
+import { TestRunsQueryLoader } from './test-runs.js';
 
 const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
 const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
@@ -80,13 +82,14 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       dataTable: Object,
       runIDs: Array,
       path: String,
-      showTestHistory: { type: Boolean, value: false }
+      showTestHistory: { type: Boolean, value: false },
+      // testRuns: Array
     };
   }
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path)',
+      'displayCharts(showTestHistory, path, testRuns)',
     ];
   }
 
@@ -94,7 +97,8 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory, path) {
+  displayCharts(showTestHistory, path, testRuns) {
+    console.log(testRuns)
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
