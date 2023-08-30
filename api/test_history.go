@@ -19,7 +19,7 @@ type Browser map[string][]Subtest
 
 // RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
-	TestName string `json:"testName"`
+	TestName string `json:"test_name"`
 }
 
 // Handler for fetching historical data of a specific test for each of the four major browsers.
