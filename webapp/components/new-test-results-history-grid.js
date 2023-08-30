@@ -241,7 +241,7 @@ class TestResultsGrid extends PolymerElement {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ testName: this.path})
+      body: JSON.stringify({ test_name: this.path})
     };
 
     this.historicalData = await fetch('/api/history', options)
