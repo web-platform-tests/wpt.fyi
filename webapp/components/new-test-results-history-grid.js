@@ -6,6 +6,7 @@
 
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 const pageStyle = getComputedStyle(document.body);
+import { PathInfo } from './path.js';
 
 const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
 const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
@@ -36,13 +37,10 @@ const BROWSER_NAMES = [
   'safari'
 ];
 
-class TestResultsGrid extends PolymerElement {
+class TestResultsGrid extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
-          .chart {
-            height: 15rem;
-          }
           .chart rect, .chart text {
             cursor: pointer;
           }
@@ -88,7 +86,7 @@ class TestResultsGrid extends PolymerElement {
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory)'
+      'displayCharts(showTestHistory, path)',
     ];
   }
 
@@ -96,13 +94,14 @@ class TestResultsGrid extends PolymerElement {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory) {
-    if (!showTestHistory || this.historicalData !== undefined) {
+  displayCharts(showTestHistory, path) {
+    if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
+
     // Get the test history data and then populate the chart
     Promise.all([
-      this.getTestHistory(),
+      this.getTestHistory(path),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData));
 
@@ -168,6 +167,9 @@ class TestResultsGrid extends PolymerElement {
 
     // Create a row for each subtest
     this.subtestNames.forEach(subtestName => {
+      if (!browserTestData[subtestName]) {
+        return;
+      }
       for (let i = 0; i < browserTestData[subtestName].length; i++) {
         const dataPoint = browserTestData[subtestName][i];
         const startDate = new Date(dataPoint.date);
@@ -204,7 +206,18 @@ class TestResultsGrid extends PolymerElement {
       }
     });
 
+    const getChartHeight = numOfSubTests => {
+      const testHeight = 41;
+      const xAxisHeight = 50;
+      if(numOfSubTests <= 30) {
+        return (numOfSubTests * testHeight) + xAxisHeight;
+      }
+      return (20 * testHeight) + xAxisHeight;
+    };
+
     let options = {
+      // height = # of tests * row height + x axis labels height
+      height: (getChartHeight(this.subtestNames.length)),
       tooltip: {
         isHtml: false,
       },
@@ -231,9 +244,10 @@ class TestResultsGrid extends PolymerElement {
   }
 
   // get test history and aligned run data
-  async getTestHistory() {
-    if (!this.path) {
-      throw new Error('Test path is undefined');
+  async getTestHistory(path) {
+    // If there is existing data, clear it to make sure nothing is cached
+    if(this.historicalData) {
+      this.historicalData = {};
     }
 
     const options = {
@@ -241,7 +255,7 @@ class TestResultsGrid extends PolymerElement {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ test_name: this.path})
+      body: JSON.stringify({ testName: path})
     };
 
     this.historicalData = await fetch('/api/history', options)
