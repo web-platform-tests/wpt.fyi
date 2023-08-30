@@ -255,7 +255,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ testName: path})
+      body: JSON.stringify({ test_name: path})
     };
 
     this.historicalData = await fetch('/api/history', options)
