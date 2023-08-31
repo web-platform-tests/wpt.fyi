@@ -250,7 +250,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            products="[[products]]"
                            diff-run="[[diffRun]]"
                            is-triage-mode="[[isTriageMode]]"
-                           metadata-map="[[metadataMap]]">
+                           metadata-map="[[metadataMap]]"
+                           rows="{{rows}}">
         </test-file-results>
       </template>
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
@@ -387,7 +388,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <new-test-results-history-grid
             path="[[path]]"
             show-test-history="[[showNewHistory]]"
-            test-runs="[[testRuns]]">
+            test-runs="[[testRuns]]"
+            rows="[[rows]]">
           </new-test-results-history-grid>
         </template>
       </template>
@@ -511,6 +513,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
       triageNotifier: Boolean,
+      rows: Array,
     };
   }
 

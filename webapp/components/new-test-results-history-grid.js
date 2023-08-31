@@ -83,13 +83,13 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       runIDs: Array,
       path: String,
       showTestHistory: { type: Boolean, value: false },
-      // testRuns: Array
+      rows: Array,
     };
   }
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path, testRuns)',
+      'displayCharts(showTestHistory, path, rows)',
     ];
   }
 
@@ -97,15 +97,15 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory, path, testRuns) {
-    console.log(testRuns)
+  displayCharts(showTestHistory, path, rows) {
+    console.log("HERE THE ROWS", rows)
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
 
     // Get the test history data and then populate the chart
     Promise.all([
-      this.getTestHistory(path),
+      this.getTestHistory(path, rows),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData));
 
@@ -248,7 +248,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   }
 
   // get test history and aligned run data
-  async getTestHistory(path) {
+  async getTestHistory(path, rows) {
     // If there is existing data, clear it to make sure nothing is cached
     if(this.historicalData) {
       this.historicalData = {};

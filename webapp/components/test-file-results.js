@@ -52,10 +52,11 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
                              diff-run="[[diffRun]]"
                              only-show-differences="{{onlyShowDifferences}}"
                              path="[[path]]"
-                             rows="[[rows]]"
+                             rows="{{rows}}"
                              verbose="[[isVerbose]]"
                              is-triage-mode="[[isTriageMode]]"
-                             metadata-map="[[metadataMap]]">
+                             metadata-map="[[metadataMap]]"
+                             on-dom-change="getRows">
     </test-file-results-table>
 `;
   }
@@ -82,7 +83,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       },
       rows: {
         type: Array,
-        computed: 'computeRows(resultsTable, onlyShowDifferences)'
+        computed: 'computeRows(resultsTable, onlyShowDifferences)',
+        notify: true,
       },
       subtestRowCount: {
         type: Number,
@@ -317,6 +319,10 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     }
 
     return rows;
+  }
+
+  getRows() {
+    // console.log(this.rows)
   }
 }
 
