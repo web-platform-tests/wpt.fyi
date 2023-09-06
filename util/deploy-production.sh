@@ -35,7 +35,7 @@ echo -e "There are $CHANGE_COUNT changes to deploy:\n$CHANGELIST"
 # Verfiy that all commit checks passed.
 FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/HEAD/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure"))')
 FAILURES=$(echo "$FAILED_CHECKS" | jq -r 'length')
-if [[ "${FAILURES}" != ""  ]];
+if [[ "${FAILURES}" != "0"  ]];
 then
     echo -e "\n$FAILURES checks failed for the latest commit:"
     echo "$FAILED_CHECKS" | jq -r '.[] | .name + ": " + .html_url'
