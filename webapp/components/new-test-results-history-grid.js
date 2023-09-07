@@ -7,8 +7,6 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 const pageStyle = getComputedStyle(document.body);
 import { PathInfo } from './path.js';
-import { TestRunsUIQuery } from './test-runs-query.js';
-import { TestRunsQueryLoader } from './test-runs.js';
 
 const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
 const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
@@ -98,7 +96,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   }
 
   displayCharts(showTestHistory, path, rows) {
-    console.log("HERE THE ROWS", rows)
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
@@ -265,12 +262,10 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
 
-    this.subtestNames = []
-    rows.forEach(row => {
-      this.subtestNames.push(row.name)
-    })
-    // this.subtestNames = Object.keys(this.historicalData[BROWSER_NAMES[0]]);
-    console.log(this.subtestNames)
+    this.subtestNames = [''];
+    for (let i = 1; i < rows.length; i++) {
+      this.subtestNames.push(rows[i].name);
+    }
   }
 }
 
