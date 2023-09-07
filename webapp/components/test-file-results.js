@@ -55,8 +55,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
                              rows="{{rows}}"
                              verbose="[[isVerbose]]"
                              is-triage-mode="[[isTriageMode]]"
-                             metadata-map="[[metadataMap]]"
-                             on-dom-change="getRows">
+                             metadata-map="[[metadataMap]]">
     </test-file-results-table>
 `;
   }
@@ -319,10 +318,6 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     }
 
     return rows;
-  }
-
-  getRows() {
-    // console.log(this.rows)
   }
 }
 
