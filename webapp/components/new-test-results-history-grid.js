@@ -264,7 +264,12 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 
     this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
-    this.subtestNames = Object.keys(this.historicalData[BROWSER_NAMES[0]]);
+
+    this.subtestNames = []
+    rows.forEach(row => {
+      this.subtestNames.push(row.name)
+    })
+    // this.subtestNames = Object.keys(this.historicalData[BROWSER_NAMES[0]]);
     console.log(this.subtestNames)
   }
 }
