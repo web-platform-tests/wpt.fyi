@@ -251,7 +251,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            diff-run="[[diffRun]]"
                            is-triage-mode="[[isTriageMode]]"
                            metadata-map="[[metadataMap]]"
-                           rows="{{rows}}">
+                           rows="[[rows]]">
         </test-file-results>
       </template>
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
@@ -371,7 +371,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
           <template is="dom-if" if="[[historyTimeline]]">
-            <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
+            <paper-button id="show-history" onclick="[[showNewHistoryClicked]]" raised>
               Show New history
             </paper-button>
           </template>
@@ -1274,9 +1274,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   showNewHistoryClicked() {
-    return () => {
+    console.log("WHERE THEY GO", window.Rows)
+    // return () => {
       this.showNewHistory = true;
-    };
+    // };
   }
 
   queryChanged(query, queryBefore) {

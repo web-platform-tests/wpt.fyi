@@ -52,7 +52,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
                              diff-run="[[diffRun]]"
                              only-show-differences="{{onlyShowDifferences}}"
                              path="[[path]]"
-                             rows="{{rows}}"
+                             rows="[[rows]]"
                              verbose="[[isVerbose]]"
                              is-triage-mode="[[isTriageMode]]"
                              metadata-map="[[metadataMap]]">
@@ -83,7 +83,6 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       rows: {
         type: Array,
         computed: 'computeRows(resultsTable, onlyShowDifferences)',
-        notify: true,
       },
       subtestRowCount: {
         type: Number,
@@ -316,7 +315,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     } else {
       this.subtestRowCount = 0;
     }
-
+    window.Rows = rows
     return rows;
   }
 }
