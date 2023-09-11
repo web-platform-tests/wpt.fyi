@@ -15,9 +15,15 @@ from google.cloud import ndb, storage
 BUCKET_NAME = 'wpt-recent-statuses-staging'
 PROJECT_NAME = 'wptdashboard-staging'
 RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
+TIMEOUT_SECONDS = 3600
+
+# Set to true to generate new JSON files for tracking previous test history.
+# This should only be used in the first invocation to create the initial
+# starting point of test history, and all Datastore entities should be deleted
+# in order to be regenerated correctly. Note that this will take a
+# significantly longer amount of processing time, and will likely need to b
+# invoked locally to avoid any timeout issues that would occur normally.
 SHOULD_GENERATE_NEW_STATUSES_JSON = False
-# Timeout after 1 hour.
-TIMEOUT_SECONDS = 3500
 
 
 class TestHistoryEntry(ndb.Model):
@@ -383,12 +389,15 @@ def get_processing_start_date() -> MostRecentHistoryProcessed:
     return most_recent_processed
 
 
-def main() -> str:
+# default parameters used for cloud functions.
+def main(args=None, topic=None) -> str:
     client = ndb.Client(project=PROJECT_NAME)
     with client.context():
         processing_start = time.time()
         run_sets_processed = 0
-        while True:
+        # If we're generating new status JSON files, only 1 set of aligned runs
+        # should be processed to create the baseline statuses.
+        while not SHOULD_GENERATE_NEW_STATUSES_JSON or run_sets_processed == 0:
             process_start_entity = get_processing_start_date()
             runs_list = get_aligned_run_info(process_start_entity)
             # A return value of None means that the processing is complete
@@ -398,7 +407,6 @@ def main() -> str:
             # A return value of an empty list means that no aligned runs
             # were found at the given interval.
             if len(runs_list) == 0:
-                run_sets_processed += 1
                 continue
             process_runs(runs_list, process_start_entity)
             run_sets_processed += 1
