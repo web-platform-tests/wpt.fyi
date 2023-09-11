@@ -251,7 +251,7 @@ def _populate_previous_statuses(browser_name: str) -> dict:
     test_statuses = json.loads(statuses_json_str)
     # Turn the list of recent statuses into a dictionary for quick referencing.
     prev_test_statuses = {(t['test_name'], t['subtest_name']): t['status']
-                         for t in test_statuses}
+                          for t in test_statuses}
     return prev_test_statuses
 
 
