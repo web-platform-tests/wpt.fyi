@@ -12,7 +12,7 @@ charset-normalizer==2.0.12
     # via requests
 click==8.0.4
     # via flask
-filelock==3.12.2
+filelock==3.12.3
     # via -r requirements.in
 flake8==6.1.0
     # via -r requirements.in
@@ -68,7 +68,7 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.5.0
+mypy==1.5.1
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
@@ -109,8 +109,12 @@ rsa==4.8
     # via google-auth
 six==1.16.0
     # via google-auth
-typing-extensions==4.1.1
+tomli==2.0.1
     # via mypy
+typing-extensions==4.7.1
+    # via
+    #   filelock
+    #   mypy
 urllib3==1.26.8
     # via requests
 werkzeug==2.2.3

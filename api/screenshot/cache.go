@@ -73,8 +73,10 @@ func uploadScreenshotHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	/* #nosec G101 */
 	bucketName := "wptd-screenshots-staging"
 	if aeAPI.GetHostname() == "wpt.fyi" {
+		/* #nosec G101 */
 		bucketName = "wptd-screenshots"
 	}
 	bucket := gcs.Bucket(bucketName)

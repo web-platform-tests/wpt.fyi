@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -18,7 +19,7 @@ type Browser map[string][]Subtest
 
 // RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
-	TestName string `json:"testName"`
+	TestName string `json:"test_name"`
 }
 
 // Handler for fetching historical data of a specific test for each of the four major browsers.
@@ -62,6 +63,11 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	// Sort runs in chronological order
+	sort.Slice(runs, func(i, j int) bool {
+		return runs[i].Date < runs[j].Date
+	})
 
 	// If there are no runs returned, return backup mock JSON
 	if len(runs) == 0 {
