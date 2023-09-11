@@ -49,19 +49,19 @@ class TestRun(ndb.Model):
 
 # Type hint class for the run metadata return value from api/runs endpoint.
 class MetadataDict(TypedDict):
-  id: str
-  browser_name: str
-  browser_version: str
-  os_name: str
-  os_version: str
-  revision: str
-  full_revision_hash: str
-  results_url: str
-  created_at: str
-  time_start: str
-  time_end: str
-  raw_results_url: str
-  labels: list[str]
+    id: str
+    browser_name: str
+    browser_version: str
+    os_name: str
+    os_version: str
+    revision: str
+    full_revision_hash: str
+    results_url: str
+    created_at: str
+    time_start: str
+    time_end: str
+    raw_results_url: str
+    labels: list[str]
 
 
 def _build_new_test_history_entry(
@@ -69,8 +69,7 @@ def _build_new_test_history_entry(
         subtest_name: str,
         run_metadata: MetadataDict,
         run_date: str,
-        current_status: str,
-    ) -> TestHistoryEntry:
+        current_status: str) -> TestHistoryEntry:
     return TestHistoryEntry(
         RunID=run_metadata['id'],
         BrowserName=run_metadata['browser_name'],
@@ -89,8 +88,7 @@ def create_entity_if_needed(
         run_date: str,
         current_status: str,
         entities_to_write: list[TestHistoryEntry],
-        unique_entities_to_write: set[tuple[str, str]],
-    ) -> None:
+        unique_entities_to_write: set[tuple[str, str]]) -> None:
     """Check if an entity should be created for a test status delta,
     and create one if necessary.
     """
@@ -117,9 +115,9 @@ def create_entity_if_needed(
         unique_entities_to_write.add(test_key)
     prev_test_statuses[test_key] = current_status
 
+
 def process_single_run(run_metadata: MetadataDict) -> None:
     """Process a single aligned run and save and deltas to history."""
-
     try:
         run_resp = requests.get(run_metadata['raw_results_url'])
         run_data = run_resp.json()
@@ -127,8 +125,10 @@ def process_single_run(run_metadata: MetadataDict) -> None:
         raise requests.exceptions.RequestException(
             'Failed to fetch raw results', e)
 
-    # Keep a dictionary of the previous test statuses from runs we've processed.
-    prev_test_statuses = _populate_previous_statuses(run_metadata['browser_name'])
+    # Keep a dictionary of the previous test statuses
+    # from runs we've processed.
+    prev_test_statuses = _populate_previous_statuses(
+        run_metadata['browser_name'])
 
     # Keep track of every single test result that's in the dataset of
     # runs we've previously seen. If they're not in the run we're processing,
@@ -209,16 +209,14 @@ def get_previous_statuses(browser_name: str) -> Any:
     storage_client = storage.Client(project=PROJECT_NAME)
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(f'{browser_name}_recent_statuses.json')
-    try:
-        return blob.download_as_string()
-    except:
-        print('Failed to obtain previous statuses.')
-        return None
+    return blob.download_as_string()
 
 
 def update_previous_statuses(
         prev_test_statuses: dict, browser_name: str) -> None:
-    """Update the JSON of most recently seen statuses for use in the next invocation."""
+    """Update the JSON of most recently seen statuses
+    for use in the next invocation.
+    """
     new_statuses = []
     print('Updating recent statuses JSON...')
     for test_name, subtest_name in prev_test_statuses.keys():
@@ -241,8 +239,8 @@ def _populate_previous_statuses(browser_name: str) -> dict:
     # If the JSON file is not found, then an exception should be raised
     # or the file should be generated, depending on the constant's value.
     if statuses_json_str is None and SHOULD_GENERATE_NEW_STATUSES_JSON:
-        # Returning an empty dictionary of recent statuses will generate
-        # the initial recent statuses file and all of the first history entries.
+        # Returning an empty dictionary of recent statuses will generate the
+        # initial recent statuses file and all of the first history entries.
         return {}
     if statuses_json_str is None:
         # If this is not the first ever run for test statuses, then raise an
@@ -267,9 +265,9 @@ def should_process_run(run_metadata: MetadataDict) -> bool:
 
 def process_runs(
         runs_list: list[MetadataDict],
-        process_start_entity: MostRecentHistoryProcessed
-    ) -> None:
-    """Process each aligned run and update the most recent processed date afterward."""
+        process_start_entity: MostRecentHistoryProcessed) -> None:
+    """Process each aligned run and update the
+    most recent processed date afterward."""
     revisions_processed = {}
     # Go through each aligned run.
 
@@ -289,7 +287,7 @@ def process_runs(
                 'safari': False,
             }
 
-        if should_process_run(run_metadata):  
+        if should_process_run(run_metadata):
             process_single_run(run_metadata)
 
         revisions_processed[revision][browser_name] = True
@@ -327,8 +325,8 @@ def get_aligned_run_info(date_entity: MostRecentHistoryProcessed) -> list|None:
 
     try:
         resp = requests.get(url)
-    # Sometimes this request can time out. If it does, just return an empty list
-    # and attempt the fetch again.
+    # Sometimes this request can time out. If it does, just return
+    # an empty list and attempt the fetch again.
     except requests.exceptions.ReadTimeout:
         return []
     runs_list: list[MetadataDict] = resp.json()
@@ -345,9 +343,10 @@ def get_aligned_run_info(date_entity: MostRecentHistoryProcessed) -> list|None:
 
     # Sort by revision -> then time start, so that the aligned runs are
     # processed in groups with each other.
-    # Note that this technically doesn't have an impact if only 1 set of aligned
-    # runs are processed, but this sort will allow this script to function
-    # properly if multiple aligned run sets were to be processed together.
+    # Note that this technically doesn't have an impact if only 1 set of
+    # aligned runs are processed, but this sort will allow this script to
+    # function properly if multiple aligned run sets were to be processed
+    # together.
     runs_list.sort(key=lambda run: run['revision'])
     runs_list.sort(key=lambda run: run['time_start'])
 
@@ -374,7 +373,7 @@ class NoRecentDateError(Exception):
 def get_processing_start_date() -> MostRecentHistoryProcessed:
     most_recent_processed: MostRecentHistoryProcessed = (
         MostRecentHistoryProcessed.query().get())
-    
+
     if most_recent_processed is None:
         raise NoRecentDateError('Most recently processed run date not found.')
     return most_recent_processed
@@ -391,10 +390,10 @@ def main() -> str:
             # A return value of None means that the processing is complete
             # and up-to-date. Stop the processing.
             if runs_list is None:
-                break 
+                break
             # A return value of an empty list means that no aligned runs
             # were found at the given interval.
-            if len(runs_list) == 0: 
+            if len(runs_list) == 0:
                 run_sets_processed += 1
                 continue
             process_runs(runs_list, process_start_entity)
