@@ -7,7 +7,7 @@ import re
 import requests
 import time
 from datetime import datetime, timedelta
-from typing import Any, TypedDict
+from typing import Any, Optional, TypedDict
 
 from google.cloud import ndb, storage
 
@@ -250,7 +250,7 @@ def _populate_previous_statuses(browser_name: str) -> dict:
 
     test_statuses = json.loads(statuses_json_str)
     # Turn the list of recent statuses into a dictionary for quick referencing.
-    prev_test_statuses= {(t['test_name'], t['subtest_name']): t['status']
+    prev_test_statuses = {(t['test_name'], t['subtest_name']): t['status']
                          for t in test_statuses}
     return prev_test_statuses
 
@@ -306,7 +306,8 @@ def process_runs(
 
 
 # Get the list of metadata for the most recent aligned runs.
-def get_aligned_run_info(date_entity: MostRecentHistoryProcessed) -> list|None:
+def get_aligned_run_info(
+        date_entity: MostRecentHistoryProcessed) -> Optional[list]:
     date_start = date_entity.Date
     date_start_obj = datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ')
 
@@ -320,7 +321,8 @@ def get_aligned_run_info(date_entity: MostRecentHistoryProcessed) -> list|None:
         end_interval = yesterday
 
     end_interval_string = end_interval.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-    url = (f'{RUNS_API_URL}?label=master&label=experimental&max-count=1&aligned'
+    url = (f'{RUNS_API_URL}?label=master'
+           '&label=experimental&max-count=1&aligned'
            f'&from={date_start}&to={end_interval_string}')
 
     try:
@@ -366,7 +368,9 @@ def update_recent_processed_date(
 
 
 class NoRecentDateError(Exception):
-    """Exception raised when the MostRecentHistoryProcessed entity is not found."""
+    """Exception raised when the MostRecentHistoryProcessed
+    entity is not found.
+    """
     pass
 
 
