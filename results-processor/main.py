@@ -10,13 +10,10 @@ import filelock
 import flask
 
 import processor
-import build_test_history
 
 
 # The file will be flock()'ed if a report is being processed.
 LOCK_FILE = '/tmp/results-processor.lock'
-# Lock file for building test history.
-TEST_HISTORY_LOCK_FILE = '/tmp/build-test-history.lock'
 # If the file above is locked, this timestamp file contains the UNIX timestamp
 # (a float in seconds) for when the current task start. A separate file is used
 # because the attempts to acquire a file lock invoke open() in truncate mode.
@@ -120,17 +117,6 @@ def task_handler():
         app.logger.info(resp)
 
     return (resp, status)
-
-
-@app.route('/api/results/build_test_history', methods=['GET'])
-def build_test_history_handler():
-    try:
-        with filelock.FileLock(TEST_HISTORY_LOCK_FILE):
-            build_test_history.main()
-    except filelock.Timeout:
-        return ('Test history is already being processed.',
-                HTTPStatus.SERVICE_UNAVAILABLE)
-    app.logger.info('Processing test history.')
 
 
 # Run the script directly locally to start Flask dev server.
