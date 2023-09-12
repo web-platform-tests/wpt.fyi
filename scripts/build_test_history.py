@@ -241,13 +241,13 @@ def update_previous_statuses(
 
 def _populate_previous_statuses(browser_name: str) -> dict:
     """Create a dict with the most recent test statuses seen for browser."""
-    statuses_json_str = get_previous_statuses(browser_name)
-    # If the JSON file is not found, then an exception should be raised
-    # or the file should be generated, depending on the constant's value.
-    if statuses_json_str is None and SHOULD_GENERATE_NEW_STATUSES_JSON:
+    if SHOULD_GENERATE_NEW_STATUSES_JSON:
         # Returning an empty dictionary of recent statuses will generate the
         # initial recent statuses file and all of the first history entries.
         return {}
+    # If the JSON file is not found, then an exception should be raised
+    # or the file should be generated, depending on the constant's value.
+    statuses_json_str = get_previous_statuses(browser_name)
     if statuses_json_str is None:
         # If this is not the first ever run for test statuses, then raise an
         # exception if the JSON file was not found.
@@ -295,6 +295,8 @@ def process_runs(
 
         if should_process_run(run_metadata):
             process_single_run(run_metadata)
+        else:
+            print('Run has already been processed')
 
         revisions_processed[revision][browser_name] = True
         # If all runs for this revision have been processed, we can update
