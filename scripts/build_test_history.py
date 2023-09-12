@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import argparse
 import json
 import re
 import requests
@@ -21,7 +22,7 @@ TIMEOUT_SECONDS = 3600
 # This should only be used in the first invocation to create the initial
 # starting point of test history, and all Datastore entities should be deleted
 # in order to be regenerated correctly. Note that this will take a
-# significantly longer amount of processing time, and will likely need to b
+# significantly longer amount of processing time, and will likely need to be
 # invoked locally to avoid any timeout issues that would occur normally.
 SHOULD_GENERATE_NEW_STATUSES_JSON = False
 
@@ -380,6 +381,13 @@ class NoRecentDateError(Exception):
     pass
 
 
+class JSONGenerationError(Exception):
+    """Exception raised when initial JSON files are being generated,
+    but the database has not been cleared of existing entries.
+    """
+    pass
+
+
 def get_processing_start_date() -> MostRecentHistoryProcessed:
     most_recent_processed: MostRecentHistoryProcessed = (
         MostRecentHistoryProcessed.query().get())
@@ -389,10 +397,26 @@ def get_processing_start_date() -> MostRecentHistoryProcessed:
     return most_recent_processed
 
 
+def check_if_db_empty() -> None:
+    """Raise an error if new JSON files are set to be generated and
+    test history data already exists.
+    """
+    test_history_entry: TestHistoryEntry = TestHistoryEntry.query().get()
+    if test_history_entry is not None:
+        raise JSONGenerationError(
+            'TestHistoryEntry entities exist in Datastore. '
+            'New JSON files should not be generated if data already exists.')
+
+
 # default parameters used for cloud functions.
 def main(args=None, topic=None) -> str:
     client = ndb.Client(project=PROJECT_NAME)
     with client.context():
+        # If we're generating new JSON files, the database should be empty
+        # of test history data.
+        if SHOULD_GENERATE_NEW_STATUSES_JSON:
+            check_if_db_empty()
+
         processing_start = time.time()
         run_sets_processed = 0
         # If we're generating new status JSON files, only 1 set of aligned runs
