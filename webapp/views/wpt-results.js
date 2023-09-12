@@ -371,7 +371,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
           <template is="dom-if" if="[[historyTimeline]]">
-            <paper-button id="show-history" onclick="[[showNewHistoryClicked]]" raised>
+            <paper-button id="show-history" onclick="[[showNewHistoryClicked()]]" raised>
               Show New history
             </paper-button>
           </template>
@@ -1274,10 +1274,19 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   showNewHistoryClicked() {
-    console.log("WHERE THEY GO", window.Rows)
-    // return () => {
-      this.showNewHistory = true;
-    // };
+    return () => {
+      this._fireEvent('getRows', { val: window.Rows })
+      this.showNewHistory = true
+    }
+  }
+
+  _fireEvent(eventName, detail) {
+    const event = new CustomEvent(eventName, {
+      bubbles: true,
+      composed: true,
+      detail,
+    });
+    this.dispatchEvent(event);
   }
 
   queryChanged(query, queryBefore) {

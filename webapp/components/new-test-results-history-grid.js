@@ -95,10 +95,20 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
+  handleGetRows(e) {
+    console.log("event???",e)
+    this.rows = e.detail.val;
+  }
+
   displayCharts(showTestHistory, path, rows) {
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
+
+    // this.addEventListener('getRows', this.handleGetRows.bind(this));
+    this.addEventListener('getRows', () => {console.log("ya boi")} );
+
+    console.log("HELLO", this.rows)
 
     // Get the test history data and then populate the chart
     Promise.all([
