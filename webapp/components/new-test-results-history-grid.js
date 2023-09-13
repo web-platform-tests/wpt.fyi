@@ -228,8 +228,10 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     // https://stackoverflow.com/questions/40928971/how-to-customize-google-chart-with-hyperlink-in-the-label
     const statusSelectHandler = (chartIndex) => {
       const selection = this.charts[chartIndex].getSelection();
+      console.log({selection})
       if (selection.length > 0) {
         const index = selection[0].row;
+        console.log({index})
         const runIDs = this.chartRunIDs[chartIndex];
         console.log(runIDs[index])
 
