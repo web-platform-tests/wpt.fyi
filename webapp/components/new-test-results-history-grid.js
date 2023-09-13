@@ -231,6 +231,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       if (selection.length > 0) {
         const index = selection[0].row;
         const runIDs = this.chartRunIDs[chartIndex];
+        console.log(runIDs[index])
 
         if (index !== undefined && runIDs.length > index) {
           window.open(`/results/?run_id=${runIDs[index]}`, '_blank');
