@@ -28,7 +28,7 @@ SHOULD_GENERATE_NEW_STATUSES_JSON = False
 
 class TestHistoryEntry(ndb.Model):
     BrowserName = ndb.StringProperty(required=True)
-    RunID = ndb.IntegerProperty(required=True)
+    RunID = ndb.StringProperty(required=True)
     Date = ndb.StringProperty(required=True)
     TestName = ndb.StringProperty(required=True)
     SubtestName = ndb.StringProperty(required=True)
