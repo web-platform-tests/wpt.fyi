@@ -250,8 +250,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                            products="[[products]]"
                            diff-run="[[diffRun]]"
                            is-triage-mode="[[isTriageMode]]"
-                           metadata-map="[[metadataMap]]"
-                           rows="[[rows]]">
+                           metadata-map="[[metadataMap]]">
         </test-file-results>
       </template>
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
@@ -516,7 +515,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
       triageNotifier: Boolean,
-      rows: Array,
     };
   }
 
