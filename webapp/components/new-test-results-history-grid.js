@@ -107,12 +107,12 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     Promise.all([
       this.getTestHistory(path),
       this.loadCharts()
-    ]).then(() => this.updateAllCharts(this.historicalData));
+    ]).then(() => this.updateAllCharts(this.historicalData, subtestNames));
 
     // Google Charts is not responsive, even if one sets a percentage-width, so
     // we add a resize observer to redraw the chart if the size changes.
     window.addEventListener('resize', () => {
-      this.updateAllCharts(subtestNames);
+      this.updateAllCharts(this.historicalData, subtestNames);
     });
   }
 
@@ -121,7 +121,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     await window.google.charts.load('current', { packages: ['timeline'] });
   }
 
-  updateAllCharts(subtestNames) {
+  updateAllCharts(historicalData, subtestNames) {
     const divNames = [
       'chromeHistoryChart',
       'edgeHistoryChart',
@@ -135,7 +135,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs = [[],[],[],[]];
 
     divNames.forEach((name, i) => {
-      this.updateChart(subtestNames, name, i);
+      this.updateChart(historicalData[BROWSER_NAMES[i]], name, i, subtestNames);
     });
   }
 
@@ -170,46 +170,46 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
-      this.subtestNames.forEach(subtestName => {
-        if (!browserTestData[subtestName]) {
-          return;
+    subtestNames.forEach(subtestName => {
+      if (!browserTestData[subtestName]) {
+        return;
+      }
+      for (let i = 0; i < browserTestData[subtestName].length; i++) {
+        const dataPoint = browserTestData[subtestName][i];
+        const startDate = new Date(dataPoint.date);
+
+        // Use the next entry as the end date, or use present time if this
+        // is the last entry
+        let endDate = now;
+        if (i + 1 !== browserTestData[subtestName].length) {
+          const nextDataPoint = browserTestData[subtestName][i + 1];
+          endDate = new Date(nextDataPoint.date);
         }
-        for (let i = 0; i < browserTestData[subtestName].length; i++) {
-          const dataPoint = browserTestData[subtestName][i];
-          const startDate = new Date(dataPoint.date);
 
-          // Use the next entry as the end date, or use present time if this
-          // is the last entry
-          let endDate = now;
-          if (i + 1 !== browserTestData[subtestName].length) {
-            const nextDataPoint = browserTestData[subtestName][i + 1];
-            endDate = new Date(nextDataPoint.date);
-          }
-
-          // If this is the main test status, name it based on the amount of subtests
-          let subtestDisplayName = subtestName;
-          if (subtestName === '') {
-            subtestDisplayName = (this.subtestNames.length > 1) ? 'Harness status' : 'Test status';
-          }
-
-          const tooltip =
-        `${dataPoint.status} ${startDate.toLocaleDateString()}-${endDate.toLocaleDateString()}`;
-          const statusColor = COLOR_MAPPING[dataPoint.status] || COLOR_MAPPING.default;
-
-          // Add the run ID to array of run IDs to use for links
-          this.chartRunIDs[chartIndex].push(dataPoint.run_id);
-
-          dataTableRows.push([
-            subtestDisplayName,
-            dataPoint.status,
-            statusColor,
-            tooltip,
-            startDate,
-            endDate,
-          ]);
+        // If this is the main test status, name it based on the amount of subtests
+        let subtestDisplayName = subtestName;
+        if (subtestName === '') {
+          subtestDisplayName = (subtestNames.length > 1) ? 'Harness status' : 'Test status';
         }
-      });
-    
+
+        const tooltip =
+          `${dataPoint.status} ${startDate.toLocaleDateString()}-${endDate.toLocaleDateString()}`;
+        const statusColor = COLOR_MAPPING[dataPoint.status] || COLOR_MAPPING.default;
+
+        // Add the run ID to array of run IDs to use for links
+        this.chartRunIDs[chartIndex].push(dataPoint.run_id);
+
+        dataTableRows.push([
+          subtestDisplayName,
+          dataPoint.status,
+          statusColor,
+          tooltip,
+          startDate,
+          endDate,
+        ]);
+      }
+    });
+
     const getChartHeight = numOfSubTests => {
       const testHeight = 41;
       const xAxisHeight = 50;
