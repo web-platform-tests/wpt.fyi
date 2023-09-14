@@ -585,7 +585,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('triagemetadata', this.reloadPendingMetadata);
-    window.addEventListener('getSubtestRows', this.handleGetSubtestRows.bind(this));
+    this.addEventListener('subtestrows', this.handleGetSubtestRows);
   }
 
   disconnectedCallback() {
@@ -1286,7 +1286,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   showNewHistoryClicked() {
     return () => {
-      this.showNewHistory = true
+      this.showNewHistory = true;
     }
   }
 

@@ -315,7 +315,8 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
     } else {
       this.subtestRowCount = 0;
     }
-    this._fireEvent('getSubtestRows', { rows });
+
+    this._fireEvent('subtestrows', { rows });
     return rows;
   }
 

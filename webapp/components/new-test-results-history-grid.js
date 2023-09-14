@@ -80,14 +80,17 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       dataTable: Object,
       runIDs: Array,
       path: String,
-      showTestHistory: { type: Boolean, value: false },
+      showTestHistory: { 
+        type: Boolean, 
+        value: false 
+      },
       subtestNames: Array,
     };
   }
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path)',
+      'displayCharts(showTestHistory, path, subtestNames)',
     ];
   }
 
@@ -95,7 +98,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory, path) {
+  displayCharts(showTestHistory, path, subtestNames) {
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
@@ -109,7 +112,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     // Google Charts is not responsive, even if one sets a percentage-width, so
     // we add a resize observer to redraw the chart if the size changes.
     window.addEventListener('resize', () => {
-      this.updateAllCharts(this.historicalData);
+      this.updateAllCharts(subtestNames);
     });
   }
 
@@ -118,7 +121,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     await window.google.charts.load('current', { packages: ['timeline'] });
   }
 
-  updateAllCharts(historicalData) {
+  updateAllCharts(subtestNames) {
     const divNames = [
       'chromeHistoryChart',
       'edgeHistoryChart',
@@ -132,14 +135,14 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs = [[],[],[],[]];
 
     divNames.forEach((name, i) => {
-      this.updateChart(historicalData[BROWSER_NAMES[i]], name, i);
+      this.updateChart(subtestNames, name, i);
     });
   }
 
-  updateChart(browserTestData, divID, chartIndex) {
+  updateChart(browserTestData, divID, chartIndex, subtestNames) {
     // Our observer may be called before the historical data has been fetched,
     // so debounce that.
-    if (!browserTestData) {
+    if (!browserTestData || !subtestNames) {
       return;
     }
 
@@ -167,8 +170,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
-    if (this.subtestNames) {
-
       this.subtestNames.forEach(subtestName => {
         if (!browserTestData[subtestName]) {
           return;
@@ -208,8 +209,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
           ]);
         }
       });
-    }
-
+    
     const getChartHeight = numOfSubTests => {
       const testHeight = 41;
       const xAxisHeight = 50;
