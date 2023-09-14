@@ -1275,18 +1275,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   showNewHistoryClicked() {
     return () => {
-      this._fireEvent('getRows', { val: window.Rows })
       this.showNewHistory = true
     }
-  }
-
-  _fireEvent(eventName, detail) {
-    const event = new CustomEvent(eventName, {
-      bubbles: true,
-      composed: true,
-      detail,
-    });
-    this.dispatchEvent(event);
   }
 
   queryChanged(query, queryBefore) {
