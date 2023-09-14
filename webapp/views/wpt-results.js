@@ -388,8 +388,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           <new-test-results-history-grid
             path="[[path]]"
             show-test-history="[[showNewHistory]]"
-            test-runs="[[testRuns]]"
-            rows="[[rows]]">
+            subtest-names="[[subtestNames]]">
           </new-test-results-history-grid>
         </template>
       </template>
@@ -491,6 +490,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         value: false,
       },
+      subtestNames: {
+        type: Array,
+        value:[]
+      },
       resultsLoadFailed: Boolean,
       noResults: Boolean,
       editingQuery: {
@@ -584,6 +587,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('triagemetadata', this.reloadPendingMetadata);
+    window.addEventListener('getSubtestRows', this.handleGetSubtestRows.bind(this));
   }
 
   disconnectedCallback() {
@@ -624,6 +628,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.displayedTotals = [];
     this.refreshDisplayedNodes();
     this.loadData();
+  }
+
+  handleGetSubtestRows(event) {
+    this.subtestNames = event.detail.rows.map(subtestRow => {
+      if(subtestRow.name === 'Harness status') {
+        return '';
+      }
+      return subtestRow.name;
+    }).filter(subtestName => subtestName !== 'Duration')
   }
 
   fetchResults(q) {

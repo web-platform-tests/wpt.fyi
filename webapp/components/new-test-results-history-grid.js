@@ -81,13 +81,13 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       runIDs: Array,
       path: String,
       showTestHistory: { type: Boolean, value: false },
-      rows: Array,
+      subtestNames: Array,
     };
   }
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path, rows)',
+      'displayCharts(showTestHistory, path)',
     ];
   }
 
@@ -95,24 +95,14 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
-  handleGetRows(e) {
-    console.log("event???",e)
-    this.rows = e.detail.val;
-  }
-
-  displayCharts(showTestHistory, path, rows) {
+  displayCharts(showTestHistory, path) {
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
 
-    // this.addEventListener('getRows', this.handleGetRows.bind(this));
-    this.addEventListener('getRows', () => {console.log("ya boi")} );
-
-    console.log("HELLO", this.rows)
-
     // Get the test history data and then populate the chart
     Promise.all([
-      this.getTestHistory(path, rows),
+      this.getTestHistory(path),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData));
 
@@ -177,45 +167,48 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
-    this.subtestNames.forEach(subtestName => {
-      if (!browserTestData[subtestName]) {
-        return;
-      }
-      for (let i = 0; i < browserTestData[subtestName].length; i++) {
-        const dataPoint = browserTestData[subtestName][i];
-        const startDate = new Date(dataPoint.date);
+    if (this.subtestNames) {
 
-        // Use the next entry as the end date, or use present time if this
-        // is the last entry
-        let endDate = now;
-        if (i + 1 !== browserTestData[subtestName].length) {
-          const nextDataPoint = browserTestData[subtestName][i + 1];
-          endDate = new Date(nextDataPoint.date);
+      this.subtestNames.forEach(subtestName => {
+        if (!browserTestData[subtestName]) {
+          return;
         }
+        for (let i = 0; i < browserTestData[subtestName].length; i++) {
+          const dataPoint = browserTestData[subtestName][i];
+          const startDate = new Date(dataPoint.date);
 
-        // If this is the main test status, name it based on the amount of subtests
-        let subtestDisplayName = subtestName;
-        if (subtestName === '') {
-          subtestDisplayName = (this.subtestNames.length > 1) ? 'Harness status' : 'Test status';
+          // Use the next entry as the end date, or use present time if this
+          // is the last entry
+          let endDate = now;
+          if (i + 1 !== browserTestData[subtestName].length) {
+            const nextDataPoint = browserTestData[subtestName][i + 1];
+            endDate = new Date(nextDataPoint.date);
+          }
+
+          // If this is the main test status, name it based on the amount of subtests
+          let subtestDisplayName = subtestName;
+          if (subtestName === '') {
+            subtestDisplayName = (this.subtestNames.length > 1) ? 'Harness status' : 'Test status';
+          }
+
+          const tooltip =
+        `${dataPoint.status} ${startDate.toLocaleDateString()}-${endDate.toLocaleDateString()}`;
+          const statusColor = COLOR_MAPPING[dataPoint.status] || COLOR_MAPPING.default;
+
+          // Add the run ID to array of run IDs to use for links
+          this.chartRunIDs[chartIndex].push(dataPoint.run_id);
+
+          dataTableRows.push([
+            subtestDisplayName,
+            dataPoint.status,
+            statusColor,
+            tooltip,
+            startDate,
+            endDate,
+          ]);
         }
-
-        const tooltip =
-          `${dataPoint.status} ${startDate.toLocaleDateString()}-${endDate.toLocaleDateString()}`;
-        const statusColor = COLOR_MAPPING[dataPoint.status] || COLOR_MAPPING.default;
-
-        // Add the run ID to array of run IDs to use for links
-        this.chartRunIDs[chartIndex].push(dataPoint.run_id);
-
-        dataTableRows.push([
-          subtestDisplayName,
-          dataPoint.status,
-          statusColor,
-          tooltip,
-          startDate,
-          endDate,
-        ]);
-      }
-    });
+      });
+    }
 
     const getChartHeight = numOfSubTests => {
       const testHeight = 41;
@@ -255,7 +248,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   }
 
   // get test history and aligned run data
-  async getTestHistory(path, rows) {
+  async getTestHistory(path) {
     // If there is existing data, clear it to make sure nothing is cached
     if(this.historicalData) {
       this.historicalData = {};
@@ -271,11 +264,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 
     this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
-
-    this.subtestNames = [''];
-    for (let i = 1; i < rows.length; i++) {
-      this.subtestNames.push(rows[i].name);
-    }
   }
 }
 
