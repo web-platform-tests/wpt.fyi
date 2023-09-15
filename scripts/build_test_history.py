@@ -271,7 +271,7 @@ def update_previous_statuses(
 def _populate_previous_statuses(browser_name: str) -> dict:
     """Create a dict with the most recent test statuses seen for browser."""
     verboseprint('Populating the most recently seen statuses...')
-    if parsed_args.should_generate_new_statuses_json:
+    if parsed_args.generate_new_statuses_json:
         # Returning an empty dictionary of recent statuses will generate the
         # initial recent statuses file and all of the first history entries.
         verboseprint('Generating new statuses, so returning empty dict.')
@@ -512,14 +512,14 @@ def main(args=None, topic=None) -> str:
 
         # If we're generating new JSON files, the database should be empty
         # of test history data.
-        if parsed_args.should_generate_new_statuses_json:
+        if parsed_args.generate_new_statuses_json:
             check_if_db_empty()
 
         processing_start = time.time()
         run_sets_processed = 0
         # If we're generating new status JSON files, only 1 set of aligned runs
         # should be processed to create the baseline statuses.
-        while (not parsed_args.should_generate_new_statuses_json
+        while (not parsed_args.generate_new_statuses_json
                or run_sets_processed == 0):
             process_start_entity = get_processing_start_date()
             runs_list = get_aligned_run_info(process_start_entity)
