@@ -82,7 +82,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       path: String,
       showTestHistory: {
         type: Boolean,
-        value: false
+        value: false,
       },
       subtestNames: Array,
     };
