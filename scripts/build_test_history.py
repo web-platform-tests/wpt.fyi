@@ -2,11 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import argparse
 import json
 import re
 import requests
 import time
 from datetime import datetime, timedelta
+from operator import attrgetter
 from typing import Any, Optional, TypedDict
 
 from google.cloud import ndb, storage
@@ -17,13 +19,34 @@ PROJECT_NAME = 'wptdashboard-staging'
 RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 TIMEOUT_SECONDS = 3600
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-v', '--verbose', action='store_true', help='increase output verbosity.')
+parser.add_argument(
+    '--delete-history-entities', action='store_true',
+    help='delete all TestHistoryEntry entities from Datastore.')
+parser.add_argument(
+    '--set-history-start-date',
+    help=('Set the starting date to process test history. '
+          'Date must be in ISO format (e.g. "2030-12-31T09:30:00.000Z). '
+          'Command will fail if TestHistoryEntry entities '
+          'already exist in Datastore.'))
 # Set to true to generate new JSON files for tracking previous test history.
 # This should only be used in the first invocation to create the initial
 # starting point of test history, and all Datastore entities should be deleted
 # in order to be regenerated correctly. Note that this will take a
 # significantly longer amount of processing time, and will likely need to be
 # invoked locally to avoid any timeout issues that would occur normally.
-SHOULD_GENERATE_NEW_STATUSES_JSON = False
+parser.add_argument(
+    '--generate-new-statuses-json',
+    action='store_true',
+    help=('generate new statuses json and entities '
+          'after entities have been deleted.'))
+
+parsed_args = parser.parse_args()
+# Function set to only print if verbose arg is active.
+verboseprint = (print if parsed_args.verbose
+                else lambda *a, **k: None)
 
 
 class TestHistoryEntry(ndb.Model):
@@ -124,6 +147,8 @@ def create_entity_if_needed(
 
 def process_single_run(run_metadata: MetadataDict) -> None:
     """Process a single aligned run and save and deltas to history."""
+    verboseprint('Obtaining the raw results JSON for the test run '
+                 f'at {run_metadata["raw_results_url"]}')
     try:
         run_resp = requests.get(run_metadata['raw_results_url'])
         run_data = run_resp.json()
@@ -149,6 +174,8 @@ def process_single_run(run_metadata: MetadataDict) -> None:
         # Format the test name.
         test_name = re.sub(r'\s', ' ', test_data['test'])
 
+        # Specifying the subtest name as empty string means that we're dealing
+        # with the overall test status rather than a subtest status.
         create_entity_if_needed(
             test_name,
             subtest_name='',
@@ -169,7 +196,7 @@ def process_single_run(run_metadata: MetadataDict) -> None:
             # Format the subtest name.
             subtest_name = re.sub(r'\s', ' ', subtest_data['name'])
             # Truncate a subtest name if it's too long to be indexed in
-            # datastore. The subtest name stored can be at most 1500 bytes.
+            # Datastore. The subtest name stored can be at most 1500 bytes.
             # At least 1 subtest violates this size.
             if len(subtest_name) > 1000:
                 subtest_name = subtest_name[:1000]
@@ -212,6 +239,7 @@ def process_single_run(run_metadata: MetadataDict) -> None:
 
 def get_previous_statuses(browser_name: str) -> Any:
     """Fetch the JSON of most recent test statuses for comparison."""
+    verboseprint(f'Obtaining recent status JSOn for {browser_name}...')
     storage_client = storage.Client(project=PROJECT_NAME)
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(f'{browser_name}_recent_statuses.json')
@@ -237,13 +265,16 @@ def update_previous_statuses(
     # Replace old revision number with new number.
     blob = bucket.blob(f'{browser_name}_recent_statuses.json')
     blob.upload_from_string(json.dumps(new_statuses))
+    verboseprint('JSON updated.')
 
 
 def _populate_previous_statuses(browser_name: str) -> dict:
     """Create a dict with the most recent test statuses seen for browser."""
-    if SHOULD_GENERATE_NEW_STATUSES_JSON:
+    verboseprint('Populating the most recently seen statuses...')
+    if parsed_args.should_generate_new_statuses_json:
         # Returning an empty dictionary of recent statuses will generate the
         # initial recent statuses file and all of the first history entries.
+        verboseprint('Generating new statuses, so returning empty dict.')
         return {}
     # If the JSON file is not found, then an exception should be raised
     # or the file should be generated, depending on the constant's value.
@@ -258,6 +289,7 @@ def _populate_previous_statuses(browser_name: str) -> dict:
     # Turn the list of recent statuses into a dictionary for quick referencing.
     prev_test_statuses = {(t['test_name'], t['subtest_name']): t['status']
                           for t in test_statuses}
+    verboseprint('Most recent previous statuses dictionary populated.')
     return prev_test_statuses
 
 
@@ -278,9 +310,11 @@ def process_runs(
     # Go through each aligned run.
 
     start = time.time()
+    verboseprint('Beginning processing of each aligned runs set...')
     for run_metadata in runs_list:
         browser_name = run_metadata['browser_name']
         revision = run_metadata['full_revision_hash']
+        verboseprint(f'Revision: {revision}')
 
         # Keep track of the runs that have been processed.
         # The process start date entity is only updated once all aligned runs
@@ -296,7 +330,8 @@ def process_runs(
         if should_process_run(run_metadata):
             process_single_run(run_metadata)
         else:
-            print('Run has already been processed')
+            print('Run has already been processed! '
+                  'TestHistoryEntry values already exist for this run.')
 
         revisions_processed[revision][browser_name] = True
         # If all runs for this revision have been processed, we can update
@@ -333,11 +368,13 @@ def get_aligned_run_info(
            '&label=experimental&max-count=1&aligned'
            f'&from={date_start}&to={end_interval_string}')
 
+    verboseprint(f'Getting set of aligned runs from: {url}')
     try:
         resp = requests.get(url)
     # Sometimes this request can time out. If it does, just return
     # an empty list and attempt the fetch again.
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.ReadTimeout as e:
+        verboseprint('Request timed out!', e)
         return []
     runs_list: list[MetadataDict] = resp.json()
 
@@ -350,6 +387,7 @@ def get_aligned_run_info(
         # which signals we're done processing.
         if end_interval == yesterday:
             return None
+        return runs_list
 
     # Sort by revision -> then time start, so that the aligned runs are
     # processed in groups with each other.
@@ -357,9 +395,11 @@ def get_aligned_run_info(
     # aligned runs are processed, but this sort will allow this script to
     # function properly if multiple aligned run sets were to be processed
     # together.
-    runs_list.sort(key=lambda run: run['revision'])
-    runs_list.sort(key=lambda run: run['time_start'])
+    runs_list.sort(key=attrgetter('revision', 'time_start'))
 
+    if len(runs_list) != 4:
+        raise ValueError('Aligned run set should contain 4 runs. '
+                         f'Got {len(runs_list)}.')
     # Print the dates just to get info on the list of runs we're working with.
     print('Runs to process:')
     for run in runs_list:
@@ -371,7 +411,31 @@ def get_aligned_run_info(
 def update_recent_processed_date(
         date_entity: MostRecentHistoryProcessed, new_date: str) -> None:
     """Update the most recently processed date after finishing processing."""
+    verboseprint(f'Updating most recent processed date to {new_date}...')
     date_entity.Date = new_date
+    date_entity.put()
+    verboseprint('Date updated.')
+
+
+def set_history_start_date(new_date: str) -> None:
+    """Update the history processing starting date based on date input."""
+    # Datastore should be empty before manipulating
+    # the history processing start date.
+    check_if_db_empty()
+    # Make sure the new date is a valid format.
+    verboseprint(f'Checking if given date {new_date} is valid...')
+    try:
+        datetime.strptime(new_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+    except ValueError as e:
+        raise e
+
+    # Query for the existing entity if it exists.
+    date_entity = MostRecentHistoryProcessed.query().get()
+    # Update the Date value if it exists - otherwise, create a new entity.
+    if date_entity is not None:
+        date_entity.Date = new_date
+    else:
+        date_entity = MostRecentHistoryProcessed(Date=new_date)
     date_entity.put()
 
 
@@ -382,7 +446,7 @@ class NoRecentDateError(Exception):
     pass
 
 
-class JSONGenerationError(Exception):
+class DatastorePopulatedError(Exception):
     """Exception raised when initial JSON files are being generated,
     but the database has not been cleared of existing entries.
     """
@@ -390,11 +454,14 @@ class JSONGenerationError(Exception):
 
 
 def get_processing_start_date() -> MostRecentHistoryProcessed:
+    verboseprint('Getting processing start date...')
     most_recent_processed: MostRecentHistoryProcessed = (
         MostRecentHistoryProcessed.query().get())
 
     if most_recent_processed is None:
         raise NoRecentDateError('Most recently processed run date not found.')
+    verboseprint('History processing start date is',
+                 most_recent_processed.Date)
     return most_recent_processed
 
 
@@ -402,27 +469,58 @@ def check_if_db_empty() -> None:
     """Raise an error if new JSON files are set to be generated and
     test history data already exists.
     """
+    verboseprint(
+        'Checking if Datastore is empty of TestHistoryEntry entities...')
     test_history_entry: TestHistoryEntry = TestHistoryEntry.query().get()
     if test_history_entry is not None:
-        raise JSONGenerationError(
+        raise DatastorePopulatedError(
             'TestHistoryEntry entities exist in Datastore. '
-            'New JSON files should not be generated if data already exists.')
+            'JSON files and processing start date should not change if data '
+            'already exists.')
+    else:
+        verboseprint('Datastore is empty of TestHistoryEntry entities.')
+
+
+def delete_history_entities():
+    """Delete any existing TestHistoryEntry entities in Datastore."""
+    # Delete entities in batches of 100,000.
+    to_delete = TestHistoryEntry.query().fetch(100000, keys_only=True)
+    print('Deleting existing TestHistoryEntry entities...')
+    while len(to_delete) > 0:
+        ndb.delete_multi(to_delete)
+        verboseprint('.', end='', flush=True)
+        to_delete = TestHistoryEntry.query().fetch(100000, keys_only=True)
+    print('Entities Deleted!')
 
 
 # default parameters used for cloud functions.
 def main(args=None, topic=None) -> str:
     client = ndb.Client(project=PROJECT_NAME)
+    verboseprint('CLI args: ', parsed_args)
     with client.context():
+        # If the flag to delete entities is specified, handle it and exit.
+        if parsed_args.delete_history_entities:
+            delete_history_entities()
+            verboseprint('Processing will stop after deletion. '
+                         'Invoke again to repopulate.')
+            exit()
+        # If the flag to set the processing date is specified,
+        # handle it and exit.
+        if parsed_args.set_history_start_date:
+            set_history_start_date(parsed_args.set_history_start_date)
+            exit()
+
         # If we're generating new JSON files, the database should be empty
         # of test history data.
-        if SHOULD_GENERATE_NEW_STATUSES_JSON:
+        if parsed_args.should_generate_new_statuses_json:
             check_if_db_empty()
 
         processing_start = time.time()
         run_sets_processed = 0
         # If we're generating new status JSON files, only 1 set of aligned runs
         # should be processed to create the baseline statuses.
-        while not SHOULD_GENERATE_NEW_STATUSES_JSON or run_sets_processed == 0:
+        while (not parsed_args.should_generate_new_statuses_json
+               or run_sets_processed == 0):
             process_start_entity = get_processing_start_date()
             runs_list = get_aligned_run_info(process_start_entity)
             # A return value of None means that the processing is complete

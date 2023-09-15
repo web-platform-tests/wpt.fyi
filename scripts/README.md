@@ -1,4 +1,3 @@
-
 ## Build Test History
 This script exists as a cloud function in GCP and will need to be redeployed
 after subsequent changes to the file. The `BUCKET_NAME`, `PROJECT_NAME`,
@@ -20,36 +19,39 @@ RUNS_API_URL = 'https://wpt.fyi/api/runs'
 ```
 
 
-### Generating Test History Data
+### Regenerating Test History Data
 
 If, for some reason, the test history data needs to be regenerated, it is
-required that all TestHistoryEntry entities be deleted from Datastore
-beforehand. Additionally, the `Date` property of the
+required that all TestHistoryEntry entities first be deleted from Datastore
+beforehand. A user with GCP Datastore write access can invoke the following
+command.
+
+**NOTE**: The entire process of deletion and regeneration of entities
+will take a considerable amount of time (hours).
+
+```sh
+python scripts/build_test_history.py -v --delete-history-entities
+```
+
+Additionally, the `Date` property of the
 `MostRecentHistoryProcessed` entity in Datastore must be changed to the date
-at which the first test history should be processed.
+at which the first test history should be processed. The date can be provided
+in the CLI in ISO format.
+
+```sh
+# Set history processing start date to the beginning of 2023
+python scripts/build_test_history.py --set-history-start-date=2023-01-01T00:00:00.000Z
+```
 
 Once all entities have been deleted, new JSON files will need to be generated
 that are used to track the most recent test statuses that are compared against
-new tests to detect deltas. To do this, set the
-`SHOULD_GENERATE_NEW_STATUSES_JSON` parameter to `True` in the file, as well as
-setting the project variables to the specific environments as mentioned above.
+new tests to detect deltas.
 
-```py
-SHOULD_GENERATE_NEW_STATUSES_JSON = True
-```
-
-This should only be used in the first invocation to create the initial
-starting point of test history. Note that this will take a
-significantly longer amount of processing time, and will likely need to be
-invoked locally to avoid any timeout issues that would occur normally.
-This script can be invoked locally by users who have write access to
-wptdashboard GCP project.
+**NOTE**: This command will take significant time to process the first
+entities as well, and the command must finish the invocation. If the command
+is stopped early, entities will again need to be deleted and this command
+will need to be re-invoked.
 
 ```sh
-python scripts/build_test_history.py
+python scripts/build_test_history.py --generate-new-statuses-json
 ```
-
-After this initial invocation that generates JSON files and initial
-TestHistoryEntry entities, the `SHOULD_GENERATE_NEW_STATUSES_JSON` variable
-should be reverted to `False`. Other invocations will now generate new
-historical data in the order of oldest to newest.
