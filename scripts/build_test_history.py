@@ -8,7 +8,6 @@ import re
 import requests
 import time
 from datetime import datetime, timedelta
-from operator import attrgetter
 from typing import Any, Optional, TypedDict
 
 from google.cloud import ndb, storage
@@ -100,7 +99,7 @@ def _build_new_test_history_entry(
         run_date: str,
         current_status: str) -> TestHistoryEntry:
     return TestHistoryEntry(
-        RunID=run_metadata['id'],
+        RunID=str(run_metadata['id']),
         BrowserName=run_metadata['browser_name'],
         Date=run_date,
         TestName=test_name,
@@ -297,7 +296,7 @@ def should_process_run(run_metadata: MetadataDict) -> bool:
     """Check if a run should be processed."""
     # A run should be processed if no entities have been written for it.
     test_entry = TestHistoryEntry.query(
-        TestHistoryEntry.RunID == run_metadata['id']).get()
+        TestHistoryEntry.RunID == str(run_metadata['id'])).get()
     return test_entry is None
 
 
@@ -395,7 +394,7 @@ def get_aligned_run_info(
     # aligned runs are processed, but this sort will allow this script to
     # function properly if multiple aligned run sets were to be processed
     # together.
-    runs_list.sort(key=attrgetter('revision', 'time_start'))
+    runs_list.sort(key=lambda run: (run['revision'], run['time_start']))
 
     if len(runs_list) != 4:
         raise ValueError('Aligned run set should contain 4 runs. '
