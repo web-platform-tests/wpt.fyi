@@ -82,7 +82,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       },
       rows: {
         type: Array,
-        computed: 'computeRows(resultsTable, onlyShowDifferences)'
+        computed: 'computeRows(resultsTable, onlyShowDifferences)',
       },
       subtestRowCount: {
         type: Number,
@@ -316,7 +316,17 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
       this.subtestRowCount = 0;
     }
 
+    this._fireEvent('subtestrows', { rows });
     return rows;
+  }
+
+  _fireEvent(eventName, detail) {
+    const event = new CustomEvent(eventName, {
+      bubbles: true,
+      composed: true,
+      detail,
+    });
+    this.dispatchEvent(event);
   }
 }
 

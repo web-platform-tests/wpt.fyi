@@ -80,13 +80,17 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
       dataTable: Object,
       runIDs: Array,
       path: String,
-      showTestHistory: { type: Boolean, value: false }
+      showTestHistory: {
+        type: Boolean,
+        value: false,
+      },
+      subtestNames: Array,
     };
   }
 
   static get observers() {
     return [
-      'displayCharts(showTestHistory, path)',
+      'displayCharts(showTestHistory, path, subtestNames)',
     ];
   }
 
@@ -94,7 +98,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     return 'new-test-results-history-grid';
   }
 
-  displayCharts(showTestHistory, path) {
+  displayCharts(showTestHistory, path, subtestNames) {
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
     }
@@ -103,12 +107,12 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     Promise.all([
       this.getTestHistory(path),
       this.loadCharts()
-    ]).then(() => this.updateAllCharts(this.historicalData));
+    ]).then(() => this.updateAllCharts(this.historicalData, subtestNames));
 
     // Google Charts is not responsive, even if one sets a percentage-width, so
     // we add a resize observer to redraw the chart if the size changes.
     window.addEventListener('resize', () => {
-      this.updateAllCharts(this.historicalData);
+      this.updateAllCharts(this.historicalData, subtestNames);
     });
   }
 
@@ -117,7 +121,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     await window.google.charts.load('current', { packages: ['timeline'] });
   }
 
-  updateAllCharts(historicalData) {
+  updateAllCharts(historicalData, subtestNames) {
     const divNames = [
       'chromeHistoryChart',
       'edgeHistoryChart',
@@ -131,14 +135,14 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs = [[],[],[],[]];
 
     divNames.forEach((name, i) => {
-      this.updateChart(historicalData[BROWSER_NAMES[i]], name, i);
+      this.updateChart(historicalData[BROWSER_NAMES[i]], name, i, subtestNames);
     });
   }
 
-  updateChart(browserTestData, divID, chartIndex) {
+  updateChart(browserTestData, divID, chartIndex, subtestNames) {
     // Our observer may be called before the historical data has been fetched,
     // so debounce that.
-    if (!browserTestData) {
+    if (!browserTestData || !subtestNames) {
       return;
     }
 
@@ -166,7 +170,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
-    this.subtestNames.forEach(subtestName => {
+    subtestNames.forEach(subtestName => {
       if (!browserTestData[subtestName]) {
         return;
       }
@@ -185,7 +189,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
         // If this is the main test status, name it based on the amount of subtests
         let subtestDisplayName = subtestName;
         if (subtestName === '') {
-          subtestDisplayName = (this.subtestNames.length > 1) ? 'Harness status' : 'Test status';
+          subtestDisplayName = (subtestNames.length > 1) ? 'Harness status' : 'Test status';
         }
 
         const tooltip =
@@ -260,7 +264,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 
     this.historicalData = await fetch('/api/history', options)
       .then(r => r.json()).then(data => data.results);
-    this.subtestNames = Object.keys(this.historicalData[BROWSER_NAMES[0]]);
   }
 }
 
