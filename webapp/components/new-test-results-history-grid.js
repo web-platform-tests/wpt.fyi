@@ -244,7 +244,11 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
     window.google.visualization.events.addListener(
       this.charts[chartIndex], 'select', () => statusSelectHandler(chartIndex));
 
-    this.charts[chartIndex].draw(this.dataTable, options);
+    if (dataTableRows > 0) {
+      this.charts[chartIndex].draw(this.dataTable, options);
+    } else {
+      div.innerHTML = 'No browser historical data found for this test.';
+    }
   }
 
   // get test history and aligned run data
