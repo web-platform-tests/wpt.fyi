@@ -630,10 +630,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   handleGetSubtestRows(event) {
     this.subtestNames = event.detail.rows.map(subtestRow => {
-      if(subtestRow.name === 'Harness status') {
+      // The overall test status is given as an empty string.
+      if(subtestRow.name === 'Harness status' || subtestRow.name === 'Test status') {
         return '';
       }
-      return subtestRow.name;
+      return subtestRow.name.replace(/\s/g, ' ');
     }).filter(subtestName => subtestName !== 'Duration')
   }
 
