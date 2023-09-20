@@ -20,6 +20,7 @@ the endpoints can be found in `routes.go`.
  - [/api/metadata/pending](#apimetadatapending)
  - [/api/metadata/triage](#apimetadatatriage)
  - [/api/bsf](#apibsf)
+ - [/api/history](#apihistory)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
 
@@ -707,6 +708,67 @@ The response has three top-level fields:
          "2966.686195133767"
       ]
    ]
+}
+```
+</details>
+
+## Test History
+
+### /api/history
+
+This endpoint accepts POST requests. It returns historical test run information for a given test name.
+
+#### JSON Request Payload
+```json
+{
+    "test_name": "example test name"
+}
+```
+#### JSON Response
+The returned JSON will contain a history of test runs for each major browser: Chrome, Firefox, Edge, and Safari.
+
+Each individual subtest run will have a `date`, `status`, and `run_id`.
+
+The first test entry for each browser is represented with an empty string. This represents the `Harness Status` if there are multiple tests, or the `Test Status` if there is only one test.
+
+<details><summary><b>Example JSON</b></summary>
+
+```json
+{
+    "results": {
+        "chrome": {
+            "": [
+                {
+                    "date": "2022-06-02T06:02:55.000Z",
+                    "status": "TIMEOUT",
+                    "run_id": "5074677897101312"
+                }
+            ],
+            "subtest_name_1": [
+                {
+                    "date": "2022-06-02T06:02:55.000Z",
+                    "status": "PASS",
+                    "run_id": "5074677897101312"
+                }
+            ]
+        },
+        "firefox": {
+            "": [
+                {
+                    "date": "2022-06-02T06:02:55.000Z",
+                    "status": "OK",
+                    "run_id": "5074677897101312"
+                }
+            ],
+            "subtest_name_1": [
+                {
+                    "date": "2022-06-02T06:02:55.000Z",
+                    "status": "PASS",
+                    "run_id": "5074677897101312"
+                }
+            ]
+        }
+    }
 }
 ```
 </details>
