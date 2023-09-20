@@ -742,62 +742,14 @@ The first test entry for each browser is represented with an empty string. This 
                     "date": "2022-06-02T06:02:55.000Z",
                     "status": "TIMEOUT",
                     "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2023-02-21T03:08:15.000Z",
-                    "status": "OK",
-                    "run_id": "5074677897101312"
-                },
+                }
             ],
             "subtest_name_1": [
                 {
                     "date": "2022-06-02T06:02:55.000Z",
                     "status": "PASS",
                     "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2022-08-14T06:02:55.000Z",
-                    "status": "FAIL",
-                    "run_id": "5074677897101312"
-                },
-            ],
-        },
-        "edge": {
-            "": [
-                {
-                    "date": "2022-06-02T06:02:55.000Z",
-                    "status": "OK",
-                    "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2023-02-21T03:08:15.000Z",
-                    "status": "TIMEOUT",
-                    "run_id": "5074677897101312"
-                },
-            ],
-            "subtest_name_1": [
-                {
-                    "date": "2022-06-02T06:02:55.000Z",
-                    "status": "PASS",
-                    "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2022-08-14T06:02:55.000Z",
-                    "status": "FAIL",
-                    "run_id": "5074677897101312"
-                },
-            ],
-            "subtest_name_2": [
-                {
-                    "date": "2022-06-02T06:02:55.000Z",
-                    "status": "TIMEOUT",
-                    "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2022-09-25T23:49:35.000Z",
-                    "status": "PASS",
-                    "run_id": "5074677897101312"
-                },
+                }
             ]
         },
         "firefox": {
@@ -806,53 +758,15 @@ The first test entry for each browser is represented with an empty string. This 
                     "date": "2022-06-02T06:02:55.000Z",
                     "status": "OK",
                     "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2023-02-21T03:08:15.000Z",
-                    "status": "TIMEOUT",
-                    "run_id": "5074677897101312"
-                },
-
+                }
             ],
             "subtest_name_1": [
                 {
                     "date": "2022-06-02T06:02:55.000Z",
                     "status": "PASS",
                     "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2022-08-14T06:02:55.000Z",
-                    "status": "FAIL",
-                    "run_id": "5074677897101312"
-                },
-
-            ],
-        },
-        "safari": {
-            "": [
-                {
-                    "date": "2022-06-02T06:02:55.000Z",
-                    "status": "OK",
-                    "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2023-02-21T03:08:15.000Z",
-                    "status": "TIMEOUT",
-                    "run_id": "5074677897101312"
-                },
-            ],
-            "subtest_name_1": [
-                {
-                    "date": "2022-06-02T06:02:55.000Z",
-                    "status": "PASS",
-                    "run_id": "5074677897101312"
-                },
-                {
-                    "date": "2022-08-14T06:02:55.000Z",
-                    "status": "FAIL",
-                    "run_id": "5074677897101312"
-                },
-            ],
+                }
+            ]
         }
     }
 }
