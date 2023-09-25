@@ -86,6 +86,8 @@ func (p ProductSpec) DisplayName() string {
 		return "Edge"
 	case "firefox":
 		return "Firefox"
+	case "firefox_android":
+		return "Firefox Android"
 	case "flow":
 		return "Flow"
 	case "node.js":
