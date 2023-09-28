@@ -37,7 +37,7 @@ const BROWSER_NAMES = [
   'safari'
 ];
 
-class TestResultsGrid extends PathInfo(PolymerElement) {
+class TestResultsTimeline extends PathInfo(PolymerElement) {
   static get template() {
     return html`
         <style>
@@ -95,7 +95,7 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
   }
 
   static get is() {
-    return 'new-test-results-history-grid';
+    return 'test-results-history-timeline';
   }
 
   displayCharts(showTestHistory, path, subtestNames) {
@@ -272,6 +272,6 @@ class TestResultsGrid extends PathInfo(PolymerElement) {
 }
 
 
-window.customElements.define(TestResultsGrid.is, TestResultsGrid);
+window.customElements.define(TestResultsTimeline.is, TestResultsTimeline);
 
-export { TestResultsGrid };
+export { TestResultsTimeline };
