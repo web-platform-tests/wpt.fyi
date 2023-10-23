@@ -97,7 +97,7 @@ do
   then
     echo "Found 3 versions for service $SERVICE, will delete the oldest"
     delete_oldest_version $SERVICE
-  elif [[ "${VERSIONS}" < "3"  ]];
+  elif [[ "${VERSIONS}" -lt "3"  ]];
   then
     echo -e "\n$VERSIONS versions found for service $SERVICE"
   else
