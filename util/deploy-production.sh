@@ -93,7 +93,7 @@ SERVICES="default processor searchcache"
 for SERVICE in $SERVICES
 do
   VERSIONS=$(gcloud app --project=wptdashboard versions list --filter="service=$SERVICE" --format=list | wc -l)
-  if [[ "${VERSIONS}" == "3"  ]];
+  if [[ "${VERSIONS}" -eq "3"  ]];
   then
     echo "Found 3 versions for service $SERVICE, will delete the oldest"
     delete_oldest_version $SERVICE
