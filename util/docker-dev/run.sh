@@ -8,39 +8,12 @@ source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
 
 function usage() {
-  USAGE="USAGE: $(basename ${0}) [-q] [-a] [-d]
+  USAGE="USAGE: $(basename ${0}) [-q] [-d] [-s]
     -d  daemon mode: Run in the background rather than blocking then cleaning up
-    -q  quiet mode: Assume default for all prompts"
+    -q  quiet mode: Assume default for all prompts
+    -s  stop daemon: Stop a running daemon"
   >&2 echo "${USAGE}"
 }
-
-PR=""
-function confirm_preserve_remove() {
-  if confirm "${1}. Remove?"; then
-    PR="r"
-  else
-    PR="p"
-  fi
-}
-
-DAEMON="false"
-QUIET="false"
-while getopts ':dhaq' FLAG; do
-  case "${FLAG}" in
-    d)
-      DAEMON="true" ;;
-    q)
-      QUIET="true"
-      PR="r" ;;
-    h|*) usage && exit 0 ;;
-  esac
-done
-
-info "Creating docker instance for dev server. Instance name: wptd-dev-instance"
-docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
-INSPECT_STATUS="${?}"
-docker inspect "${DOCKER_INSTANCE}" | grep '"Running": true' | read
-RUNNING_STATUS="${?}"
 
 function stop() {
   info "Stopping ${DOCKER_INSTANCE}..."
@@ -55,6 +28,36 @@ function stop() {
     info "${DOCKER_INSTANCE} removed."
   fi
 }
+
+PR=""
+function confirm_preserve_remove() {
+  if confirm "${1}. Remove?"; then
+    PR="r"
+  else
+    PR="p"
+  fi
+}
+
+DAEMON="false"
+QUIET="false"
+while getopts ':dhqs' FLAG; do
+  case "${FLAG}" in
+    d)
+      DAEMON="true" ;;
+    s)
+      stop && exit 0 ;;
+    q)
+      QUIET="true"
+      PR="r" ;;
+    h|*) usage && exit 0 ;;
+  esac
+done
+
+info "Creating docker instance for dev server. Instance name: wptd-dev-instance"
+docker inspect "${DOCKER_INSTANCE}" > /dev/null 2>&1
+INSPECT_STATUS="${?}"
+docker inspect "${DOCKER_INSTANCE}" | grep '"Running": true' | read
+RUNNING_STATUS="${?}"
 
 function quit() {
   warn "run.sh: Recieved interrupt. Exiting..."
