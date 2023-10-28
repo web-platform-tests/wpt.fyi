@@ -1,6 +1,5 @@
 #!/bin/bash
 
-DOCKER_DIR=$(dirname $0)
 DOCKER_IMAGE=${DOCKER_IMAGE:-"webplatformtests/wpt.fyi:latest"}
 DOCKER_INSTANCE=${DOCKER_INSTANCE:-"wptd-dev-instance"}
 WPTD_HOST_WEB_PORT=${WPTD_HOST_WEB_PORT:-"8080"}

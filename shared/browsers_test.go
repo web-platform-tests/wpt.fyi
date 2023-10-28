@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -20,7 +21,6 @@ func TestGetDefaultBrowserNames(t *testing.T) {
 	for _, n := range names {
 		assert.NotEqual(t, "android_webview", n)
 		assert.NotEqual(t, "chrome_android", n)
-		assert.NotEqual(t, "chrome_ios", n)
 		assert.NotEqual(t, "chromium", n)
 		assert.NotEqual(t, "deno", n)
 		assert.NotEqual(t, "epiphany", n)
@@ -45,7 +45,6 @@ func TestIsBrowserName(t *testing.T) {
 	assert.True(t, IsBrowserName("node.js"))
 	assert.True(t, IsBrowserName("safari"))
 	assert.True(t, IsBrowserName("chrome_android"))
-	assert.True(t, IsBrowserName("chrome_ios"))
 	assert.True(t, IsBrowserName("android_webview"))
 	assert.True(t, IsBrowserName("epiphany"))
 	assert.True(t, IsBrowserName("servo"))
