@@ -17,6 +17,7 @@
   <script type="module">
 import { AllBrowserNames } from '../product-info.js';
 import { TestSearch } from '../test-search.js';
+import { waitingOn } from './util/helpers.js';
 
 suite('<test-search>', () => {
   suite('Parser/interpreter', () => {
@@ -457,6 +458,27 @@ suite('<test-search>', () => {
           { exists: [{ pattern: '2dcontext' }] },
           { all: [{ status: 'FAIL' }] },
         ]
+      });
+    });
+  });
+  suite('TestSearch.prototype.*', () => {
+    suite('async latchQuery()', () => {
+      let search_fixture;
+
+      setup(() => {
+        search_fixture = fixture('test-search-fixture');
+        search_fixture._setStructuredQueries(true);
+      });
+
+      test('does not lowerCase', () => {
+        search_fixture.queryInput = 'a'; // First set triggers early return (oldQuery=undefined)
+        search_fixture.queryInput = 'shadow-dom/DocumentOrShadowRoot-prototype-elementFromPoint.html';
+        return waitingOn(() => search_fixture.structuredQuery)
+          .then(() => {
+            assert.deepEqual(search_fixture.structuredQuery, {
+              exists: [{ pattern: 'shadow-dom/DocumentOrShadowRoot-prototype-elementFromPoint.html' }]
+            });
+          });
       });
     });
   });
