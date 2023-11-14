@@ -38,7 +38,7 @@ def slow():
 def download_attachment():
     return flask.send_file('artifact_test.zip',
                            as_attachment=True,
-                           attachment_filename='artifact_test.zip')
+                           download_name='artifact_test.zip')
 
 
 @app.route('/download/test.txt', methods=['GET'])
