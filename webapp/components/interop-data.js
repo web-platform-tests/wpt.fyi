@@ -314,7 +314,7 @@ export const interopData = {
     'investigation_scores': [
       {
         'name': 'Accessibility Testing',
-        'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
+        'url': 'https://github.com/web-platform-tests/interop-accessibility',
         'scores_over_time': [
           { 'date': '2023-03-08', 'score': 600 },
           { 'date': '2023-05-13', 'score': 700 },
@@ -323,7 +323,8 @@ export const interopData = {
           { 'date': '2023-09-27', 'score': 870 },
           { 'date': '2023-10-12', 'score': 910 },
           { 'date': '2023-10-13', 'score': 920 },
-          { 'date': '2023-11-03', 'score': 950 }
+          { 'date': '2023-11-03', 'score': 950 },
+          { 'date': '2023-11-14', 'score': 980 }
         ]
       },
       {
