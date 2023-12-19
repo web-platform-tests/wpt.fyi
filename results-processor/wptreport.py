@@ -37,7 +37,8 @@ DEFAULT_PROJECT = 'wptdashboard'
 RELEASE_CHANNEL_LABELS = frozenset({'stable', 'beta', 'experimental'})
 # Ignore inconsistent browser minor versions for now.
 # TODO(Hexcles): Remove this when the TC decision task is implemented.
-IGNORED_CONFLICTS = frozenset({'browser_build_id', 'browser_changeset'})
+IGNORED_CONFLICTS = frozenset({'browser_build_id', 'browser_changeset',
+                               'version', 'os_build'})
 
 # A map of abbreviations for test statuses. This will be used
 # to convert test statuses to smaller formats to store in summary files.

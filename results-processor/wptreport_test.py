@@ -188,6 +188,8 @@ class WPTReportTest(unittest.TestCase):
                 'run_info': {
                     'browser_build_id': '1',
                     'browser_changeset': 'r1',
+                    'version': 'v1',
+                    'os_build': 'b1',
                 },
             }, f)
         with open(tmp_path, 'rb') as f:
@@ -199,12 +201,16 @@ class WPTReportTest(unittest.TestCase):
                 'run_info': {
                     'browser_build_id': '2',
                     'browser_changeset': 'r2',
+                    'version': 'v2',
+                    'os_build': 'b2',
                 },
             }, f)
         with open(tmp_path, 'rb') as f:
             r.load_json(f)
         self.assertIsNone(r.run_info['browser_build_id'])
         self.assertIsNone(r.run_info['browser_changeset'])
+        self.assertIsNone(r.run_info['version'])
+        self.assertIsNone(r.run_info['os_build'])
 
     def test_load_gzip_json(self):
         # This case also covers the Unicode testing of load_json().
