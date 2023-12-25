@@ -22,6 +22,7 @@ flask==3.0.0
     # via -r requirements.in
 google-api-core[grpc]==2.14.0
     # via
+    #   google-api-core
     #   google-cloud-core
     #   google-cloud-datastore
     #   google-cloud-storage
@@ -70,7 +71,7 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.7.1
+mypy==1.8.0
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
