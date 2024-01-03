@@ -106,6 +106,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | isExp
       | triagedExp
       | labelExp
+      | webFeatureExp
       | statusExp
       | subtestExp
       | pathExp
@@ -132,6 +133,9 @@ const QUERY_GRAMMAR = ohm.grammar(`
 
     labelExp
       = caseInsensitive<"label"> ":" nameFragment
+
+    webFeatureExp
+      = caseInsensitive<"web_feature"> ":" nameFragment
 
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
@@ -324,6 +328,10 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   labelExp: (l, colon, r) => {
     const ps = r.eval();
     return ps.length === 0 ? emptyQuery : {label: ps };
+  },
+  webFeatureExp: (l, colon, r) => {
+    const ps = r.eval();
+    return ps.length === 0 ? emptyQuery : {web_feature: ps };
   },
   subtestExp: (l, colon, r) => {
     return { subtest: r.eval() };

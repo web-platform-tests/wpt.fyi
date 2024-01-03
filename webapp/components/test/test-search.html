@@ -429,6 +429,10 @@ suite('<test-search>', () => {
       assertQueryParse('label:interop123', { exists: [{ label: 'interop123' }] });
     });
 
+    test('web feature search', () => {
+      assertQueryParse('web_feature:grid', { exists: [{ web_feature: 'grid' }] });
+    });
+
     test('multi-root', () => {
       assertQueryParse('none(status:missing) count>0(status:!pass)', {
         and: [
