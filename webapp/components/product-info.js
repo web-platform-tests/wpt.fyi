@@ -166,7 +166,7 @@ const ProductInfo = (superClass) => class extends superClass {
     }
     labels = new Set(labels);
     // Special case for Chrome nightly, which is in fact Chromium ToT:
-    if (name === 'chrome' && labels.has('nightly')) {
+    if (name === 'chrome' && labels.has('nightly') && !labels.has('canary')) {
       name = 'chromium';
 
     } else if (name === 'android_webview') {
