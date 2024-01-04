@@ -15,6 +15,12 @@ import (
 	"github.com/google/go-github/v47/github"
 )
 
+// WebFeatureManifestRepo is where the web feature manifest is published
+const WebFeatureManifestRepo = "wpt"
+
+// webFeaturesManifestFilename is the name of the manifest file in a given release
+const webFeaturesManifestFilename = "WEB_FEATURES_MANIFEST.json.gz"
+
 // ErrNoWebFeaturesManifestFileFound when a given GitHub release does not contain a manifest file to download.
 var ErrNoWebFeaturesManifestFileFound = errors.New("web features manifest not found in release")
 

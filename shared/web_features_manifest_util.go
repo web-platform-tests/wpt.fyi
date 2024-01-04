@@ -9,11 +9,6 @@ import (
 	"io"
 )
 
-// WebFeatureManifestRepo is where the web feature manifest is published
-const WebFeatureManifestRepo = "wpt"
-
-const webFeaturesManifestFilename = "WEB_FEATURES_MANIFEST.json.gz"
-
 // GetWPTWebFeaturesManifest is the entrypoint for handling web features manifest downloads.
 // It includes two generic steps: Downloading and Parsing.
 func GetWPTWebFeaturesManifest(ctx context.Context, downloader WebFeaturesManifestDownloader, parser WebFeatureManifestParser) (WebFeaturesData, error) {
