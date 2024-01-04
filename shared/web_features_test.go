@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/slices"
 )
 
 func TestWebFeaturesData_TestMatchesWithWebFeature(t *testing.T) {
@@ -99,10 +100,19 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 	}
 }
 
+// Ensures order is kept for equality purposes
+func sortValuesInMap(input *map[string][]string) {
+	for test, features := range *input {
+		slices.Sort(features)
+		(*input)[test] = features
+	}
+}
+
 func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 	// Test cases for prepareTestWebFeatureFilter
 	data := webFeaturesManifestV1Data{"feature1": []string{"test1", "test2"}, "feature2": []string{"test2"}}
 	expectedResult := map[string][]string{"test1": {"feature1"}, "test2": {"feature1", "feature2"}}
 	result := data.prepareTestWebFeatureFilter()
+	sortValuesInMap(&result)
 	assert.Equal(t, expectedResult, result)
 }
