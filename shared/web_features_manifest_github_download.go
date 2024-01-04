@@ -62,7 +62,10 @@ type GitHubWebFeaturesManifestDownloader struct {
 
 // Download attempts to download the manifest file from the latest release.
 func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.ReadCloser, error) {
-	release, _, err := d.gitHubClient.Repositories.GetLatestRelease(ctx, SourceOwner, WebFeatureManifestRepo)
+	release, _, err := d.gitHubClient.Repositories.GetLatestRelease(
+		ctx,
+		"jcscottiii", // REPLACE WITH SourceOwner BEFORE MERGING,
+		WebFeatureManifestRepo)
 	if err != nil {
 		return nil, errors.Join(ErrUnableToRetrieveGitHubRelease, err)
 	}

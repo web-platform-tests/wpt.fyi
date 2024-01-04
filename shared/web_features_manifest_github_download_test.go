@@ -120,7 +120,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "successful download",
 			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/web-platform-tests/wpt/releases/latest", r.URL.Path)
+				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
 				release := &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
@@ -173,7 +173,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "error downloading asset",
 			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/web-platform-tests/wpt/releases/latest", r.URL.Path)
+				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
 				release := &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
@@ -196,7 +196,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "empty response body",
 			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/web-platform-tests/wpt/releases/latest", r.URL.Path)
+				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
 				release := &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
