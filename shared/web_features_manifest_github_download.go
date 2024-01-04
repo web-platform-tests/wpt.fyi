@@ -100,13 +100,30 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 	if resp.Body == nil || resp.ContentLength == 0 {
 		return nil, ErrMissingBodyDuringWebFeaturesManifestDownload
 	}
-	defer resp.Body.Close()
 
 	// Perform any necessary extractions / transformations
 	decompressedBody, err := d.bodyTransformer.Transform(resp.Body)
 	if err != nil {
+		// Transformation did not happen. Clean up
+		resp.Body.Close()
+
 		return nil, err
 	}
 
-	return decompressedBody, nil
+	return &gitHubDownloadStream{resp.Body, decompressedBody}, nil
+}
+
+type gitHubDownloadStream struct {
+	originalBody    io.ReadCloser
+	transformedBody io.ReadCloser
+}
+
+func (s *gitHubDownloadStream) Read(p []byte) (int, error) {
+	return s.transformedBody.Read(p)
+}
+
+func (s *gitHubDownloadStream) Close() error {
+	transformedBodyErr := s.transformedBody.Close()
+	originalBodyErr := s.originalBody.Close()
+	return errors.Join(transformedBodyErr, originalBodyErr)
 }
