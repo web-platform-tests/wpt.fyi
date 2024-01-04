@@ -183,7 +183,7 @@ func main() {
 	// Polls Metadata update every 10 minutes.
 	go poll.StartMetadataPollingService(context.Background(), logger, time.Minute*10)
 
-	// Polls Web Feature update Manifest every 10 minutes.
+	// Polls Web Feature Manifest update every 10 minutes.
 	go poll.StartWebFeaturesManifestPollingService(context.Background(), logger, time.Minute*10)
 
 	http.HandleFunc("/_ah/liveness_check", livenessCheckHandler)
