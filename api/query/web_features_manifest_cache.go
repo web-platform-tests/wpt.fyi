@@ -25,8 +25,7 @@ func SetWebFeaturesDataCache(newData shared.WebFeaturesData) {
 var webFeaturesDataCache shared.WebFeaturesData // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var webFeaturesDataCacheLock sync.RWMutex       // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 
-type searchcacheWebFeaturesManifestFetcher struct {
-}
+type searchcacheWebFeaturesManifestFetcher struct{}
 
 func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, error) {
 	webFeaturesDataCacheLock.RLock()
