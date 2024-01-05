@@ -351,12 +351,16 @@ func (tl TestLabel) Filter(t TestID) bool {
 
 // Filter interprets a TestWebFeature as a filter function over TestIDs.
 func (twf TestWebFeature) Filter(t TestID) bool {
+	logrus.Infof("filter for t %+v", t)
 	name, _, err := twf.tests.GetName(t)
 	if err != nil {
+		logrus.Infof("no test for filter for t %+v, %s", t, err.Error())
 		return false
 	}
+	logrus.Infof("filter for name %s", name)
 	// Check if there's any data
 	if twf.webFeaturesData == nil {
+		logrus.Infof("filter for %s failed because missing data", name)
 		return false
 	}
 	// Get the Web Features for that exact test path
