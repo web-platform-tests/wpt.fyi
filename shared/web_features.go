@@ -56,7 +56,12 @@ type webFeaturesManifestFile struct {
 // The data is a simple map.
 // The key is the web feature key
 // The value is a list of tests that are part of that web feature.
-type webFeaturesManifestV1Data map[string][]string
+type webFeaturesManifestV1Data map[string][]webFeaturesManifestV1DataTest
+
+type webFeaturesManifestV1DataTest struct {
+	Path string  `json:"path,omitempty"`
+	URL  *string `json:"url,omitempty"`
+}
 
 // WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format
 type WebFeaturesManifestJSONParser struct{}
@@ -89,10 +94,14 @@ func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() map[string][]st
 	testToWebFeaturesMap := make(map[string][]string)
 	for webFeature, tests := range d {
 		for _, test := range tests {
-			if currentWebFeatures, ok := testToWebFeaturesMap[test]; !ok {
-				testToWebFeaturesMap[test] = []string{webFeature}
+			if test.URL == nil {
+				// wpt.fyi only cares about the url. If it doesn't have it, it is probably a support file.
+				continue
+			}
+			if currentWebFeatures, ok := testToWebFeaturesMap[*test.URL]; !ok {
+				testToWebFeaturesMap[*test.URL] = []string{webFeature}
 			} else {
-				testToWebFeaturesMap[test] = append(currentWebFeatures, webFeature)
+				testToWebFeaturesMap[*test.URL] = append(currentWebFeatures, webFeature)
 			}
 
 		}

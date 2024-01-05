@@ -67,8 +67,8 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 	}{
 		{
 			name:          "valid manifest version 1",
-			inputJSON:     `{"version": 1, "data": {"feature1": ["test1", "test2"]}}`,
-			expectedData:  WebFeaturesData{"test1": []string{"feature1"}, "test2": []string{"feature1"}},
+			inputJSON:     `{"version": 1, "data": {"feature1": [{"path": "test1", "url": "/test1"}, {"path": "test2", "url": "/test2"}]}}`,
+			expectedData:  WebFeaturesData{"/test1": []string{"feature1"}, "/test2": []string{"feature1"}},
 			expectedError: nil,
 		},
 		{
@@ -112,10 +112,22 @@ func sortValuesInMap(input *map[string][]string) {
 	}
 }
 
+func strPtr(in string) *string {
+	return &in
+}
+
 func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 	// Test cases for prepareTestWebFeatureFilter
-	data := webFeaturesManifestV1Data{"feature1": []string{"test1", "test2"}, "feature2": []string{"test2"}}
-	expectedResult := map[string][]string{"test1": {"feature1"}, "test2": {"feature1", "feature2"}}
+	data := webFeaturesManifestV1Data{
+		"feature1": []webFeaturesManifestV1DataTest{
+			{Path: "test1", URL: strPtr("/test1")},
+			{Path: "test2", URL: strPtr("/test2")},
+			{Path: "no-url"},
+		},
+		"feature2": []webFeaturesManifestV1DataTest{
+			{Path: "test2", URL: strPtr("/test2")},
+		}}
+	expectedResult := map[string][]string{"/test1": {"feature1"}, "/test2": {"feature1", "feature2"}}
 	result := data.prepareTestWebFeatureFilter()
 	sortValuesInMap(&result)
 	assert.Equal(t, expectedResult, result)
