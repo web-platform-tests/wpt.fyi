@@ -377,12 +377,7 @@ type AbstractTestWebFeature struct {
 func (t AbstractTestWebFeature) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	t.manifestFetcher = searchcacheWebFeaturesManifestFetcher{}
 
-	data, err := t.manifestFetcher.Fetch()
-	if err != nil {
-		logrus.StandardLogger().Errorf("manifest cache failed %s", err.Error())
-	} else {
-		logrus.StandardLogger().Infof("manifest cache %+v", data)
-	}
+	data, _ := t.manifestFetcher.Fetch()
 
 	return TestWebFeature{
 		WebFeature:      t.WebFeature,
