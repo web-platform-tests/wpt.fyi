@@ -28,11 +28,16 @@ var webFeaturesDataCacheLock sync.RWMutex       // nolint:gochecknoglobals // TO
 type searchcacheWebFeaturesManifestFetcher struct{}
 
 func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, error) {
+	logger := shared.GetLogger(context.Background())
+	logger.Infof("starting manifest fetch")
 	webFeaturesDataCacheLock.RLock()
 	defer webFeaturesDataCacheLock.RUnlock()
+	logger.Infof("checking for manifest cache in fetch")
 	if webFeaturesDataCache != nil {
+		logger.Infof("manifest exists in cache")
 		return webFeaturesDataCache, nil
 	}
+	logger.Infof("fetch could not find manifest cache")
 
 	netClient := &http.Client{
 		Timeout: time.Second * 5,
@@ -52,6 +57,7 @@ func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, 
 
 		return nil, err
 	}
+	logger.Infof("retrieved manifest data for cache")
 
 	return data, nil
 }
