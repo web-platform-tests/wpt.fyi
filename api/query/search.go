@@ -173,7 +173,7 @@ func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.
 
 	logger.Infof("Forwarding structured search request to %s: %s", hostname, string(data))
 
-	client := sh.api.GetHTTPClientWithTimeout(time.Second * 15)
+	client := sh.api.GetHTTPClientWithTimeout(time.Second * 120)
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, fwdURL.String(), bytes.NewBuffer(data))
 	if err != nil {
 		logger.Errorf("Failed to create request to POST %s: %v", fwdURL.String(), err)
