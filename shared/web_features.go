@@ -17,7 +17,7 @@ import (
 
 // WebFeaturesData is the public data type that represents the data parsed from
 // a given manifest file
-type WebFeaturesData map[string][]string
+type WebFeaturesData map[string]map[string]interface{}
 
 // ErrUnknownWebFeaturesManifestVersion indicates that the parser does not know how to parse
 // this version of the web features file.
@@ -38,13 +38,13 @@ func (d WebFeaturesData) TestMatchesWithWebFeature(test, webFeature string) bool
 	if len(d) == 0 {
 		return false
 	}
-	logrus.Infof("matching for %s feature %+v", test, webFeature, d)
-	webFeatures := d[test]
-	for _, wf := range webFeatures {
-		if strings.EqualFold(webFeature, wf) {
-			return true
-		}
+	logrus.Infof("matching for %s feature %s in data %+v", test, webFeature, d)
+	if webFeatures, ok := d[test]; ok {
+		_, found := webFeatures[strings.ToLower(webFeature)]
+
+		return found
 	}
+
 	return false
 }
 
@@ -93,20 +93,18 @@ func (p WebFeaturesManifestJSONParser) Parse(ctx context.Context, r io.ReadClose
 }
 
 // PrepareTestWebFeatureFilter maps a MetadataResult test name to its web features.
-func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() map[string][]string {
-	testToWebFeaturesMap := make(map[string][]string)
+func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() map[string]map[string]interface{} {
+	// Create a map where the value is effectively a set (map[string]interface{})
+	testToWebFeaturesMap := make(map[string]map[string]interface{})
 	for webFeature, tests := range d {
 		for _, test := range tests {
 			if test.URL == nil {
 				// wpt.fyi only cares about the url. If it doesn't have it, it is probably a support file.
 				continue
 			}
-			if currentWebFeatures, ok := testToWebFeaturesMap[*test.URL]; !ok {
-				testToWebFeaturesMap[*test.URL] = []string{webFeature}
-			} else {
-				testToWebFeaturesMap[*test.URL] = append(currentWebFeatures, webFeature)
-			}
-
+			key := strings.ToLower(*test.URL)
+			value := strings.ToLower(webFeature)
+			testToWebFeaturesMap[key] = map[string]interface{}{value: nil}
 		}
 	}
 

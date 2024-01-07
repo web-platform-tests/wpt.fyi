@@ -7,7 +7,6 @@ package query
 import (
 	"context"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -16,22 +15,17 @@ import (
 // SetWebFeaturesDataCache safely swaps the data cache.
 // Currently, the separate goroutine in the poll folder will use this.
 func SetWebFeaturesDataCache(newData shared.WebFeaturesData) {
-	webFeaturesDataCacheLock.Lock()
+	shared.GetLogger(context.Background()).Infof("setting data cache for manifest")
 	webFeaturesDataCache = newData
-	defer webFeaturesDataCacheLock.Unlock()
 }
 
 // webFeaturesDataCache is the local cache of Web Features data in searchcache. Zero value is nil.
 var webFeaturesDataCache shared.WebFeaturesData // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
-var webFeaturesDataCacheLock sync.RWMutex       // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 
 type searchcacheWebFeaturesManifestFetcher struct{}
 
 func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, error) {
 	logger := shared.GetLogger(context.Background())
-	logger.Infof("starting manifest fetch")
-	webFeaturesDataCacheLock.RLock()
-	defer webFeaturesDataCacheLock.RUnlock()
 	logger.Infof("checking for manifest cache in fetch")
 	if webFeaturesDataCache != nil {
 		logger.Infof("manifest exists in cache")
