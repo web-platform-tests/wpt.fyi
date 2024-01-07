@@ -36,6 +36,25 @@ func TestInteropHandler_redirect(t *testing.T) {
 	assert.NotEqual(t, loc.Path, "interop-2022?embedded")
 }
 
+func TestInteropHandler_redirect(t *testing.T) {
+	// /interop route should redirect to the current default interop year dashboard.
+	req := httptest.NewRequest("GET", "/interop?embedded", strings.NewReader("{}"))
+	req = mux.SetURLVars(req, map[string]string{
+		"name":     "interop",
+		"embedded": "true",
+	})
+
+	w := httptest.NewRecorder()
+	interopHandler(w, req)
+	resp := w.Result()
+	assert.Equal(t, resp.StatusCode, http.StatusTemporaryRedirect)
+
+	loc, err := resp.Location()
+	assert.Nil(t, err)
+	// Check if embedded param is maintained after redirect.
+	assert.NotEqual(t, loc.Path, "interop-2023?embedded")
+}
+
 func TestInteropHandler_compatRedirect(t *testing.T) {
 	// "/compat20XX" paths should redirect to the interop version of the given year.
 	req := httptest.NewRequest("GET", "/compat2021", strings.NewReader("{}"))
