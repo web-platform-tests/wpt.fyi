@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // WebFeaturesData is the public data type that represents the data parsed from
@@ -38,7 +36,6 @@ func (d WebFeaturesData) TestMatchesWithWebFeature(test, webFeature string) bool
 	if len(d) == 0 {
 		return false
 	}
-	logrus.Infof("matching for %s feature %s in data %+v", test, webFeature, d)
 	if webFeatures, ok := d[test]; ok {
 		_, found := webFeatures[strings.ToLower(webFeature)]
 
