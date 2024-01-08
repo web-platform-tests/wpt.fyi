@@ -90,7 +90,7 @@ func (p WebFeaturesManifestJSONParser) Parse(ctx context.Context, r io.ReadClose
 }
 
 // PrepareTestWebFeatureFilter maps a MetadataResult test name to its web features.
-func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() map[string]map[string]interface{} {
+func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() WebFeaturesData {
 	// Create a map where the value is effectively a set (map[string]interface{})
 	testToWebFeaturesMap := make(map[string]map[string]interface{})
 	for webFeature, tests := range d {

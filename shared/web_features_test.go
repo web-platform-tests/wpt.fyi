@@ -129,7 +129,10 @@ func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 		"feature2": []webFeaturesManifestV1DataTest{
 			{Path: "test2", URL: strPtr("/test2")},
 		}}
-	expectedResult := map[string][]string{"/test1": {"feature1"}, "/test2": {"feature1", "feature2"}}
+	expectedResult := WebFeaturesData{
+		"/test1": {"feature1": nil},
+		"/test2": {"feature1": nil, "feature2": nil},
+	}
 	result := data.prepareTestWebFeatureFilter()
 	assert.Equal(t, expectedResult, result)
 }

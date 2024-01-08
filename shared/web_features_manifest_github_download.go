@@ -114,6 +114,9 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 	return &gitHubDownloadStream{resp.Body, decompressedBody}, nil
 }
 
+// Instead of passing copies of []byte, this struct contains the raw stream of data
+// That way it can be read once.
+// This struct implements io.ReadCloser so callers are responsible for calling Close()
 type gitHubDownloadStream struct {
 	originalBody    io.ReadCloser
 	transformedBody io.ReadCloser

@@ -104,7 +104,7 @@ type TestLabel struct {
 	metadata map[string][]string
 }
 
-// TestWebFeature is a query.TestWebFeature bound to an in-memory index and MetadataResults.
+// TestWebFeature is a query.TestWebFeature bound to an in-memory index and WebFeaturesData.
 type TestWebFeature struct {
 	index
 	webFeature      string

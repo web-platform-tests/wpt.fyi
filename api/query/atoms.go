@@ -365,8 +365,8 @@ func (t AbstractTestLabel) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	}
 }
 
-// AbstractTestWebFeature represents the root of a testwebfeature query, which matches test-level metadata
-// web features to a searched web feature.
+// AbstractTestWebFeature represents the root of a web_feature query, which matches test-level
+// metadata to a searched web feature.
 type AbstractTestWebFeature struct {
 	WebFeature      string
 	manifestFetcher searchcacheWebFeaturesManifestFetcher
