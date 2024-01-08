@@ -81,6 +81,7 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 	for _, asset := range release.Assets {
 		if asset != nil && asset.Name != nil && strings.EqualFold(webFeaturesManifestFilename, *asset.Name) && asset.BrowserDownloadURL != nil {
 			assetURL = *asset.BrowserDownloadURL
+
 			break
 		}
 	}
@@ -125,5 +126,6 @@ func (s *gitHubDownloadStream) Read(p []byte) (int, error) {
 func (s *gitHubDownloadStream) Close() error {
 	transformedBodyErr := s.transformedBody.Close()
 	originalBodyErr := s.originalBody.Close()
+
 	return errors.Join(transformedBodyErr, originalBodyErr)
 }

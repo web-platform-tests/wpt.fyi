@@ -376,6 +376,6 @@ for any of the .yml files in the
 
  E.g.
 
-Search triaged tests with a web_feature grid:
+Search the [nesting](https://github.com/web-platform-dx/web-features/blob/main/feature-group-definitions/nesting.yml) feature:
 
-    web_feature:grid
+    web_feature:nesting

@@ -101,7 +101,12 @@ func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() map[string]map[
 			}
 			key := strings.ToLower(*test.URL)
 			value := strings.ToLower(webFeature)
-			testToWebFeaturesMap[key] = map[string]interface{}{value: nil}
+			if set, found := testToWebFeaturesMap[key]; found {
+				set[value] = nil
+				testToWebFeaturesMap[key] = set
+			} else {
+				testToWebFeaturesMap[key] = map[string]interface{}{value: nil}
+			}
 		}
 	}
 

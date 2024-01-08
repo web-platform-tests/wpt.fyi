@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 func TestWebFeaturesData_TestMatchesWithWebFeature(t *testing.T) {
@@ -28,14 +27,14 @@ func TestWebFeaturesData_TestMatchesWithWebFeature(t *testing.T) {
 	}{
 		{
 			name:       "test matches with web feature",
-			data:       WebFeaturesData{"test1": []string{"feature1", "feature2"}},
+			data:       WebFeaturesData{"test1": map[string]interface{}{"feature1": nil, "feature2": nil}},
 			test:       "test1",
 			webFeature: "feature1",
 			expected:   true,
 		},
 		{
 			name:       "test doesn't match with web feature",
-			data:       WebFeaturesData{"test1": []string{"feature1", "feature2"}},
+			data:       WebFeaturesData{"test1": map[string]interface{}{"feature1": nil, "feature2": nil}},
 			test:       "test1",
 			webFeature: "feature3",
 			expected:   false,
@@ -66,9 +65,20 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "valid manifest version 1",
-			inputJSON:     `{"version": 1, "data": {"feature1": [{"path": "test1", "url": "/test1"}, {"path": "test2", "url": "/test2"}]}}`,
-			expectedData:  WebFeaturesData{"/test1": []string{"feature1"}, "/test2": []string{"feature1"}},
+			name:      "valid manifest version 1",
+			inputJSON: `{"version": 1, "data": {"feature1": [{"path": "test1", "url": "/test1"}, {"path": "test2", "url": "/test2"}], "feature2": [{"path": "test1", "url": "/test1"}, {"path": "test3", "url": "/test3"}]}}`,
+			expectedData: WebFeaturesData{
+				"/test1": map[string]interface{}{
+					"feature1": nil,
+					"feature2": nil,
+				},
+				"/test2": map[string]interface{}{
+					"feature1": nil,
+				},
+				"/test3": map[string]interface{}{
+					"feature2": nil,
+				},
+			},
 			expectedError: nil,
 		},
 		{
@@ -99,16 +109,8 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 			if !errors.Is(err, tc.expectedError) {
 				t.Errorf("Parse() returned unexpected error: (%v). expected error: (%v).", err, tc.expectedError)
 			}
-			assert.Equal(t, data, tc.expectedData)
+			assert.Equal(t, tc.expectedData, data)
 		})
-	}
-}
-
-// Ensures order is kept for equality purposes
-func sortValuesInMap(input *map[string][]string) {
-	for test, features := range *input {
-		slices.Sort(features)
-		(*input)[test] = features
 	}
 }
 
@@ -129,6 +131,5 @@ func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 		}}
 	expectedResult := map[string][]string{"/test1": {"feature1"}, "/test2": {"feature1", "feature2"}}
 	result := data.prepareTestWebFeatureFilter()
-	sortValuesInMap(&result)
 	assert.Equal(t, expectedResult, result)
 }
