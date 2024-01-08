@@ -1,4 +1,3 @@
-//go:build small
 // +build small
 
 package webapp
