@@ -918,10 +918,10 @@ func TestBindExecute_TestWebFeature(t *testing.T) {
 			},
 		},
 	})
-	data := map[string][]string{
-		"/foo/bar/b.html": {"random"},
-		matchingTestName:  {"avif", "GRID"},
-		"/d/e/f":          {""},
+	data := shared.WebFeaturesData{
+		"/foo/bar/b.html": {"random": nil},
+		matchingTestName:  {"avif": nil, "grid": nil},
+		"/d/e/f":          {"": nil},
 	}
 
 	testlabel := query.TestWebFeature{WebFeature: "grid", WebFeaturesData: data}
