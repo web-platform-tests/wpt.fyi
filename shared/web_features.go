@@ -59,8 +59,7 @@ type webFeaturesManifestFile struct {
 type webFeaturesManifestV1Data map[string][]webFeaturesManifestV1DataTest
 
 type webFeaturesManifestV1DataTest struct {
-	Path string  `json:"path,omitempty"`
-	URL  *string `json:"url,omitempty"`
+	URL string `json:"url"`
 }
 
 // WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format
@@ -95,11 +94,7 @@ func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() WebFeaturesData
 	testToWebFeaturesMap := make(map[string]map[string]interface{})
 	for webFeature, tests := range d {
 		for _, test := range tests {
-			if test.URL == nil {
-				// wpt.fyi only cares about the url. If it doesn't have it, it is probably a support file.
-				continue
-			}
-			key := strings.ToLower(*test.URL)
+			key := strings.ToLower(test.URL)
 			value := strings.ToLower(webFeature)
 			if set, found := testToWebFeaturesMap[key]; found {
 				set[value] = nil

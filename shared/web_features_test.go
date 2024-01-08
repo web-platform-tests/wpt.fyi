@@ -114,20 +114,15 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 	}
 }
 
-func strPtr(in string) *string {
-	return &in
-}
-
 func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 	// Test cases for prepareTestWebFeatureFilter
 	data := webFeaturesManifestV1Data{
 		"feature1": []webFeaturesManifestV1DataTest{
-			{Path: "test1", URL: strPtr("/test1")},
-			{Path: "test2", URL: strPtr("/test2")},
-			{Path: "no-url"},
+			{URL: "/test1"},
+			{URL: "/test2"},
 		},
 		"feature2": []webFeaturesManifestV1DataTest{
-			{Path: "test2", URL: strPtr("/test2")},
+			{URL: "/test2"},
 		}}
 	expectedResult := WebFeaturesData{
 		"/test1": {"feature1": nil},
