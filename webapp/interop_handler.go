@@ -29,8 +29,8 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	year := mux.Vars(r)["year"]
 
-	// /compat20XX redirects to /interop-20XX
-	needsRedirect := name == "compat"
+	// /compat20XX and /interop20XX redirect to /interop-20XX
+	needsRedirect := name == "compat" || name == "interop"
 	if _, ok := validYears[year]; !ok {
 		year = defaultRedirectYear
 		needsRedirect = true
