@@ -390,7 +390,7 @@ export const interopData = {
         'countsTowardScore': false
       },
       'interop-2022-webcompat': {
-        'description': 'Web Compat',
+        'description': 'Web Compat 2022',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat',
