@@ -18,58 +18,20 @@ Flex.
 
 ### To production
 
-First log into the `wptdashboard` project. You need to be a project member with
+You need to be a `wptdashboard` GCP project member with
 at least Editor privileges. Then from the project root directory:
 
-If you are running on Linux:
-
 ```sh
-# Ensure you have the latest code
 git checkout main
 git pull
-
-# Login to gcloud if not already logged in.
-# To check if you are already logged in, run `make gcloud_login`. It will fail if it cannot find a logged in profile.
-gcloud auth login
-
-# Deploy the services
-make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
-make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
-make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
+util/deploy-production.sh
 ```
 
-If you are running on non-Linux, first start a Docker instance:
+Then follow the script’s instructions. You can see all available command line options by passing `-h`.
 
-```sh
-./util/docker-dev/run.sh
-```
+If there are changes to deploy but the checks have failed, it will provide the proper links to investigate the failures. If the failures should not block deployment (e.g. known intermittents) it will suggest that you rerun the script with the `-f` flag to force deployment.
 
-Once the instance is running, run:
-
-```sh
-# Ensure you have the latest code
-git checkout main
-git pull
-source util/commands.sh
-
-# Login to gcloud if not already logged in.
-# To check if you are already logged in, run `wptd_exec_it make gcloud_login`. It will fail if it cannot find a logged in profile.
-wptd_exec_it gcloud auth login
-
-# Deploy the services
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
-```
-
-If you've updated [`index.yaml`](../webapp/web/index.yaml),
-[`queue.yaml`](../webapp/web/queue.yaml), or
-[`dispatch.yaml`](../webapp/web/dispatch.yaml) you must also deploy them manually.
-
-```sh
-cd webapp/web
-gcloud app deploy --project=wptdashboard index.yaml queue.yaml dispatch.yaml
-```
+If the deployment fails during one of the build or deployment steps in the docker VM (for transient or intermittent errors), you can skip the GitHub bug creation and proceed straight to retrying the build by using the `-b` flag.
 
 ### To staging
 
