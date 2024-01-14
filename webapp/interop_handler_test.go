@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 package webapp
@@ -33,7 +34,7 @@ func TestInteropHandler_redirect(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check that the path has been properly updated to the current interop effort.
-	assert.Equal(t, loc.Path, "/interop-2023")
+	assert.Equal(t, loc.Path, "/interop-2024")
 	// Check if embedded param is maintained after redirect.
 	assert.Equal(t, loc.RawQuery, "embedded")
 }
@@ -54,7 +55,7 @@ func TestInteropHandler_redirectdefault(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check that the path has been properly updated to the current interop effort.
-	assert.Equal(t, loc.Path, "/interop-2023")
+	assert.Equal(t, loc.Path, "/interop-2024")
 	// Check if embedded param is maintained after redirect.
 	assert.Equal(t, loc.RawQuery, "embedded")
 }
