@@ -29,7 +29,7 @@ util/deploy-production.sh
 
 Then follow the script’s instructions. You can see all available command line options by passing `-h`.
 
-If there are changes to deploy but the checks have failed, it will provide the proper links to investigate the failures. If the failures should not block deployment (e.g. known intermittents) it will suggest that you rerun the script with the `-f` flag to force deployment.
+If there are changes to deploy but the checks have failed, it will provide the proper links to investigate the failures. If the failures should not block deployment (e.g. intermittent failures), it will suggest that you rerun the script with the `-f` flag to force deployment.
 
 If the deployment fails during one of the build or deployment steps in the docker VM (for transient or intermittent errors), you can skip the GitHub bug creation and proceed straight to retrying the build by using the `-b` flag.
 
