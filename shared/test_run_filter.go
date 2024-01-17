@@ -41,18 +41,21 @@ func (s SHAs) ShortSHAs() []string {
 	return short
 }
 
+type ExcludePresets struct{}
+
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {
-	SHAs     SHAs         `json:"shas,omitempty"`
-	Labels   mapset.Set   `json:"labels,omitempty"`
-	Aligned  *bool        `json:"aligned,omitempty"`
-	From     *time.Time   `json:"from,omitempty"`
-	To       *time.Time   `json:"to,omitempty"`
-	MaxCount *int         `json:"maxcount,omitempty"`
-	Offset   *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
-	Products ProductSpecs `json:"products,omitempty"`
-	View     *string      `json:"view,omitempty"`
+	SHAs           SHAs         `json:"shas,omitempty"`
+	Labels         mapset.Set   `json:"labels,omitempty"`
+	Aligned        *bool        `json:"aligned,omitempty"`
+	From           *time.Time   `json:"from,omitempty"`
+	To             *time.Time   `json:"to,omitempty"`
+	MaxCount       *int         `json:"maxcount,omitempty"`
+	Offset         *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
+	Products       ProductSpecs `json:"products,omitempty"`
+	View           *string      `json:"view,omitempty"`
+	ExcludePresets []string     `json:"exclude_presets,omitempty"`
 }
 
 type testRunFilterNoCustomMarshalling TestRunFilter
