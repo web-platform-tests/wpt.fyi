@@ -860,7 +860,7 @@ func TestBindExecute_LabelWithWildcards(t *testing.T) {
 	})
 	metadata := map[string][]string{
 		"/foo/bar/b.html": {"random"},
-		"/a/*":  {"interop1", "INTEROP2"},
+		"/a/*":            {"interop1", "INTEROP2"},
 		"/d/e/f":          {""},
 		matchingTestName:  {"foo"},
 	}
@@ -869,6 +869,62 @@ func TestBindExecute_LabelWithWildcards(t *testing.T) {
 	// this matches the wildcard "/a/*". When mapped to test runs, that
 	// means it should match "/a/b/c" due to wildcard expansion.
 	testlabel := query.And{[]query.ConcreteQuery{query.TestLabel{Label: "interop2", Metadata: metadata}, query.TestLabel{Label: "interop1", Metadata: metadata}}}
+	plan, err := idx.Bind(runs, testlabel)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []shared.LegacySearchRunResult{
+			{
+				// Only matching test passes.
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
+			},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
+func TestBindExecute_TestWebFeature(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/a/b/c"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					{
+						Test:   "/d/e/f",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+	data := shared.WebFeaturesData{
+		"/foo/bar/b.html": {"random": nil},
+		matchingTestName:  {"avif": nil, "grid": nil},
+		"/d/e/f":          {"": nil},
+	}
+
+	testlabel := query.TestWebFeature{WebFeature: "grid", WebFeaturesData: data}
 	plan, err := idx.Bind(runs, testlabel)
 	assert.Nil(t, err)
 

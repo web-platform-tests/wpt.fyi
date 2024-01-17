@@ -104,6 +104,13 @@ type TestLabel struct {
 	metadata map[string][]string
 }
 
+// TestWebFeature is a query.TestWebFeature bound to an in-memory index and WebFeaturesData.
+type TestWebFeature struct {
+	index
+	webFeature      string
+	webFeaturesData shared.WebFeaturesData
+}
+
 // MetadataQuality is a query.MetadataQuality bound to an in-memory index.
 type MetadataQuality struct {
 	index
@@ -342,6 +349,20 @@ func (tl TestLabel) Filter(t TestID) bool {
 	return false
 }
 
+// Filter interprets a TestWebFeature as a filter function over TestIDs.
+func (twf TestWebFeature) Filter(t TestID) bool {
+	name, _, err := twf.tests.GetName(t)
+	if err != nil {
+		return false
+	}
+	// Check if there's any data
+	if twf.webFeaturesData == nil {
+		return false
+	}
+	// Get the Web Features for that exact test path
+	return twf.webFeaturesData.TestMatchesWithWebFeature(name, twf.webFeature)
+}
+
 // Filter interprets a MetadataQuality as a filter function over TestIDs.
 func (q MetadataQuality) Filter(t TestID) bool {
 	switch q.quality {
@@ -460,6 +481,8 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 		return Triaged{idx, v.Metadata}, nil
 	case query.TestLabel:
 		return TestLabel{idx, v.Label, v.Metadata}, nil
+	case query.TestWebFeature:
+		return TestWebFeature{idx, v.WebFeature, v.WebFeaturesData}, nil
 	case query.MetadataQuality:
 		return MetadataQuality{idx, v}, nil
 	case query.And:
