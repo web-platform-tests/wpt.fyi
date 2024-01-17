@@ -185,6 +185,9 @@ class InteropSummary extends PolymerElement {
     if (!this.shouldDisplayInvestigationNumber()) {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
       investigationDiv.style.display = 'none';
+    }
+    // Don't display the interop score for Interop 2021.
+    if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       const summaryDiv = this.shadowRoot.querySelector('.summary-container');
