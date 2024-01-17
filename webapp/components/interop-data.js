@@ -643,33 +643,6 @@ export const interopData = {
         'score_as_group': true
       }
     ],
-    'investigation_scores': [
-      {
-        'name': 'Accessibility Testing',
-        'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
-        'scores_over_time': [
-          { 'date': '2023-03-08', 'score': 600 },
-          { 'date': '2023-05-13', 'score': 700 },
-          { 'date': '2023-06-27', 'score': 780 },
-          { 'date': '2023-09-05', 'score': 860 },
-          { 'date': '2023-09-27', 'score': 870 },
-          { 'date': '2023-10-12', 'score': 910 },
-          { 'date': '2023-10-13', 'score': 920 },
-          { 'date': '2023-11-03', 'score': 950 },
-          { 'date': '2023-11-14', 'score': 980 },
-          { 'date': '2023-11-19', 'score': 1000 }
-        ]
-      },
-      {
-        'name': 'Mobile Testing',
-        'url': 'https://github.com/web-platform-tests/interop-2023-mobile-testing',
-        'scores_over_time': [
-          { 'date': '2023-06-20', 'score': 400 },
-          { 'date': '2023-09-26', 'score': 600 },
-          { 'date': '2023-10-24', 'score': 700 }
-        ]
-      }
-    ],
     'investigation_weight': 0.0,
     /**
      * More information on results generation at
