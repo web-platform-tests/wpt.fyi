@@ -85,19 +85,19 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 			name:          "invalid manifest JSON",
 			inputJSON:     `{"version": 1, "data": invalid}`,
 			expectedData:  nil,
-			expectedError: ErrBadWebFeaturesManifestJSON,
+			expectedError: errBadWebFeaturesManifestJSON,
 		},
 		{
 			name:          "invalid manifest v1 JSON",
 			inputJSON:     `{"version": 1, "data": "invalid"}`,
 			expectedData:  nil,
-			expectedError: ErrUnexpectedWebFeaturesManifestV1Format,
+			expectedError: errUnexpectedWebFeaturesManifestV1Format,
 		},
 		{
 			name:          "unknown manifest version",
 			inputJSON:     `{"version": 2}`,
 			expectedData:  nil,
-			expectedError: ErrUnknownWebFeaturesManifestVersion,
+			expectedError: errUnknownWebFeaturesManifestVersion,
 		},
 	}
 

@@ -14,7 +14,7 @@ import (
 func GetWPTWebFeaturesManifest(ctx context.Context, downloader WebFeaturesManifestDownloader, parser WebFeatureManifestParser) (WebFeaturesData, error) {
 	manifest, err := downloader.Download(ctx)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	data, err := parser.Parse(ctx, manifest)
 	if err != nil {
