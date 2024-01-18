@@ -14,7 +14,7 @@ import (
 )
 
 // WebFeaturesData is the public data type that represents the data parsed from
-// a given manifest file
+// a given manifest file.
 type WebFeaturesData map[string]map[string]interface{}
 
 // errUnknownWebFeaturesManifestVersion indicates that the parser does not know how to parse
@@ -62,14 +62,14 @@ type webFeaturesManifestV1DataTest struct {
 	URL string `json:"url"`
 }
 
-// WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format
+// WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format.
 type WebFeaturesManifestJSONParser struct{}
 
 // Parse parses a JSON file into a WebFeaturesData instance.
-func (p WebFeaturesManifestJSONParser) Parse(ctx context.Context, r io.ReadCloser) (WebFeaturesData, error) {
+func (p WebFeaturesManifestJSONParser) Parse(_ context.Context, r io.ReadCloser) (WebFeaturesData, error) {
 	defer r.Close()
-	file := webFeaturesManifestFile{}
-	err := json.NewDecoder(r).Decode(&file)
+	file := new(webFeaturesManifestFile)
+	err := json.NewDecoder(r).Decode(file)
 	if err != nil {
 		return nil, errors.Join(errBadWebFeaturesManifestJSON, err)
 	}
