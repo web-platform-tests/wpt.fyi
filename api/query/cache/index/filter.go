@@ -355,11 +355,11 @@ func (twf TestWebFeature) Filter(t TestID) bool {
 	if err != nil {
 		return false
 	}
-	// Check if there's any data
+	// Check if there's any data.
 	if twf.webFeaturesData == nil {
 		return false
 	}
-	// Get the Web Features for that exact test path
+	// Get the Web Features for that exact test path.
 	return twf.webFeaturesData.TestMatchesWithWebFeature(name, twf.webFeature)
 }
 

@@ -372,7 +372,7 @@ feature label, regardless of browsers.
 
 Where web-feature-name is a string, case-insensitive and matches the filename base
 for any of the .yml files in the
-[feature-group-definitions](https://github.com/web-platform-dx/web-features/tree/main/feature-group-definitions) directory..
+[feature-group-definitions](https://github.com/web-platform-dx/web-features/tree/main/feature-group-definitions) directory.
 
  E.g.
 
