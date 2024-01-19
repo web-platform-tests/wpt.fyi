@@ -15,24 +15,24 @@ import (
 	"github.com/google/go-github/v47/github"
 )
 
-// WebFeatureManifestRepo is where the web feature manifest is published
+// WebFeatureManifestRepo is where the web feature manifest is published.
 const WebFeatureManifestRepo = "wpt"
 
-// webFeaturesManifestFilename is the name of the manifest file in a given release
+// webFeaturesManifestFilename is the name of the manifest file in a given release.
 const webFeaturesManifestFilename = "WEB_FEATURES_MANIFEST.json.gz"
 
-// ErrNoWebFeaturesManifestFileFound when a given GitHub release does not contain a manifest file to download.
-var ErrNoWebFeaturesManifestFileFound = errors.New("web features manifest not found in release")
+// errNoWebFeaturesManifestFileFound when a given GitHub release does not contain a manifest file to download.
+var errNoWebFeaturesManifestFileFound = errors.New("web features manifest not found in release")
 
-// ErrMissingBodyDuringWebFeaturesManifestDownload when a http call to download the file contains no body.
+// errMissingBodyDuringWebFeaturesManifestDownload when a http call to download the file contains no body.
 // This should not happen often.
-var ErrMissingBodyDuringWebFeaturesManifestDownload = errors.New("empty body when downloading web features manifest")
+var errMissingBodyDuringWebFeaturesManifestDownload = errors.New("empty body when downloading web features manifest")
 
-// ErrUnableToRetrieveGitHubRelease indicates the request to retrieve the latest release failed
-var ErrUnableToRetrieveGitHubRelease = errors.New("failed to retrieve latest GitHub release")
+// errUnableToRetrieveGitHubRelease indicates the request to retrieve the latest release failed.
+var errUnableToRetrieveGitHubRelease = errors.New("failed to retrieve latest GitHub release")
 
-// ErrGitHubAssetDownloadFailedToComplete indicates the download request failed for a given release asset
-var ErrGitHubAssetDownloadFailedToComplete = errors.New("request to download GitHub asset failed")
+// errGitHubAssetDownloadFailedToComplete indicates the download request failed for a given release asset.
+var errGitHubAssetDownloadFailedToComplete = errors.New("request to download GitHub asset failed")
 
 // gzipBodyTransformer extracts the g-zipped body into a raw file stream.
 type gzipBodyTransformer struct{}
@@ -41,9 +41,9 @@ func (t gzipBodyTransformer) Transform(body io.Reader) (io.ReadCloser, error) {
 	return gzip.NewReader(body)
 }
 
-// ResponseBodyTransformer provides a interface to transform the incoming response body into a
+// responseBodyTransformer provides a interface to transform the incoming response body into a
 // final expected body format.
-type ResponseBodyTransformer interface {
+type responseBodyTransformer interface {
 	Transform(io.Reader) (io.ReadCloser, error)
 }
 
@@ -59,7 +59,7 @@ func NewGitHubWebFeaturesManifestDownloader(
 	}
 }
 
-// RepositoryReleaseGetter provides an interface to retrieve releases for a given repository
+// RepositoryReleaseGetter provides an interface to retrieve releases for a given repository.
 type RepositoryReleaseGetter interface {
 	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
 }
@@ -70,7 +70,7 @@ type RepositoryReleaseGetter interface {
 type GitHubWebFeaturesManifestDownloader struct {
 	httpClient        *http.Client
 	repoReleaseGetter RepositoryReleaseGetter
-	bodyTransformer   ResponseBodyTransformer
+	bodyTransformer   responseBodyTransformer
 }
 
 // Download attempts to download the manifest file from the latest release.
@@ -80,20 +80,22 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 		"jcscottiii", // REPLACE WITH SourceOwner BEFORE MERGING,
 		WebFeatureManifestRepo)
 	if err != nil {
-		return nil, errors.Join(ErrUnableToRetrieveGitHubRelease, err)
+		return nil, errors.Join(errUnableToRetrieveGitHubRelease, err)
 	}
 
 	// Find the asset URL for the manifest file.
 	assetURL := ""
 	for _, asset := range release.Assets {
-		if asset != nil && asset.Name != nil && strings.EqualFold(webFeaturesManifestFilename, *asset.Name) && asset.BrowserDownloadURL != nil {
+		if asset != nil && asset.Name != nil &&
+			strings.EqualFold(webFeaturesManifestFilename, *asset.Name) &&
+			asset.BrowserDownloadURL != nil {
 			assetURL = *asset.BrowserDownloadURL
 
 			break
 		}
 	}
 	if assetURL == "" {
-		return nil, ErrNoWebFeaturesManifestFileFound
+		return nil, errNoWebFeaturesManifestFileFound
 	}
 
 	// Download the file.
@@ -103,10 +105,10 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 	}
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return nil, ErrGitHubAssetDownloadFailedToComplete
+		return nil, errGitHubAssetDownloadFailedToComplete
 	}
 	if resp.Body == nil || resp.ContentLength == 0 {
-		return nil, ErrMissingBodyDuringWebFeaturesManifestDownload
+		return nil, errMissingBodyDuringWebFeaturesManifestDownload
 	}
 
 	// Perform any necessary extractions / transformations.

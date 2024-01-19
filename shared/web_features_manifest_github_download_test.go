@@ -179,7 +179,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				err:           errors.New("fake GitHub client error"),
 			},
 			expectedBody:  nil,
-			expectedError: ErrUnableToRetrieveGitHubRelease,
+			expectedError: errUnableToRetrieveGitHubRelease,
 		},
 		{
 			name: "manifest file not found",
@@ -193,7 +193,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				err:  nil,
 			},
 			expectedBody:  nil,
-			expectedError: ErrNoWebFeaturesManifestFileFound,
+			expectedError: errNoWebFeaturesManifestFileFound,
 		},
 		{
 			name: "error downloading asset",
@@ -218,7 +218,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				}
 			}, err: errors.New("simulated network error")},
 			expectedBody:  nil,
-			expectedError: ErrGitHubAssetDownloadFailedToComplete,
+			expectedError: errGitHubAssetDownloadFailedToComplete,
 		},
 		{
 			name: "empty response body",
@@ -244,7 +244,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				}
 			}, err: nil},
 			expectedBody:  nil,
-			expectedError: ErrMissingBodyDuringWebFeaturesManifestDownload,
+			expectedError: errMissingBodyDuringWebFeaturesManifestDownload,
 		},
 	}
 	for _, tc := range tests {
