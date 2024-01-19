@@ -9,6 +9,7 @@ import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { afterNextRender } from '../node_modules/@polymer/polymer/lib/utils/render-status.js';
 
 // InteropDashboard is a custom element that holds the overall interop dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
@@ -336,54 +337,40 @@ class InteropDashboard extends PolymerElement {
                   <!-- First score table header with sort functionality -->
                   <template is="dom-if" if="[[isFirstTable(itemsIndex)]]">
                     <tr class="section-header">
-                      <th class="sortable-header" on-click="sortByName">
+                      <th class="sortable-header">
                         {{section.name}}
-                        <img class="sort-icon-focus-areas" src="[[getSortIcon(0, sortColumn, isSortedAsc)]]" />
+                        <img class="sort-icon-focus-areas" src="[[getSortIcon(-2, sortColumn, isSortedAsc)]]" />
                       </th>
-                      <th class="sortable-header" on-click="sortByChrome">
-                        <template is="dom-if" if="[[stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
-                            <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
-                          </div>
+                      <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
+                        <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
+                          <th class="sortable-header">
+                              <template is="dom-if" if="[[stable]]">
+                                <div class="browser-icons">
+                                  <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
+                                  <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
+                                </div>
+                              </template>
+                              <template is="dom-if" if="[[!stable]]">
+                                <div class="browser-icons">
+                                  <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
+                                  <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
+                                </div>
+                              </template>
+                            <img class="sort-icon" src="[[getSortIcon(itemsIndex, sortColumn, isSortedAsc)]]" />
+                          </th>
                         </template>
-                        <template is="dom-if" if="[[!stable]]">
-                          <div class="browser-icons">
-                            <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
-                            <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
-                          </div>
+                        <template is="dom-if" if="{{!isChromeEdgeCombo(browserInfo)}}">
+                          <th class="sortable-header">
+                            <div class="browser-icons single-browser-icon">
+                              <img src="[[getBrowserIcon(browserInfo, stable)]]" width="32" alt="[[getBrowserIconName(browserInfo, stable)]]" title="[[getBrowserIconName(browserInfo, stable)]]" />
+                            </div>
+                            <img class="sort-icon" src="[[getSortIcon(itemsIndex, sortColumn, isSortedAsc)]]" />
+                          </th>
                         </template>
-                        <img class="sort-icon" src="[[getSortIcon(1, sortColumn, isSortedAsc)]]" />
-                      </th>
-                      <th class="sortable-header" on-click="sortByFF">
-                        <template is="dom-if" if="[[stable]]">
-                          <div class="browser-icons single-browser-icon">
-                            <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
-                          </div>
-                        </template>
-                        <template is="dom-if" if="[[!stable]]">
-                          <div class="browser-icons single-browser-icon">
-                            <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
-                          </div>
-                        </template>
-                        <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
-                      </th>
-                      <th class="sortable-header" on-click="sortBySafari">
-                        <template is="dom-if" if="[[stable]]">
-                          <div class="browser-icons single-browser-icon">
-                            <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
-                          </div>
-                        </template>
-                        <template is="dom-if" if="[[!stable]]">
-                          <div class="browser-icons single-browser-icon">
-                            <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
-                          </div>
-                        </template>
-                        <img class="sort-icon" src="[[getSortIcon(3, sortColumn, isSortedAsc)]]" />
-                      </th>
-                      <th class="sortable-header" on-click="sortByInterop">
+                      </template>
+                      <th class="sortable-header">
                         <div class="interop-header">INTEROP</div>
-                        <img class="sort-icon" src="[[getSortIcon(4, sortColumn, isSortedAsc)]]" />
+                        <img class="sort-icon" src="[[getSortIcon(-1, sortColumn, isSortedAsc)]]" />
                       </th>
                     </tr>
                   </template>
@@ -396,44 +383,29 @@ class InteropDashboard extends PolymerElement {
                         <th colspan=4>Group Progress</th>
                       </template>
                       <template is="dom-if" if="[[showBrowserIcons(itemsIndex, section.score_as_group)]]">
-                        <th>
-                          <template is="dom-if" if="[[stable]]">
-                            <div class="browser-icons">
-                              <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
-                              <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
-                            </div>
-                          </template>
-                          <template is="dom-if" if="[[!stable]]">
-                            <div class="browser-icons">
-                              <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
-                              <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
-                            </div>
-                          </template>
-                        </th>
-                        <th>
-                          <template is="dom-if" if="[[stable]]">
-                            <div class="browser-icons single-browser-icon">
-                              <img src="/static/firefox_64x64.png" width="32" alt="Firefox" title="Firefox" />
-                            </div>
-                          </template>
-                          <template is="dom-if" if="[[!stable]]">
-                            <div class="browser-icons single-browser-icon">
-                              <img src="/static/firefox-nightly_64x64.png" width="32" alt="Firefox Nightly" title="Firefox Nightly" />
-                            </div>
-                          </template>
-                        </th>
-                        <th>
-                          <template is="dom-if" if="[[stable]]">
-                            <div class="browser-icons single-browser-icon">
-                              <img src="/static/safari_64x64.png" width="32" alt="Safari" title="Safari" />
-                            </div>
-                          </template>
-                          <template is="dom-if" if="[[!stable]]">
-                            <div class="browser-icons single-browser-icon">
-                              <img src="/static/safari-preview_64x64.png" width="32" alt="Safari Technology Preview" title="Safari Technology Preview" />
-                            </div>
-                          </template>
-                        </th>
+                        <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
+                          <th>
+                            <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
+                              <template is="dom-if" if="[[stable]]">
+                                <div class="browser-icons">
+                                  <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
+                                  <img src="/static/edge_64x64.png" width="32" alt="Edge" title="Edge" />
+                                </div>
+                              </template>
+                              <template is="dom-if" if="[[!stable]]">
+                                <div class="browser-icons">
+                                  <img src="/static/chrome-dev_64x64.png" width="32" alt="Chrome Dev" title="Chrome Dev" />
+                                  <img src="/static/edge-dev_64x64.png" width="32" alt="Edge Dev" title="Edge Dev" />
+                                </div>
+                              </template>
+                            </template>
+                            <template is="dom-if" if="{{!isChromeEdgeCombo(browserInfo)}}">
+                              <div class="browser-icons single-browser-icon">
+                                <img src="[[getBrowserIcon(browserInfo, stable)]]" width="32" alt="[[getBrowserIconName(browserInfo, stable)]]" title="[[getBrowserIconName(browserInfo, stable)]]" />
+                              </div>
+                            </template>
+                          </th>
+                        </template>
                         <th><div class="interop-header">INTEROP</div></th>
                       </template>
                       <template is="dom-if" if="[[showNoOtherColumns(section.score_as_group, itemsIndex)]]">
@@ -453,20 +425,20 @@ class InteropDashboard extends PolymerElement {
                         <td>
                           <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
                         </td>
-                        <td>[[getBrowserScoreForFeature(0, rowName, stable)]]</td>
-                        <td>[[getBrowserScoreForFeature(1, rowName, stable)]]</td>
-                        <td>[[getBrowserScoreForFeature(2, rowName, stable)]]</td>
-                        <td>[[getBrowserScoreForFeature(3, rowName, stable)]]</td>
+                        <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
+                          <td>[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
+                        </template>
+                        <td>[[getInteropScoreForFeature(rowName, stable)]]</td>
                       </tr>
                     </template>
                   </tbody>
                   <tfoot>
                     <tr class="subtotal-row">
                       <td><strong>TOTAL</strong></td>
-                      <td>[[getSubtotalScore(0, section, stable)]]</td>
-                      <td>[[getSubtotalScore(1, section, stable)]]</td>
-                      <td>[[getSubtotalScore(2, section, stable)]]</td>
-                      <td>[[getSubtotalScore(3, section, stable)]]</td>
+                      <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
+                        <td>[[getSubtotalScore(itemsIndex, section, stable)]]</td>
+                      </template>
+                      <td>[[getInteropSubtotalScore(section, stable)]]</td>
                     </tr>
                   </tfoot>
                 </template>
@@ -639,6 +611,13 @@ class InteropDashboard extends PolymerElement {
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
     }
+    afterNextRender(this, this.addSortEvents);
+  }
+
+  // Add the on-click handlers for sorting by a specific table header.
+  addSortEvents() {
+    const sortableHeaders = this.shadowRoot.querySelectorAll('.sortable-header');
+    sortableHeaders.forEach((header, i) => header.addEventListener('click', () => this.handleSortClick(i)));
   }
 
   isSelected(feature) {
@@ -747,6 +726,12 @@ class InteropDashboard extends PolymerElement {
     return `${avg.toFixed(1)}%`;
   }
 
+  getInteropSubtotalScore(section, isStable) {
+    const numBrowsers = this.getYearProp('numBrowsers');
+    const score = this.getSubtotalScore(numBrowsers, section, isStable);
+    return score;
+  }
+
   getSummaryOptionText() {
     // Show "Active" in graph summary text if it is the current interop year.
     if (parseInt(this.year) === new Date().getFullYear()) {
@@ -771,6 +756,11 @@ class InteropDashboard extends PolymerElement {
       return '100%';
     }
     return `${(score / 10).toFixed(1)}%`;
+  }
+
+  getInteropScoreForFeature(feature, isStable) {
+    const numBrowsers = this.getYearProp('numBrowsers');
+    return this.getBrowserScoreForFeature(numBrowsers, feature, isStable);
   }
 
   // getNumericalBrowserScoreByFeature returns the same score as
@@ -864,7 +854,19 @@ class InteropDashboard extends PolymerElement {
     return columnNumber === sortColumn;
   }
 
+  adjustSortIconIndex(index) {
+    const numBrowsers = this.getYearProp('browserInfo').length;
+    if (index === -2) {
+      return 0;
+    }
+    if (index === -1) {
+      return numBrowsers + 1;
+    }
+    return index + 1;
+  }
+
   getSortIcon(index, sortColumn, isSortedAsc) {
+    index = this.adjustSortIconIndex(index);
     if (sortColumn !== index) {
       return '/static/expand_inactive.svg';
     }
@@ -919,31 +921,21 @@ class InteropDashboard extends PolymerElement {
     return sortedFeatureOrder;
   };
 
-  /**
-   * Column sort handlers.
-   * TODO(danielrsmith): There are surely better ways to this pass this on-click.
-   * Polymer makes it hard to pass arguments through event handlers.
-   * Find a way to pass the column as an argument to avoid these calls.
-   **/
-  sortByName = () => {
-    this.handleSortClick(0);
-  };
+  isChromeEdgeCombo(browserInfo) {
+    return browserInfo.tableName === 'Chrome/Edge';
+  }
 
-  sortByChrome = () => {
-    this.handleSortClick(1);
-  };
+  getBrowserIcon(browserInfo, isStable) {
+    const icon = (isStable) ? browserInfo.stableIcon : browserInfo.experimentalIcon;
+    return `/static/${icon}_64x64.png`;
+  }
 
-  sortByFF = () => {
-    this.handleSortClick(2);
-  };
-
-  sortBySafari = () => {
-    this.handleSortClick(3);
-  };
-
-  sortByInterop = () => {
-    this.handleSortClick(4);
-  };
+  getBrowserIconName(browserInfo, isStable) {
+    if (isStable) {
+      return browserInfo.tableName;
+    }
+    return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
+  }
 
   // Handle the table header click to sort a column.
   handleSortClick = (i) => {

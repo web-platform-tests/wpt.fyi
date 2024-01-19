@@ -90,6 +90,8 @@ class InteropDataManager {
     // Default to the Chrome/Edge bundled unless specified.
     this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari'];
     this.browserInfo = this.browsers.map(browser => BROWSER_NAME_INFO[browser]);
+    this.numBrowsers = this.browserInfo.length;
+
     this.focusAreas = yearInfo.focus_areas;
     // Focus areas are iterated through often, so keep a list of all of them.
     this.focusAreasList = Object.keys(this.focusAreas);
@@ -149,8 +151,8 @@ class InteropDataManager {
 
       // The order of these needs to be in sync with the markup.
       scores.forEach((score, i) => {
-        const tooltipName = (i === scores.length - 1) ? 'Interop' : this.browserInfo[i].tooltipName;
-        score[feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex(tooltipName)) * 1000;
+        const tableName = (i === scores.length - 1) ? 'Interop' : this.browserInfo[i].tableName;
+        score[feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex(tableName)) * 1000;
       });
     }
     return scores;
