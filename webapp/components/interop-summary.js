@@ -42,6 +42,13 @@ class InteropSummary extends PolymerElement {
           margin-right: auto;
         }
 
+        .smaller-browser-number {
+          font-size: 3.5em;
+          width: 2.5ch;
+          height: 2.5ch;
+          padding: 8px;
+        }
+
         .summary-browser-name {
           text-align: center;
           display: flex;
@@ -89,7 +96,7 @@ class InteropSummary extends PolymerElement {
         <div id="summaryNumberRow">
           <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number">--</div>
+              <div class="summary-number score-number smaller-browser-number browser-number">--</div>
               <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
                 <!-- Chrome/Edge -->
                 <template is="dom-if" if="[[stable]]">
@@ -125,7 +132,11 @@ class InteropSummary extends PolymerElement {
                       <figcaption>[[browserInfo.tableName]]</figcaption>
                     </template>
                     <template is="dom-if" if="[[!stable]]">
-                      <figcaption>[[browserInfo.tableName]]<br>[[browserInfo.experimentalName]]</figcaption>
+                      <figcaption>
+                        <template is="dom-repeat" items="[[getBrowserNameParts(browserInfo)]]" as="namePart">
+                          [[namePart]]<br>
+                        </template>
+                      </figcaption>
                     </template>
                   </figure>
                 </div>
@@ -164,14 +175,19 @@ class InteropSummary extends PolymerElement {
       const investigationDiv = this.shadowRoot.querySelector('#investigationSummary');
       investigationDiv.style.display = 'none';
     }
+
+    const summaryDiv = this.shadowRoot.querySelector('.summary-container');
     // Don't display the interop score for Interop 2021.
     if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
-      const summaryDiv = this.shadowRoot.querySelector('.summary-container');
       summaryDiv.style.minHeight = '275px';
     }
+    if (this.year === '2024') {
+      summaryDiv.style.minHeight = '420px';
+    }
     afterNextRender(this, this.updateSummaryScores);
+    afterNextRender(this, this.setSummaryNumberSizes);
   }
 
   shouldDisplayInvestigationNumber() {
@@ -214,6 +230,13 @@ class InteropSummary extends PolymerElement {
     }
   }
 
+  setSummaryNumberSizes() {
+    const scoreElements = this.shadowRoot.querySelectorAll('.browser-number');
+    if (scoreElements.length < 4) {
+      scoreElements.forEach(scoreElement => scoreElement.classList.remove('smaller-browser-number'));
+    }
+  }
+
   getYearProp(prop) {
     return this.dataManager.getYearProp(prop);
   }
@@ -232,6 +255,10 @@ class InteropSummary extends PolymerElement {
       return browserInfo.tableName;
     }
     return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
+  }
+
+  getBrowserNameParts(browserInfo) {
+    return [browserInfo.tableName, ...browserInfo.experimentalName.split(' ')];
   }
 
   calculateColor(score) {
