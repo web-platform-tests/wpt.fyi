@@ -29,10 +29,10 @@ var ErrNoWebFeaturesManifestFileFound = errors.New("web features manifest not fo
 var ErrMissingBodyDuringWebFeaturesManifestDownload = errors.New("empty body when downloading web features manifest")
 
 // ErrUnableToRetrieveGitHubRelease indicates the request to retrieve the latest release failed
-var ErrUnableToRetrieveGitHubRelease = errors.New("failed to retrieve latest github release")
+var ErrUnableToRetrieveGitHubRelease = errors.New("failed to retrieve latest GitHub release")
 
 // ErrGitHubAssetDownloadFailedToComplete indicates the download request failed for a given release asset
-var ErrGitHubAssetDownloadFailedToComplete = errors.New("request to download github asset failed")
+var ErrGitHubAssetDownloadFailedToComplete = errors.New("request to download GitHub asset failed")
 
 // gzipBodyTransformer extracts the g-zipped body into a raw file stream.
 type gzipBodyTransformer struct{}
@@ -76,7 +76,7 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 		return nil, errors.Join(ErrUnableToRetrieveGitHubRelease, err)
 	}
 
-	// Find the asset URL for the manifest file
+	// Find the asset URL for the manifest file.
 	assetURL := ""
 	for _, asset := range release.Assets {
 		if asset != nil && asset.Name != nil && strings.EqualFold(webFeaturesManifestFilename, *asset.Name) && asset.BrowserDownloadURL != nil {
