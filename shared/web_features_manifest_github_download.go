@@ -77,7 +77,7 @@ type GitHubWebFeaturesManifestDownloader struct {
 func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.ReadCloser, error) {
 	release, _, err := d.repoReleaseGetter.GetLatestRelease(
 		ctx,
-		"jcscottiii", // REPLACE WITH SourceOwner BEFORE MERGING,
+		SourceOwner,
 		WebFeatureManifestRepo)
 	if err != nil {
 		return nil, errors.Join(errUnableToRetrieveGitHubRelease, err)

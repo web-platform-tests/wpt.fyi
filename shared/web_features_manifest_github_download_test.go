@@ -140,7 +140,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "successful download",
 			releaseGetterInput: mockRepositoryReleaseGetterInput{
-				expectedOwner: "jcscottiii",
+				expectedOwner: "web-platform-tests",
 				expectedRepo:  "wpt",
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
@@ -172,7 +172,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "error getting latest release",
 			releaseGetterInput: mockRepositoryReleaseGetterInput{
-				expectedOwner: "jcscottiii",
+				expectedOwner: "web-platform-tests",
 				expectedRepo:  "wpt",
 				repoRelease:   nil,
 				resp:          nil,
@@ -184,7 +184,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "manifest file not found",
 			releaseGetterInput: mockRepositoryReleaseGetterInput{
-				expectedOwner: "jcscottiii",
+				expectedOwner: "web-platform-tests",
 				expectedRepo:  "wpt",
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{},
@@ -198,7 +198,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "error downloading asset",
 			releaseGetterInput: mockRepositoryReleaseGetterInput{
-				expectedOwner: "jcscottiii",
+				expectedOwner: "web-platform-tests",
 				expectedRepo:  "wpt",
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
@@ -223,7 +223,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		{
 			name: "empty response body",
 			releaseGetterInput: mockRepositoryReleaseGetterInput{
-				expectedOwner: "jcscottiii",
+				expectedOwner: "web-platform-tests",
 				expectedRepo:  "wpt",
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
