@@ -606,6 +606,15 @@ export const interopData = {
         'score_as_group': false
       },
       {
+        'name': 'Active Investigations',
+        'rows': [
+          'Accessibility Testing',
+          'Mobile Testing',
+          'WebAssembly Testing',
+        ],
+        'score_as_group': true
+      },
+      {
         'name': 'Previous Focus Areas',
         'rows': [
           'interop-2023-cssborderimage',
@@ -633,15 +642,23 @@ export const interopData = {
         ],
         'score_as_group': false
       },
+    ],
+    'investigation_scores': [
       {
-        'name': 'Previous Investigations',
-        'rows': [
-          'Accessibility Testing',
-          'Mobile Testing'
-        ],
-        'previous_investigation': true,
-        'score_as_group': true
-      }
+        'name': 'Accessibility Testing',
+        'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
+        'scores_over_time': []
+      },
+      {
+        'name': 'Mobile Testing',
+        'url': 'https://github.com/web-platform-tests/interop-2023-mobile-testing',
+        'scores_over_time': []
+      },
+      {
+        'name': 'WebAssembly Testing',
+        'url': '',
+        'scores_over_time': []
+      },
     ],
     'investigation_weight': 0.0,
     /**
@@ -660,7 +677,7 @@ export const interopData = {
         'countsTowardScore': true
       },
       'interop-2024-starting-style-transition': {
-        'description': 'CSS @starting-style and transition-behavior',
+        'description': '@starting-style & transition-behavior',
         'mdn': '',
         'spec': '',
         'tests': '/results/css?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior',
