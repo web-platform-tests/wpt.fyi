@@ -49,26 +49,33 @@ type ResponseBodyTransformer interface {
 
 // NewGitHubWebFeaturesManifestDownloader creates a downloader which will examine
 // a GitHub release, find the manifest file, and download it.
-func NewGitHubWebFeaturesManifestDownloader(httpClient *http.Client, gitHubClient *github.Client) *GitHubWebFeaturesManifestDownloader {
+func NewGitHubWebFeaturesManifestDownloader(
+	httpClient *http.Client,
+	repoReleaseGetter RepositoryReleaseGetter) *GitHubWebFeaturesManifestDownloader {
 	return &GitHubWebFeaturesManifestDownloader{
-		httpClient:      httpClient,
-		gitHubClient:    gitHubClient,
-		bodyTransformer: gzipBodyTransformer{},
+		httpClient:        httpClient,
+		repoReleaseGetter: repoReleaseGetter,
+		bodyTransformer:   gzipBodyTransformer{},
 	}
+}
+
+// RepositoryReleaseGetter provides an interface to retrieve releases for a given repository
+type RepositoryReleaseGetter interface {
+	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
 }
 
 // GitHubWebFeaturesManifestDownloader is a downloader that will examine
 // a GitHub release, find the manifest file, and download it.
 // Use NewGitHubWebFeaturesManifestDownloader to create an instance.
 type GitHubWebFeaturesManifestDownloader struct {
-	httpClient      *http.Client
-	gitHubClient    *github.Client
-	bodyTransformer ResponseBodyTransformer
+	httpClient        *http.Client
+	repoReleaseGetter RepositoryReleaseGetter
+	bodyTransformer   ResponseBodyTransformer
 }
 
 // Download attempts to download the manifest file from the latest release.
 func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.ReadCloser, error) {
-	release, _, err := d.gitHubClient.Repositories.GetLatestRelease(
+	release, _, err := d.repoReleaseGetter.GetLatestRelease(
 		ctx,
 		"jcscottiii", // REPLACE WITH SourceOwner BEFORE MERGING,
 		WebFeatureManifestRepo)
@@ -89,7 +96,7 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 		return nil, ErrNoWebFeaturesManifestFileFound
 	}
 
-	// Download the file
+	// Download the file.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, assetURL, nil)
 	if err != nil {
 		return nil, err
@@ -102,10 +109,10 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 		return nil, ErrMissingBodyDuringWebFeaturesManifestDownload
 	}
 
-	// Perform any necessary extractions / transformations
+	// Perform any necessary extractions / transformations.
 	decompressedBody, err := d.bodyTransformer.Transform(resp.Body)
 	if err != nil {
-		// Transformation did not happen. Clean up
+		// Transformation did not happen. Clean up by closing any open resources.
 		resp.Body.Close()
 
 		return nil, err
@@ -116,7 +123,7 @@ func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 
 // Instead of passing copies of []byte, this struct contains the raw stream of data
 // That way it can be read once.
-// This struct implements io.ReadCloser so callers are responsible for calling Close()
+// This struct implements io.ReadCloser so callers are responsible for calling Close().
 type gitHubDownloadStream struct {
 	originalBody    io.ReadCloser
 	transformedBody io.ReadCloser

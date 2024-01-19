@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v47/github"
-	"github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,10 +41,10 @@ func createWebFeaturesTestdata() {
 		panic(err)
 	}
 
-	// Create a buffer for compressing the JSON
+	// Create a buffer for compressing the JSON.
 	var buf bytes.Buffer
 
-	// Create a gzip writer and write the JSON to it
+	// Create a gzip writer and write the JSON to it.
 	gz := gzip.NewWriter(&buf)
 	if _, err := gz.Write(jsonData); err != nil {
 		panic(err)
@@ -54,14 +53,14 @@ func createWebFeaturesTestdata() {
 		panic(err)
 	}
 
-	// Write the compressed data to a file
+	// Write the compressed data to a file.
 	if err := os.WriteFile(compressedWebFeaturesManifestFilePath, buf.Bytes(), 0644); err != nil {
 		panic(err)
 	}
 }
 
 func TestResponseBodyTransformer_Success(t *testing.T) {
-	updateGolden := false // Switch this when we want to update the golden file
+	updateGolden := false // Switch this when we want to update the golden file.
 	if updateGolden {
 		createWebFeaturesTestdata()
 	}
@@ -107,29 +106,52 @@ func (tr mockBodyTransformer) Transform(body io.Reader) (io.ReadCloser, error) {
 	return tr.output, tr.err
 }
 
+type mockRepositoryReleaseGetter struct {
+	t *testing.T
+	mockRepositoryReleaseGetterInput
+}
+
+type mockRepositoryReleaseGetterInput struct {
+	expectedOwner string
+	expectedRepo  string
+	repoRelease   *github.RepositoryRelease
+	resp          *github.Response
+	err           error
+}
+
+func (g mockRepositoryReleaseGetter) GetLatestRelease(
+	ctx context.Context,
+	owner, repo string) (*github.RepositoryRelease, *github.Response, error) {
+	require.Equal(g.t, g.expectedOwner, owner)
+	require.Equal(g.t, g.expectedRepo, repo)
+	return g.repoRelease, g.resp, g.err
+}
+
 func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 	// Test cases for Download
 	tests := []struct {
-		name             string
-		getLatestRelease func(http.ResponseWriter, *http.Request)
-		roundTrip        RoundTripFunc
-		transformer      mockBodyTransformerInput
-		expectedBody     []byte
-		expectedError    error
+		name               string
+		releaseGetterInput mockRepositoryReleaseGetterInput
+		roundTrip          RoundTripFunc
+		transformer        mockBodyTransformerInput
+		expectedBody       []byte
+		expectedError      error
 	}{
 		{
 			name: "successful download",
-			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
-				release := &github.RepositoryRelease{
+			releaseGetterInput: mockRepositoryReleaseGetterInput{
+				expectedOwner: "jcscottiii",
+				expectedRepo:  "wpt",
+				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
 							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
-				}
-				w.Write(mock.MustMarshal(release))
+				},
+				resp: &github.Response{},
+				err:  nil,
 			},
 			roundTrip: RoundTripFunc{function: func(req *http.Request) *http.Response {
 				assert.Equal(t, "https://example.com/WEB_FEATURES_MANIFEST.json.gz", req.URL.String())
@@ -149,40 +171,45 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		},
 		{
 			name: "error getting latest release",
-			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				mock.WriteError(
-					w,
-					http.StatusInternalServerError,
-					"failed to get release",
-				)
+			releaseGetterInput: mockRepositoryReleaseGetterInput{
+				expectedOwner: "jcscottiii",
+				expectedRepo:  "wpt",
+				repoRelease:   nil,
+				resp:          nil,
+				err:           errors.New("fake GitHub client error"),
 			},
 			expectedBody:  nil,
 			expectedError: ErrUnableToRetrieveGitHubRelease,
 		},
 		{
 			name: "manifest file not found",
-			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				release := &github.RepositoryRelease{
+			releaseGetterInput: mockRepositoryReleaseGetterInput{
+				expectedOwner: "jcscottiii",
+				expectedRepo:  "wpt",
+				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{},
-				}
-				w.Write(mock.MustMarshal(release))
+				},
+				resp: &github.Response{},
+				err:  nil,
 			},
 			expectedBody:  nil,
 			expectedError: ErrNoWebFeaturesManifestFileFound,
 		},
 		{
 			name: "error downloading asset",
-			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
-				release := &github.RepositoryRelease{
+			releaseGetterInput: mockRepositoryReleaseGetterInput{
+				expectedOwner: "jcscottiii",
+				expectedRepo:  "wpt",
+				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
 							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
-				}
-				w.Write(mock.MustMarshal(release))
+				},
+				resp: &github.Response{},
+				err:  nil,
 			},
 			roundTrip: RoundTripFunc{function: func(req *http.Request) *http.Response {
 				assert.Equal(t, "https://example.com/WEB_FEATURES_MANIFEST.json.gz", req.URL.String())
@@ -195,17 +222,19 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 		},
 		{
 			name: "empty response body",
-			getLatestRelease: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/repos/jcscottiii/wpt/releases/latest", r.URL.Path)
-				release := &github.RepositoryRelease{
+			releaseGetterInput: mockRepositoryReleaseGetterInput{
+				expectedOwner: "jcscottiii",
+				expectedRepo:  "wpt",
+				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
 							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
-				}
-				w.Write(mock.MustMarshal(release))
+				},
+				resp: &github.Response{},
+				err:  nil,
 			},
 			roundTrip: RoundTripFunc{function: func(req *http.Request) *http.Response {
 				assert.Equal(t, "https://example.com/WEB_FEATURES_MANIFEST.json.gz", req.URL.String())
@@ -220,24 +249,18 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			mockedGitHubHTTPClient := mock.NewMockedHTTPClient(
-				mock.WithRequestMatchHandler(
-					mock.GetReposReleasesLatestByOwnerByRepo,
-					http.HandlerFunc(tc.getLatestRelease),
-				),
-			)
+			getter := mockRepositoryReleaseGetter{t, tc.releaseGetterInput}
 			httpClient := &http.Client{
 				Transport: tc.roundTrip,
 			}
-			c := github.NewClient(mockedGitHubHTTPClient)
-			downloader := NewGitHubWebFeaturesManifestDownloader(httpClient, c)
+			downloader := NewGitHubWebFeaturesManifestDownloader(httpClient, getter)
 			downloader.bodyTransformer = mockBodyTransformer{t, tc.transformer}
 			body, err := downloader.Download(context.Background())
 			if !errors.Is(err, tc.expectedError) {
 				t.Errorf("Download() returned unexpected error: (%v). expected error: (%v).", err, tc.expectedError)
 			}
 
-			// No need to compare the body if there's an error
+			// No need to compare the body if there's an error.
 			if err != nil {
 				return
 			}
