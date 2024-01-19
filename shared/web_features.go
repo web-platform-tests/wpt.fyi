@@ -56,11 +56,7 @@ type webFeaturesManifestFile struct {
 // The data is a simple map.
 // The key is the web feature key
 // The value is a list of tests that are part of that web feature.
-type webFeaturesManifestV1Data map[string][]webFeaturesManifestV1DataTest
-
-type webFeaturesManifestV1DataTest struct {
-	URL string `json:"url"`
-}
+type webFeaturesManifestV1Data map[string][]string
 
 // WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format.
 type WebFeaturesManifestJSONParser struct{}
@@ -94,7 +90,7 @@ func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() WebFeaturesData
 	testToWebFeaturesMap := make(map[string]map[string]interface{})
 	for webFeature, tests := range d {
 		for _, test := range tests {
-			key := strings.ToLower(test.URL)
+			key := strings.ToLower(test)
 			value := strings.ToLower(webFeature)
 			if set, found := testToWebFeaturesMap[key]; found {
 				set[value] = nil

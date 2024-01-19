@@ -66,7 +66,7 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 	}{
 		{
 			name:      "valid manifest version 1",
-			inputJSON: `{"version": 1, "data": {"feature1": [{"path": "test1", "url": "/test1"}, {"path": "test2", "url": "/test2"}], "feature2": [{"path": "test1", "url": "/test1"}, {"path": "test3", "url": "/test3"}]}}`,
+			inputJSON: `{"version": 1, "data": {"feature1": ["/test1", "/test2"], "feature2": ["/test1", "/test3"]}}`,
 			expectedData: WebFeaturesData{
 				"/test1": map[string]interface{}{
 					"feature1": nil,
@@ -117,12 +117,12 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 	// Test cases for prepareTestWebFeatureFilter
 	data := webFeaturesManifestV1Data{
-		"feature1": []webFeaturesManifestV1DataTest{
-			{URL: "/test1"},
-			{URL: "/test2"},
+		"feature1": []string{
+			"/test1",
+			"/test2",
 		},
-		"feature2": []webFeaturesManifestV1DataTest{
-			{URL: "/test2"},
+		"feature2": []string{
+			"/test2",
 		}}
 	expectedResult := WebFeaturesData{
 		"/test1": {"feature1": nil},
