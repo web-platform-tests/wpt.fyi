@@ -7,6 +7,7 @@
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import {afterNextRender} from  '../node_modules/@polymer/polymer/lib/utils/render-status.js';
 
 class InteropSummary extends PolymerElement {
   static get template() {
@@ -86,74 +87,51 @@ class InteropSummary extends PolymerElement {
           </div>
         </div>
         <div id="summaryNumberRow">
-          <!-- Chrome/Edge -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number score-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
-                  <figcaption>Chrome</figcaption>
-                </figure>
-                <figure>
-                  <img src="/static/edge_64x64.png" width="36" alt="Edge" />
-                  <figcaption>Edge</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
-                  <figcaption>Chrome<br>Dev</figcaption>
-                </figure>
-                <figure>
-                  <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
-                  <figcaption>Edge<br>Dev</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
-          <!-- Firefox -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number score-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/firefox_64x64.png" width="36" alt="Firefox" />
-                  <figcaption>Firefox</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/firefox-nightly_64x64.png" width="36" alt="Firefox Nightly" />
-                  <figcaption>Firefox<br>Nightly</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
-          <!-- Safari -->
-          <div class="summary-flex-item" tabindex="0">
-            <div class="summary-number score-number">--</div>
-            <template is="dom-if" if="[[stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/safari_64x64.png" width="36" alt="Safari" />
-                  <figcaption>Safari</figcaption>
-                </figure>
-              </div>
-            </template>
-            <template is="dom-if" if="[[!stable]]">
-              <div class="summary-browser-name">
-                <figure>
-                  <img src="/static/safari-preview_64x64.png" width="36" alt="Safari Technology Preview" />
-                  <figcaption>Safari<br>Technology Preview</figcaption>
-                </figure>
-              </div>
-            </template>
-          </div>
+          <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
+            <div class="summary-flex-item" tabindex="0">
+              <div class="summary-number score-number">--</div>
+              <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
+                <!-- Chrome/Edge -->
+                <template is="dom-if" if="[[stable]]">
+                  <div class="summary-browser-name">
+                    <figure>
+                      <img src="/static/chrome_64x64.png" width="36" alt="Chrome" />
+                      <figcaption>Chrome</figcaption>
+                    </figure>
+                    <figure>
+                      <img src="/static/edge_64x64.png" width="36" alt="Edge" />
+                      <figcaption>Edge</figcaption>
+                    </figure>
+                  </div>
+                </template>
+                <template is="dom-if" if="[[!stable]]">
+                  <div class="summary-browser-name">
+                    <figure>
+                      <img src="/static/chrome-dev_64x64.png" width="36" alt="Chrome Dev" />
+                      <figcaption>Chrome<br>Dev</figcaption>
+                    </figure>
+                    <figure>
+                      <img src="/static/edge-dev_64x64.png" width="36" alt="Edge Dev" />
+                      <figcaption>Edge<br>Dev</figcaption>
+                    </figure>
+                  </div>
+                </template>
+              </template>
+              <template is="dom-if" if="{{!isChromeEdgeCombo(browserInfo)}}">
+                <div class="summary-browser-name">
+                  <figure>
+                    <img src="[[getBrowserIcon(browserInfo, stable)]]" width="36" alt="[[getBrowserIconName(browserInfo, stable)]]" />
+                    <template is="dom-if" if="[[stable]]">
+                      <figcaption>[[browserInfo.tableName]]</figcaption>
+                    </template>
+                    <template is="dom-if" if="[[!stable]]">
+                      <figcaption>[[browserInfo.tableName]]<br>[[browserInfo.experimentalName]]</figcaption>
+                    </template>
+                  </figure>
+                </div>
+              </template>
+            </div>
+          </template>
         </div>
       </div>
 `;
@@ -193,6 +171,7 @@ class InteropSummary extends PolymerElement {
       const summaryDiv = this.shadowRoot.querySelector('.summary-container');
       summaryDiv.style.minHeight = '275px';
     }
+    afterNextRender(this, this.updateSummaryScores);
   }
 
   shouldDisplayInvestigationNumber() {
@@ -213,18 +192,18 @@ class InteropSummary extends PolymerElement {
   }
 
   async updateSummaryScores() {
-    const scoreNumbers = this.shadowRoot.querySelectorAll('.score-number');
+    const scoreElements = this.shadowRoot.querySelectorAll('.score-number');
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-    if (scoreNumbers.length !== scores.length) {
-      throw new Error(
-        `Mismatched number of browsers/scores:  ${scoreNumbers.length} vs. ${scores.length}`);
+    // If the elements have not rendered yet, don't update the scores.
+    if (scoreElements.length !== scores.length) {
+      return;
     }
     // Update interop summary number first.
-    this.updateSummaryScore(scoreNumbers[0], scores[scores.length - 1][summaryFeatureName]);
+    this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
     // Update the rest of the browser scores.
-    for (let i = 1; i < scoreNumbers.length; i++) {
-      this.updateSummaryScore(scoreNumbers[i], scores[i - 1][summaryFeatureName]);
+    for (let i = 1; i < scoreElements.length; i++) {
+      this.updateSummaryScore(scoreElements[i], scores[i - 1][summaryFeatureName]);
     }
 
     // Update investigation summary separately.
@@ -233,6 +212,26 @@ class InteropSummary extends PolymerElement {
       this.updateSummaryScore(
         investigationNumber, this.dataManager.getYearProp('investigationTotalScore'));
     }
+  }
+
+  getYearProp(prop) {
+    return this.dataManager.getYearProp(prop);
+  }
+
+  isChromeEdgeCombo(browserInfo) {
+    return browserInfo.tableName === 'Chrome/Edge';
+  }
+
+  getBrowserIcon(browserInfo, isStable) {
+    const icon = (isStable) ? browserInfo.stableIcon : browserInfo.experimentalIcon;
+    return `/static/${icon}_64x64.png`;
+  }
+
+  getBrowserIconName(browserInfo, isStable) {
+    if (isStable) {
+      return browserInfo.tableName;
+    }
+    return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
   }
 
   calculateColor(score) {
