@@ -200,7 +200,6 @@ class InteropDataManager {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
           const tooltip = this.createTooltip(browserName, version, score);
-          console.log(feature);
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
