@@ -586,7 +586,7 @@ export const interopData = {
         'name': 'Active Focus Areas',
         'rows': [
           'interop-2024-accessibility',
-          'interop-2024-starting-style-transition',
+          'interop-2024-starting-style-transition-behavior',
           'interop-2023-property',
           'interop-2024-dsd',
           'interop-2024-dir',
@@ -729,7 +729,7 @@ export const interopData = {
         'tests': '/results/?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-accessibility',
         'countsTowardScore': true
       },
-      'interop-2024-starting-style-transition': {
+      'interop-2024-starting-style-transition-behavior': {
         'description': '@starting-style & transition-behavior',
         'mdn': '',
         'spec': '',
