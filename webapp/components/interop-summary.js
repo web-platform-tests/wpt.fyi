@@ -309,7 +309,7 @@ class InteropSummary extends PolymerElement {
       Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
       Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
       Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
-    ]
+    ];
 
     return [
       `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
