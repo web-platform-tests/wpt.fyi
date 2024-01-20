@@ -163,9 +163,16 @@ class InteropFeatureChart extends PolymerElement {
     if (feature !== summaryFeatureName && !(feature in focusAreas)) {
       feature = summaryFeatureName;
     }
+
+    const graphColors = this.getYearProp('browserInfo')
+      .map(browserInfo => browserInfo.graphColor);
+    // Add Interop color.
+    graphColors.push('#123301');
+
     const options = {
       height: 350,
       fontSize: 14,
+      lineWidth: 3,
       tooltip: {
         trigger: 'both',
       },
@@ -195,14 +202,14 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
-      // Line chart color definitions for [Chrome, Firefox, Safari, Interop].
-      colors: ['#fbc013', '#fc7a3a', '#148cda', '#2c6f07'],
+      colors: graphColors,
     };
 
     options.width = '100%';
     options.legend = {
       position: 'top',
       alignment: 'center',
+      maxLines: 2,
     };
     options.chartArea = {
       left: 75,

@@ -7,45 +7,51 @@
 import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
 import { interopData } from './interop-data.js';
 
-const BROWSER_NAME_INFO = {
+const BROWSER_INFO = {
   chrome_edge_dev: {
+    graphColor: '#fbc013',
     tableName: 'Chrome/Edge',
     tooltipName: 'Chrome',
   },
   chrome_dev: {
-    tableName: 'Chrome',
-    tooltipName: 'Chrome',
-    stableIcon: 'chrome',
     experimentalIcon: 'chrome-dev',
     experimentalName: 'Dev',
-  },
-  chrome_canary: {
+    graphColor: '#fbc013',
+    stableIcon: 'chrome',
     tableName: 'Chrome',
     tooltipName: 'Chrome',
-    stableIcon: 'chrome',
+  },
+  chrome_canary: {
     experimentalIcon: 'chrome-canary',
     experimentalName: 'Canary',
+    graphColor: '#fbc013',
+    stableIcon: 'chrome',
+    tableName: 'Chrome',
+    tooltipName: 'Chrome',
   },
   edge_dev: {
-    tableName: 'Edge',
-    tooltipName: 'Edge',
-    stableIcon: 'edge',
     experimentalIcon: 'edge-dev',
     experimentalName: 'Dev',
+    graphColor: '#55d555',
+    stableIcon: 'edge',
+    tableName: 'Edge',
+    tooltipName: 'Edge',
   },
   firefox: {
-    tableName: 'Firefox',
-    tooltipName: 'Firefox',
-    stableIcon: 'firefox',
     experimentalIcon: 'firefox-nightly',
     experimentalName: 'Nightly',
+    graphColor: '#fc7a3a',
+    stableIcon: 'firefox',
+    tableName: 'Firefox',
+    tooltipName: 'Firefox',
   },
   safari: {
-    tableName: 'Safari',
-    tooltipName: 'Safari',
-    stableIcon: 'safari',
     experimentalIcon: 'safari-preview',
     experimentalName: 'Technology Preview',
+    graphColor: '#148cda',
+    stableIcon: 'safari',
+    tableName: 'Safari',
+    tooltipName: 'Safari',
   }
 }
 // InteropDataManager encapsulates the loading of the CSV data that backs
@@ -89,7 +95,7 @@ class InteropDataManager {
 
     // Default to the Chrome/Edge bundled unless specified.
     this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari'];
-    this.browserInfo = this.browsers.map(browser => BROWSER_NAME_INFO[browser]);
+    this.browserInfo = this.browsers.map(browser => BROWSER_INFO[browser]);
     this.numBrowsers = this.browserInfo.length;
 
     this.focusAreas = yearInfo.focus_areas;
@@ -241,7 +247,6 @@ class InteropDataManager {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
           const tooltip = this.createTooltip(browserName, version, score);
-          console.log(feature);
           newRows.get(feature).push(score / 1000);
           newRows.get(feature).push(tooltip);
 
