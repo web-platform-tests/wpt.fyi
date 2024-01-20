@@ -186,6 +186,9 @@ class InteropSummary extends PolymerElement {
     if (this.year === '2024') {
       summaryDiv.style.minHeight = '420px';
     }
+
+    // The summary score elements are given class names asynchronously,
+    // so we have to wait until they've finished rendering to update them.
     afterNextRender(this, this.updateSummaryScores);
     afterNextRender(this, this.setSummaryNumberSizes);
   }
@@ -230,6 +233,7 @@ class InteropSummary extends PolymerElement {
     }
   }
 
+  // Sets the size of the summary number bubbles based on the number of browsers.
   setSummaryNumberSizes() {
     const scoreElements = this.shadowRoot.querySelectorAll('.browser-number');
     if (scoreElements.length < 4) {
@@ -241,6 +245,7 @@ class InteropSummary extends PolymerElement {
     return this.dataManager.getYearProp(prop);
   }
 
+  // Checks if this section is displaying the Chrome/Edge combo together.
   isChromeEdgeCombo(browserInfo) {
     return browserInfo.tableName === 'Chrome/Edge';
   }
@@ -257,6 +262,8 @@ class InteropSummary extends PolymerElement {
     return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
   }
 
+  // Returns the browser full name as a list of strings so we can 
+  // render them with breaks. e.g. ["Safari", "Technology", "Preview"]
   getBrowserNameParts(browserInfo) {
     return [browserInfo.tableName, ...browserInfo.experimentalName.split(' ')];
   }

@@ -581,7 +581,7 @@ export const interopData = {
     }
   },
   '2024': {
-    'browsers': ['chrome_canary', 'edge_dev', 'firefox', 'safari'],
+    'browsers': ['chrome_canary', 'edge', 'firefox', 'safari'],
     'table_sections': [
       {
         'name': 'Active Focus Areas',

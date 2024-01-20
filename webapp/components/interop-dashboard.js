@@ -855,16 +855,25 @@ class InteropDashboard extends PolymerElement {
   }
 
   adjustSortIconIndex(index) {
-    const numBrowsers = this.getYearProp('browserInfo').length;
+    // There can be a variable number of columns to sort on. The first column
+    // is always focus areas column, and the last column is always the
+    // Interop scores. We pass in the browserInfo index, but it starts at 0.
+    // The quick and dirty way to distinguish focus area column and interop column
+    // is to use a negative index for those columns, and adjust it.
+    const numBrowsers = this.getYearProp('numBrowsers');
+    // Focus area column. Adjust to 0.
     if (index === -2) {
       return 0;
     }
+    // Interop column, should be at the end of number of browsers.
     if (index === -1) {
       return numBrowsers + 1;
     }
+    // If a browser column is selected, offset by the focus area column.
     return index + 1;
   }
 
+  // Determine the arrow to display to distinguish which column is sorted, and how.
   getSortIcon(index, sortColumn, isSortedAsc) {
     index = this.adjustSortIconIndex(index);
     if (sortColumn !== index) {
@@ -921,6 +930,7 @@ class InteropDashboard extends PolymerElement {
     return sortedFeatureOrder;
   };
 
+  // Checks if this section is displaying the Chrome/Edge combo together.
   isChromeEdgeCombo(browserInfo) {
     return browserInfo.tableName === 'Chrome/Edge';
   }

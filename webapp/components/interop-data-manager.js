@@ -7,6 +7,7 @@
 import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
 import { interopData } from './interop-data.js';
 
+// Information about how to display the browsers.
 const BROWSER_INFO = {
   chrome_edge_dev: {
     graphColor: '#fbc013',
@@ -29,7 +30,7 @@ const BROWSER_INFO = {
     tableName: 'Chrome',
     tooltipName: 'Chrome',
   },
-  edge_dev: {
+  edge: {
     experimentalIcon: 'edge-dev',
     experimentalName: 'Dev',
     graphColor: '#55d555',
@@ -53,7 +54,8 @@ const BROWSER_INFO = {
     tableName: 'Safari',
     tooltipName: 'Safari',
   }
-}
+};
+
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
 // fetches the CSV data, processes it into sets of datatables, and then caches
@@ -148,7 +150,7 @@ class InteropDataManager {
     // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
-    const scores = this.browsers.map(_ => {
+    const scores = this.browsers.map(() => {
       return {};
     });
     // Add Interop score as well.
@@ -205,7 +207,9 @@ class InteropDataManager {
       dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
-    const browserVersions = tooltipBrowserNames.map(_ => []);
+    const browserVersions = tooltipBrowserNames.map(() => {
+      return [];
+    });
 
     const numFocusAreas = this.focusAreasList.length;
 
