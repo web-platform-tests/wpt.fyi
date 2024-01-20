@@ -287,29 +287,13 @@ class InteropSummary extends PolymerElement {
   calculateColor(score) {
     const gradient = [
       // Red.
-      {
-        scale: 0,
-        backgroundColor: [238, 43, 43],
-        textColor: [238, 43, 43],
-      },
+      { scale: 0, color: [250, 0, 0] },
       // Orange.
-      {
-        scale: 33.33,
-        backgroundColor: [250, 125, 0],
-        textColor: [209, 105, 0],
-      },
+      { scale: 33.33, color: [250, 125, 0] },
       // Yellow.
-      {
-        scale: 66.67,
-        backgroundColor: [220, 220, 0],
-        textColor: [184, 132, 0],
-      },
+      { scale: 66.67, color: [220, 220, 0] },
       // Green.
-      {
-        scale: 100,
-        backgroundColor: [0, 160, 0],
-        textColor: [0, 160, 0],
-      },
+      { scale: 100, color: [0, 160, 0] },
     ];
 
     let color1, color2;
@@ -321,20 +305,15 @@ class InteropSummary extends PolymerElement {
       }
     }
     const colorWeight = ((score - color1.scale) / (color2.scale - color1.scale));
-    const textColor = [
-      Math.round(color1.textColor[0] * (1 - colorWeight) + color2.textColor[0] * colorWeight),
-      Math.round(color1.textColor[1] * (1 - colorWeight) + color2.textColor[1] * colorWeight),
-      Math.round(color1.textColor[2] * (1 - colorWeight) + color2.textColor[2] * colorWeight),
+    const color = [
+      Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
+      Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
+      Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
     ];
 
-    const backgroundColor = [
-      Math.round(color1.backgroundColor[0] * (1 - colorWeight) + color2.backgroundColor[0] * colorWeight),
-      Math.round(color1.backgroundColor[1] * (1 - colorWeight) + color2.backgroundColor[1] * colorWeight),
-      Math.round(color1.backgroundColor[2] * (1 - colorWeight) + color2.backgroundColor[2] * colorWeight),
-    ]
     return [
-      `rgb(${textColor[0]}, ${textColor[1]}, ${textColor[2]})`,
-      `rgba(${backgroundColor[0]}, ${backgroundColor[1]}, ${backgroundColor[2]}, 0.15)`,
+      `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+      `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.15)`,
     ];
   }
 }
