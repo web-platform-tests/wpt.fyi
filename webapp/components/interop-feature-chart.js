@@ -209,7 +209,7 @@ class InteropFeatureChart extends PolymerElement {
     options.legend = {
       position: 'top',
       alignment: 'center',
-      maxLines: 2,
+      maxLines: 2,  // needed for displaying 5+ graph entities.
     };
     options.chartArea = {
       left: 75,

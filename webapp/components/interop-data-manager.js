@@ -191,8 +191,6 @@ class InteropDataManager {
     const features = [this.summaryFeatureName,
       ...this.focusAreasList];
 
-    // We store a lookup table of browser versions to help with the
-    // 'Show browser changelog' tooltip action.
     const tooltipBrowserNames = [];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
@@ -207,6 +205,8 @@ class InteropDataManager {
       dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
+    // We store a lookup table of browser versions to help with the
+    // 'Show browser changelog' tooltip action.
     const browserVersions = tooltipBrowserNames.map(() => {
       return [];
     });
