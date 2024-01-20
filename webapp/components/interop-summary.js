@@ -262,7 +262,7 @@ class InteropSummary extends PolymerElement {
     return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
   }
 
-  // Returns the browser full name as a list of strings so we can 
+  // Returns the browser full name as a list of strings so we can
   // render them with breaks. e.g. ["Safari", "Technology", "Preview"]
   getBrowserNameParts(browserInfo) {
     return [browserInfo.tableName, ...browserInfo.experimentalName.split(' ')];
