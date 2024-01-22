@@ -365,18 +365,21 @@ func (t AbstractTestLabel) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	}
 }
 
+// webFeaturesManifestFetcher describes the behavior to fetch Web Features data.
+type webFeaturesManifestFetcher interface {
+	Fetch() (shared.WebFeaturesData, error)
+}
+
 // AbstractTestWebFeature represents the root of a web_feature query, which matches test-level
 // metadata to a searched web feature.
 type AbstractTestWebFeature struct {
-	WebFeature      string
-	manifestFetcher searchcacheWebFeaturesManifestFetcher
+	TestWebFeatureAtom
+	manifestFetcher webFeaturesManifestFetcher
 }
 
 // BindToRuns for AbstractTestWebFeature fetches test-level metadata; it is independent of test runs.
 // nolint:ireturn // TODO: Fix ireturn lint error
 func (t AbstractTestWebFeature) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
-	t.manifestFetcher = searchcacheWebFeaturesManifestFetcher{}
-
 	data, _ := t.manifestFetcher.Fetch()
 
 	return TestWebFeature{
@@ -1023,9 +1026,14 @@ func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON for AbstractTestWebFeature attempts to interpret a query atom as
+// TestWebFeatureAtom contains the parsed data from a "feature" query atom.
+type TestWebFeatureAtom struct {
+	WebFeature string
+}
+
+// UnmarshalJSON for TestWebFeatureAtom attempts to interpret a query atom as
 // {"feature":<web_feature_string>}.
-func (t *AbstractTestWebFeature) UnmarshalJSON(b []byte) error {
+func (t *TestWebFeatureAtom) UnmarshalJSON(b []byte) error {
 	var data map[string]*json.RawMessage
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
@@ -1228,9 +1236,12 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 		}
 	}
 	{
-		var t AbstractTestWebFeature
-		if err := json.Unmarshal(b, &t); err == nil {
-			return t, nil
+		var atom TestWebFeatureAtom
+		if err := json.Unmarshal(b, &atom); err == nil {
+			return AbstractTestWebFeature{
+				TestWebFeatureAtom: atom,
+				manifestFetcher:    searchcacheWebFeaturesManifestFetcher{},
+			}, nil
 		}
 	}
 	const docsFilePath = "wpt.fyi/api/query/README.md"

@@ -217,7 +217,7 @@ func keepWebFeaturesManifestUpdated(
 	ghClient *github.Client,
 	logger shared.Logger) {
 	logger.Infof("Running keepWebFeaturesManifestUpdated...")
-	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, ghClient)
+	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, ghClient.Repositories)
 
 	data, err := shared.GetWPTWebFeaturesManifest(ctx, downloader, shared.WebFeaturesManifestJSONParser{})
 	if err != nil {

@@ -45,7 +45,7 @@ func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, 
 
 		return nil, err
 	}
-	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, gitHubClient)
+	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, gitHubClient.Repositories)
 
 	data, err := shared.GetWPTWebFeaturesManifest(ctx, downloader, shared.WebFeaturesManifestJSONParser{})
 	if err != nil {
