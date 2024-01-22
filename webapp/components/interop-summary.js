@@ -197,9 +197,24 @@ class InteropSummary extends PolymerElement {
     return scores !== null && scores !== undefined;
   }
 
+  // roundScore defines the rounding rules for the top-level scores.
+  roundScore(score) {
+    // Round down when a score is above the 975 breakpoint.
+    if (score > 975) {
+      return Math.floor(score / 10);
+    }
+
+    // Round down before interop 2024.
+    if (parseInt(this.year) < 2024) {
+      return Math.floor(score / 10);
+    }
+
+    return Math.round(score / 10);
+  }
+
   // Takes a summary number div and changes the value to match the score (with CountUp).
   updateSummaryScore(number, score) {
-    score = Math.floor(score / 10);
+    score = this.roundScore(score);
     const curScore = number.innerText;
     new CountUp(number, score, {
       startVal: curScore === '--' ? 0 : curScore
