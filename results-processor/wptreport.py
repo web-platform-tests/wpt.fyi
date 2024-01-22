@@ -534,15 +534,23 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'release':
         # e.g. Edge release
         labels.add('stable')
-    if channel == 'dev' or channel == 'preview':
-        # e.g. Chrome Dev and Safari Technology Preview
+    if channel == 'preview':
+        # e.g. Safari Technology Preview
+        labels.add('experimental')
+    if channel == 'dev' and browser != 'chrome':
+        # e.g. Edge Dev.
+        labels.add('experimental')
+    if channel == 'canary' and browser == 'chrome':
+        # e.g. Chrome Canary.
+        # We only label Chrome Canary as experimental to avoid confusion
+        # with Chrome Dev.
         labels.add('experimental')
     if channel == 'nightly' and browser != 'chrome':
         # Notably, we don't want to treat Chrome Nightly (Chromium trunk) as
-        # experimental, as it would cause confusion with Chrome Dev.
+        # experimental, as it would cause confusion with Chrome Canary and Dev.
         labels.add('experimental')
-    if channel == 'canary' and browser in ('chrome', 'edgechromium'):
-        # Chrome/Edge Canary is almost nightly.
+    if channel == 'canary' and browser == 'edgechromium':
+        # Edge Canary is almost nightly.
         labels.add('nightly')
     if channel == 'canary' and browser == 'deno':
         # Deno Canary is the experimental channel.
