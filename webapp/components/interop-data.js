@@ -751,7 +751,7 @@ export const interopData = {
         'countsTowardScore': true
       },
       'interop-2024-font-size-adjust': {
-        'description': 'CSS font-size-adjust',
+        'description': 'font-size-adjust',
         'mdn': '',
         'spec': '',
         'tests': '/results/css/css-fonts?label=experimental&label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust',
@@ -807,14 +807,14 @@ export const interopData = {
         'countsTowardScore': true
       },
       'interop-2024-scrollbar': {
-        'description': 'Scrollbar styling',
+        'description': 'Scrollbar Styling',
         'mdn': '',
         'spec': '',
         'tests': '/results/css?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-scrollbar',
         'countsTowardScore': true
       },
       'interop-2024-text-wrap': {
-        'description': 'CSS text-wrap: balance',
+        'description': 'text-wrap: balance',
         'mdn': '',
         'spec': '',
         'tests': '/results/css/css-text?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-text-wrap',
