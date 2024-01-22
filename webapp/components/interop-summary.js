@@ -42,7 +42,7 @@ class InteropSummary extends PolymerElement {
           margin-right: auto;
         }
 
-        .smaller-browser-number {
+        .smaller-summary-number {
           font-size: 3.5em;
           width: 2.5ch;
           height: 2.5ch;
@@ -84,19 +84,19 @@ class InteropSummary extends PolymerElement {
         <div id="summaryNumberRow">
           <!-- Interop -->
           <div id="interopSummary" class="summary-flex-item" tabindex="0">
-            <div class="summary-number score-number">--</div>
+            <div class="summary-number score-number smaller-summary-number">--</div>
             <h3 class="summary-title">INTEROP</h3>
           </div>
           <!-- Investigations -->
           <div id="investigationSummary" class="summary-flex-item" tabindex="0">
-            <div id="investigationNumber" class="summary-number">--</div>
+            <div id="investigationNumber" class="summary-number smaller-summary-number">--</div>
             <h3 class="summary-title">INVESTIGATIONS</h3>
           </div>
         </div>
         <div id="summaryNumberRow">
           <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number smaller-browser-number browser-number">--</div>
+              <div class="summary-number score-number smaller-summary-number">--</div>
               <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
                 <!-- Chrome/Edge -->
                 <template is="dom-if" if="[[stable]]">
@@ -184,7 +184,7 @@ class InteropSummary extends PolymerElement {
       summaryDiv.style.minHeight = '275px';
     }
     if (this.year === '2024') {
-      summaryDiv.style.minHeight = '420px';
+      summaryDiv.style.minHeight = '350px';
     }
 
     // The summary score elements are given class names asynchronously,
@@ -235,9 +235,10 @@ class InteropSummary extends PolymerElement {
 
   // Sets the size of the summary number bubbles based on the number of browsers.
   setSummaryNumberSizes() {
-    const scoreElements = this.shadowRoot.querySelectorAll('.browser-number');
-    if (scoreElements.length < 4) {
-      scoreElements.forEach(scoreElement => scoreElement.classList.remove('smaller-browser-number'));
+    const numBrowsers = this.dataManager.getYearProp('numBrowsers');
+    if (numBrowsers < 4) {
+      const scoreElements = this.shadowRoot.querySelectorAll('.summary-number');
+      scoreElements.forEach(scoreElement => scoreElement.classList.remove('smaller-summary-number'));
     }
   }
 
