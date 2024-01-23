@@ -149,6 +149,8 @@ type GitHubWebFeaturesClient struct {
 	parser     webFeatureManifestParser
 }
 
+// gitHubWebFeaturesClientOptions contains all the non-required options that
+// can be used to configure an instance of GitHubWebFeaturesClient
 type gitHubWebFeaturesClientOptions struct {
 	netClient *http.Client
 }
