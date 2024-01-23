@@ -209,10 +209,13 @@ func StartWebFeaturesManifestPollingService(ctx context.Context, logger shared.L
 	}
 }
 
+// webFeaturesGetter provides a thin interface to get web features data.
 type webFeaturesGetter interface {
 	Get(context.Context) (shared.WebFeaturesData, error)
 }
 
+// keepWebFeaturesManifestUpdated fetches a new copy of the web features data
+// and updates the local cache.
 func keepWebFeaturesManifestUpdated(
 	ctx context.Context,
 	logger shared.Logger,
