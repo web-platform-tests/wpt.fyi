@@ -191,7 +191,6 @@ func cleanOrphanedPendingMetadata(
 // services via simple polling every interval duration.
 func StartWebFeaturesManifestPollingService(ctx context.Context, logger shared.Logger, interval time.Duration) {
 	logger.Infof("Starting web features manifest polling service.")
-	netClient := &http.Client{Timeout: time.Second * 5}
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
 		logger.Infof("Unable to get GitHub client: %v", err)
@@ -201,9 +200,8 @@ func StartWebFeaturesManifestPollingService(ctx context.Context, logger shared.L
 		if gitHubClient != nil {
 			keepWebFeaturesManifestUpdated(
 				ctx,
-				netClient,
-				gitHubClient,
-				logger)
+				logger,
+				shared.NewGitHubWebFeaturesClient(gitHubClient))
 		} else {
 			logger.Infof("GitHub client is not initialized, skipping keepWebFeaturesManifestUpdated.")
 		}
@@ -211,15 +209,17 @@ func StartWebFeaturesManifestPollingService(ctx context.Context, logger shared.L
 	}
 }
 
+type webFeaturesGetter interface {
+	Get(context.Context) (shared.WebFeaturesData, error)
+}
+
 func keepWebFeaturesManifestUpdated(
 	ctx context.Context,
-	netClient *http.Client,
-	ghClient *github.Client,
-	logger shared.Logger) {
+	logger shared.Logger,
+	featuresGetter webFeaturesGetter) {
 	logger.Infof("Running keepWebFeaturesManifestUpdated...")
-	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, ghClient.Repositories)
 
-	data, err := shared.GetWPTWebFeaturesManifest(ctx, downloader, shared.WebFeaturesManifestJSONParser{})
+	data, err := featuresGetter.Get(ctx)
 	if err != nil {
 		logger.Errorf("unable to fetch web features manifest during query. %s", err.Error())
 

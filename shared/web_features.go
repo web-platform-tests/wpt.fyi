@@ -58,11 +58,11 @@ type webFeaturesManifestFile struct {
 // The value is a list of tests that are part of that web feature.
 type webFeaturesManifestV1Data map[string][]string
 
-// WebFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format.
-type WebFeaturesManifestJSONParser struct{}
+// webFeaturesManifestJSONParser is parser that can interpret a Web Features Manifest in a JSON format.
+type webFeaturesManifestJSONParser struct{}
 
 // Parse parses a JSON file into a WebFeaturesData instance.
-func (p WebFeaturesManifestJSONParser) Parse(_ context.Context, r io.ReadCloser) (WebFeaturesData, error) {
+func (p webFeaturesManifestJSONParser) Parse(_ context.Context, r io.ReadCloser) (WebFeaturesData, error) {
 	defer r.Close()
 	file := new(webFeaturesManifestFile)
 	err := json.NewDecoder(r).Decode(file)
@@ -84,7 +84,7 @@ func (p WebFeaturesManifestJSONParser) Parse(_ context.Context, r io.ReadCloser)
 	return nil, fmt.Errorf("bad version %d %w", file.Version, errUnknownWebFeaturesManifestVersion)
 }
 
-// PrepareTestWebFeatureFilter maps a MetadataResult test name to its web features.
+// prepareTestWebFeatureFilter maps a MetadataResult test name to its web features.
 func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() WebFeaturesData {
 	// Create a map where the value is effectively a set (map[string]interface{})
 	testToWebFeaturesMap := make(map[string]map[string]interface{})

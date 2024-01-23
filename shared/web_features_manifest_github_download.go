@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v47/github"
 )
@@ -47,34 +48,34 @@ type responseBodyTransformer interface {
 	Transform(io.Reader) (io.ReadCloser, error)
 }
 
-// NewGitHubWebFeaturesManifestDownloader creates a downloader which will examine
+// newGitHubWebFeaturesManifestDownloader creates a downloader which will examine
 // a GitHub release, find the manifest file, and download it.
-func NewGitHubWebFeaturesManifestDownloader(
+func newGitHubWebFeaturesManifestDownloader(
 	httpClient *http.Client,
-	repoReleaseGetter RepositoryReleaseGetter) *GitHubWebFeaturesManifestDownloader {
-	return &GitHubWebFeaturesManifestDownloader{
+	repoReleaseGetter repositoryReleaseGetter) *gitHubWebFeaturesManifestDownloader {
+	return &gitHubWebFeaturesManifestDownloader{
 		httpClient:        httpClient,
 		repoReleaseGetter: repoReleaseGetter,
 		bodyTransformer:   gzipBodyTransformer{},
 	}
 }
 
-// RepositoryReleaseGetter provides an interface to retrieve releases for a given repository.
-type RepositoryReleaseGetter interface {
+// repositoryReleaseGetter provides an interface to retrieve releases for a given repository.
+type repositoryReleaseGetter interface {
 	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
 }
 
-// GitHubWebFeaturesManifestDownloader is a downloader that will examine
+// gitHubWebFeaturesManifestDownloader is a downloader that will examine
 // a GitHub release, find the manifest file, and download it.
-// Use NewGitHubWebFeaturesManifestDownloader to create an instance.
-type GitHubWebFeaturesManifestDownloader struct {
+// Use newGitHubWebFeaturesManifestDownloader to create an instance.
+type gitHubWebFeaturesManifestDownloader struct {
 	httpClient        *http.Client
-	repoReleaseGetter RepositoryReleaseGetter
+	repoReleaseGetter repositoryReleaseGetter
 	bodyTransformer   responseBodyTransformer
 }
 
 // Download attempts to download the manifest file from the latest release.
-func (d GitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.ReadCloser, error) {
+func (d gitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.ReadCloser, error) {
 	release, _, err := d.repoReleaseGetter.GetLatestRelease(
 		ctx,
 		SourceOwner,
@@ -140,4 +141,59 @@ func (s *gitHubDownloadStream) Close() error {
 	originalBodyErr := s.originalBody.Close()
 
 	return errors.Join(transformedBodyErr, originalBodyErr)
+}
+
+// GitHubWebFeaturesClient is the entrypoint to retrieving web features from GitHub.
+type GitHubWebFeaturesClient struct {
+	downloader webFeaturesManifestDownloader
+	parser     webFeatureManifestParser
+}
+
+type gitHubWebFeaturesClientOptions struct {
+	netClient *http.Client
+}
+
+// A GitHubWebFeaturesClientOption configures GitHubWebFeaturesClient.
+type GitHubWebFeaturesClientOption func(*gitHubWebFeaturesClientOptions)
+
+// SetHTTPClientForGitHubWebFeatures overrides the http client used to download
+// the found asset from the release.
+func SetHTTPClientForGitHubWebFeatures(netClient *http.Client) GitHubWebFeaturesClientOption {
+	return func(opts *gitHubWebFeaturesClientOptions) {
+		opts.netClient = netClient
+	}
+}
+
+// nolint:gochecknoglobals // non exported variable that contains default values.
+var defaultGitHubWebFeaturesClientOptions = []GitHubWebFeaturesClientOption{
+	SetHTTPClientForGitHubWebFeatures(&http.Client{
+		Timeout: time.Second * 5,
+	}),
+}
+
+// NewGitHubWebFeaturesClient constructs an instance of GitHubWebFeaturesClient
+// with default values.
+func NewGitHubWebFeaturesClient(ghClient *github.Client) *GitHubWebFeaturesClient {
+	var options gitHubWebFeaturesClientOptions
+	for _, opt := range defaultGitHubWebFeaturesClientOptions {
+		opt(&options)
+	}
+	// For now, use the default options. In the future, we could pass in
+	// variadic options and override them here.
+
+	downloader := newGitHubWebFeaturesManifestDownloader(options.netClient, ghClient.Repositories)
+
+	return &GitHubWebFeaturesClient{downloader: downloader, parser: webFeaturesManifestJSONParser{}}
+}
+
+// Get returns the latest web features data from GitHub.
+func (c GitHubWebFeaturesClient) Get(ctx context.Context) (WebFeaturesData, error) {
+	data, err := getWPTWebFeaturesManifest(ctx, c.downloader, c.parser)
+	if err != nil {
+		GetLogger(ctx).Errorf("unable to fetch web features manifest during query. %s", err.Error())
+
+		return nil, err
+	}
+
+	return data, nil
 }

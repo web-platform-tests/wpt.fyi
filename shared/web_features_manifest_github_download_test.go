@@ -253,7 +253,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 			httpClient := &http.Client{
 				Transport: tc.roundTrip,
 			}
-			downloader := NewGitHubWebFeaturesManifestDownloader(httpClient, getter)
+			downloader := newGitHubWebFeaturesManifestDownloader(httpClient, getter)
 			downloader.bodyTransformer = mockBodyTransformer{t, tc.transformer}
 			body, err := downloader.Download(context.Background())
 			if !errors.Is(err, tc.expectedError) {

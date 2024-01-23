@@ -6,9 +6,7 @@ package query
 
 import (
 	"context"
-	"net/http"
 	"sync"
-	"time"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -16,10 +14,17 @@ import (
 // SetWebFeaturesDataCache safely swaps the data cache.
 // Currently, the separate goroutine in the poll folder will use this.
 func SetWebFeaturesDataCache(newData shared.WebFeaturesData) {
-	shared.GetLogger(context.Background()).Infof("setting data cache for manifest")
 	webFeaturesDataCacheLock.Lock()
 	defer webFeaturesDataCacheLock.Unlock()
 	webFeaturesDataCache = newData
+}
+
+// GetWebFeaturesDataCache safely retrieves the data cache.
+func GetWebFeaturesDataCache() shared.WebFeaturesData {
+	webFeaturesDataCacheLock.RLock()
+	defer webFeaturesDataCacheLock.RUnlock()
+
+	return webFeaturesDataCache
 }
 
 // webFeaturesDataCache is the local cache of Web Features data in searchcache. Zero value is nil.
@@ -29,15 +34,11 @@ var webFeaturesDataCacheLock sync.RWMutex       // nolint:gochecknoglobals // TO
 type searchcacheWebFeaturesManifestFetcher struct{}
 
 func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, error) {
-	webFeaturesDataCacheLock.RLock()
-	defer webFeaturesDataCacheLock.RUnlock()
-	if webFeaturesDataCache != nil {
-		return webFeaturesDataCache, nil
+	cache := GetWebFeaturesDataCache()
+	if cache != nil {
+		return cache, nil
 	}
 
-	netClient := &http.Client{
-		Timeout: time.Second * 5,
-	}
 	ctx := context.Background()
 	gitHubClient, err := shared.NewAppEngineAPI(ctx).GetGitHubClient()
 	if err != nil {
@@ -45,11 +46,11 @@ func (f searchcacheWebFeaturesManifestFetcher) Fetch() (shared.WebFeaturesData, 
 
 		return nil, err
 	}
-	downloader := shared.NewGitHubWebFeaturesManifestDownloader(netClient, gitHubClient.Repositories)
 
-	data, err := shared.GetWPTWebFeaturesManifest(ctx, downloader, shared.WebFeaturesManifestJSONParser{})
+	featuresClient := shared.NewGitHubWebFeaturesClient(gitHubClient)
+	data, err := featuresClient.Get(ctx)
 	if err != nil {
-		shared.GetLogger(ctx).Errorf("unable to fetch web features manifest during query. %s", err.Error())
+		shared.GetLogger(ctx).Warningf("github client unable to get features for searchcache")
 
 		return nil, err
 	}
