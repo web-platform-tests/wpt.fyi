@@ -108,11 +108,7 @@ class InteropDataManager {
     this.issueURL = yearInfo.issue_url;
     this.tableSections = yearInfo.table_sections;
     // Keep a list of years we have interop data prepared for.
-    // TODO(DanielRyanSmith): Revert this back to using the keys in interop-data
-    // with the change to set Interop 2024 as the default dashboard.
-    // This change is to avoid displaying the banner on the 2023 dashboard that
-    // states the user is viewing a previous year.
-    this.validYears = ['2021', '2022', '2023'];
+    this.validYears = Object.keys(paramsByYear);
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
