@@ -150,7 +150,7 @@ type GitHubWebFeaturesClient struct {
 }
 
 // gitHubWebFeaturesClientOptions contains all the non-required options that
-// can be used to configure an instance of GitHubWebFeaturesClient
+// can be used to configure an instance of GitHubWebFeaturesClient.
 type gitHubWebFeaturesClientOptions struct {
 	netClient *http.Client
 }
