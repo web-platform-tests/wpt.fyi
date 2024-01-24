@@ -9,12 +9,13 @@ import (
 	"io"
 )
 
-// GetWPTWebFeaturesManifest is the entrypoint for handling web features manifest downloads.
+// getWPTWebFeaturesManifest contains the common logic to handle retrieving a
+// web features manifest.
 // It includes two generic steps: Downloading and Parsing.
-func GetWPTWebFeaturesManifest(
+func getWPTWebFeaturesManifest(
 	ctx context.Context,
-	downloader WebFeaturesManifestDownloader,
-	parser WebFeatureManifestParser) (WebFeaturesData, error) {
+	downloader webFeaturesManifestDownloader,
+	parser webFeatureManifestParser) (WebFeaturesData, error) {
 	manifest, err := downloader.Download(ctx)
 	if err != nil {
 		return nil, err
@@ -27,17 +28,17 @@ func GetWPTWebFeaturesManifest(
 	return data, nil
 }
 
-// WebFeaturesManifestDownloader provides an interface for downloading a manifest file.
+// webFeaturesManifestDownloader provides an interface for downloading a manifest file.
 // Typically implementers of the interface create a struct based on the location of the file.
 // For example: GitHub.
-type WebFeaturesManifestDownloader interface {
+type webFeaturesManifestDownloader interface {
 	Download(context.Context) (io.ReadCloser, error)
 }
 
-// WebFeatureManifestParser provides an interface on how to parse a given manifest.
+// webFeatureManifestParser provides an interface on how to parse a given manifest.
 // Typically implementers of the interface create a struct per type of file.
 // For example: JSON file or YAML file.
-type WebFeatureManifestParser interface {
+type webFeatureManifestParser interface {
 	// Parse reads the stream of data and returns a map.
 	// The map mirrors the structure of MetadataResults where the key is the
 	// test name and the value is the actual data. In this case the "data" is a

@@ -74,7 +74,7 @@ func TestGetWPTWebFeaturesManifest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := GetWPTWebFeaturesManifest(context.Background(), tc.mockDownloader, tc.mockParser)
+			result, err := getWPTWebFeaturesManifest(context.Background(), tc.mockDownloader, tc.mockParser)
 			assert.Equal(t, tc.expectedData, result)
 			assert.Equal(t, tc.expectedError, err)
 		})

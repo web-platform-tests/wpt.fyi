@@ -362,3 +362,20 @@ Search triaged tests with a label interop-2022:
 
 See [Meta qualities](#meta-qualities) above for more information on other
 meta qualities than `"different"`.
+
+#### feature
+
+`feature` query atoms perform a search for tests that have a matching
+feature label, regardless of browsers.
+
+    {"feature": [web-feature-name]}
+
+Where web-feature-name is a string, case-insensitive and matches the filename base
+for any of the .yml files in the
+[feature-group-definitions](https://github.com/web-platform-dx/web-features/tree/main/feature-group-definitions) directory.
+
+ E.g.
+
+Search the [nesting](https://github.com/web-platform-dx/web-features/blob/main/feature-group-definitions/nesting.yml) feature:
+
+    feature:nesting
