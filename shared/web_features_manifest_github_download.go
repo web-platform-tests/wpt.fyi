@@ -87,8 +87,8 @@ func (d gitHubWebFeaturesManifestDownloader) Download(ctx context.Context) (io.R
 	// Find the asset URL for the manifest file.
 	assetURL := ""
 	for _, asset := range release.Assets {
-		if asset != nil && asset.Name != nil &&
-			strings.EqualFold(webFeaturesManifestFilename, *asset.Name) &&
+		if asset != nil && asset.Label != nil &&
+			strings.EqualFold(webFeaturesManifestFilename, *asset.Label) &&
 			asset.BrowserDownloadURL != nil {
 			assetURL = *asset.BrowserDownloadURL
 
