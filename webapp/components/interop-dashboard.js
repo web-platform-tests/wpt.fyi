@@ -340,7 +340,7 @@ class InteropDashboard extends PolymerElement {
                     <tr class="section-header">
                       <th class="sortable-header">
                         {{section.name}}
-                        <img class="sort-icon-focus-areas" src="[[getSortIcon(-2, sortColumn, isSortedAsc)]]" />
+                        <img class="sort-icon-focus-areas" src="[[getFocusAreaSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                         <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
@@ -371,7 +371,7 @@ class InteropDashboard extends PolymerElement {
                       </template>
                       <th class="sortable-header">
                         <div class="interop-header">INTEROP</div>
-                        <img class="sort-icon" src="[[getSortIcon(-1, sortColumn, isSortedAsc)]]" />
+                        <img class="sort-icon" src="[[getInteropSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
                     </tr>
                   </template>
@@ -855,28 +855,33 @@ class InteropDashboard extends PolymerElement {
     return columnNumber === sortColumn;
   }
 
-  adjustSortIconIndex(index) {
-    // There can be a variable number of columns to sort on. The first column
-    // is always focus areas column, and the last column is always the
-    // Interop scores. We pass in the browserInfo index, but it starts at 0.
-    // The quick and dirty way to distinguish focus area column and interop column
-    // is to use a negative index for those columns, and adjust it.
-    const numBrowsers = this.getYearProp('numBrowsers');
-    // Focus area column. Adjust to 0.
-    if (index === -2) {
-      return 0;
+  // Determine the icon that should be displayed on the focus area column.
+  getFocusAreaSortIcon(sortColumn, isSortedAsc) {
+    if (sortColumn !== 0) {
+      return '/static/expand_inactive.svg';
     }
-    // Interop column, should be at the end of number of browsers.
-    if (index === -1) {
-      return numBrowsers + 1;
+    if (isSortedAsc) {
+      return '/static/expand_less.svg';
     }
-    // If a browser column is selected, offset by the focus area column.
-    return index + 1;
+    return '/static/expand_more.svg';
+  }
+
+  // Determine the icon that should be displayed on the interop column.
+  getInteropSortIcon(sortColumn, isSortedAsc) {
+    const interopIndex = this.dataManager.getYearProp('numBrowsers') + 1;
+    if (interopIndex !== sortColumn) {
+      return '/static/expand_inactive.svg';
+    }
+    if (isSortedAsc) {
+      return '/static/expand_less.svg';
+    }
+    return '/static/expand_more.svg';
   }
 
   // Determine the arrow to display to distinguish which column is sorted, and how.
   getSortIcon(index, sortColumn, isSortedAsc) {
-    index = this.adjustSortIconIndex(index);
+    // Browser scores columns start at index 1, so we offset the given index by 1.
+    index++;
     if (sortColumn !== index) {
       return '/static/expand_inactive.svg';
     }
