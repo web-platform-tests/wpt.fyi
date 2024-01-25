@@ -718,7 +718,7 @@
         "countsTowardScore": true
       },
       "interop-2024-dir": {
-        "description": "Direction",
+        "description": "Text Directionality",
         "mdn": "",
         "spec": "",
         "tests": "/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dir",
