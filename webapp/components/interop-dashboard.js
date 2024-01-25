@@ -629,12 +629,13 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
     // Keep the block-level design for interop 2021-2022
-    if (this.year !== '2023') {
+    if (this.year === '2021' || this.year === '2022') {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
       gridContainerDiv.style.margin = 'auto';
-      // 2023 also displays a special description which is not displayed in previous years.
+      // Dashboards after 2022 also display a special description,
+      // which is not displayed in previous years.
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
     }
