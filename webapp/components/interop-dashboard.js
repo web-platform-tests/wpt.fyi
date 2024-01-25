@@ -634,7 +634,7 @@ class InteropDashboard extends PolymerElement {
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
       gridContainerDiv.style.margin = 'auto';
-      // dashboards after 2022 also display a special description
+      // Dashboards after 2022 also display a special description,
       // which is not displayed in previous years.
       const extraDescriptionDiv = this.shadowRoot.querySelector('.extra-description');
       extraDescriptionDiv.style.display = 'none';
