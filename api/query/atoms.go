@@ -365,6 +365,29 @@ func (t AbstractTestLabel) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
 	}
 }
 
+// webFeaturesManifestFetcher describes the behavior to fetch Web Features data.
+type webFeaturesManifestFetcher interface {
+	Fetch() (shared.WebFeaturesData, error)
+}
+
+// AbstractTestWebFeature represents the root of a web_feature query, which matches test-level
+// metadata to a searched web feature.
+type AbstractTestWebFeature struct {
+	TestWebFeatureAtom
+	manifestFetcher webFeaturesManifestFetcher
+}
+
+// BindToRuns for AbstractTestWebFeature fetches test-level metadata; it is independent of test runs.
+// nolint:ireturn // TODO: Fix ireturn lint error
+func (t AbstractTestWebFeature) BindToRuns(_ ...shared.TestRun) ConcreteQuery {
+	data, _ := t.manifestFetcher.Fetch()
+
+	return TestWebFeature{
+		WebFeature:      t.WebFeature,
+		WebFeaturesData: data,
+	}
+}
+
 // MetadataQuality represents the root of an "is" query, which asserts known
 // metadata qualities to the results.
 type MetadataQuality int
@@ -1003,6 +1026,32 @@ func (t *AbstractTestLabel) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// TestWebFeatureAtom contains the parsed data from a "feature" query atom.
+type TestWebFeatureAtom struct {
+	WebFeature string
+}
+
+// UnmarshalJSON for TestWebFeatureAtom attempts to interpret a query atom as
+// {"feature":<web_feature_string>}.
+func (t *TestWebFeatureAtom) UnmarshalJSON(b []byte) error {
+	var data map[string]*json.RawMessage
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+	webFeatureMsg, ok := data["feature"]
+	if !ok {
+		return errors.New(`Missing web feature pattern property: "feature"`)
+	}
+	var webFeature string
+	if err := json.Unmarshal(*webFeatureMsg, &webFeature); err != nil {
+		return errors.New(`Property "feature" is not a string`)
+	}
+
+	t.WebFeature = webFeature
+
+	return nil
+}
+
 // UnmarshalJSON for AbstractTriaged attempts to interpret a query atom as
 // {"triaged":<browser name>}.
 func (t *AbstractTriaged) UnmarshalJSON(b []byte) error {
@@ -1184,6 +1233,15 @@ func unmarshalQ(b []byte) (AbstractQuery, error) {
 		var t AbstractTestLabel
 		if err := json.Unmarshal(b, &t); err == nil {
 			return t, nil
+		}
+	}
+	{
+		var atom TestWebFeatureAtom
+		if err := json.Unmarshal(b, &atom); err == nil {
+			return AbstractTestWebFeature{
+				TestWebFeatureAtom: atom,
+				manifestFetcher:    searchcacheWebFeaturesManifestFetcher{},
+			}, nil
 		}
 	}
 	const docsFilePath = "wpt.fyi/api/query/README.md"

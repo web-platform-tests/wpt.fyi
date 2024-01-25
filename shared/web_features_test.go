@@ -103,7 +103,7 @@ func TestWebFeaturesManifestJSONParser_Parse(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			parser := WebFeaturesManifestJSONParser{}
+			parser := webFeaturesManifestJSONParser{}
 			r := io.NopCloser(strings.NewReader(tc.inputJSON))
 			data, err := parser.Parse(context.Background(), r)
 			if !errors.Is(err, tc.expectedError) {

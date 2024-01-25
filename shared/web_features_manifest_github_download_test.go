@@ -127,6 +127,30 @@ func (g mockRepositoryReleaseGetter) GetLatestRelease(
 	return g.repoRelease, g.resp, g.err
 }
 
+/*
+Truncated example output from GitHub API.
+Useful for building the returned responses in TestGitHubWebFeaturesManifestDownloader_Download.
+
+gh release view --repo web-platform-tests/wpt --json assets
+{
+  "assets": [
+    {
+      "apiUrl": "https://api.github.com/repos/web-platform-tests/wpt/releases/assets/147533430",
+      "contentType": "application/octet-stream",
+      "createdAt": "2024-01-24T14:40:18Z",
+      "downloadCount": 0,
+      "id": "RA_kwDOADc1Vc4Iyy52",
+      "label": "WEB_FEATURES_MANIFEST.json.gz",
+      "name": "WEB_FEATURES_MANIFEST-f8871bc568c2cf86b38cb70f28a9d5f707e19259.json.gz",
+      "size": 38815,
+      "state": "uploaded",
+      "updatedAt": "2024-01-24T14:40:18Z",
+      "url": "https://github.com/web-platform-tests/wpt/releases/download/merge_pr_41522/WEB_FEATURES_MANIFEST-f8871bc568c2cf86b38cb70f28a9d5f707e19259.json.gz"
+    }
+  ]
+}
+*/
+
 func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 	// Test cases for Download
 	tests := []struct {
@@ -145,7 +169,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
-							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
+							Label:              github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
@@ -203,7 +227,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
-							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
+							Label:              github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
@@ -228,7 +252,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 				repoRelease: &github.RepositoryRelease{
 					Assets: []*github.ReleaseAsset{
 						{
-							Name:               github.String("WEB_FEATURES_MANIFEST.json.gz"),
+							Label:              github.String("WEB_FEATURES_MANIFEST.json.gz"),
 							BrowserDownloadURL: github.String("https://example.com/WEB_FEATURES_MANIFEST.json.gz"),
 						},
 					},
@@ -253,7 +277,7 @@ func TestGitHubWebFeaturesManifestDownloader_Download(t *testing.T) {
 			httpClient := &http.Client{
 				Transport: tc.roundTrip,
 			}
-			downloader := NewGitHubWebFeaturesManifestDownloader(httpClient, getter)
+			downloader := newGitHubWebFeaturesManifestDownloader(httpClient, getter)
 			downloader.bodyTransformer = mockBodyTransformer{t, tc.transformer}
 			body, err := downloader.Download(context.Background())
 			if !errors.Is(err, tc.expectedError) {
