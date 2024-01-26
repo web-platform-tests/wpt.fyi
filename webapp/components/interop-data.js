@@ -581,25 +581,26 @@ export const interopData = {
     }
   },
   '2024': {
+    'browsers': ['chrome_canary', 'edge', 'firefox', 'safari'],
     'table_sections': [
       {
         'name': 'Active Focus Areas',
         'rows': [
           'interop-2024-accessibility',
-          'interop-2024-starting-style-transition-behavior',
+          'interop-2024-nesting',
           'interop-2023-property',
           'interop-2024-dsd',
-          'interop-2024-dir',
           'interop-2024-font-size-adjust',
           'interop-2024-websockets',
           'interop-2024-indexeddb',
           'interop-2024-layout',
-          'interop-2024-nesting',
           'interop-2023-events',
           'interop-2024-popover',
           'interop-2024-relative-color',
           'interop-2024-video-rvfc',
           'interop-2024-scrollbar',
+          'interop-2024-starting-style-transition-behavior',
+          'interop-2024-dir',
           'interop-2024-text-wrap',
           'interop-2023-url',
         ],
@@ -617,12 +618,15 @@ export const interopData = {
       {
         'name': 'Previous Focus Areas',
         'rows': [
+          'interop-2021-aspect-ratio',
           'interop-2023-cssborderimage',
+          'interop-2022-cascade',
           'interop-2023-color',
           'interop-2023-container',
           'interop-2023-contain',
           'interop-2023-mathfunctions',
           'interop-2023-pseudos',
+          'interop-2022-dialog',
           'interop-2023-fonts',
           'interop-2023-forms',
           'interop-2023-has',
@@ -633,16 +637,13 @@ export const interopData = {
           'interop-2023-motion',
           'interop-2023-offscreencanvas',
           'interop-2022-scrolling',
-          'interop-2021-transforms',
-          'interop-2023-webcodecs',
-          'interop-2023-webcompat',
-          'interop-2021-aspect-ratio',
-          'interop-2022-cascade',
-          'interop-2022-dialog',
           'interop-2021-position-sticky',
+          'interop-2021-transforms',
           'interop-2022-text',
           'interop-2022-viewport',
-          'interop-2022-webcompat'
+          'interop-2023-webcodecs',
+          'interop-2022-webcompat',
+          'interop-2023-webcompat',
         ],
         'score_as_group': false
       },
@@ -744,7 +745,7 @@ export const interopData = {
         'countsTowardScore': true
       },
       'interop-2024-dir': {
-        'description': 'Direction',
+        'description': 'Text Directionality',
         'mdn': '',
         'spec': '',
         'tests': '/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dir',

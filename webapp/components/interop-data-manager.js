@@ -7,6 +7,54 @@
 import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
 import { interopData } from './interop-data.js';
 
+// Information about how to display the browsers.
+const BROWSER_INFO = {
+  chrome_edge_dev: {
+    graphColor: '#fbc013',
+    tableName: 'Chrome/Edge',
+    tooltipName: 'Chrome',
+  },
+  chrome_dev: {
+    experimentalIcon: 'chrome-dev',
+    experimentalName: 'Dev',
+    graphColor: '#fbc013',
+    stableIcon: 'chrome',
+    tableName: 'Chrome',
+    tooltipName: 'Chrome',
+  },
+  chrome_canary: {
+    experimentalIcon: 'chrome-canary',
+    experimentalName: 'Canary',
+    graphColor: '#fbc013',
+    stableIcon: 'chrome',
+    tableName: 'Chrome',
+    tooltipName: 'Chrome',
+  },
+  edge: {
+    experimentalIcon: 'edge-dev',
+    experimentalName: 'Dev',
+    graphColor: '#55d555',
+    stableIcon: 'edge',
+    tableName: 'Edge',
+    tooltipName: 'Edge',
+  },
+  firefox: {
+    experimentalIcon: 'firefox-nightly',
+    experimentalName: 'Nightly',
+    graphColor: '#fc7a3a',
+    stableIcon: 'firefox',
+    tableName: 'Firefox',
+    tooltipName: 'Firefox',
+  },
+  safari: {
+    experimentalIcon: 'safari-preview',
+    experimentalName: 'Technology Preview',
+    graphColor: '#148cda',
+    stableIcon: 'safari',
+    tableName: 'Safari',
+    tooltipName: 'Safari',
+  }
+};
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
 // both the summary scores and graphs shown on the Interop dashboard. It
@@ -46,6 +94,11 @@ class InteropDataManager {
       this.investigationTotalScore =
         this.#calcInvestigationTotalScore(this.investigationScores);
     }
+
+    // Default to the Chrome/Edge bundled unless specified.
+    this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari'];
+    this.browserInfo = this.browsers.map(browser => BROWSER_INFO[browser]);
+    this.numBrowsers = this.browserInfo.length;
 
     this.focusAreas = yearInfo.focus_areas;
     // Focus areas are iterated through often, so keep a list of all of them.
@@ -97,18 +150,22 @@ class InteropDataManager {
     // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
 
-    const scores = [{}, {}, {}, {}];
-    for (const feature of [
-      this.summaryFeatureName, ...this.focusAreasList]) {
+    const scores = this.browsers.map(() => {
+      return {};
+    });
+    // Add Interop score as well.
+    scores.push({});
+
+    for (const feature of [this.summaryFeatureName, ...this.focusAreasList]) {
       const dataTable = dataTables.get(feature);
       // Assumption: The rows are ordered by dates with the most recent entry last.
       const lastRowIndex = dataTable.getNumberOfRows() - 1;
 
       // The order of these needs to be in sync with the markup.
-      scores[0][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Chrome/Edge')) * 1000;
-      scores[1][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Firefox')) * 1000;
-      scores[2][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Safari')) * 1000;
-      scores[3][feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex('Interop')) * 1000;
+      scores.forEach((score, i) => {
+        const tableName = (i === scores.length - 1) ? 'Interop' : this.browserInfo[i].tableName;
+        score[feature] = dataTable.getValue(lastRowIndex, dataTable.getColumnIndex(tableName)) * 1000;
+      });
     }
     return scores;
   }
@@ -133,32 +190,26 @@ class InteropDataManager {
 
     const features = [this.summaryFeatureName,
       ...this.focusAreasList];
+
+    const tooltipBrowserNames = [];
     const dataTables = new Map(features.map(feature => {
       const dataTable = new window.google.visualization.DataTable();
       dataTable.addColumn('date', 'Date');
-      dataTable.addColumn('number', 'Chrome/Edge');
-      dataTable.addColumn({ type: 'string', role: 'tooltip' });
-      dataTable.addColumn('number', 'Firefox');
-      dataTable.addColumn({ type: 'string', role: 'tooltip' });
-      dataTable.addColumn('number', 'Safari');
-      dataTable.addColumn({ type: 'string', role: 'tooltip' });
+      for (const browserInfo of this.browserInfo) {
+        tooltipBrowserNames.push(browserInfo.tooltipName);
+        dataTable.addColumn('number', browserInfo.tableName);
+        dataTable.addColumn({ type: 'string', role: 'tooltip' });
+      }
       dataTable.addColumn('number', 'Interop');
+      tooltipBrowserNames.push('Interop');
       dataTable.addColumn({type: 'string', role: 'tooltip'});
       return [feature, dataTable];
     }));
-
-    // We list Chrome/Edge on the legend, but when creating the tooltip we
-    // include the version information and so should be clear about which browser
-    // exactly gave the results.
-    const tooltipBrowserNames = [
-      'Chrome',
-      'Firefox',
-      'Safari',
-      'Interop',
-    ];
     // We store a lookup table of browser versions to help with the
     // 'Show browser changelog' tooltip action.
-    const browserVersions = [[], [], [], []];
+    const browserVersions = tooltipBrowserNames.map(() => {
+      return [];
+    });
 
     const numFocusAreas = this.focusAreasList.length;
 
