@@ -32,7 +32,7 @@ func KeepRunsUpdated(store shared.Datastore, logger shared.Logger, interval time
 	for {
 		start := time.Now()
 
-		runs, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
+		runs, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil, nil)
 		if err != nil {
 			logger.Errorf("Error fetching runs for update: %v", err)
 			wait(start, interval)

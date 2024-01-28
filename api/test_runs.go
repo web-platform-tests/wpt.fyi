@@ -146,7 +146,7 @@ func LoadTestRunKeysForFilters(store shared.Datastore, filters shared.TestRunFil
 		return keys, err
 	}
 
-	return q.LoadTestRunKeys(products, filters.Labels, filters.SHAs, from, filters.To, limit, offset)
+	return q.LoadTestRunKeys(products, filters.Labels, filters.SHAs, from, filters.To, limit, offset, filters.QueryOpts)
 }
 
 // LoadTestRunsForFilters deciphers the filters and executes a corresponding query to load

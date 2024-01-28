@@ -106,7 +106,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns
 		limit := 1
 		products := runFilters.GetProductsOrDefault()
 		runsByProduct, err := qh.store.TestRunQuery().LoadTestRuns(
-			products, runFilters.Labels, []string{sha}, runFilters.From, runFilters.To, &limit, nil)
+			products, runFilters.Labels, []string{sha}, runFilters.From, runFilters.To, &limit, nil, nil)
 		if err != nil {
 			return testRuns, filters, err
 		}

@@ -310,7 +310,7 @@ func FetchRunForSpec(ctx context.Context, spec ProductSpec) (*TestRun, error) {
 	one := 1
 	store := NewAppEngineDatastore(ctx, true)
 	q := store.TestRunQuery()
-	testRuns, err := q.LoadTestRuns(ProductSpecs{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil)
+	testRuns, err := q.LoadTestRuns(ProductSpecs{spec}, nil, SHAs{spec.Revision}, nil, nil, &one, nil, nil)
 	if err != nil {
 		return nil, err
 	}
