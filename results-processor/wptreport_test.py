@@ -598,14 +598,14 @@ class HelpersTest(unittest.TestCase):
         }
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            {'blade-runner', 'dev', 'experimental', 'chrome'}
+            {'blade-runner', 'dev', 'chrome'}
         )
 
         # Chrome Canary
         r._report['run_info']['browser_channel'] = 'canary'
         self.assertSetEqual(
             prepare_labels(r, '', 'blade-runner'),
-            {'blade-runner', 'canary', 'nightly', 'chrome'}
+            {'blade-runner', 'canary', 'experimental', 'chrome'}
         )
 
         # Chrome Nightly
