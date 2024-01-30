@@ -443,9 +443,6 @@ class InteropDashboard extends PolymerElement {
                     </tr>
                   </tfoot>
                 </template>
-                <div hidden$=[[!hasFocusAreasDescriptionLink]]>
-                  <a target="_blank" href$="[[focusAreasDescriptionLink]]">Descriptions of all focus areas</a>
-                </div>
                 <template is="dom-if" if="[[section.score_as_group]]">
                   <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
@@ -466,6 +463,9 @@ class InteropDashboard extends PolymerElement {
                   </tfoot>
                 </template>
               </table>
+              <div hidden$=[[!shouldShowFocusAreasDescriptionLink(itemsIndex)]]>
+                <a target="_blank" href$="[[focusAreasDescriptionLink]]">Descriptions of all focus areas</a>
+              </div>
             </template>
           </div>
         </div>
@@ -590,7 +590,6 @@ class InteropDashboard extends PolymerElement {
     this.currentInteropYear = allYears[allYears.length - 1];
     this.isCurrentYear = this.year === this.currentInteropYear;
     this.focusAreasDescriptionLink = this.dataManager.getYearProp('focusAreasDescriptionLink');
-    this.hasFocusAreasDescriptionLink = !!this.focusAreasDescriptionLink;
 
     super.ready();
 
@@ -854,6 +853,10 @@ class InteropDashboard extends PolymerElement {
   // Check if the table being rendered is the first table.
   isFirstTable(tableIndex) {
     return tableIndex === 0;
+  }
+
+  shouldShowFocusAreasDescriptionLink(tableIndex) {
+    return this.isFirstTable(tableIndex) && !!this.focusAreasDescriptionLink
   }
 
   shouldShowSortIcon(columnNumber, sortColumn) {
