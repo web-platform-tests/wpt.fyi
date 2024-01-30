@@ -646,6 +646,7 @@
     "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2024/interop-2024-{stable|experimental}-v2.csv",
     "summary_feature_name": "summary",
     "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
+    "focus_areas_description": "https://github.com/web-platform-tests/interop/blob/main/2024/README.md",
     "focus_areas": {
       "interop-2021-aspect-ratio": {
         "description": "Aspect Ratio",
@@ -698,14 +699,14 @@
       },
       "interop-2024-accessibility": {
         "description": "Accessibility",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Glossary/Accessible_name",
         "spec": "",
         "tests": "/results/?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-accessibility",
         "countsTowardScore": true
       },
       "interop-2024-starting-style-transition-behavior": {
         "description": "@starting-style & transition-behavior",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style",
         "spec": "",
         "tests": "/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior",
         "countsTowardScore": true
@@ -719,14 +720,14 @@
       },
       "interop-2024-dir": {
         "description": "Text Directionality",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/:dir",
         "spec": "",
         "tests": "/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dir",
         "countsTowardScore": true
       },
       "interop-2024-font-size-adjust": {
         "description": "font-size-adjust",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/font-size-adjust",
         "spec": "",
         "tests": "/results/css/css-fonts?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust",
         "countsTowardScore": true
@@ -734,13 +735,13 @@
       "interop-2024-websockets": {
         "description": "HTTPS URLs for WebSocket",
         "mdn": "",
-        "spec": "",
+        "spec": "https://websockets.spec.whatwg.org/ ",
         "tests": "/results/websockets?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-websockets",
         "countsTowardScore": true
       },
       "interop-2024-indexeddb": {
         "description": "IndexedDB",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB",
         "spec": "",
         "tests": "/results/IndexedDB?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-indexeddb",
         "countsTowardScore": true
@@ -754,14 +755,14 @@
       },
       "interop-2024-nesting": {
         "description": "CSS Nesting",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting",
         "spec": "",
         "tests": "/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-nesting",
         "countsTowardScore": true
       },
       "interop-2024-popover": {
         "description": "Popover",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Popover_API",
         "spec": "",
         "tests": "/results/html/semantics/popovers?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-popover",
         "countsTowardScore": true
@@ -775,21 +776,21 @@
       },
       "interop-2024-video-rvfc": {
         "description": "requestVideoFrameCallback",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback",
         "spec": "",
         "tests": "/results/video-rvfc?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-video-rvfc",
         "countsTowardScore": true
       },
       "interop-2024-scrollbar": {
         "description": "Scrollbar Styling",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-width",
         "spec": "",
         "tests": "/results/css?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-scrollbar",
         "countsTowardScore": true
       },
       "interop-2024-text-wrap": {
         "description": "text-wrap: balance",
-        "mdn": "",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap",
         "spec": "",
         "tests": "/results/css/css-text?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-text-wrap",
         "countsTowardScore": true

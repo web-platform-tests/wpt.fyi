@@ -107,6 +107,7 @@ class InteropDataManager {
     this.csvURL = yearInfo.csv_url;
     this.issueURL = yearInfo.issue_url;
     this.tableSections = yearInfo.table_sections;
+    this.focusAreasDescriptionLink = yearInfo.focus_areas_description;
     // Keep a list of years we have interop data prepared for.
     // TODO(DanielRyanSmith): Revert this back to using the keys in interop-data
     // with the change to set Interop 2024 as the default dashboard.

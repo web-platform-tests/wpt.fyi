@@ -443,6 +443,9 @@ class InteropDashboard extends PolymerElement {
                     </tr>
                   </tfoot>
                 </template>
+                <div hidden$=[[!hasFocusAreasDescriptionLink]]>
+                  <a target="_blank" href$="[[focusAreasDescriptionLink]]">Descriptions of all focus areas</a>
+                </div>
                 <template is="dom-if" if="[[section.score_as_group]]">
                   <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
@@ -586,6 +589,8 @@ class InteropDashboard extends PolymerElement {
     const allYears = this.getAllYears();
     this.currentInteropYear = allYears[allYears.length - 1];
     this.isCurrentYear = this.year === this.currentInteropYear;
+    this.focusAreasDescriptionLink = this.dataManager.getYearProp('focusAreasDescriptionLink');
+    this.hasFocusAreasDescriptionLink = !!this.focusAreasDescriptionLink;
 
     super.ready();
 
