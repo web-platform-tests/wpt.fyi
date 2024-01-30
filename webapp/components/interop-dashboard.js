@@ -856,7 +856,7 @@ class InteropDashboard extends PolymerElement {
   }
 
   shouldShowFocusAreasDescriptionLink(tableIndex) {
-    return this.isFirstTable(tableIndex) && !!this.focusAreasDescriptionLink
+    return this.isFirstTable(tableIndex) && !!this.focusAreasDescriptionLink;
   }
 
   shouldShowSortIcon(columnNumber, sortColumn) {
