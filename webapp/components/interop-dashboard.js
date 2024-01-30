@@ -114,6 +114,10 @@ class InteropDashboard extends PolymerElement {
           color: white;
         }
 
+        .focus-area-description-link {
+          margin-top: 12px;
+        }
+
         .sortable-header {
           position: relative;
           user-select: none;
@@ -463,7 +467,7 @@ class InteropDashboard extends PolymerElement {
                   </tfoot>
                 </template>
               </table>
-              <div hidden$=[[!shouldShowFocusAreasDescriptionLink(itemsIndex)]]>
+              <div class="focus-area-description-link" hidden$=[[!shouldShowFocusAreasDescriptionLink(itemsIndex)]]>
                 <a target="_blank" href$="[[focusAreasDescriptionLink]]">Descriptions of all focus areas</a>
               </div>
             </template>
