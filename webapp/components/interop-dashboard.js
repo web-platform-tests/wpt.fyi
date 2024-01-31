@@ -114,6 +114,10 @@ class InteropDashboard extends PolymerElement {
           color: white;
         }
 
+        .focus-area-description-link {
+          margin-top: 12px;
+        }
+
         .sortable-header {
           position: relative;
           user-select: none;
@@ -463,6 +467,9 @@ class InteropDashboard extends PolymerElement {
                   </tfoot>
                 </template>
               </table>
+              <div class="focus-area-description-link" hidden$=[[!shouldShowFocusAreasDescriptionLink(itemsIndex)]]>
+                <a target="_blank" href$="[[focusAreasDescriptionLink]]">Descriptions of all focus areas</a>
+              </div>
             </template>
           </div>
         </div>
@@ -586,6 +593,7 @@ class InteropDashboard extends PolymerElement {
     const allYears = this.getAllYears();
     this.currentInteropYear = allYears[allYears.length - 1];
     this.isCurrentYear = this.year === this.currentInteropYear;
+    this.focusAreasDescriptionLink = this.dataManager.getYearProp('focusAreasDescriptionLink');
 
     super.ready();
 
@@ -849,6 +857,10 @@ class InteropDashboard extends PolymerElement {
   // Check if the table being rendered is the first table.
   isFirstTable(tableIndex) {
     return tableIndex === 0;
+  }
+
+  shouldShowFocusAreasDescriptionLink(tableIndex) {
+    return this.isFirstTable(tableIndex) && !!this.focusAreasDescriptionLink;
   }
 
   shouldShowSortIcon(columnNumber, sortColumn) {
