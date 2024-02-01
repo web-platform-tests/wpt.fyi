@@ -798,7 +798,7 @@ export const interopData = {
         'description': 'Relative Color Syntax',
         'mdn': '',
         'spec': '',
-        'tests': '/results/css/css-color?label=master&label=experimental&aligned&q=label%3Ainterop-2024-relative-color',
+        'tests': '/results/css/css-color?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-relative-color',
         'countsTowardScore': true
       },
       'interop-2024-video-rvfc': {
