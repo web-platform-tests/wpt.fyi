@@ -742,7 +742,7 @@ export const interopData = {
         'description': 'Declarative Shadow DOM',
         'mdn': '',
         'spec': '',
-        'tests': '/shadow-dom/declarative?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dsd',
+        'tests': '/shadow-dom?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dsd',
         'countsTowardScore': true
       },
       'interop-2024-dir': {
