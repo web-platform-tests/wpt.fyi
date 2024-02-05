@@ -23,15 +23,16 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 	filter := strings.ToLower(mux.Vars(r)["filter"])
 	q := store.NewQuery("PendingTestRun")
+	filterBuilder := q.FilterBuilder()
 	switch filter {
 	case "pending":
-		q = q.Order("-Stage").Filter("Stage < ", int(shared.StageValid))
+		q = q.Order("-Stage").FilterEntity(filterBuilder.PropertyFilter("Stage", "<", int(shared.StageValid)))
 	case "invalid":
-		q = q.Filter("Stage = ", int(shared.StageInvalid))
+		q = q.FilterEntity(filterBuilder.PropertyFilter("Stage", "=", int(shared.StageInvalid)))
 	case "empty":
-		q = q.Filter("Stage = ", int(shared.StageEmpty))
+		q = q.FilterEntity(filterBuilder.PropertyFilter("Stage", "=", int(shared.StageEmpty)))
 	case "duplicate":
-		q = q.Filter("Stage = ", int(shared.StageDuplicate))
+		q = q.FilterEntity(filterBuilder.PropertyFilter("Stage", "= ", int(shared.StageDuplicate)))
 	case "":
 		// No-op
 	default:
