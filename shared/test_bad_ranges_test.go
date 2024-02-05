@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func checkStartTimeBeforeEndTime(t *testing.T, input []invalidTestRange) {
+func checkStartTimeBeforeEndTime(t *testing.T, input []InvalidTestRange) {
 	// A range is valid if:
 	// - the start time is less than (and not equal to) the end.
 	for _, testRange := range input {
@@ -28,13 +28,13 @@ func TestValidateRanges(t *testing.T) {
 func TestIsWithinRange(t *testing.T) {
 	testCases := []struct {
 		name           string
-		testRange      invalidTestRange
+		testRange      InvalidTestRange
 		input          time.Time
 		expectedResult bool
 	}{
 		{
 			name: "before start",
-			testRange: invalidTestRange{
+			testRange: InvalidTestRange{
 				start: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 				end:   time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 			},
@@ -43,7 +43,7 @@ func TestIsWithinRange(t *testing.T) {
 		},
 		{
 			name: "after end",
-			testRange: invalidTestRange{
+			testRange: InvalidTestRange{
 				start: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 				end:   time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 			},
@@ -52,7 +52,7 @@ func TestIsWithinRange(t *testing.T) {
 		},
 		{
 			name: "within range",
-			testRange: invalidTestRange{
+			testRange: InvalidTestRange{
 				start: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 				end:   time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 			},
@@ -61,7 +61,7 @@ func TestIsWithinRange(t *testing.T) {
 		},
 		{
 			name: "edge of start (which is inclusive)",
-			testRange: invalidTestRange{
+			testRange: InvalidTestRange{
 				start: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 				end:   time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 			},
@@ -70,7 +70,7 @@ func TestIsWithinRange(t *testing.T) {
 		},
 		{
 			name: "edge of end (which is exclusive)",
-			testRange: invalidTestRange{
+			testRange: InvalidTestRange{
 				start: time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 				end:   time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 			},

@@ -339,10 +339,13 @@ func ParseViewParam(v url.Values) (*string, error) {
 	return nil, nil
 }
 
+// QueryOptions is a container for pre-set query options.
 type QueryOptions struct {
 	ExcludeBadRanges bool
 }
 
+// AppendToURLValues appends the current options in QueryOptions into the
+// given query parameters.
 func (o QueryOptions) AppendToURLValues(v *url.Values) {
 	if o.ExcludeBadRanges {
 		v.Add("option", "no-bad-ranges")

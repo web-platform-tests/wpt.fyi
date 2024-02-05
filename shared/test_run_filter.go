@@ -41,8 +41,6 @@ func (s SHAs) ShortSHAs() []string {
 	return short
 }
 
-type ExcludePresets struct{}
-
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {

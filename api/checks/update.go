@@ -135,7 +135,7 @@ func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (
 		filter.To,
 		&one,
 		nil,
-		filter.QueryOpts,
+		nil,
 	)
 	if err != nil {
 		return nil, nil, err

@@ -822,3 +822,37 @@ func TestParseOptionParams_InvalidOption(t *testing.T) {
 	assert.Equal(t, errors.New("unknown 'option' parameter: bad"), err)
 	assert.Nil(t, opt)
 }
+
+func TestQueryOptionAppendToURLValues(t *testing.T) {
+	testCases := []struct {
+		name              string
+		inputURLValues    url.Values
+		options           QueryOptions
+		expectedURLValues url.Values
+	}{
+		{
+			name:              "does not add anything",
+			inputURLValues:    map[string][]string{},
+			options:           QueryOptions{},
+			expectedURLValues: map[string][]string{},
+		},
+		{
+			name:           "adds no-bad-ranges",
+			inputURLValues: map[string][]string{},
+			options: QueryOptions{
+				ExcludeBadRanges: true,
+			},
+			expectedURLValues: map[string][]string{
+				"option": {
+					"no-bad-ranges",
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.options.AppendToURLValues(&tc.inputURLValues)
+			assert.Equal(t, tc.expectedURLValues, tc.inputURLValues)
+		})
+	}
+}

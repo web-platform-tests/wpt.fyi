@@ -2,7 +2,8 @@ package shared
 
 import "time"
 
-type invalidTestRange struct {
+// InvalidTestRange contains the date information for when a test range should not be included.
+type InvalidTestRange struct {
 	// start is the beginning of when the test run should be excluded.
 	// The value is inclusive of the range.
 	start time.Time
@@ -18,11 +19,11 @@ type invalidTestRange struct {
 //
 // This is similar to the existing logic in advanceDateToSkipBadDataIfNecessary [1].
 // [1] https://github.com/web-platform-tests/results-analysis/blob/bb5c86533956a65a506cd0c7202ab6fe1bf1d67f/bad-ranges.js
-func (r invalidTestRange) IsWithinRange(input time.Time) bool {
+func (r InvalidTestRange) IsWithinRange(input time.Time) bool {
 	return !input.Before(r.start) && input.Before(r.end)
 }
 
-var stableBadRanges = []invalidTestRange{
+var stableBadRanges = []InvalidTestRange{
 	// This was some form of Safari outage, undiagnosed but a clear erroneous
 	// spike in failure rates.
 	{
@@ -64,7 +65,7 @@ var stableBadRanges = []invalidTestRange{
 	},
 }
 
-var experimentalBadRanges = []invalidTestRange{
+var experimentalBadRanges = []InvalidTestRange{
 	// This was a safaridriver outage, resolved by
 	// https://github.com/web-platform-tests/wpt/pull/18585
 	{
