@@ -221,7 +221,7 @@ class InteropSummary extends PolymerElement {
       startVal: curScore === '--' ? 0 : curScore
     }).start();
     const colors = this.calculateColor(score);
-    number.style.color = colors[0];
+    number.style.color = `color-mix(in lch, ${colors[0]} 70%, black)`;
     number.style.backgroundColor = colors[1];
   }
 
