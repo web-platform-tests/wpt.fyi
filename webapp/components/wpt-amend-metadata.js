@@ -303,6 +303,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       'servo',
       'wktr',
       'webkitgtk',
+      'openharmony',
     ].includes(product);
   }
 
@@ -330,7 +331,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       return `https://github.com/nodejs/node/issues?q="${testName}"`;
     }
 
-    if (product === 'safari' || product === 'wktr' || product === 'webkitgtk') {
+    if (product === 'safari' || product === 'wktr' || product === 'webkitgtk' || product === 'openharmony') {
       return `https://bugs.webkit.org/buglist.cgi?quicksearch="${testName}"`;
     }
 

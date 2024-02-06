@@ -71,7 +71,7 @@ func (p ProductSpec) IsExperimental() bool {
 func (p ProductSpec) DisplayName() string {
 	switch p.BrowserName {
 	case "chrome":
-		return "Chrome"
+		return "Chrome-Test"
 	case "chromium":
 		return "Chromium"
 	case "chrome_android":
@@ -79,7 +79,7 @@ func (p ProductSpec) DisplayName() string {
 	case "android_webview":
 		return "WebView"
 	case "deno":
-		return "Deno"
+		return "DenoTemp"
 	case "edge":
 		return "Edge"
 	case "firefox":
@@ -98,6 +98,8 @@ func (p ProductSpec) DisplayName() string {
 		return "macOS WebKit"
 	case "webkitgtk":
 		return "WebKitGTK"
+	case "openharmony":
+		return "OpenHarmony"
 	default:
 		return p.BrowserName
 	}
