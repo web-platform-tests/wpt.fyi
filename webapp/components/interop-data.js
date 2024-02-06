@@ -343,7 +343,7 @@ export const interopData = {
      * More information on results generation at
      * https://github.com/web-platform-tests/results-analysis
     **/
-    'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2023/interop-2023-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2023-{stable|experimental}.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
     'focus_areas': {
