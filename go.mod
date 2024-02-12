@@ -28,7 +28,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.16.0
-	google.golang.org/api v0.161.0
+	google.golang.org/api v0.163.0
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac
 	google.golang.org/genproto/googleapis/api v0.0.0-20240122161410-6c6643bf1457
 	google.golang.org/grpc v1.61.0
@@ -89,7 +89,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240122161410-6c6643bf1457 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
