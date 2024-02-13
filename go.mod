@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v1.12.5
 	cloud.google.com/go/datastore v1.15.0
 	cloud.google.com/go/logging v1.9.0
-	cloud.google.com/go/secretmanager v1.11.4
+	cloud.google.com/go/secretmanager v1.11.5
 	cloud.google.com/go/storage v1.37.0
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
@@ -30,7 +30,7 @@ require (
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.161.0
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac
-	google.golang.org/genproto/googleapis/api v0.0.0-20240122161410-6c6643bf1457
+	google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe
 	google.golang.org/grpc v1.61.0
 	gopkg.in/yaml.v3 v3.0.1
 )
