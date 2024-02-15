@@ -42,7 +42,7 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
   }
 
   selectedChanged(e) {
-    this.dispatchEvent(new CustomEvent('browser-changed', {
+    this.dispatchEvent(new CustomEvent('browser-name-changed', {
       detail: { value: e.target.value }
     }));
   }
