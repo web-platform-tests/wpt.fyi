@@ -16,7 +16,7 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
   <paper-dropdown-menu label="Browser" no-animations>
-    <paper-listbox slot="dropdown-content" selected="[[browser]]" attr-for-selected="value">
+    <paper-listbox slot="dropdown-content" selected="[[browser]]" attr-for-selected="value" on-change="selectedChanged">
       <template is="dom-repeat" items="[[products]]" as="product">
         <paper-icon-item value="[[product.browser_name]]">
           <display-logo slot="item-icon" product="[[product]]" small></display-logo>
@@ -39,6 +39,12 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
         value: DefaultProducts.map(p => Object.assign({}, p)),
       },
     };
+  }
+
+  selectedChanged(e) {
+    this.dispatchEvent(new CustomEvent('browser-changed', {
+      detail: { value: e.target.value }
+    }));
   }
 }
 window.customElements.define(BrowserPicker.is, BrowserPicker);
