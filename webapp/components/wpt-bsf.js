@@ -93,7 +93,6 @@ class WPTBSF extends LoadingState(PolymerElement) {
       sha: String,
       isInteracting: {
         type: Boolean,
-        notify: true,
       },
       shortSHA: {
         type: String,
@@ -152,9 +151,17 @@ class WPTBSF extends LoadingState(PolymerElement) {
     };
     this.enterChart = () => {
       this.isInteracting = true;
+      const event = new CustomEvent('is-interacting-changed', {
+        detail: { value: this.isInteracting }
+      });
+      this.dispatchEvent(event);
     };
     this.exitChart = () => {
       this.isInteracting = false;
+      const event = new CustomEvent('is-interacting-changed', {
+        detail: { value: this.isInteracting }
+      });
+      this.dispatchEvent(event);
     };
     this.loadBSFData();
   }
