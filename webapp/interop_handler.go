@@ -44,7 +44,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
 	}

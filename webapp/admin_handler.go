@@ -80,7 +80,7 @@ func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.Git
 		return
 	}
 
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		data := struct {
 			Host string
 		}{
@@ -88,7 +88,7 @@ func handleAdminFlags(a shared.AppEngineAPI, ds shared.Datastore, acl shared.Git
 		}
 		// We don't need user info in this template.
 		RenderTemplate(w, nil, "admin_flags.html", data)
-	} else if r.Method == "POST" {
+	} else if r.Method == http.MethodPost {
 		var flag shared.Flag
 		if bytes, err := ioutil.ReadAll(r.Body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
