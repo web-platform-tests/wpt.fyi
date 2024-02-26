@@ -13,7 +13,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
-	github.com/gomodule/redigo v1.8.9
+	github.com/gomodule/redigo v1.9.2
 	github.com/google/go-github/v47 v47.1.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
