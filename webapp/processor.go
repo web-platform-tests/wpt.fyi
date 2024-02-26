@@ -10,7 +10,7 @@ import (
 
 // processorStatusHandler handles GET requests to /processor
 func processorStatusHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method http.MethodGet {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
 	}
