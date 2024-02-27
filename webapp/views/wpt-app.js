@@ -124,7 +124,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           </info-banner>
           <template is="dom-if" if="[[!isBSFCollapsed]]">
             <iron-collapse opened="[[!isBSFCollapsed]]">
-              <wpt-bsf is-interacting="[[isInteracting]]" on-is-interacting-changed="bsfIsInteractingChanged"></wpt-bsf>
+              <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
             </iron-collapse>
           </template>
         </div>
@@ -312,7 +312,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     this.shadowRoot.querySelector('app-location')
       ._createPropertyObserver('__query', query => this.query = query);
-    this.addEventListener('is-interacting-changed', this.bsfIsInteractingChanged);
+    this.addEventListener('interactingchanged', this.bsfIsInteractingChanged);
   }
 
   bsfIsInteractingChanged(e) {

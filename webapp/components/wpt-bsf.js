@@ -151,14 +151,14 @@ class WPTBSF extends LoadingState(PolymerElement) {
     };
     this.enterChart = () => {
       this.isInteracting = true;
-      const event = new CustomEvent('is-interacting-changed', {
+      const event = new CustomEvent('interactingchanged', {
         detail: { value: this.isInteracting }
       });
       this.dispatchEvent(event);
     };
     this.exitChart = () => {
       this.isInteracting = false;
-      const event = new CustomEvent('is-interacting-changed', {
+      const event = new CustomEvent('interactingchanged', {
         detail: { value: this.isInteracting }
       });
       this.dispatchEvent(event);
