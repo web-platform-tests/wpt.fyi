@@ -651,17 +651,17 @@ export const interopData = {
     'investigation_scores': [
       {
         'name': 'Accessibility Testing',
-        'url': 'https://github.com/web-platform-tests/interop-2023-accessibility-testing',
+        'url': 'https://github.com/web-platform-tests/interop-accessibility-testing',
         'scores_over_time': []
       },
       {
         'name': 'Mobile Testing',
-        'url': 'https://github.com/web-platform-tests/interop-2023-mobile-testing',
+        'url': 'https://github.com/web-platform-tests/interop-mobile-testing',
         'scores_over_time': []
       },
       {
         'name': 'WebAssembly Testing',
-        'url': '',
+        'url': 'https://github.com/web-platform-tests/interop-2024-wasm',
         'scores_over_time': []
       },
     ],
