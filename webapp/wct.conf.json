@@ -7,7 +7,7 @@
       "skipSeleniumInstall": true,
       "browserOptions": {
         "chrome": [
-          "headless",
+          "headless=new",
           "disable-gpu",
           "no-sandbox",
           "disable-features=ScriptStreaming"
