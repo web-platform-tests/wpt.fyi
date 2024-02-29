@@ -257,7 +257,7 @@ inotifywait:
 
 node: curl gpg
 	if [[ "$$(which node)" == "" ]]; then \
-		curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -; \
+		curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -; \
 		sudo apt-get install -qqy nodejs; \
 	fi
 
