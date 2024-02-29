@@ -47,7 +47,7 @@ func apiSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh searchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "POST" {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
 
 		return

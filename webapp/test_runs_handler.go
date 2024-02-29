@@ -13,7 +13,7 @@ import (
 
 // testRunsHandler handles GET/POST requests to /test-runs
 func testRunsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET is supported.", http.StatusMethodNotAllowed)
 		return
 	}
