@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/datastore v1.15.0
 	cloud.google.com/go/logging v1.9.0
 	cloud.google.com/go/secretmanager v1.11.5
-	cloud.google.com/go/storage v1.38.0
+	cloud.google.com/go/storage v1.39.0
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.3
@@ -29,15 +29,15 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.167.0
-	google.golang.org/genproto v0.0.0-20240205150955-31a09d347014
-	google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014
+	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
+	google.golang.org/genproto/googleapis/api v0.0.0-20240221002015-b0ce06bbee7c
 	google.golang.org/grpc v1.62.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	cloud.google.com/go v0.112.0 // indirect
-	cloud.google.com/go/compute v1.23.4 // indirect
+	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/longrunning v0.5.5 // indirect
