@@ -28,7 +28,7 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
 RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
 # Node LTS
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -qqy nodejs
 
 # Google Cloud SDK
