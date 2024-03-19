@@ -60,7 +60,7 @@ func TestStopImmediately(t *testing.T) {
 	query := sharedtest.NewMockTestRunQuery(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
 	store.EXPECT().TestRunQuery().Return(query)
-	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(shared.TestRunsByProduct{
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil, nil).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{Product: product, TestRuns: shared.TestRuns{
 			shared.TestRun{ID: 1},
 			shared.TestRun{ID: 2},
@@ -89,7 +89,7 @@ func TestIngestSomeRuns(t *testing.T) {
 	query := sharedtest.NewMockTestRunQuery(ctrl)
 	product, _ := shared.ParseProductSpec("chrome")
 	store.EXPECT().TestRunQuery().Return(query)
-	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(shared.TestRunsByProduct{
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil, nil).Return(shared.TestRunsByProduct{
 		shared.ProductTestRuns{
 			Product: product,
 			TestRuns: shared.TestRuns{

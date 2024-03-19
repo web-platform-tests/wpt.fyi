@@ -118,7 +118,7 @@ func FillIndex(
 func startBackfillMonitor(store shared.Datastore, logger shared.Logger, maxBytes uint64, m *backfillMonitor) error {
 	// FetchRuns will return at most N runs for each product, so divide the upper bound by the number of products.
 	limit := int(maxBytes/bytesPerRun) / len(shared.GetDefaultProducts())
-	runsByProduct, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil)
+	runsByProduct, err := store.TestRunQuery().LoadTestRuns(shared.GetDefaultProducts(), nil, nil, nil, nil, &limit, nil, nil)
 	if err != nil {
 		return err
 	}

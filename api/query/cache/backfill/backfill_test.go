@@ -33,7 +33,7 @@ func TestFetchErr(t *testing.T) {
 	idx := index.NewMockIndex(ctrl)
 	expected := errors.New("Fetch error")
 	store.EXPECT().TestRunQuery().Return(query)
-	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(nil, expected)
+	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil, nil).Return(nil, expected)
 	_, err := FillIndex(store, nil, nil, 1, uint(10), uint64(1), 0.0, idx)
 	assert.Equal(t, expected, err)
 }

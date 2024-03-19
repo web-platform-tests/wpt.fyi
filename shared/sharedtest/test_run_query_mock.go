@@ -53,33 +53,33 @@ func (mr *MockTestRunQueryMockRecorder) GetAlignedRunSHAs(arg0, arg1, arg2, arg3
 }
 
 // LoadTestRunKeys mocks base method.
-func (m *MockTestRunQuery) LoadTestRunKeys(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.KeysByProduct, error) {
+func (m *MockTestRunQuery) LoadTestRunKeys(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int, arg7 *shared.QueryOptions) (shared.KeysByProduct, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadTestRunKeys", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "LoadTestRunKeys", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 	ret0, _ := ret[0].(shared.KeysByProduct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadTestRunKeys indicates an expected call of LoadTestRunKeys.
-func (mr *MockTestRunQueryMockRecorder) LoadTestRunKeys(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+func (mr *MockTestRunQueryMockRecorder) LoadTestRunKeys(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRunKeys", reflect.TypeOf((*MockTestRunQuery)(nil).LoadTestRunKeys), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRunKeys", reflect.TypeOf((*MockTestRunQuery)(nil).LoadTestRunKeys), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 }
 
 // LoadTestRuns mocks base method.
-func (m *MockTestRunQuery) LoadTestRuns(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int) (shared.TestRunsByProduct, error) {
+func (m *MockTestRunQuery) LoadTestRuns(arg0 []shared.ProductSpec, arg1 mapset.Set, arg2 []string, arg3, arg4 *time.Time, arg5, arg6 *int, arg7 *shared.QueryOptions) (shared.TestRunsByProduct, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "LoadTestRuns", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 	ret0, _ := ret[0].(shared.TestRunsByProduct)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LoadTestRuns indicates an expected call of LoadTestRuns.
-func (mr *MockTestRunQueryMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+func (mr *MockTestRunQueryMockRecorder) LoadTestRuns(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MockTestRunQuery)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadTestRuns", reflect.TypeOf((*MockTestRunQuery)(nil).LoadTestRuns), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 }
 
 // LoadTestRunsByKeys mocks base method.

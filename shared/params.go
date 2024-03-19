@@ -339,6 +339,38 @@ func ParseViewParam(v url.Values) (*string, error) {
 	return nil, nil
 }
 
+// QueryOptions is a container for pre-set query options.
+type QueryOptions struct {
+	ExcludeBadRanges bool
+}
+
+// AppendToURLValues appends the current options in QueryOptions into the
+// given query parameters.
+func (o QueryOptions) AppendToURLValues(v *url.Values) {
+	if o.ExcludeBadRanges {
+		v.Add("option", "no-bad-ranges")
+	}
+}
+
+// ParseOptionParam parses the 'option' parameter and ensures it is a valid value.
+func ParseOptionParam(v url.Values) (*QueryOptions, error) {
+	optionParams, found := v["option"]
+	if !found {
+		return nil, nil
+	}
+	queryOptions := new(QueryOptions)
+	for _, param := range optionParams {
+		switch strings.ToLower(param) {
+		case "no-bad-ranges":
+			queryOptions.ExcludeBadRanges = true
+		default:
+			return nil, fmt.Errorf("unknown 'option' parameter: %s", param)
+		}
+	}
+
+	return queryOptions, nil
+}
+
 // ParseDateTimeParam flexibly parses a date/time param with the given name as a time.Time.
 func ParseDateTimeParam(v url.Values, name string) (*time.Time, error) {
 	if fromParam := v.Get(name); fromParam != "" {
@@ -593,6 +625,9 @@ func ParseTestRunFilterParams(v url.Values) (filter TestRunFilter, err error) {
 		return filter, err
 	}
 	if filter.View, err = ParseViewParam(v); err != nil {
+		return filter, err
+	}
+	if filter.QueryOpts, err = ParseOptionParam(v); err != nil {
 		return filter, err
 	}
 	return filter, nil

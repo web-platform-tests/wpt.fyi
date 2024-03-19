@@ -44,15 +44,16 @@ func (s SHAs) ShortSHAs() []string {
 // TestRunFilter represents the ways TestRun entities can be filtered in
 // the webapp and api.
 type TestRunFilter struct {
-	SHAs     SHAs         `json:"shas,omitempty"`
-	Labels   mapset.Set   `json:"labels,omitempty"`
-	Aligned  *bool        `json:"aligned,omitempty"`
-	From     *time.Time   `json:"from,omitempty"`
-	To       *time.Time   `json:"to,omitempty"`
-	MaxCount *int         `json:"maxcount,omitempty"`
-	Offset   *int         `json:"offset,omitempty"` // Used for paginating with MaxCount.
-	Products ProductSpecs `json:"products,omitempty"`
-	View     *string      `json:"view,omitempty"`
+	SHAs      SHAs          `json:"shas,omitempty"`
+	Labels    mapset.Set    `json:"labels,omitempty"`
+	Aligned   *bool         `json:"aligned,omitempty"`
+	From      *time.Time    `json:"from,omitempty"`
+	To        *time.Time    `json:"to,omitempty"`
+	MaxCount  *int          `json:"maxcount,omitempty"`
+	Offset    *int          `json:"offset,omitempty"` // Used for paginating with MaxCount.
+	Products  ProductSpecs  `json:"products,omitempty"`
+	View      *string       `json:"view,omitempty"`
+	QueryOpts *QueryOptions `json:"option,omitempty"`
 }
 
 type testRunFilterNoCustomMarshalling TestRunFilter
@@ -90,7 +91,8 @@ func (filter TestRunFilter) IsDefaultQuery() bool {
 		(filter.From == nil) &&
 		(filter.MaxCount == nil || *filter.MaxCount == 1) &&
 		(len(filter.Products) < 1) &&
-		(filter.View == nil)
+		(filter.View == nil) &&
+		(filter.QueryOpts == nil)
 }
 
 // OrDefault returns the current filter, or, if it is a default query, returns
@@ -195,6 +197,9 @@ func (filter TestRunFilter) ToQuery() (q url.Values) {
 	}
 	if filter.View != nil {
 		q.Set("view", *filter.View)
+	}
+	if filter.QueryOpts != nil {
+		filter.QueryOpts.AppendToURLValues(&q)
 	}
 	return q
 }
