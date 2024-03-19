@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/datastore v1.15.0
 	cloud.google.com/go/logging v1.9.0
 	cloud.google.com/go/secretmanager v1.11.5
-	cloud.google.com/go/storage v1.39.0
+	cloud.google.com/go/storage v1.39.1
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.3
@@ -30,13 +30,13 @@ require (
 	golang.org/x/oauth2 v0.18.0
 	google.golang.org/api v0.167.0
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
-	google.golang.org/genproto/googleapis/api v0.0.0-20240221002015-b0ce06bbee7c
+	google.golang.org/genproto/googleapis/api v0.0.0-20240304161311-37d4d3c04a78
 	google.golang.org/grpc v1.62.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	cloud.google.com/go v0.112.0 // indirect
+	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.1 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/johncgriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/karrick/godirwalk v1.17.0 // indirect
@@ -89,7 +89,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240213162025-012b6fc9bca9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240228224816-df926f6c8641 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
