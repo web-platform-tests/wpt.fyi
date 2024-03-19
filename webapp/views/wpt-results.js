@@ -255,6 +255,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
       <div class="channel-area">
         <paper-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</paper-button>
+        <paper-button id="toggleTestView" class\$="[[ testViewButtonClass(view) ]]" on-click="clickTestView">Test View</paper-button>
         <paper-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</paper-button>
       </div>
     </template>
@@ -769,11 +770,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       if (!('subtest_total' in row.results[i])) {
         row.results[i].subtest_passes = 0;
         row.results[i].subtest_total = 0;
+        row.results[i].test_view_passes = 0;
+        row.results[i].test_view_total = 0;
       }
       row.results[i].subtest_passes += passes;
       nodes.totals[i].subtest_passes += passes;
       row.results[i].subtest_total += total;
       nodes.totals[i].subtest_total += total;
+      const test_view_pass = (passes === total) ? 1: 0;
+      row.results[i].test_view_passes += test_view_pass;
+      nodes.totals[i].test_view_passes += test_view_pass;
+      row.results[i].test_view_total++;
+      nodes.totals[i].test_view_total++;
     }
   }
 
@@ -837,7 +845,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         // Keep track of overall total.
         if (!('totals' in nodes)) {
           nodes['totals'] = this.testRuns.map(() => {
-            return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0 };
+            return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0, test_view_passes: 0, test_view_total: 0 };
           });
         }
         // Accumulate the sums.
@@ -966,7 +974,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
     } else {
       // Change prop by view.
-      const prefix = this.isDefaultView() ? 'subtest_' : '';
+      let prefix = '';
+      if (this.isDefaultView()) {
+        prefix = 'subtest_'
+      } else if (this.isTestView()) {
+        prefix = 'test_view_';
+      }
       // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
       // result.passes=0 && result.total=0 -> 'top';
       // otherwise -> 'passes-[colouring-by-percent]'.
@@ -974,7 +987,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         return 'none';
       }
       // Percent view (interop-202*) will allow the home results to be colorized.
-      if (this.path === '/' && !this.colorHomepage && this.view !== 'interop') {
+      if (this.path === '/' && !this.colorHomepage && !this.isInteropView()) {
         return 'top';
       }
       if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
@@ -988,19 +1001,30 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return canViewInteropScores && !pathIsATestFile;
   }
 
+  testViewButtonClass(view) {
+    return (view === 'test') ? 'selected' : 'unselected';
+  }
+
   interopButtonClass(view) {
     return (view === 'interop') ? 'selected' : 'unselected';
   }
 
   defaultButtonClass(view) {
-    return (view !== 'interop') ? 'selected' : 'unselected';
+    return (view !== 'interop' && view !== 'test') ? 'selected' : 'unselected';
   }
 
   clickInterop() {
-    if (!this.isDefaultView()) {
+    if (this.isInteropView()) {
       return;
     }
     this.view = 'interop';
+  }
+
+  clickTestView() {
+    if (this.isTestView()) {
+      return;
+    }
+    this.view = 'test';
   }
 
   clickDefault() {
@@ -1039,13 +1063,24 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   isDefaultView() {
     // Checks if a special view is active.
-    return this.view !== 'interop';
+    return !this.isInteropView() && !this.isTestView();
+  }
+
+  isInteropView() {
+    return this.view === 'interop';
+  }
+
+  isTestView() {
+    return this.view === 'test';
   }
 
   getTotalsClass(totalInfo) {
     if ((this.path === '/' && !this.colorHomepage && this.isDefaultView())
         || totalInfo.subtest_total === 0) {
       return 'top';
+    }
+    if (this.isTestView()) {
+      return this.passRateClass(totalInfo.test_view_passes, totalInfo.test_view_total);
     }
     if (!this.isDefaultView()) {
       return this.passRateClass(totalInfo.passes, totalInfo.total);
@@ -1164,6 +1199,47 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${this.getTestNumbersDisplay(passes, total, isDir)} (${cellDisplay}%)`;
   }
 
+  // Formats the numbers shown on the results page for the test view.
+  formatCellDisplayTestView(passes, total, status, isDir) {
+
+    // At the test level:
+    // 1. Show PASS is passes == total for subtests.
+    // 2. Show FAIL if status is undefined (legacy summaries) or 'O' (because showing OKAY would be misleading).
+    // 3. Show FAIL otherwise.
+    if (!isDir) {
+      if (passes === total) {
+        return "PASS"
+      } else if ((status === undefined) || (status === 'O')) {
+        return "FAIL";
+      } else if (status in STATUS_ABBREVIATIONS) {
+        return STATUS_ABBREVIATIONS[status];
+      } else {
+        return "FAIL";
+      }
+    }
+
+    const formatPercent = parseFloat((passes / total * 100).toFixed(0));
+    let cellDisplay = '';
+    // Show flat 0% or 100% only if none or all tests/subtests pass.
+    if (passes === 0) {
+      cellDisplay = '0';
+    } else if (passes === total) {
+      cellDisplay = '100';
+    } else if (formatPercent === 0.0) {
+      // If there are passing tests, but only enough to round to 0.00,
+      // show 0.01 rather than 0.00 to differentiate between possible error states.
+      cellDisplay = '0.1';
+    } else if (formatPercent === 100.0) {
+      // If almost every test is passing, but there are some failures,
+      // don't round up to 'total / total' so that it's clear some failure exists.
+      cellDisplay = '99.9';
+    } else {
+      cellDisplay = `${formatPercent}`;
+    }
+    // Only display the the numbers without percentages.
+    return `${this.getTestNumbersDisplay(passes, total, isDir)}`;
+  }
+
   // Formats the numbers that will be shown in each cell on the results page.
   formatCellDisplay(passes, total, status=undefined, isDir=true) {
     // Display 'Missing' text if there are no tests or subtests.
@@ -1171,11 +1247,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return 'Missing';
     }
 
-    // If the view is not the default view (subtest), then the function to
-    // obtain the selected view is called.
-    if (this.view === 'interop') {
+    // If the view is not the default view (subtest), then check for the 'interop' view.
+    // If view is 'interop', use that format instead.
+    if (this.isInteropView()) {
       return this.formatCellDisplayInterop(passes, total, isDir);
     }
+
+    // If the view is not the default view (subtest), then check for the 'test' view.
+    // If view is 'test', use that format instead.
+    if (this.isTestView()) {
+      return this.formatCellDisplayTestView(passes, total, status, isDir);
+    }
+
     // If we're in the subtest view and there are no subtests but a status exists,
     // we should count the status as the test total.
     if (total === 0) {
@@ -1185,12 +1268,30 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return `${passes} / ${total}`;
   }
 
-  getNodeResult(node, index) {
-    const useSubtestCounts = this.isDefaultView() || !node.isDir;
-    const status = node.results[index].status;
+  isSubtestView(node) {
+    return this.isDefaultView() || !node.isDir;
+  }
+
+  getNodeTotalProp(node) {
+    if (this.isTestView()) {
+      return  'test_view_total';
+    }
     // Display test numbers at directory level, but subtest numbers when showing a single test.
-    const passesProp = useSubtestCounts ? 'subtest_passes': 'passes';
-    const totalProp = useSubtestCounts ? 'subtest_total': 'total';
+    return this.isSubtestView(node) ? 'subtest_total': 'total';
+  }
+
+  getNodePassProp(node) {
+    if (this.isTestView()) {
+      return 'test_view_passes';
+    }
+    // Display test numbers at directory level, but subtest numbers when showing a single test.
+    return this.isSubtestView(node) ? 'subtest_passes': 'passes';
+  }
+
+  getNodeResult(node, index) {
+    const status = node.results[index].status;
+    const passesProp = this.getNodePassProp(node);
+    const totalProp = this.getNodeTotalProp(node);
     // Calculate what should be displayed in a given results row.
     let passes = node.results[index][passesProp];
     let total = node.results[index][totalProp];
@@ -1201,9 +1302,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   getTotalDisplay(totalInfo) {
     let passes = totalInfo.subtest_passes;
     let total = totalInfo.subtest_total;
-    if (this.view === 'interop') {
+    if (this.isInteropView()) {
       passes = totalInfo.passes;
       total = totalInfo.total;
+    }
+    if (this.isTestView()) {
+      passes = totalInfo.test_view_passes;
+      total = totalInfo.test_view_total;
     }
     return this.formatCellDisplay(passes, total);
   }
@@ -1353,6 +1458,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         if (this.isDefaultView()) {
           passesParam = 'subtest_passes';
           totalParam = 'subtest_total';
+        } else if (this.isTestView()) {
+          passesParam = 'test_view_passes';
+          totalParam = 'test_view_total';
         }
 
         // Both 0/0 cases; compare test names.
