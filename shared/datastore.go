@@ -36,7 +36,7 @@ type Iterator interface {
 
 // Query abstracts a datastore.Query
 type Query interface {
-	Filter(filterStr string, value interface{}) Query
+	FilterEntity(EntityFilter) Query
 	Project(fields ...string) Query
 	Limit(limit int) Query
 	Offset(offset int) Query
@@ -44,6 +44,18 @@ type Query interface {
 	KeysOnly() Query
 	Distinct() Query
 	Run(Datastore) Iterator
+
+	FilterBuilder() FilterBuilder
+}
+
+// PropertyFilter is a particular filter that filters based on property value.
+type PropertyFilter interface {
+	EntityFilter
+}
+
+// FilterBuilder contains the logic to create different types of filters
+type FilterBuilder interface {
+	PropertyFilter(FieldName string, Operator string, Value interface{}) EntityFilter
 }
 
 // Datastore abstracts a datastore, hiding the distinctions between cloud and
