@@ -78,13 +78,16 @@ golangci_lint: golangci-lint
 	
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
-	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
+	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud|race)' $(GO_TEST_FILES)); \
 	if [ -n "$$TAGLESS" ]; then echo -e "Files are missing '// +build TAG' or '//go:build TAG' tags:\n$$TAGLESS" && exit 1; fi
 
-go_test: go_small_test go_medium_test
+go_test: go_small_test go_medium_test go_race_test
 
 go_small_test: go_build gcc
 	go test -tags=small $(VERBOSE) ./...
+
+go_race_test: go_build gcc
+	go test -tags=race -race $(VERBOSE) ./...
 
 go_medium_test: go_build dev_appserver_deps gcc
 	go test -tags=medium $(VERBOSE) $(FLAGS) ./...

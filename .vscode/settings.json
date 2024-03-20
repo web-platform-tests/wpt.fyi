@@ -1,5 +1,5 @@
 {
-  "go.buildTags": "small,medium,large,cloud",
+  "go.buildTags": "small,medium,large,cloud,race",
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
