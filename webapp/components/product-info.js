@@ -11,7 +11,6 @@ const DisplayNames = (() => {
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('android_webview', 'WebView');
   m.set('chrome_android', 'ChromeAndroid');
-  m.set('chrome_ios', 'ChromeIOS');
   m.set('chromium', 'Chromium');
   m.set('deno', 'Deno');
   m.set('firefox_android', 'Firefox Android');
@@ -47,7 +46,7 @@ const versionPatterns = Object.freeze({
 });
 
 // The set of all browsers known to the wpt.fyi UI.
-const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
+const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome',
   'chromium', 'deno', 'edge', 'firefox_android', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkitgtk', 'wktr']);
 
 // The list of default browsers used in cases where the user has not otherwise
@@ -173,9 +172,9 @@ const ProductInfo = (superClass) => class extends superClass {
     } else if (name === 'android_webview') {
       return `/static/${name}.png`;
 
-    } else if (name === 'chrome_android') {
+    } else if (name === 'chrome_android' || name === 'chrome_ios') {
       // TODO(kyle): A temporary workaround; remove this check when
-      // chrome_android is mapped to chrome on wptrunner.
+      // chrome_android and chrome_ios is mapped to chrome on wptrunner.
       return '/static/chrome_64x64.png';
     } else if (name === 'firefox_android') {
       // For now use the geckoview logo for Firefox for Android,
