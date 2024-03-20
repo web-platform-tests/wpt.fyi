@@ -11,6 +11,7 @@ const DisplayNames = (() => {
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('android_webview', 'WebView');
   m.set('chrome_android', 'ChromeAndroid');
+  m.set('chrome_ios', 'ChromeIOS');
   m.set('chromium', 'Chromium');
   m.set('deno', 'Deno');
   m.set('firefox_android', 'Firefox Android');
@@ -46,7 +47,7 @@ const versionPatterns = Object.freeze({
 });
 
 // The set of all browsers known to the wpt.fyi UI.
-const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome',
+const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
   'chromium', 'deno', 'edge', 'firefox_android', 'firefox', 'flow', 'node.js', 'safari', 'servo', 'webkitgtk', 'wktr']);
 
 // The list of default browsers used in cases where the user has not otherwise
