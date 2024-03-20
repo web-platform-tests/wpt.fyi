@@ -172,9 +172,9 @@ const ProductInfo = (superClass) => class extends superClass {
     } else if (name === 'android_webview') {
       return `/static/${name}.png`;
 
-    } else if (name === 'chrome_android') {
+    } else if (name === 'chrome_android' || name === 'chrome_ios') {
       // TODO(kyle): A temporary workaround; remove this check when
-      // chrome_android is mapped to chrome on wptrunner.
+      // chrome_android and chrome_ios is mapped to chrome on wptrunner.
       return '/static/chrome_64x64.png';
     } else if (name === 'firefox_android') {
       // For now use the geckoview logo for Firefox for Android,
