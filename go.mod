@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.20
 
 require (
-	cloud.google.com/go/cloudtasks v1.12.6
+	cloud.google.com/go/cloudtasks v1.12.7
 	cloud.google.com/go/datastore v1.15.0
 	cloud.google.com/go/logging v1.9.0
 	cloud.google.com/go/secretmanager v1.11.5
@@ -30,7 +30,7 @@ require (
 	golang.org/x/oauth2 v0.18.0
 	google.golang.org/api v0.170.0
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
-	google.golang.org/genproto/googleapis/api v0.0.0-20240304161311-37d4d3c04a78
+	google.golang.org/genproto/googleapis/api v0.0.0-20240311132316-a219d84964c2
 	google.golang.org/grpc v1.62.1
 	gopkg.in/yaml.v3 v3.0.1
 )
