@@ -47,6 +47,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'queryBuilder',
       'queryBuilderSHA',
       'showBSF',
+      'showViewEqTest',
       'structuredQueries',
       'triageMetadataUI',
       'webPlatformTestsLive',
@@ -256,6 +257,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{showBSF}}">
         Enable Browser Specific Failures graph
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showViewEqTest}}">
+        Enable view=test query parameter
       </paper-checkbox>
     </paper-item>
 `;

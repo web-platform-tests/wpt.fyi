@@ -255,7 +255,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
       <div class="channel-area">
         <paper-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</paper-button>
-        <paper-button id="toggleTestView" class\$="[[ testViewButtonClass(view) ]]" on-click="clickTestView">Test View</paper-button>
+        <template is="dom-if" if="[[showViewEqTest]]">
+          <paper-button id="toggleTestView" class\$="[[ testViewButtonClass(view) ]]" on-click="clickTestView">Test View</paper-button>
+        </template>
         <paper-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</paper-button>
       </div>
     </template>
@@ -1021,6 +1023,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   clickTestView() {
+    if (!this.showViewEqTest) {
+      // Do nothing if the `showViewEqTest` feature flag is not enabled.
+      return;
+    }
+
     if (this.isTestView()) {
       return;
     }
@@ -1071,6 +1078,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   isTestView() {
+    // If the `showViewEqTest` feature flag is not active, return false immediately.
+    if (!this.showViewEqTest) {
+      return false;
+    }
     return this.view === 'test';
   }
 
