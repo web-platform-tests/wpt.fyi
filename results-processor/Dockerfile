@@ -1,4 +1,4 @@
-FROM python:3.9.18-bullseye
+FROM python:3.9.19-bullseye
 
 # Install runtime dependencies.
 # python3-crcmod for faster gsutil checksum
