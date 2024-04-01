@@ -1079,10 +1079,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   isTestView() {
     // If the `showViewEqTest` feature flag is not active, return false immediately.
-    if (!this.showViewEqTest) {
-      return false;
-    }
-    return this.view === 'test';
+    return this.showViewEqTest && this.view === 'test';
   }
 
   getTotalsClass(totalInfo) {
