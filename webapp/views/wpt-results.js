@@ -1226,24 +1226,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
     }
 
-    const formatPercent = parseFloat((passes / total * 100).toFixed(0));
-    let cellDisplay = '';
-    // Show flat 0% or 100% only if none or all tests/subtests pass.
-    if (passes === 0) {
-      cellDisplay = '0';
-    } else if (passes === total) {
-      cellDisplay = '100';
-    } else if (formatPercent === 0.0) {
-      // If there are passing tests, but only enough to round to 0.00,
-      // show 0.01 rather than 0.00 to differentiate between possible error states.
-      cellDisplay = '0.1';
-    } else if (formatPercent === 100.0) {
-      // If almost every test is passing, but there are some failures,
-      // don't round up to 'total / total' so that it's clear some failure exists.
-      cellDisplay = '99.9';
-    } else {
-      cellDisplay = `${formatPercent}`;
-    }
     // Only display the the numbers without percentages.
     return `${this.getTestNumbersDisplay(passes, total, isDir)}`;
   }
