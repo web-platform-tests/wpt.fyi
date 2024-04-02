@@ -6,13 +6,14 @@
 import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
+import { WPTFlags } from './wpt-flags.js';
 
 const testRunsQueryComputer =
   'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view)';
 
-const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
+const TestRunsQuery = (superClass, opt_queryCompute) => class extends WPTFlags(QueryBuilder(
   ProductInfo(superClass),
-  opt_queryCompute || testRunsQueryComputer) {
+  opt_queryCompute || testRunsQueryComputer)) {
 
   static get properties() {
     return {
@@ -172,7 +173,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   showDefaultView(view, q) {
-    return !view || !q || !q.includes('interop-202');
+    return !this.anyInteropView && (!view || !q || !q.includes('interop-202'));
   }
 
   parseQuery(query) {
