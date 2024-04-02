@@ -1,3 +1,4 @@
+//go:build small
 // +build small
 
 // Copyright 2017 The WPT Dashboard Project. All rights reserved.
@@ -393,6 +394,55 @@ func TestParseLabelsParam_LabelsAndLabel_Duplicate(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/api/runs?labels=experimental&label=experimental", nil)
 	labels := ParseLabelsParam(r.URL.Query())
 	assert.Len(t, labels, 1)
+}
+
+// Generic method that can return the pointer of anything.
+func valuePtr[T any](in T) *T {
+	return &in
+}
+
+func TestParseViewParam(t *testing.T) {
+	testCases := []struct {
+		name           string
+		input          url.Values
+		expectedOutput *string
+	}{
+		{
+			name: "subtest",
+			input: map[string][]string{
+				"view": {"subtest"},
+			},
+			expectedOutput: valuePtr("subtest"),
+		},
+		{
+			name: "interop",
+			input: map[string][]string{
+				"view": {"interop"},
+			},
+			expectedOutput: valuePtr("interop"),
+		},
+		{
+			name: "test",
+			input: map[string][]string{
+				"view": {"test"},
+			},
+			expectedOutput: valuePtr("test"),
+		},
+		{
+			name: "badinput",
+			input: map[string][]string{
+				"view": {"badinput"},
+			},
+			expectedOutput: nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			output, err := ParseViewParam(tc.input)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedOutput, output)
+		})
+	}
 }
 
 func TestParseVersion(t *testing.T) {
