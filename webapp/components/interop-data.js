@@ -652,7 +652,9 @@ export const interopData = {
       {
         'name': 'Accessibility Testing',
         'url': 'https://github.com/web-platform-tests/interop-accessibility',
-        'scores_over_time': []
+        'scores_over_time': [
+          { 'date': '2024-04-02', 'score': 18 }
+        ]
       },
       {
         'name': 'Mobile Testing',
