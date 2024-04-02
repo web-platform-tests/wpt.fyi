@@ -779,7 +779,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       nodes.totals[i].subtest_passes += passes;
       row.results[i].subtest_total += total;
       nodes.totals[i].subtest_total += total;
-      const test_view_pass = (passes === total) ? 1: 0;
+      const test_view_pass = (passes === total && PASSING_STATUSES.includes(status)) ? 1: 0;
       row.results[i].test_view_passes += test_view_pass;
       nodes.totals[i].test_view_passes += test_view_pass;
       row.results[i].test_view_total++;
@@ -1211,11 +1211,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   formatCellDisplayTestView(passes, total, status, isDir) {
 
     // At the test level:
-    // 1. Show PASS is passes == total for subtests.
-    // 2. Show FAIL if status is undefined (legacy summaries) or 'O' (because showing OKAY would be misleading).
+    // 1. Show PASS is passes == total for subtests AND (status is undefined (legacy) OR isPassingStatus (v2)).
+    // 2. Show FAIL if status is undefined (legacy summaries) or 'O' (because showing OK would be misleading).
     // 3. Show FAIL otherwise.
     if (!isDir) {
-      if (passes === total) {
+      if (passes === total && ((status === undefined) || (PASSING_STATUSES.includes(status)))) {
         return "PASS"
       } else if ((status === undefined) || (status === 'O')) {
         return "FAIL";
