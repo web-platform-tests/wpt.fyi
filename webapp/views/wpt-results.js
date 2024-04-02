@@ -55,6 +55,13 @@ const STATUS_ABBREVIATIONS = {
 };
 const PASSING_STATUSES = ['O', 'P'];
 
+// ViewEnum contains the different values for the `view` query parameter.
+const ViewEnum = {
+  Subtest: 'subtest',
+  Interop: 'interop',
+  Test: 'test'
+}
+
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
@@ -1004,22 +1011,22 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   testViewButtonClass(view) {
-    return (view === 'test') ? 'selected' : 'unselected';
+    return (view === ViewEnum.Test) ? 'selected' : 'unselected';
   }
 
   interopButtonClass(view) {
-    return (view === 'interop') ? 'selected' : 'unselected';
+    return (view === ViewEnum.Interop) ? 'selected' : 'unselected';
   }
 
   defaultButtonClass(view) {
-    return (view !== 'interop' && view !== 'test') ? 'selected' : 'unselected';
+    return (view !== ViewEnum.Interop && view !== ViewEnum.Test) ? 'selected' : 'unselected';
   }
 
   clickInterop() {
     if (this.isInteropView()) {
       return;
     }
-    this.view = 'interop';
+    this.view = ViewEnum.Interop;
   }
 
   clickTestView() {
@@ -1031,14 +1038,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (this.isTestView()) {
       return;
     }
-    this.view = 'test';
+    this.view = ViewEnum.Test;
   }
 
   clickDefault() {
     if (this.isDefaultView()) {
       return;
     }
-    this.view = 'subtest';
+    this.view = ViewEnum.Subtest;
   }
 
   changeView(view) {
@@ -1074,12 +1081,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   isInteropView() {
-    return this.view === 'interop';
+    return this.view === ViewEnum.Interop;
   }
 
   isTestView() {
     // If the `showViewEqTest` feature flag is not active, return false immediately.
-    return this.showViewEqTest && this.view === 'test';
+    return this.showViewEqTest && this.view === ViewEnum.Test;
   }
 
   getTotalsClass(totalInfo) {
