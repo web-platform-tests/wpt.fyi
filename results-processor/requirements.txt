@@ -56,7 +56,7 @@ grpcio-status==1.44.0
     # via google-api-core
 gunicorn==21.2.0
     # via -r requirements.in
-idna==3.3
+idna==3.7
     # via requests
 importlib-metadata==6.8.0
     # via flask
