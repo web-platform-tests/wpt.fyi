@@ -33,7 +33,7 @@
     "@polymer/test-fixture": "4.0.2",
     "cpy-cli": "5.0.0",
     "eslint": "8.57.0",
-    "eslint-plugin-html": "8.0.0",
+    "eslint-plugin-html": "8.1.0",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.7",
     "web-component-tester": "6.9.2"
