@@ -630,7 +630,8 @@
         "name": "Accessibility Testing",
         "url": "https://github.com/web-platform-tests/interop-accessibility",
         "scores_over_time": [
-          { "date": "2024-04-02", "score": 18 }
+          { "date": "2024-04-02", "score": 18 },
+          { "date": "2024-04-25", "score": 33 }
         ]
       },
       {
