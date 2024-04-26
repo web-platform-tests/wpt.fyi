@@ -637,7 +637,9 @@
       {
         "name": "Mobile Testing",
         "url": "https://github.com/web-platform-tests/interop-mobile-testing",
-        "scores_over_time": []
+        "scores_over_time": [
+          { "date": "2024-04-23", "score": 130 }
+        ]
       },
       {
         "name": "WebAssembly Testing",
