@@ -50,7 +50,7 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
           }
         </style>
         <h2>
-          <img class="browser" alt="chrome chrome,dev,experimental,master,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/chrome-dev_64x64.png">
+          <img class="browser" alt="chrome chrome,canary,experimental,master,taskcluster,user:chromium-wpt-export-bot,prod logo" src="/static/chrome-canary_64x64.png">
           Chrome
         </h2>
         <div class="chart" id="chromeHistoryChart"></div>
