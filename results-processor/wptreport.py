@@ -552,7 +552,8 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'release':
         # e.g. Edge release
         labels.add('stable')
-    if channel == 'canary' and (browser == 'edgechromium' or browser == 'edge'):
+    if (channel == 'canary' and
+            (browser == 'edgechromium' or browser == 'edge')):
         # Edge Canary is almost nightly.
         labels.add('nightly')
 
