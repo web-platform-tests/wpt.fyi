@@ -41,3 +41,10 @@ update dependencies, run the following commands:
 pip3.9 install --user pip-tools
 python3.9 -m piptools compile requirements.in
 ```
+
+## Local debugging
+
+Debugging is disabled both in production and when running locally by default.
+To enable debugging when running locally pass `debug=True` to the `app.run()`
+call in the last line of
+[`main.py`](https://github.com/web-platform-tests/wpt.fyi/blob/main/results-processor/main.py).
