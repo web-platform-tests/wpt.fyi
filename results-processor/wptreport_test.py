@@ -637,16 +637,16 @@ class HelpersTest(unittest.TestCase):
             {'blade-runner', 'beta', 'firefox'}
         )
 
-    def test_normalize_product_edge_webdriver(self):
+    def test_normalize_product_edge(self):
         r = WPTReport()
         r._report = {
             'run_info': {
-                'product': 'edge_webdriver',
+                'product': 'edge',
             }
         }
         self.assertSetEqual(
             normalize_product(r),
-            {'edge', 'webdriver', 'edge_webdriver'}
+            {'edge', 'edgechromium'}
         )
         self.assertEqual(
             r.run_info['product'],
