@@ -122,4 +122,4 @@ def task_handler():
 # Run the script directly locally to start Flask dev server.
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True)
+    app.run(debug=False)
