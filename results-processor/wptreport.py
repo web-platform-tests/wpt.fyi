@@ -552,7 +552,8 @@ def _channel_to_labels(browser: str, channel: str) -> Set[str]:
     if channel == 'release':
         # e.g. Edge release
         labels.add('stable')
-    if channel == 'canary' and browser == 'edgechromium':
+    if (channel == 'canary' and
+            (browser == 'edgechromium' or browser == 'edge')):
         # Edge Canary is almost nightly.
         labels.add('nightly')
 
@@ -618,10 +619,7 @@ def normalize_product(report: WPTReport) -> Set[str]:
        A set of strings.
     """
     product = report.run_info['product']
-    if product == 'edge_webdriver':
-        report.run_info['product'] = 'edge'
-        return {'edge', 'webdriver', 'edge_webdriver'}
-    elif product == 'edgechromium':
+    if product == 'edgechromium' or product == 'edge':
         report.run_info['product'] = 'edge'
         return {'edge', 'edgechromium'}
     elif product == 'webkitgtk_minibrowser':
