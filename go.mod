@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/cloudtasks v1.12.7
-	cloud.google.com/go/datastore v1.15.0
+	cloud.google.com/go/datastore v1.17.0
 	cloud.google.com/go/logging v1.9.0
 	cloud.google.com/go/secretmanager v1.12.0
 	cloud.google.com/go/storage v1.40.0
@@ -29,8 +29,8 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.20.0
 	google.golang.org/api v0.180.0
-	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de
-	google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be
+	google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda
+	google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae
 	google.golang.org/grpc v1.63.2
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -41,7 +41,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.7 // indirect
-	cloud.google.com/go/longrunning v0.5.5 // indirect
+	cloud.google.com/go/longrunning v0.5.7 // indirect
 	github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843 // indirect
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
