@@ -31,8 +31,8 @@ cloud.google.com/go/bigquery v1.4.0/go.mod h1:S8dzgnTigyfTmLBfrtrhyYhwRxG72rYxvf
 cloud.google.com/go/bigquery v1.5.0/go.mod h1:snEHRnqQbz117VIFhE8bmtwIDY80NLUZUMb4Nv6dBIg=
 cloud.google.com/go/bigquery v1.7.0/go.mod h1://okPTzCYNXSlb24MZs83e2Do+h+VXtc4gLoIoXIAPc=
 cloud.google.com/go/bigquery v1.8.0/go.mod h1:J5hqkt3O0uAFnINi6JXValWIb1v0goeZM77hZzJN/fQ=
-cloud.google.com/go/cloudtasks v1.12.7 h1:Ev+poxwb7pudBhiF0ObwAWT7Dh9BZAcsvAfFTWg0MPc=
-cloud.google.com/go/cloudtasks v1.12.7/go.mod h1:I6o/ggPK/RvvokBuUppsbmm4hrGouzFbf6fShIm0Pqc=
+cloud.google.com/go/cloudtasks v1.12.8 h1:Y0HUuiCAVk9BojLItOycBl91tY25NXH8oFsyi1IC/U4=
+cloud.google.com/go/cloudtasks v1.12.8/go.mod h1:aX8qWCtmVf4H4SDYUbeZth9C0n9dBj4dwiTYi4Or/P4=
 cloud.google.com/go/compute/metadata v0.3.0 h1:Tz+eQXMEqDIKRsmY3cHTL6FVaynIjX2QxYC4trgAKZc=
 cloud.google.com/go/compute/metadata v0.3.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
 cloud.google.com/go/datastore v1.0.0/go.mod h1:LXYbyblFSglQ5pkeyhO+Qmw7ukd3C+pD7TKLgZqpHYE=
