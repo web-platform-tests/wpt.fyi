@@ -69,7 +69,7 @@ func (m *backfillMonitor) Stop() error {
 	return m.ProxyMonitor.Stop()
 }
 
-// nolint:ireturn // TODO: Fix ireturn lint error
+// nolint:all // TODO: Fix ireturn lint error
 func (*backfillIndex) Bind([]shared.TestRun, query.ConcreteQuery) (query.Plan, error) {
 	return nil, nil
 }
