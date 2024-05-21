@@ -74,6 +74,7 @@ go_lint: golint go_test_tag_lint
 
 # TODO: run on /shared/, /util/, /webapp/, /webdriver/
 golangci_lint: golangci-lint
+        golangci-lint cache clean
 	golangci-lint run ./api/...
 	
 go_test_tag_lint:
