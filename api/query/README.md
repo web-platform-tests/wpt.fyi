@@ -40,8 +40,6 @@ Combines the filters such that there exists some result in the row that satisfie
 
 #### All and None
 
-> BETA: This feature is under development and may change without warning.
-
     all([query1] [query2])
 
 Combines filters such that they must all apply to all runs.
@@ -61,8 +59,6 @@ useful when there are multiple runs with the same product, e.g. to find a regres
 
 #### Count
 
-> BETA: This feature is under development and may change without warning.
-
     count:[number]([query1] [query2])
 
 Requires that the number of results matching the given query/queries is precisely
@@ -78,8 +74,6 @@ Safari is the only one missing a result:
     three(status:!missing) safari:missing
 
 ##### Count inequality
-
-> BETA: This feature is under development and may change without warning.
 
     count[inequality][number]([query1])
 
@@ -150,8 +144,6 @@ or, negation,
 Where `[product]` is a product specification (e.g. `safari`, `chrome-69`).
 
 #### Meta qualities
-
-> BETA: This feature is under development and may change without warning.
 
 Filters the results to values which possess/exhibit a given quality.
 
