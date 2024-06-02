@@ -76,7 +76,8 @@ func (s checksAPIImpl) ScheduleResultsProcessing(sha string, product shared.Prod
 func (s checksAPIImpl) GetSuitesForSHA(sha string) ([]shared.CheckSuite, error) {
 	var suites []shared.CheckSuite
 	store := shared.NewAppEngineDatastore(s.Context(), false)
-	_, err := store.GetAll(store.NewQuery("CheckSuite").Filter("SHA =", sha), &suites)
+	q := store.NewQuery("CheckSuite")
+	_, err := store.GetAll(q.FilterEntity(q.FilterBuilder().PropertyFilter("SHA", "=", sha)), &suites)
 
 	return suites, err
 }

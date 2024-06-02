@@ -197,6 +197,14 @@ type cloudQuery struct {
 	query *datastore.Query
 }
 
+func (q cloudQuery) FilterBuilder() FilterBuilder {
+	return cloudFilterBuilder{}
+}
+
+func (q cloudQuery) FilterEntity(entityFilter EntityFilter) Query {
+	return cloudQuery{q.query.FilterEntity(entityFilter)}
+}
+
 func (q cloudQuery) Filter(filterStr string, value interface{}) Query {
 	return cloudQuery{q.query.Filter(filterStr, value)}
 }
@@ -239,4 +247,17 @@ type cloudIterator struct {
 func (i cloudIterator) Next(dst interface{}) (Key, error) {
 	key, err := i.iter.Next(dst)
 	return cloudKey{key}, err
+}
+
+// EntityFilter wraps datastore.EntityFilter.
+// datastore.EntityFilter does not expose any methods. But using this type
+// allows us to be strict on the filters returned by the FilterBuilder.
+type EntityFilter interface {
+	datastore.EntityFilter
+}
+
+type cloudFilterBuilder struct{}
+
+func (b cloudFilterBuilder) PropertyFilter(FieldName string, Operator string, Value interface{}) EntityFilter {
+	return datastore.PropertyFilter{FieldName: FieldName, Operator: Operator, Value: Value}
 }
