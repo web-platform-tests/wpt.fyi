@@ -42,7 +42,7 @@ export default [...compat.extends("eslint:recommended"), {
         },
     },
 
-    files: ["components/*.js"],
+    files: ["components/**/*.js"],
     rules: {
         "brace-style": ["error", "1tbs"],
         curly: ["error", "all"],
