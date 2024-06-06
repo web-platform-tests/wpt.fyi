@@ -30,15 +30,18 @@
     "@browser-logos/servo": "2.0.1",
     "@browser-logos/uc": "1.1.0",
     "@browser-logos/webkit-nightly": "2.0.2",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.4.0",
     "@polymer/test-fixture": "4.0.2",
     "cpy-cli": "5.0.0",
     "eslint": "9.4.0",
     "eslint-plugin-html": "8.1.1",
+    "globals": "^15.3.0",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.7",
     "web-component-tester": "6.9.2"
   },
-  "overridesComments" :{
+  "overridesComments": {
     "diff@<3.5.0": "Remove once web-component-tester & wct-browser-legacy is removed.",
     "growl@<1.10.0": "Remove once wct-browser-legacy is removed.",
     "multer@<1.4.5": "Remove once web-component-tester is removed."

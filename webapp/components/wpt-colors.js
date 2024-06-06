@@ -56,7 +56,6 @@ wpt.getColor = (passes, total) => {
   return wpt.colors[part + 1];
 };
 
-/* eslint-disable-next-line no-unused-vars */
 const WPTColors = superClass => class extends superClass {
   passRateClass(passes, total) {
     return wpt.passRateClass(passes, total);

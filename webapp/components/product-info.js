@@ -127,7 +127,6 @@ function productFromRun(run) {
   return product;
 }
 
-// eslint-disable-next-line no-unused-vars
 const ProductInfo = (superClass) => class extends superClass {
   static get properties() {
     return {

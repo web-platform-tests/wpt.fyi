@@ -11,7 +11,6 @@ import { WPTFlags } from './wpt-flags.js';
 import './ohm.js';
 import { AllBrowserNames } from './product-info.js';
 
-/* eslint-enable */
 const statuses = [
   'pass',
   'ok',
@@ -455,6 +454,7 @@ class TestSearch extends WPTFlags(PolymerElement) {
       } else {
         try {
           this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
+        // eslint-disable-next-line no-unused-vars
         } catch (err) {
           // TODO: Handle query parse/interpret error.
         }

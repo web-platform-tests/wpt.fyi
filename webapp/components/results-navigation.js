@@ -11,7 +11,6 @@ import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
  * QueryBuilder contains a helper method for building a query string from
  * an object of params.
  */
-// eslint-disable-next-line no-unused-vars
 const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends superClass {
   static get properties() {
     const props = {

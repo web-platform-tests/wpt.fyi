@@ -9,7 +9,7 @@ LoadingState is a behaviour component for indicating when information is
 still being loaded (generally, fetched).
 */
 
-// eslint-disable-next-line no-unused-vars
+
 const LoadingState = (superClass) => class extends superClass {
   static get properties() {
     return {
