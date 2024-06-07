@@ -144,6 +144,7 @@ class Permalinks extends QueryBuilder(PolymerElement) {
         text: 'URL copied to clipboard!',
         duration: 2000,
       });
+    // eslint-disable-next-line no-unused-vars
     } catch (e) {
       this.toast.show({
         text: 'Failed to copy URL to clipboard. Copy it manually.',

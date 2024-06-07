@@ -13,7 +13,6 @@ $_documentContainer.innerHTML = `<dom-module id="self-navigator">
 </dom-module>`;
 
 document.head.appendChild($_documentContainer.content);
-// eslint-disable-next-line no-unused-vars
 const SelfNavigation = (superClass) => class SelfNavigation extends PathInfo(superClass) {
   static get properties() {
     return {
