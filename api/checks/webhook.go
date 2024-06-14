@@ -306,7 +306,7 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 	// Jump straight to completed check_run for already-present runs for the SHA.
 	store := shared.NewAppEngineDatastore(ctx, false)
 	products = shared.ProductSpecs(products).OrDefault()
-	runsByProduct, err := store.TestRunQuery().LoadTestRuns(products, nil, shared.SHAs{sha}, nil, nil, nil, nil)
+	runsByProduct, err := store.TestRunQuery().LoadTestRuns(products, nil, shared.SHAs{sha}, nil, nil, nil, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
 	}

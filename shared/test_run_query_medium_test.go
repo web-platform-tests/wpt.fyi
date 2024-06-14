@@ -1,3 +1,4 @@
+//go:build medium
 // +build medium
 
 package shared_test
@@ -37,7 +38,7 @@ func TestLoadTestRuns(t *testing.T) {
 	key, _ = store.Put(key, &testRun)
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, nil, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, nil, nil, nil, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(allRuns))
@@ -65,7 +66,7 @@ func TestLoadTestRunsBySHAs(t *testing.T) {
 	}
 
 	q := store.TestRunQuery()
-	runsByProduct, err := q.LoadTestRuns(shared.GetDefaultProducts(), nil, shared.SHAs{"1111111111", "333333333"}, nil, nil, nil, nil)
+	runsByProduct, err := q.LoadTestRuns(shared.GetDefaultProducts(), nil, shared.SHAs{"1111111111", "333333333"}, nil, nil, nil, nil, nil)
 	runs := runsByProduct.AllRuns()
 	assert.Nil(t, err)
 	assert.Len(t, runs, 2)
@@ -75,7 +76,7 @@ func TestLoadTestRunsBySHAs(t *testing.T) {
 	assert.Equal(t, "1111111111", runs[0].Revision)
 	assert.Equal(t, "3333333333", runs[1].Revision)
 
-	runsByProduct, err = q.LoadTestRuns(shared.GetDefaultProducts(), nil, shared.SHAs{"11111", "33333"}, nil, nil, nil, nil)
+	runsByProduct, err = q.LoadTestRuns(shared.GetDefaultProducts(), nil, shared.SHAs{"11111", "33333"}, nil, nil, nil, nil, nil)
 	runs = runsByProduct.AllRuns()
 	assert.Nil(t, err)
 	assert.Len(t, runs, 2)
@@ -161,7 +162,7 @@ func TestLoadTestRuns_Experimental_Only(t *testing.T) {
 	labels := mapset.NewSet()
 	labels.Add("experimental")
 	ten := 10
-	loaded, err := store.TestRunQuery().LoadTestRuns(products, labels, nil, nil, nil, &ten, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(products, labels, nil, nil, nil, &ten, nil, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(allRuns))
@@ -203,7 +204,7 @@ func TestLoadTestRuns_LabelinProductSpec(t *testing.T) {
 	products := make([]shared.ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Labels = mapset.NewSetWith("foo")
-	loaded, err := store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil, nil)
 	allRuns := loaded.AllRuns()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(allRuns))
@@ -246,7 +247,7 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 	products := make([]shared.ProductSpec, 1)
 	products[0].BrowserName = "chrome"
 	products[0].Revision = strings.Repeat("1", 10)
-	loaded, err := store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
@@ -254,21 +255,21 @@ func TestLoadTestRuns_SHAinProductSpec(t *testing.T) {
 
 	// Partial SHA
 	products[0].Revision = "11111"
-	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil, nil)
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
 
 	// Partial SHA, Browser version
 	products[0].BrowserVersion = "63"
-	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil, nil)
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
 
 	// Partial SHA, Exact version
 	products[0].BrowserVersion = "63.1.1.1"
-	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil)
+	loaded, err = store.TestRunQuery().LoadTestRuns(products, nil, nil, nil, nil, nil, nil, nil)
 	allRuns = loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
 	assert.Equal(t, "1111111111", allRuns[0].Revision)
@@ -309,7 +310,7 @@ func TestLoadTestRuns_Ordering(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, nil, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 2, len(allRuns))
@@ -354,7 +355,7 @@ func TestLoadTestRuns_From(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, &yesterday, nil, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, &yesterday, nil, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))
@@ -396,7 +397,7 @@ func TestLoadTestRuns_To(t *testing.T) {
 	}
 
 	chrome, _ := shared.ParseProductSpec("chrome")
-	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, &now, nil, nil)
+	loaded, err := store.TestRunQuery().LoadTestRuns(shared.ProductSpecs{chrome}, nil, nil, nil, &now, nil, nil, nil)
 	assert.Nil(t, err)
 	allRuns := loaded.AllRuns()
 	assert.Equal(t, 1, len(allRuns))

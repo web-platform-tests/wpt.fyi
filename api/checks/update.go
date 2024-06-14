@@ -135,6 +135,7 @@ func loadRunsToCompare(ctx context.Context, filter shared.TestRunFilter) (
 		filter.To,
 		&one,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -176,6 +177,7 @@ func loadPRRun(ctx context.Context, filter shared.TestRunFilter, extraLabel stri
 		nil,
 		&one,
 		nil,
+		nil,
 	)
 	run := runs.First()
 	if err != nil {
@@ -199,7 +201,7 @@ func loadMasterRunBefore(
 	one := 1
 	to := headRun.TimeStart.Add(-time.Millisecond)
 	labels := mapset.NewSetWith(headRun.Channel(), shared.MasterLabel)
-	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, labels, nil, nil, &to, &one, nil)
+	runs, err := store.TestRunQuery().LoadTestRuns(filter.Products, labels, nil, nil, &to, &one, nil, nil)
 	baseRun := runs.First()
 	if err != nil {
 		return nil, err

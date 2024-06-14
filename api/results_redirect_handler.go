@@ -33,7 +33,7 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	store := shared.NewAppEngineDatastore(ctx, true)
 	one := 1
 	testRuns, err := store.TestRunQuery().LoadTestRuns(
-		filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil)
+		filters.Products, filters.Labels, filters.SHAs, nil, nil, &one, nil, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
