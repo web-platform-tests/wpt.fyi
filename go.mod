@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/cloudtasks v1.12.8
-	cloud.google.com/go/datastore v1.17.0
+	cloud.google.com/go/datastore v1.17.1
 	cloud.google.com/go/logging v1.10.0
 	cloud.google.com/go/secretmanager v1.13.1
 	cloud.google.com/go/storage v1.41.0
@@ -30,7 +30,7 @@ require (
 	golang.org/x/oauth2 v0.21.0
 	google.golang.org/api v0.184.0
 	google.golang.org/genproto v0.0.0-20240604185151-ef581f913117
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117
 	google.golang.org/grpc v1.64.0
 	gopkg.in/yaml.v3 v3.0.1
 )
