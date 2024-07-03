@@ -70,6 +70,7 @@ func (h SHAsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			filters.To,
 			filters.MaxCount,
 			filters.Offset,
+			nil,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -30,7 +30,8 @@ type TestRunQuery interface {
 		from *time.Time,
 		to *time.Time,
 		limit,
-		offset *int) (result TestRunsByProduct, err error)
+		offset *int,
+		queryOpts *QueryOptions) (result TestRunsByProduct, err error)
 
 	// LoadTestRunKeys loads the keys for the TestRun entities for the given parameters.
 	// It is encapsulated because we cannot run single queries with multiple inequality
@@ -42,7 +43,8 @@ type TestRunQuery interface {
 		from *time.Time,
 		to *time.Time,
 		limit *int,
-		offset *int) (result KeysByProduct, err error)
+		offset *int,
+		queryOpts *QueryOptions) (result KeysByProduct, err error)
 
 	// LoadTestRunsByKeys loads test runs by keys and sets their IDs.
 	LoadTestRunsByKeys(KeysByProduct) (result TestRunsByProduct, err error)
@@ -76,12 +78,13 @@ func (t testRunQueryImpl) LoadTestRuns(
 	from *time.Time,
 	to *time.Time,
 	limit,
-	offset *int) (result TestRunsByProduct, err error) {
+	offset *int,
+	queryOpts *QueryOptions) (result TestRunsByProduct, err error) {
 	if len(products) == 0 {
 		return nil, errNoProducts
 	}
 
-	keys, err := t.LoadTestRunKeys(products, labels, revisions, from, to, limit, offset)
+	keys, err := t.LoadTestRunKeys(products, labels, revisions, from, to, limit, offset, queryOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +118,8 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 	from *time.Time,
 	to *time.Time,
 	limit *int,
-	offset *int) (result KeysByProduct, err error) {
+	offset *int,
+	queryOpts *QueryOptions) (result KeysByProduct, err error) {
 	log := GetLogger(t.store.Context())
 	result = make(KeysByProduct, len(products))
 	baseQuery := t.store.NewQuery("TestRun")

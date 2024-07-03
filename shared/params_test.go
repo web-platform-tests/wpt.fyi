@@ -9,6 +9,7 @@ package shared
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -699,6 +700,10 @@ func TestParseTestRunFilterParams(t *testing.T) {
 	r = httptest.NewRequest("GET", "http://wpt.fyi/?from=2018-01-01T00%3A00%3A00Z", nil)
 	filter, _ = ParseTestRunFilterParams(r.URL.Query())
 	assert.Equal(t, "from=2018-01-01T00%3A00%3A00Z", filter.ToQuery().Encode())
+
+	r = httptest.NewRequest("GET", "http://wpt.fyi/?option=no-bad-ranges", nil)
+	filter, _ = ParseTestRunFilterParams(r.URL.Query())
+	assert.Equal(t, "option=no-bad-ranges", filter.ToQuery().Encode())
 }
 
 func TestParseTestRunFilterParams_Invalid(t *testing.T) {
@@ -847,4 +852,56 @@ func TestParseTestRunFilterParams_Page(t *testing.T) {
 	values.Set("page", "bogus value")
 	_, err := ParseTestRunFilterParams(values)
 	assert.NotNil(t, err)
+}
+
+func TestParseOptionParams_NoBadRanges(t *testing.T) {
+	values := make(url.Values)
+	values.Set("option", "no-bad-ranges")
+	opt, err := ParseOptionParam(values)
+	assert.NoError(t, err)
+	assert.Equal(t, &QueryOptions{
+		ExcludeBadRanges: true,
+	}, opt)
+}
+
+func TestParseOptionParams_InvalidOption(t *testing.T) {
+	values := make(url.Values)
+	values.Set("option", "bad")
+	opt, err := ParseOptionParam(values)
+	assert.Equal(t, errors.New("unknown 'option' parameter: bad"), err)
+	assert.Nil(t, opt)
+}
+
+func TestQueryOptionAppendToURLValues(t *testing.T) {
+	testCases := []struct {
+		name              string
+		inputURLValues    url.Values
+		options           QueryOptions
+		expectedURLValues url.Values
+	}{
+		{
+			name:              "does not add anything",
+			inputURLValues:    map[string][]string{},
+			options:           QueryOptions{},
+			expectedURLValues: map[string][]string{},
+		},
+		{
+			name:           "adds no-bad-ranges",
+			inputURLValues: map[string][]string{},
+			options: QueryOptions{
+				ExcludeBadRanges: true,
+			},
+			expectedURLValues: map[string][]string{
+				"option": {
+					"no-bad-ranges",
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.options.AppendToURLValues(&tc.inputURLValues)
+			assert.Equal(t, tc.expectedURLValues, tc.inputURLValues)
+		})
+	}
 }
