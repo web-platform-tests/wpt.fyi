@@ -8,7 +8,7 @@ blinker==1.7.0
     # via flask
 cachetools==5.0.0
     # via google-auth
-certifi==2023.7.22
+certifi==2024.7.4
     # via requests
 charset-normalizer==2.0.12
     # via requests
