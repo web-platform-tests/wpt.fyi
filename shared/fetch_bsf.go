@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/fetch_bsf_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared FetchBSF
+//go:generate mockgen -build_flags=--mod=mod -destination sharedtest/fetch_bsf_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared FetchBSF
 
 package shared
 
