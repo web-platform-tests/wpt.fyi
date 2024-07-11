@@ -16,7 +16,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"github.com/phayes/freeport"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"

@@ -16,7 +16,7 @@ import (
 
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
