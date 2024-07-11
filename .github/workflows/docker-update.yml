@@ -20,7 +20,7 @@ jobs:
       (github.event_name != 'pull_request'))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: elgohr/Publish-Docker-Github-Action@v5
         # https://github.com/elgohr/Publish-Docker-Github-Action
         with:
