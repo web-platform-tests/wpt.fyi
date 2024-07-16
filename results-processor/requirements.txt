@@ -110,5 +110,5 @@ urllib3==1.26.19
     # via requests
 werkzeug==3.0.3
     # via flask
-zipp==3.17.0
+zipp==3.19.1
     # via importlib-metadata
