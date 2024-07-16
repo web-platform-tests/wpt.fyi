@@ -5,7 +5,7 @@
 package mock_backfill
 
 import (
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	reflect "reflect"
 )

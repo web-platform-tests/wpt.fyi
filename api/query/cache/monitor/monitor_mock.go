@@ -5,7 +5,7 @@
 package monitor
 
 import (
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	reflect "reflect"
 	time "time"
 )

@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"github.com/google/go-github/v47/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"

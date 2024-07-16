@@ -195,7 +195,7 @@ golint: git
 
 mockgen: git
 	if [ "$$(which mockgen)" == "" ]; then \
-		go install github.com/golang/mock/mockgen; \
+		go install go.uber.org/mock/mockgen; \
 	fi
 
 packr2: git
