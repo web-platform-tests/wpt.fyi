@@ -140,7 +140,7 @@ func RecentScreenshotHashes(
 	for all.Cardinality() < totalLimit {
 		query := ds.NewQuery("Screenshot")
 		for _, l := range labels {
-			query = query.Filter("Labels =", l)
+			query = query.FilterEntity(query.FilterBuilder().PropertyFilter("Labels", "=", l))
 		}
 		query = query.Order("-LastUsed").Limit(totalLimit)
 
