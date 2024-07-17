@@ -298,6 +298,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       'deno',
       'edge',
       'firefox',
+      'ladybird',
       'node.js',
       'safari',
       'servo',
@@ -324,6 +325,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
     if (product === 'firefox') {
       return `https://bugzilla.mozilla.org/buglist.cgi?quicksearch="${testName}"`;
+    }
+
+    if (product === 'ladybird') {
+      return `https://github.com/LadybirdBrowser/ladybird/issues?q="${testName}"`;
     }
 
     if (product === 'node.js') {
