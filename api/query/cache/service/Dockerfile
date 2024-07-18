@@ -1,6 +1,5 @@
 # Production deployment spec for query cache service.
 
-# Base golang 1.20.1 image.
 FROM golang:1.21.12-bullseye as builder
 
 RUN apt-get update
