@@ -73,7 +73,7 @@ go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./webdriver/...
 
 # TODO: run on /shared/, /util/, /webapp/, /webdriver/
-golangci_lint: golangci-lint
+golangci_lint: golangci-lint github_action_go_setup
 	golangci-lint cache clean
 	golangci-lint run ./api/...
 	
