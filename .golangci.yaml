@@ -62,6 +62,3 @@ linters-settings:
     # See: https://github.com/web-platform-tests/wpt.fyi/blob/main/go.mod
     replace-allow-list:
       - launchpad.net/gocheck
-  errcheck:
-    # TODO: Remove following line when version 1.58.3 is released.
-    ignore: ""
