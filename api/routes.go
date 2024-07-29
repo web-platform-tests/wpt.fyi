@@ -65,7 +65,11 @@ func RegisterRoutes() {
 	)
 
 	// API endpoint for searching Metadata for the products.
-	shared.AddRoute("/api/metadata", "api-metadata", shared.WrapPermissiveCORS(apiMetadataHandler))
+	shared.AddRoute(
+		"/api/metadata",
+		"api-metadata",
+		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiMetadataHandler)),
+	)
 
 	// API endpoint for searching pending Metadata stored in memory.
 	shared.AddRoute(
