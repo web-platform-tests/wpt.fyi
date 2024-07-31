@@ -2,19 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate packr2
-
 package summaries
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"net/url"
 	"strings"
 	"text/template"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/gobuffalo/packr/v2"
 
 	"github.com/google/go-github/v47/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -23,20 +21,17 @@ import (
 // nolint:gochecknoglobals // TODO: Fix gochecknoglobals lint error
 var templates *template.Template
 
+//go:embed templates/*.md
+var mdFiles embed.FS
+
 func init() {
-	box := packr.New("markdown templates", "./templates/")
 	templates = template.New("all.md").
 		Funcs(template.FuncMap{
 			"escapeMD": escapeMD,
 		})
-	for _, t := range box.List() {
-		tmpl := templates.New(t)
-		body, err := box.FindString(t)
-		if err != nil {
-			panic(err)
-		} else if _, err = tmpl.Parse(body); err != nil {
-			panic(err)
-		}
+	_, err := templates.ParseFS(mdFiles, "templates/*.md")
+	if err != nil {
+		panic(err)
 	}
 }
 

@@ -1,7 +1,5 @@
 node_modules/
 debug.test
-packrd/
-*-packr.go
 /web
 
 # Google Cloud secret

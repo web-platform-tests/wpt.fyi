@@ -27,7 +27,7 @@ GO_FILES := $(shell find $(WPTD_PATH) -type f -name '*.go')
 GO_TEST_FILES := $(shell find $(WPTD_PATH) -type f -name '*_test.go')
 # Golangci version should be updated periodically.
 # See: https://golangci-lint.run/usage/install/#other-ci
-GOLANGCI_LINT_VERSION := v1.52.2
+GOLANGCI_LINT_VERSION := v1.59.1
 
 build: go_build
 
@@ -50,9 +50,9 @@ github_action_go_setup:
 	else \
 		echo "Did not detect github workspace. Skipping." ; \
 	fi
-# NOTE: We prune before generate, because node_modules are packr'd into the
+# NOTE: We prune before generate, because node_modules are embedded into the
 # binary (and part of the build).
-go_build: git mockgen packr2 github_action_go_setup
+go_build: git mockgen github_action_go_setup
 	make webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
@@ -196,11 +196,6 @@ golint: git
 mockgen: git
 	if [ "$$(which mockgen)" == "" ]; then \
 		go install go.uber.org/mock/mockgen; \
-	fi
-
-packr2: git
-	if [ "$$(which packr2)" == "" ]; then \
-		go install github.com/gobuffalo/packr/v2/packr2; \
 	fi
 
 package_service: var-APP_PATH
