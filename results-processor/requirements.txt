@@ -16,7 +16,7 @@ click==8.1.7
     # via flask
 filelock==3.15.4
     # via -r requirements.in
-flake8==7.1.0
+flake8==7.1.1
     # via -r requirements.in
 flask==3.0.3
     # via -r requirements.in
