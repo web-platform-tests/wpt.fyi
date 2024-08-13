@@ -416,7 +416,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   handleTestRunsLoad(e) {
-    console.log('testRuns', e.detail);
     this.testRuns = e.detail.testRuns;
   }
 
