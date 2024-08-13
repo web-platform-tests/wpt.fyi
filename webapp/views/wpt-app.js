@@ -69,7 +69,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           height: 28px;
         }
 
-        /* TODO(danielrsmith): Remove these when interop 2025 proposals are closed. */
+        /* TODO(DanielRyanSmith): Remove these when interop 2025 proposals are closed. */
         .interop-2025-banner {
           height: 40px;
           background-color: #DEF;
