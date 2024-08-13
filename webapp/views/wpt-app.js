@@ -68,12 +68,38 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           padding: 0px;
           height: 28px;
         }
+
+        /* TODO(danielrsmith): Remove these when interop 2025 proposals are closed. */
+        .interop-2025-banner {
+          height: 40px;
+          background-color: #DEF;
+          text-align: center;
+          padding-top: 16px;
+          border: 2px solid #1D79F2;
+          border-radius: 8px;
+        }
+        .interop-2025-banner p {
+          margin: 0;
+          font-size: 18px;
+        }
+        .interop-2025-banner a {
+          color: #0d5de6;
+          text-decoration: none;
+        }
       </style>
 
       <app-location route="{{route}}" url-space-regex="^/(results)/"></app-location>
       <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
 
       <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="[[isTriageMode]]"></wpt-header>
+
+      <a href="https://example.com" target="_blank">
+        <div class="interop-2025-banner">
+          <p>
+            🚀 Submit a proposal for Interop 2025! 🚀
+          </p>
+        </div>
+      </a>
 
       <section class="search">
         <div class="path">
@@ -390,6 +416,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   handleTestRunsLoad(e) {
+    console.log('testRuns', e.detail);
     this.testRuns = e.detail.testRuns;
   }
 
