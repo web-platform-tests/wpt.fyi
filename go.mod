@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.21
 
 require (
-	cloud.google.com/go/cloudtasks v1.12.12
+	cloud.google.com/go/cloudtasks v1.12.13
 	cloud.google.com/go/datastore v1.17.1
 	cloud.google.com/go/logging v1.11.0
 	cloud.google.com/go/secretmanager v1.13.5
@@ -37,7 +37,7 @@ require (
 
 require (
 	cloud.google.com/go v0.115.0 // indirect
-	cloud.google.com/go/auth v0.7.3 // indirect
+	cloud.google.com/go/auth v0.8.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.12 // indirect
