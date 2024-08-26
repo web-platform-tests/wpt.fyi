@@ -183,8 +183,7 @@ class InteropSummary extends PolymerElement {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       summaryDiv.style.minHeight = '275px';
-    }
-    else if (this.year === '2024') {
+    } else if (this.year === '2024') {
       summaryDiv.style.minHeight = '350px';
     }
 

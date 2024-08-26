@@ -125,14 +125,14 @@ class InteropDataManager {
       this.tableSections = yearInfo.mobile_table_sections;
     } else {
       // Default to the Chrome/Edge bundled unless specified.
-      this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari']; 
+      this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari'];
       this.csvURL = yearInfo.csv_url;
       this.validYears = paramsByYear.valid_years;
       // Focus areas are iterated through often, so keep a list of all of them.
       this.focusAreasList = Object.keys(this.focusAreas);
       this.tableSections = yearInfo.table_sections;
     }
-  
+
     this.browserInfo = this.browsers.map(browser => BROWSER_INFO[browser]);
     this.numBrowsers = this.browserInfo.length;
     this.summaryFeatureName = yearInfo.summary_feature_name;
