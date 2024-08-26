@@ -157,6 +157,7 @@ class InteropSummary extends PolymerElement {
       year: String,
       dataManager: Object,
       scores: Object,
+      isMobileScoresView: Boolean,
       stable: {
         type: Boolean,
         observer: '_stableChanged',
@@ -177,13 +178,13 @@ class InteropSummary extends PolymerElement {
     }
 
     const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    // Don't display the interop score for Interop 2021.
-    if (this.year === '2021') {
+    // Don't display the interop score for Interop 2021 or mobile view.
+    if (this.year === '2021' || this.isMobileScoresView) {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       summaryDiv.style.minHeight = '275px';
     }
-    if (this.year === '2024') {
+    else if (this.year === '2024') {
       summaryDiv.style.minHeight = '350px';
     }
 
@@ -195,7 +196,7 @@ class InteropSummary extends PolymerElement {
 
   shouldDisplayInvestigationNumber() {
     const scores = this.dataManager.getYearProp('investigationScores');
-    return scores !== null && scores !== undefined;
+    return scores !== null && scores !== undefined && !this.isMobileScoresView;
   }
 
   // roundScore defines the rounding rules for the top-level scores.

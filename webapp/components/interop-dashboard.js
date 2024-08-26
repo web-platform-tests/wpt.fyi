@@ -91,6 +91,10 @@ class InteropDashboard extends PolymerElement {
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
         }
 
+        .channel-area[hidden] {
+          display: none;
+        }
+
         .channel-area > paper-button {
           margin: 0;
         }
@@ -292,14 +296,20 @@ class InteropDashboard extends PolymerElement {
       </div>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
-          <h1>Interop [[year]] Dashboard</h1>
-          <div class="channel-area">
+          <h1>[[dashboardTitle]]</h1>
+          <div class="channel-area" hidden$="[[isMobileScoresView]]">
             <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
             <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
           </div>
         </div>
         <div class="grid-item grid-item-summary">
-          <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+          <interop-summary
+            year="[[year]]"
+            data-manager="[[dataManager]]"
+            scores="[[scores]]"
+            stable="[[stable]]"
+            is-mobile-scores-view="[[isMobileScoresView]]">
+          </interop-summary>
         </div>
         <div class="grid-item grid-item-description">
           <p>Interop [[year]] is a cross-browser effort to improve the interoperability of the web —
@@ -543,10 +553,15 @@ class InteropDashboard extends PolymerElement {
         type: Number,
         value: 0
       },
+      dashboardTitle: String,
       currentInteropYear: Number,
       isCurrentYear: {
         type: Boolean,
         value: true,
+      },
+      isMobileScoresView: {
+        type: Boolean,
+        value: false,
       },
       isSortedAsc: {
         type: Boolean,
@@ -578,7 +593,16 @@ class InteropDashboard extends PolymerElement {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.dataManager = new InteropDataManager(this.year);
+    this.isMobileScoresView = params.get('mobileView') !== null;
+    this.dataManager = new InteropDataManager(this.year, this.isMobileScoresView);
+
+    if (this.isMobileScoresView) {
+      this.dashboardTitle = `Interop ${this.year} Mobile Dashboard`;
+      // No stable view for mobile results.
+      this.stable = false;
+    } else {
+      this.dashboardTitle = `Interop ${this.year} Dashboard`;
+    }
 
     this.scores = {};
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
@@ -610,7 +634,7 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
     // Keep the block-level design for interop 2021-2022
-    if (this.year === '2021' || this.year === '2022') {
+    if (this.year === '2021' || this.year === '2022' || this.isMobileScoresView) {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
@@ -663,7 +687,6 @@ class InteropDashboard extends PolymerElement {
     // - https://github.com/whatwg/url/issues/762
     // - https://github.com/whatwg/url/issues/461
     // - https://github.com/whatwg/url/issues/335
-
     // Test results are defined as absolute paths from this origin.
     const url = new URL(testsURL, window.location.origin);
     // Test results URLs can have multiple 'label' params. Grab them all.
@@ -819,6 +842,9 @@ class InteropDashboard extends PolymerElement {
     }
     if (embedded) {
       params.push('embedded');
+    }
+    if (this.isMobileScoresView) {
+      params.push('mobileView');
     }
 
     let url = location.pathname;

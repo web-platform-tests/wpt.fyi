@@ -22,6 +22,22 @@ const BROWSER_INFO = {
     tableName: 'Chrome',
     tooltipName: 'Chrome',
   },
+  chrome_android: {
+    experimentalIcon: 'chrome',
+    experimentalName: 'Android',
+    graphColor: '#fbc013',
+    stableIcon: 'chrome',
+    tableName: 'Chrome',
+    tooltipName: 'Chrome',
+  },
+  firefox_android: {
+    experimentalIcon: 'geckoview',
+    experimentalName: 'Android',
+    graphColor: '#fc7a3a',
+    stableIcon: 'firefox',
+    tableName: 'Firefox',
+    tooltipName: 'Firefox',
+  },
   chrome_canary: {
     experimentalIcon: 'chrome-canary',
     experimentalName: 'Canary',
@@ -53,7 +69,7 @@ const BROWSER_INFO = {
     stableIcon: 'safari',
     tableName: 'Safari',
     tooltipName: 'Safari',
-  }
+  },
 };
 
 // InteropDataManager encapsulates the loading of the CSV data that backs
@@ -61,14 +77,18 @@ const BROWSER_INFO = {
 // fetches the CSV data, processes it into sets of datatables, and then caches
 // those tables for later use by the dashboard.
 class InteropDataManager {
-  constructor(year) {
+  constructor(year, isMobileScoresView) {
     this.year = year;
+    this.isMobileScoresView = isMobileScoresView;
     // The data is loaded when the year data is obtained and the csv is loaded and parsed.
     this._dataLoaded = this.fetchYearData()
     // The year data is needed for parsing the csv.
       .then(async() => {
         await load();
-        return Promise.all([this._loadCsv('stable'), this._loadCsv('experimental')]);
+        return Promise.all([
+          this._loadCsv('stable'),
+          this._loadCsv('experimental'),
+        ]);
       });
   }
 
@@ -95,21 +115,29 @@ class InteropDataManager {
         this.#calcInvestigationTotalScore(this.investigationScores);
     }
 
-    // Default to the Chrome/Edge bundled unless specified.
-    this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari'];
+    this.focusAreas = yearInfo.focus_areas;
+    // Adjust where data is obtained for mobile view.
+    if (this.isMobileScoresView) {
+      this.browsers = yearInfo.mobile_browsers;
+      this.csvURL = yearInfo.mobile_csv_url;
+      this.validYears = paramsByYear.valid_mobile_years;
+      this.focusAreasList = yearInfo.mobile_focus_areas;
+      this.tableSections = yearInfo.mobile_table_sections;
+    } else {
+      // Default to the Chrome/Edge bundled unless specified.
+      this.browsers = yearInfo.browsers || ['chrome_edge_dev', 'firefox', 'safari']; 
+      this.csvURL = yearInfo.csv_url;
+      this.validYears = paramsByYear.valid_years;
+      // Focus areas are iterated through often, so keep a list of all of them.
+      this.focusAreasList = Object.keys(this.focusAreas);
+      this.tableSections = yearInfo.table_sections;
+    }
+  
     this.browserInfo = this.browsers.map(browser => BROWSER_INFO[browser]);
     this.numBrowsers = this.browserInfo.length;
-
-    this.focusAreas = yearInfo.focus_areas;
-    // Focus areas are iterated through often, so keep a list of all of them.
-    this.focusAreasList = Object.keys(this.focusAreas);
     this.summaryFeatureName = yearInfo.summary_feature_name;
-    this.csvURL = yearInfo.csv_url;
     this.issueURL = yearInfo.issue_url;
-    this.tableSections = yearInfo.table_sections;
     this.focusAreasDescriptionLink = yearInfo.focus_areas_description;
-    // Keep a list of years we have interop data prepared for.
-    this.validYears = Object.keys(paramsByYear);
   }
 
   // Fetches the datatable for the given feature and stable/experimental state.
@@ -143,6 +171,10 @@ class InteropDataManager {
   // the object is a feature->score mapping.
   async getMostRecentScores(stable) {
     await this._dataLoaded;
+    // We don't aggregate stable results for mobile.
+    if (this.isMobileScoresView && stable) {
+      return {};
+    }
     // TODO: Don't get the data from the data tables (which are for the graphs)
     // but instead extract it separately when parsing the CSV.
     const dataTables = stable ? this.stableDatatables : this.experimentalDatatables;
@@ -182,8 +214,13 @@ class InteropDataManager {
   // ultimately set either this.stableDatatables or this.experimentalDatatables
   // with a map of {feature name --> datatable}.
   async _loadCsv(label) {
+    // We don't aggregate stable results for mobile.
+    if (this.isMobileScoresView && label === 'stable') {
+      return;
+    }
+
     const url = this.csvURL.replace('{stable|experimental}', label);
-    const csvLines = await fetchCsvContents(url);
+    const csvLines = await fetchCsvContents(url, this.isMobileScoresView);
 
     const features = [this.summaryFeatureName,
       ...this.focusAreasList];
@@ -245,9 +282,12 @@ class InteropDataManager {
         browserVersions[browserIdx].push(version);
 
         let testScore = 0.0;
+        // Mobile csv does not have an Interop version column to account for.
+        let versionOffset = (this.isMobileScoresView && browserName === 'Interop') ? 0 : 1;
+
         headers.forEach((feature, j) => {
           let score = 0;
-          score = parseInt(csvValues[i + 1 + j]);
+          score = parseInt(csvValues[i + j + versionOffset]);
           if (!(score >= 0 && score <= 1000)) {
             throw new Error(`Expected score in 0-1000 range, got ${score}`);
           }
@@ -331,13 +371,21 @@ class InteropDataManager {
   }
 }
 
-async function fetchCsvContents(url) {
+async function fetchCsvContents(url, isMobileScoresView) {
   const csvResp = await fetch(url);
   if (!csvResp.ok) {
     throw new Error(`Fetching chart csv data failed: ${csvResp.status}`);
   }
-  const csvText = await csvResp.text();
-  const csvLines = csvText.split('\n').filter(l => l);
+
+  let csvLines;
+  if (isMobileScoresView) {
+    const respJson = await csvResp.json();
+    const csvText = atob(respJson['content']);
+    csvLines = csvText.split('\r\n').filter(l => l);
+  } else {
+    const csvText = await csvResp.text();
+    csvLines = csvText.split('\n').filter(l => l);
+  }
   return csvLines;
 }
 
