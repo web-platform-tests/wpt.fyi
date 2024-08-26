@@ -207,7 +207,6 @@ func (i *shardedWPTIndex) IngestRun(r shared.TestRun) error {
 			return err
 		}
 
-		//nolint:gosec
 		shardIdx := int(t.testID % numShardsU64)
 		dataForShard := shardData[shardIdx]
 		re := ResultID(shared.TestStatusValueFromString(res.Status))
