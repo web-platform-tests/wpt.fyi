@@ -561,6 +561,7 @@
   },
   "2024": {
     "browsers": ["chrome_canary", "edge", "firefox", "safari"],
+    "mobile_browsers": ["chrome_android", "firefox_android"],
     "table_sections": [
       {
         "name": "Active Focus Areas",
