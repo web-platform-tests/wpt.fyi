@@ -237,7 +237,7 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install -qqy --no-install-suggests openjdk-8-jdk; \
+		sudo apt-get install -qqy --no-install-suggests openjdk-11-jdk; \
 	fi
 
 gpg:
