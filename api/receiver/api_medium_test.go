@@ -167,7 +167,7 @@ func TestScheduleResultsTask(t *testing.T) {
 			id = taskName
 			return id, nil
 		})
-	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil)
+	task, err := a.ScheduleResultsTask("blade-runner", results, screenshots, nil, nil)
 	assert.Equal(t, id, task)
 	assert.Nil(t, err)
 

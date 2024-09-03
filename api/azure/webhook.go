@@ -105,9 +105,9 @@ func processBuild(
 			sha,
 			uploader.Username,
 			uploader.Password,
-			// Azure has a single zip artifact, special-cased by the receiver.
-			[]string{artifact.Resource.DownloadURL},
 			nil,
+			nil,
+			[]string{artifact.Resource.DownloadURL},
 			shared.ToStringSlice(labels))
 		if err != nil {
 			errors <- fmt.Errorf("failed to create run: %w", err)

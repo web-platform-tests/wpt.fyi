@@ -153,8 +153,8 @@ class Processor(object):
             return self._download_gcs(uri)
         return self._download_http(uri)
 
-    def _download_azure(self, azure_url):
-        artifact = self._download_http(azure_url)
+    def _download_archive(self, archive_url):
+        artifact = self._download_http(archive_url)
         if artifact is None:
             return
         with zipfile.ZipFile(artifact, mode='r') as z:
@@ -168,18 +168,19 @@ class Processor(object):
                 if re.match(r'^.*/wpt_screenshot.*\.txt$', f.filename):
                     self.screenshots.append(path)
 
-    def download(self, results, screenshots, azure_url):
+    def download(self, results, screenshots, archives):
         """Downloads all necessary inputs.
 
         Args:
             results: A list of results URIs (gs:// or https?://).
             screenshots: A list of screenshots URIs (gs:// or https?://).
-            azure_url: A HTTP URL to an Azure build artifact.
+            archives: A list of archive URIs (https?://).
         """
-        if azure_url:
+        if archives:
             assert not results
             assert not screenshots
-            self._download_azure(azure_url)
+            for archive_url in archives:
+                self._download_archive(archive_url)
             return
         self.results = [
             p for p in (self._download_single(i) for i in results)
@@ -306,24 +307,26 @@ def _upload_screenshots(processor):
 def process_report(task_id, params):
     # Mandatory fields (will throw if key does not exist):
     uploader = params['uploader']
+    # Repeatable fields
+    archives = params.getlist('archives')
+    results = params.getlist('results')
+    screenshots = params.getlist('screenshots')
     # Optional fields:
-    azure_url = params.get('azure_url')
+    if 'azure_url' in params:
+        archives.append(params['azure_url'])
     run_id = params.get('id', '0')
     callback_url = params.get('callback_url')
     labels = params.get('labels', '')
-    # Repeatable fields
-    results = params.getlist('results')
-    screenshots = params.getlist('screenshots')
 
     response = []
     with Processor() as p:
         p.update_status(run_id, 'WPTFYI_PROCESSING', None, callback_url)
-        if azure_url:
-            _log.info("Downloading Azure results: %s", azure_url)
+        if archives:
+            _log.info("Downloading %d archives", len(archives))
         else:
             _log.info("Downloading %d results & %d screenshots",
                       len(results), len(screenshots))
-        p.download(results, screenshots, azure_url)
+        p.download(results, screenshots, archives)
         if len(p.results) == 0:
             _log.error("No results successfully downloaded")
             p.update_status(run_id, 'EMPTY', None, callback_url)

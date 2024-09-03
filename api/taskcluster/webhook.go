@@ -618,7 +618,7 @@ func CreateAllRuns(
 			}
 
 			uploadClient := uc.NewClient(aeAPI)
-			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, labelsForRun)
+			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, nil, labelsForRun)
 			if err != nil {
 				errors <- err
 

@@ -259,18 +259,18 @@ func (mr *MockAPIMockRecorder) IsFeatureEnabled(arg0 any) *gomock.Call {
 }
 
 // ScheduleResultsTask mocks base method.
-func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2 []string, arg3 map[string]string) (string, error) {
+func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2, arg3 []string, arg4 map[string]string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleResultsTask", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ScheduleResultsTask", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleResultsTask indicates an expected call of ScheduleResultsTask.
-func (mr *MockAPIMockRecorder) ScheduleResultsTask(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleResultsTask(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), arg0, arg1, arg2, arg3, arg4)
 }
 
 // ScheduleTask mocks base method.

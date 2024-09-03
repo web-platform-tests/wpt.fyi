@@ -47,7 +47,7 @@ class ProcessorTest(unittest.TestCase):
             p.download(
                 ['gs://wptd/foo/bar.json'],
                 ['https://wpt.fyi/test.txt.gz'],
-                None)
+                [])
             self.assertListEqual(p.results, ['/fake/bar.json'])
             self.assertListEqual(p.screenshots, ['/fake/test.txt.gz'])
 
@@ -57,7 +57,7 @@ class ProcessorTest(unittest.TestCase):
             p._download_http = self.fake_download(
                 'https://wpt.fyi/artifact.zip', 'artifact_test.zip')
 
-            p.download([], [], 'https://wpt.fyi/artifact.zip')
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 2)
             self.assertTrue(p.results[0].endswith(
                 '/artifact_test/wpt_report_1.json'))
@@ -79,10 +79,10 @@ class ProcessorTest(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 p.download(['https://wpt.fyi/test.json.gz'],
                            [],
-                           'https://wpt.fyi/artifact.zip')
+                           ['https://wpt.fyi/artifact.zip'])
 
             # Download failure: no exceptions should be raised.
-            p.download([], [], 'https://wpt.fyi/artifact.zip')
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 0)
 
 
@@ -116,7 +116,7 @@ class MockProcessorTest(unittest.TestCase):
         mock.assert_has_calls([
             call.update_status('654321', 'WPTFYI_PROCESSING', None,
                                'https://test.wpt.fyi/api'),
-            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
+            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], []),
         ])
         mock.report.update_metadata.assert_called_once_with(
             revision='21917b36553562d21c14fe086756a57cbe8a381b',
@@ -143,7 +143,7 @@ class MockProcessorTest(unittest.TestCase):
             process_report('12345', params)
         mock.assert_has_calls([
             call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
-            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], None),
+            call.download(['https://wpt.fyi/wpt_report.json.gz'], [], []),
             call.load_report(),
             call.update_status(
                 '654321', 'INVALID',
@@ -166,7 +166,7 @@ class MockProcessorTest(unittest.TestCase):
             process_report('12345', params)
         mock.assert_has_calls([
             call.update_status('654321', 'WPTFYI_PROCESSING', None, None),
-            call.download([], [], None),
+            call.download([], [], []),
             call.update_status('654321', 'EMPTY', None, None),
         ])
         mock.create_run.assert_not_called()
@@ -223,7 +223,7 @@ class ProcessorDownloadServerTest(unittest.TestCase):
                 p.download(
                     [self.url + '/download/test.txt', url_timeout],
                     [url_404],
-                    None)
+                    [])
             self.assertEqual(len(p.results), 1)
             self.assertTrue(p.results[0].endswith('.txt'))
             self.assertEqual(len(p.screenshots), 0)
