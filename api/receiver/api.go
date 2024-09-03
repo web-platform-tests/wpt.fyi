@@ -44,7 +44,12 @@ type API interface {
 
 	AddTestRun(testRun *shared.TestRun) (shared.Key, error)
 	IsAdmin(*http.Request) bool
-	ScheduleResultsTask(uploader string, results, screenshots []string, extraParams map[string]string) (string, error)
+	ScheduleResultsTask(
+		uploader string,
+		results []string,
+		screenshots []string,
+		archives []string,
+		extraParams map[string]string) (string, error)
 	UpdatePendingTestRun(pendingRun shared.PendingTestRun) error
 	UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error
 }
@@ -193,7 +198,7 @@ func (a *apiImpl) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 }
 
 func (a apiImpl) ScheduleResultsTask(
-	uploader string, results, screenshots []string, extraParams map[string]string) (string, error) {
+	uploader string, results, screenshots []string, archives []string, extraParams map[string]string) (string, error) {
 	key, err := a.store.ReserveID("TestRun")
 	if err != nil {
 		return "", err
@@ -215,6 +220,7 @@ func (a apiImpl) ScheduleResultsTask(
 	payload := url.Values{
 		"results":     results,
 		"screenshots": screenshots,
+		"archives":    archives,
 	}
 	payload.Set("id", fmt.Sprint(key.IntID()))
 	payload.Set("uploader", uploader)

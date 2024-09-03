@@ -37,6 +37,7 @@ const DisplayNames = (() => {
   // Sources
   m.set('azure', 'Azure Pipelines');
   m.set('buildbot', 'Buildbot');
+  m.set('github-actions', 'GitHub Actions');
   m.set('msedge', 'MS Edge');
   m.set('taskcluster', 'Taskcluster');
   return m;
@@ -64,7 +65,7 @@ const DefaultProducts = DefaultProductSpecs.map(p => Object.freeze(parseProductS
 
 const CommitTypes = new Set(['pr_head', 'master']);
 const Channels = new Set(['stable', 'beta', 'experimental']);
-const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure']);
+const Sources = new Set(['buildbot', 'taskcluster', 'msedge', 'azure', 'github-actions']);
 const Platforms = new Set(['linux', 'win', 'mac', 'ios', 'android']);
 const SemanticLabels = [
   { property: '_channel', values: Channels },
