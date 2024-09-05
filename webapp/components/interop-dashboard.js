@@ -287,7 +287,7 @@ class InteropDashboard extends PolymerElement {
         }
 
       </style>
-      <a href="https://example.com" target="_blank">
+      <a href="https://github.com/web-platform-tests/interop/blob/main/2025/README.md" target="_blank">
         <div class="interop-2025-banner">
           <p>
             🚀 Submit a proposal for Interop 2025! 🚀
