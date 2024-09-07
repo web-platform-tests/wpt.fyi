@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "make build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
+            "label": "Webdriver Single Chrome Test",
+            "type": "shell",
+            "command": "go test -v -timeout=15m -tags=large ./webdriver -run ${input:testName} -args -firefox_path=/usr/bin/firefox -geckodriver_path=$GECKODRIVER_PATH -chrome_path=/usr/bin/google-chrome -chromedriver_path=/usr/bin/chromedriver -frame_buffer=false -staging=false -browser=chrome",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
+            "label": "Webdriver Chrome Tests",
+            "type": "shell",
+            "command": "go test -v -timeout=15m -tags=large ./webdriver -args -firefox_path=/usr/bin/firefox -geckodriver_path=$GECKODRIVER_PATH -chrome_path=/usr/bin/google-chrome -chromedriver_path=/usr/bin/chromedriver -frame_buffer=false -staging=false -browser=chrome",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$go"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+        "id": "testName",
+        "type": "promptString",
+        "description": "Enter the test function name"
+        }
+    ]
+}

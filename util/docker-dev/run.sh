@@ -60,7 +60,7 @@ docker inspect "${DOCKER_INSTANCE}" | grep '"Running": true' | read
 RUNNING_STATUS="${?}"
 
 function quit() {
-  warn "run.sh: Recieved interrupt. Exiting..."
+  warn "run.sh: Received interrupt. Exiting..."
   stop
   exit 0
 }
