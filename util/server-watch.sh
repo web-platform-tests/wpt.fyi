@@ -30,7 +30,7 @@ else
   exit 0
 fi
 
-# node_modules is already served live by packr;
+# node_modules is already served live by embed;
 # components is served by nicehttp from disk.
 while inotifywait -q -e modify -r . @.git @results-processor @webapp/node_modules @webapp/components; do
   # It's fine if the server has already died.
