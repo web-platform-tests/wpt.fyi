@@ -103,7 +103,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-go_cloud_test: gcloud_login
+go_cloud_test: go_build gcloud_login
 	gcloud config set project wptdashboard-staging; \
 	if [[ -f "$(WPTD_PATH)client-secret.json" ]]; then \
 		echo "Running with client-secret.json credentials instead of possible system credentials. This should happen for CI runs."; \
