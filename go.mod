@@ -11,6 +11,7 @@ require (
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13
 	github.com/gobuffalo/packr/v2 v2.8.3
+	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gomodule/redigo v1.9.2
 	github.com/google/go-github/v47 v47.1.0
@@ -27,7 +28,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.4.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.194.0
 	google.golang.org/genproto v0.0.0-20240822170219-fc7c04adadcd
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142
@@ -53,7 +54,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gobuffalo/logger v1.0.7 // indirect
 	github.com/gobuffalo/packd v1.0.2 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
