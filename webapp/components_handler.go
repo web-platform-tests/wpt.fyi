@@ -27,7 +27,7 @@ var (
 // npm package loads in the js file with paths on the host.
 func componentsHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := mux.Vars(r)["path"]
-	body, err := nodeModules.ReadFile(filePath)
+	body, err := nodeModules.ReadFile("node_modules/" + filePath)
 	if err != nil || body == nil {
 		http.Error(w, fmt.Sprintf("Component %s not found", filePath), http.StatusNotFound)
 		return
