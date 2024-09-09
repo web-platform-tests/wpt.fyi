@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Web server",
+            "type": "go",
+            "request": "attach",
+            "port": 12345,
+            "host": "localhost",
+            "mode": "remote",
+            "debugAdapter": "dlv-dap",
+            "dlvFlags": ["--check-go-version=false"],
+            "substitutePath": [
+                {
+                    "from": "${workspaceFolder}", "to": "/home/user/wpt.fyi"
+                }
+            ]
+        }
+    ]
+}

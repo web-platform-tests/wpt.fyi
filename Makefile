@@ -63,7 +63,8 @@ go_build: git mockgen packr2 github_action_go_setup
 go_build_dev:
 	@ # Disable packr to always serve local node modules and dynamic components.
 	@ # There's thus no need to prune node_modules.
-	go build -v -tags skippackr ./webapp/web
+	@ # Disable inlining and optimizations that can interfere with debugging.
+	go build -v -tags skippackr -gcflags=all="-N -l" ./webapp/web
 
 go_lint: golint go_test_tag_lint
 	golint -set_exit_status ./api/...

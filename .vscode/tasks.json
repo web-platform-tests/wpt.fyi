@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "make build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
+            "label": "Install WebDriver Deps",
+            "type": "shell",
+            "command": "make chrome && make chromedriver",
+        },
+        {
+            "label": "Webdriver Single Chrome Test",
+            "type": "shell",
+            "command": "go test -v -timeout=15m -tags=large ./webdriver -run ${input:testName} -args -chrome_path=/usr/bin/google-chrome -chromedriver_path=/usr/bin/chromedriver -frame_buffer=false -staging=false -browser=chrome",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "Install WebDriver Deps"
+            ],
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
+            "label": "Webdriver Chrome Tests",
+            "type": "shell",
+            "command": "go test -v -timeout=15m -tags=large ./webdriver -args -chrome_path=/usr/bin/google-chrome -chromedriver_path=/usr/bin/chromedriver -frame_buffer=false -staging=false -browser=chrome",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "Install WebDriver Deps"
+            ],
+            "problemMatcher": [
+                "$go"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+        "id": "testName",
+        "type": "promptString",
+        "description": "Enter the test function name"
+        }
+    ]
+}
