@@ -97,6 +97,7 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_GCD_PORT}:8001" \
+      -p "12345:12345" \
       --workdir "/home/user/wpt.fyi" \
       --name "${DOCKER_INSTANCE}" \
       ${DOCKER_IMAGE}

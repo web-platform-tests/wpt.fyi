@@ -22,7 +22,10 @@ source "${DOCKER_DIR}/../logging.sh"
 
 set -e
 
-wptd_exec make inotifywait
+if [[ ${DEBUG} != "true" ]];
+then
+  wptd_exec make inotifywait
+fi
 info "Building web server..."
 # Build the full go_build target to get node_modules.
 wptd_exec make go_build

@@ -25,7 +25,7 @@ else
   if [[ $(which dlv) == "" ]]; then \
     go install github.com/go-delve/delve/cmd/dlv@latest
   fi
-  info "Starting debugger on port 12345"
+  info "Starting debugger on port 12345, rebuilding on changes is disabled."
   dlv debug github.com/web-platform-tests/wpt.fyi/webapp/web --headless --listen=:12345 --output /tmp/web.debug
   exit 0
 fi
