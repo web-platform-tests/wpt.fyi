@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination mock_receiver/api_mock.go github.com/web-platform-tests/wpt.fyi/api/receiver API
+//go:generate mockgen -build_flags=--mod=mod -destination mock_receiver/api_mock.go github.com/web-platform-tests/wpt.fyi/api/receiver API
 
 package receiver
 

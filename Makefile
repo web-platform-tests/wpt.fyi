@@ -50,9 +50,9 @@ github_action_go_setup:
 	else \
 		echo "Did not detect github workspace. Skipping." ; \
 	fi
-# NOTE: We prune before generate, because node_modules are packr'd into the
+# NOTE: We prune before generate, because node_modules are embedded into the
 # binary (and part of the build).
-go_build: git mockgen packr2 github_action_go_setup
+go_build: git mockgen github_action_go_setup
 	make webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
@@ -103,7 +103,7 @@ go_firefox_test: firefox geckodriver
 go_chrome_test: chrome chromedriver
 	make _go_webdriver_test BROWSER=chrome
 
-go_cloud_test: gcloud_login
+go_cloud_test: go_build gcloud_login
 	gcloud config set project wptdashboard-staging; \
 	if [[ -f "$(WPTD_PATH)client-secret.json" ]]; then \
 		echo "Running with client-secret.json credentials instead of possible system credentials. This should happen for CI runs."; \
@@ -199,11 +199,6 @@ mockgen: git
 		go install go.uber.org/mock/mockgen; \
 	fi
 
-packr2: git
-	if [ "$$(which packr2)" == "" ]; then \
-		go install github.com/gobuffalo/packr/v2/packr2; \
-	fi
-
 package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
@@ -242,7 +237,7 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install -qqy --no-install-suggests openjdk-8-jdk; \
+		sudo apt-get install -qqy --no-install-suggests openjdk-11-jdk; \
 	fi
 
 gpg:
