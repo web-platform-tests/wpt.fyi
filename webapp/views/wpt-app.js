@@ -93,7 +93,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <wpt-header path="[[encodedPath]]" query="[[query]]" user="[[user]]" is-triage-mode="[[isTriageMode]]"></wpt-header>
 
-      <a href="https://example.com" target="_blank">
+      <!-- TODO(DanielRyanSmith): Remove this banner after the Interop 2025 submission period -->
+      <a href="https://github.com/web-platform-tests/interop/blob/main/2025/README.md" target="_blank">
         <div class="interop-2025-banner">
           <p>
             🚀 Submit a proposal for Interop 2025! 🚀
