@@ -8,6 +8,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	"github.com/web-platform-tests/wpt.fyi/api/ghactions"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
@@ -21,6 +22,7 @@ func init() {
 	api.RegisterRoutes()
 	azure.RegisterRoutes()
 	checks.RegisterRoutes()
+	ghactions.RegisterRoutes()
 	query.RegisterRoutes()
 	receiver.RegisterRoutes()
 	screenshot.RegisterRoutes()
