@@ -12,5 +12,5 @@ func RegisterRoutes() {
 	// the results of a GitHub Actions workflow run.
 	// The endpoint is insecure, because we'll only try to fetch (specifically) a
 	// web-platform-tests/wpt build with the given ID.
-	shared.AddRoute("/api/checks/github-actions/", "github-actions-notify", notifyHandler).Methods("POST")
+	shared.AddRoute("/api/github-actions/", "github-actions-notify", notifyHandler).Methods("POST")
 }
