@@ -4,7 +4,7 @@
 
 package summaries
 
-import "github.com/google/go-github/v47/github"
+import "github.com/google/go-github/v65/github"
 
 // RecomputeAction is an action that can be taken to
 // trigger a recompute of the diff, against the latest
