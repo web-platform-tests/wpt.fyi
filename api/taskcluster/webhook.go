@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination mock_taskcluster/webhook_mock.go github.com/web-platform-tests/wpt.fyi/api/taskcluster API
+//go:generate mockgen -build_flags=--mod=mod -destination mock_taskcluster/webhook_mock.go github.com/web-platform-tests/wpt.fyi/api/taskcluster API
 
 package taskcluster
 
@@ -17,9 +17,9 @@ import (
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v65/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/v44/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v67/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -618,7 +618,7 @@ func CreateAllRuns(
 			}
 
 			uploadClient := uc.NewClient(aeAPI)
-			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, labelsForRun)
+			err := uploadClient.CreateRun(sha, username, password, urls.Results, urls.Screenshots, nil, labelsForRun)
 			if err != nil {
 				errors <- err
 

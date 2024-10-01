@@ -29,6 +29,7 @@ type Client interface {
 		password string,
 		resultURLs []string,
 		screenshotURLs []string,
+		archiveURLs []string,
 		labels []string) error
 }
 
@@ -51,6 +52,7 @@ func (c client) CreateRun(
 	password string,
 	resultURLs []string,
 	screenshotURLs []string,
+	archiveURLs []string,
 	labels []string) error {
 	// https://github.com/web-platform-tests/wpt.fyi/blob/main/api/README.md#url-payload
 	payload := make(url.Values)
@@ -64,6 +66,9 @@ func (c client) CreateRun(
 	}
 	for _, url := range screenshotURLs {
 		payload.Add("screenshot_url", url)
+	}
+	for _, url := range archiveURLs {
+		payload.Add("archive_url", url)
 	}
 	if labels != nil {
 		payload.Add("labels", strings.Join(labels, ","))

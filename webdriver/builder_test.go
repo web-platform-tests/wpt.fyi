@@ -1,3 +1,4 @@
+//go:build large
 // +build large
 
 // Copyright 2019 The WPT Dashboard Project. All rights reserved.
@@ -42,7 +43,7 @@ func TestQueryBuilder_MasterCheckedForMasterLabelQuery(t *testing.T) {
 		}
 
 		// Expand the builder
-		wd.ExecuteScript("arguments[0].editingQuery = true", []interface{}{e})
+		_, err = wd.ExecuteScript("arguments[0].editingQuery = true", []interface{}{e})
 		if err != nil {
 			assert.FailNow(t, fmt.Sprintf("Failed to expand builder: %s", err.Error()))
 		}

@@ -60,7 +60,7 @@ docker inspect "${DOCKER_INSTANCE}" | grep '"Running": true' | read
 RUNNING_STATUS="${?}"
 
 function quit() {
-  warn "run.sh: Recieved interrupt. Exiting..."
+  warn "run.sh: Received interrupt. Exiting..."
   stop
   exit 0
 }
@@ -97,6 +97,7 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
       --cap-add=SYS_ADMIN \
       -p "${WPTD_HOST_WEB_PORT}:8080" \
       -p "${WPTD_HOST_GCD_PORT}:8001" \
+      -p "12345:12345" \
       --workdir "/home/user/wpt.fyi" \
       --name "${DOCKER_INSTANCE}" \
       ${DOCKER_IMAGE}

@@ -54,6 +54,7 @@ func TestCreateRun(t *testing.T) {
 		"password",
 		[]string{"https://wpt.fyi/results.json.gz"},
 		[]string{"https://wpt.fyi/screenshots.db.gz"},
+		nil,
 		[]string{"foo", "bar"},
 	))
 	assert.True(t, visited)

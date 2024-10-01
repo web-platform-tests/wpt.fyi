@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination mock_checks/api_mock.go github.com/web-platform-tests/wpt.fyi/api/checks API
+//go:generate mockgen -build_flags=--mod=mod -destination mock_checks/api_mock.go github.com/web-platform-tests/wpt.fyi/api/checks API
 
 package checks
 
@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v65/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )

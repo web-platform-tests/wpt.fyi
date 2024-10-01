@@ -2,33 +2,27 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate packr2
-
 package webapp
 
 import (
+	"embed"
 	"html/template"
 	"net/http"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // templates contains all of the template objects parsed from templates/*,
 // created once at startup. Use RenderTemplate to render responses.
 var templates *template.Template
+//go:embed templates/*.html
+var htmlTemplates embed.FS
 
 func init() {
-	box := packr.New("html templates", "./templates/")
 	templates = template.New("all.html")
-	for _, t := range box.List() {
-		tmpl := templates.New(t)
-		body, err := box.FindString(t)
-		if err != nil {
-			panic(err)
-		} else if _, err = tmpl.Parse(body); err != nil {
-			panic(err)
-		}
+	_, err := templates.ParseFS(htmlTemplates, "templates/*.html")
+	if err != nil {
+		panic(err)
 	}
 }
 

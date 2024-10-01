@@ -11,12 +11,12 @@ import (
 	"strings"
 	"testing"
 
-	"go.uber.org/mock/gomock"
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v65/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
+	"go.uber.org/mock/gomock"
 )
 
 func TestHandleCheckRunEvent_InvalidApp(t *testing.T) {

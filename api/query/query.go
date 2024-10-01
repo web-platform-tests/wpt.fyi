@@ -99,7 +99,7 @@ func (qh queryHandler) getRunsAndFilters(in shared.QueryFilter) (shared.TestRuns
 	var testRuns shared.TestRuns
 	var err error
 
-	if filters.RunIDs == nil || len(filters.RunIDs) == 0 {
+	if len(filters.RunIDs) == 0 {
 		var runFilters shared.TestRunFilter
 		var sha string
 		var err error

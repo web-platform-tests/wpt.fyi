@@ -119,12 +119,28 @@ Then, in another tab, we need to get the instance id of the container, exec
 'bash' inside of it, and run our test:
 
 ```
-docker container ls
-[ note the CONTAINER ID ]
-docker exec -it $CONTAINER_ID bash
+source util/commands.sh
+wptd_exec_it bash
 user@abce84dd426d:~/wpt.fyi$
 [now you can run 'make go_chrome_test', or 'go test ...' directly, etc]
 ```
 
 Note that this maps the host machine's wpt.fyi checkout into docker, so any
 code edits you make on the host are reflected in the container and vice-versa.
+
+### Debugging in docker
+
+You can use VSCode to debug the web server running in Docker. To do so, first
+start the docker container in one tab:
+```sh
+./util/docker-dev/run.sh
+```
+
+Then, in another tab, start the web server with the `-d` flag:
+```sh
+./util/docker-dev/web_server.sh -d
+```
+
+Afterwards, you can go to VSCode in the Run and Debug tab and click the play button
+next to the Web server launch configuration. You can then set breakpoints, inspect
+variables, pause and resume execution as usual.

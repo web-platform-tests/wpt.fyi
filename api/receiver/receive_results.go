@@ -63,7 +63,8 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 	}
 
 	log := shared.GetLogger(a.Context())
-	var results, screenshots []string
+	var results, screenshots, archives []string
+	// nolint:nestif // TODO: Fix nestif lint error
 	if f := r.MultipartForm; f != nil && f.File != nil && len(f.File["result_file"]) > 0 {
 		// result_file[] payload
 		files := f.File["result_file"]
@@ -81,12 +82,16 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		// Special Azure case for result_url payload
 		azureURL := r.PostForm.Get("result_url")
 		log.Debugf("Found Azure URL: %s", azureURL)
-		extraParams["azure_url"] = azureURL
+		archives = []string{azureURL}
 	} else if len(r.PostForm["result_url"]) > 0 {
 		// General result_url[] payload
 		results = r.PostForm["result_url"]
 		screenshots = r.PostForm["screenshot_url"]
 		log.Debugf("Found %d result URLs, %d screenshot URLs", results, screenshots)
+	} else if len(r.PostForm["archive_url"]) > 0 {
+		// General archive_url[] payload
+		archives = r.PostForm["archive_url"]
+		log.Debugf("Found %d archive URLs", archives)
 	} else {
 		log.Errorf("No results found")
 		http.Error(w, "No results found", http.StatusBadRequest)
@@ -94,7 +99,7 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := a.ScheduleResultsTask(uploader, results, screenshots, extraParams)
+	t, err := a.ScheduleResultsTask(uploader, results, screenshots, archives, extraParams)
 	if err != nil {
 		log.Errorf("Failed to schedule task: %v", err)
 		http.Error(w, "Failed to schedule task", http.StatusInternalServerError)

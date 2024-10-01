@@ -19,7 +19,7 @@ The tooling image and the first stage of searchcache use the same Golang image. 
 
 ## Step 3 - Change the version in go.mod
 
-There is a line with the Golang version in the [go.mod](../go.mod) file. Change it to the latest major and minor version.
+There is a line with the Golang version in the [go.mod](../go.mod) file. Change it to the latest major, minor and patch version.
 
 ## Step 4 - Run go mod tidy
 

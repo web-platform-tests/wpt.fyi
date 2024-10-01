@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -destination sharedtest/appengine_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared AppEngineAPI
+//go:generate mockgen -build_flags=--mod=mod -destination sharedtest/appengine_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared AppEngineAPI
 
 package shared
 
@@ -21,7 +21,7 @@ import (
 	gclog "cloud.google.com/go/logging"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/gomodule/redigo/redis"
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v65/github"
 	apps "google.golang.org/api/appengine/v1"
 	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"

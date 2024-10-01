@@ -19,14 +19,14 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/mock/gomock"
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v65/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	mock_tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster/mock_taskcluster"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
+	"go.uber.org/mock/gomock"
 )
 
 type branchInfos []*github.Branch

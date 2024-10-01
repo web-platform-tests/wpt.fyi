@@ -8,6 +8,7 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/api"
 	"github.com/web-platform-tests/wpt.fyi/api/azure"
 	"github.com/web-platform-tests/wpt.fyi/api/checks"
+	"github.com/web-platform-tests/wpt.fyi/api/ghactions"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/api/receiver"
 	"github.com/web-platform-tests/wpt.fyi/api/screenshot"
@@ -17,14 +18,24 @@ import (
 )
 
 func init() {
-	// webapp.RegisterRoutes has a catch-all, so needs to go last.
-	api.RegisterRoutes()
+	// API routes:
+
+	// /api/checks/ routes:
 	azure.RegisterRoutes()
+	ghactions.RegisterRoutes()
+	// checks.RegisterRoutes has a catch-all for /api/checks/, so needs to go last.
 	checks.RegisterRoutes()
+
+	// The rest of /api/:
+	api.RegisterRoutes()
 	query.RegisterRoutes()
 	receiver.RegisterRoutes()
 	screenshot.RegisterRoutes()
 	taskcluster.RegisterRoutes()
+
+	// The actual Web App:
+
+	// webapp.RegisterRoutes has a catch-all, so needs to go last.
 	webapp.RegisterRoutes()
 }
 
