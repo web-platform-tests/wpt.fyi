@@ -11,7 +11,7 @@ import tempfile
 import time
 import traceback
 import zipfile
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 import requests
 from google.cloud import datastore
@@ -28,6 +28,9 @@ class Processor(object):
     USERNAME = '_processor'
     # Timeout waiting for remote HTTP servers to respond
     TIMEOUT_WAIT = 10
+    # GitHub API metadata
+    GITHUB_API_VERSION = '2022-11-28'
+    GITHUB_API_HOSTNAME = 'api.github.com'
 
     def __init__(self):
         # Delay creating Datastore.client so that tests don't need creds.
@@ -112,6 +115,15 @@ class Processor(object):
                 return e
         return None
 
+    def _secret(self, token_name):
+        _log.info('Reading secret: %s', token_name)
+        key = self.datastore.key('Token', token_name)
+        return self.datastore.get(key)['secret']
+
+    @property
+    def _github_token(self):
+        return self._secret('github-wpt-fyi-bot-token')
+
     def _download_gcs(self, gcs):
         assert gcs.startswith('gs://')
         ext = self.known_extension(gcs)
@@ -123,15 +135,31 @@ class Processor(object):
 
     def _download_http(self, url):
         assert url.startswith('http://') or url.startswith('https://')
-        _log.debug("Downloading %s", url)
+        _log.debug('Downloading %s', url)
+        extra_headers = None
+        if urlsplit(url).hostname == self.GITHUB_API_HOSTNAME:
+            extra_headers = {
+                'Authorization': 'Bearer ' + self._github_token,
+                'X-GitHub-Api-Version': self.GITHUB_API_VERSION,
+            }
         try:
-            r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+            r = requests.get(
+                url,
+                headers=extra_headers,
+                stream=True,
+                timeout=self.TIMEOUT_WAIT,
+            )
             r.raise_for_status()
         except requests.RequestException:
             # Sleep 1 second and retry.
             time.sleep(1)
             try:
-                r = requests.get(url, stream=True, timeout=self.TIMEOUT_WAIT)
+                r = requests.get(
+                    url,
+                    headers=extra_headers,
+                    stream=True,
+                    timeout=self.TIMEOUT_WAIT,
+                )
                 r.raise_for_status()
             except requests.Timeout:
                 _log.error("Timed out fetching: %s", url)
