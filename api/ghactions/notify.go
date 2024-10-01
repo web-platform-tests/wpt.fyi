@@ -124,12 +124,12 @@ func processBuild(
 		for _, artifact := range artifacts.Artifacts {
 
 			if !artifactNameGlob.Match(*artifact.Name) {
-				log.Infof("Skipping artifact %s", artifact.Name)
+				log.Infof("Skipping artifact %s", *artifact.Name)
 
 				continue
 			}
 
-			log.Infof("Adding %s for %s/%s run %v to upload...", artifact.Name, owner, repo, runID)
+			log.Infof("Adding %s for %s/%s run %v to upload...", *artifact.Name, owner, repo, runID)
 
 			// Set the labels based on the first artifact we find.
 			if len(archiveURLs) == 0 {
