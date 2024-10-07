@@ -81,6 +81,10 @@ class InteropDashboard extends PolymerElement {
           grid-area: bottom-desc;
         }
 
+        .text-center {
+          text-align: center;
+        }
+
         .channel-area {
           display: flex;
           max-width: fit-content;
@@ -224,10 +228,6 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
-        .interop-years {
-          text-align: center;
-        }
-
         .interop-year-text {
           display: inline-block;
           padding: 0 5px;
@@ -297,6 +297,9 @@ class InteropDashboard extends PolymerElement {
       <div class="grid-container">
         <div class="grid-item grid-item-header">
           <h1>[[dashboardTitle]]</h1>
+          <div class="text-center" hidden$="[[!isMobileScoresView]]">
+            <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
+          </div>
           <div class="channel-area" hidden$="[[isMobileScoresView]]">
             <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
             <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
@@ -520,7 +523,7 @@ class InteropDashboard extends PolymerElement {
         </div>
       </div>
       <footer class="compat-footer">
-        <div class="interop-years">
+        <div class="text-center">
           <div class="interop-year-text">
             <p>View by year: </p>
           </div>
