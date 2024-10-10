@@ -36,18 +36,15 @@ class InteropDashboard extends PolymerElement {
           text-align: center;
         }
 
-        .interop-2025-banner {
+        .previous-year-banner {
           height: 40px;
           background-color: #DEF;
           text-align: center;
           padding-top: 16px;
-          border: 2px solid #1D79F2;
-          border-radius: 8px;
         }
 
-        .interop-2025-banner p {
+        .previous-year-banner p {
           margin: 0;
-          font-size: 18px;
         }
 
         .grid-container {
@@ -287,14 +284,12 @@ class InteropDashboard extends PolymerElement {
         }
 
       </style>
-      <a href="https://github.com/web-platform-tests/interop/blob/main/2025/README.md" target="_blank">
-        <div class="interop-2025-banner">
-          <p>
-            🚀 Submit a proposal for Interop 2025! 🚀
-          </p>
-        </div>
-      </a>
-
+      <div class="previous-year-banner" hidden$=[[isCurrentYear]]>
+        <p>
+          You are viewing Interop data from a previous year.
+          <a href="/interop-[[currentInteropYear]]">View the current Interop Dashboard</a>.
+        </p>
+      </div>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
           <h1>Interop [[year]] Dashboard</h1>
