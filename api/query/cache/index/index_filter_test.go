@@ -12,11 +12,11 @@ import (
 	"testing"
 
 	mapset "github.com/deckarep/golang-set"
-	"go.uber.org/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	metrics "github.com/web-platform-tests/wpt.fyi/shared/metrics"
+	"go.uber.org/mock/gomock"
 )
 
 const testNumShards = 16
@@ -1030,11 +1030,19 @@ func TestBindExecute_IsTentative(t *testing.T) {
 			&metrics.TestResultsReport{
 				Results: []*metrics.TestResults{
 					{
-						Test:   "/a/b/c",
+						Test:   "/a/b/c.html",
 						Status: "PASS",
 					},
 					{
 						Test:   "/a/b/c.tentative.html",
+						Status: "PASS",
+					},
+					{
+						Test:   "/a/b/tentative/c.html",
+						Status: "PASS",
+					},
+					{
+						Test:   "/a/b/tentative/c.tentative.html",
 						Status: "PASS",
 					},
 				},
@@ -1050,20 +1058,42 @@ func TestBindExecute_IsTentative(t *testing.T) {
 	srs, ok := res.([]shared.SearchResult)
 	assert.True(t, ok)
 
-	assert.Equal(t, 1, len(srs))
-	expectedResult := shared.SearchResult{
-		Test: "/a/b/c.tentative.html",
-		LegacyStatus: []shared.LegacySearchRunResult{
-			{
-				Passes:        1,
-				Total:         1,
-				Status:        "",
-				NewAggProcess: true,
+	assert.Equal(t, 3, len(srs))
+	assert.Equal(t, resultSet(t, []shared.SearchResult{
+		{
+			Test: "/a/b/c.tentative.html",
+			LegacyStatus: []shared.LegacySearchRunResult{
+				{
+					Passes:        1,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
+				},
 			},
 		},
-	}
-
-	assert.Equal(t, expectedResult, srs[0])
+		{
+			Test: "/a/b/tentative/c.html",
+			LegacyStatus: []shared.LegacySearchRunResult{
+				{
+					Passes:        1,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
+				},
+			},
+		},
+		{
+			Test: "/a/b/tentative/c.tentative.html",
+			LegacyStatus: []shared.LegacySearchRunResult{
+				{
+					Passes:        1,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
+				},
+			},
+		},
+	}), resultSet(t, srs))
 }
 
 func TestBindExecute_IsOptional(t *testing.T) {

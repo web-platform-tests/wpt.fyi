@@ -385,7 +385,7 @@ func (q MetadataQuality) Filter(t TestID) bool {
 			return false
 		}
 
-		return strings.Contains(name, ".tentative.")
+		return strings.Contains(name, ".tentative.") || strings.Contains(name, "/tentative/")
 	case query.MetadataQualityOptional:
 		// is:optional only returns rows from tests with .optional.
 		// in their name. See
