@@ -229,7 +229,7 @@ gcc: apt-get-gcc
 git: apt-get-git
 jq: apt-get-jq
 psmisc: apt-get-psmisc
-python3: apt-get-python3.11
+python3: apt-get-python3.9
 tox: apt-get-tox
 unzip: apt-get-unzip
 wget: apt-get-wget
@@ -237,7 +237,7 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install -qqy --no-install-suggests openjdk-17-jdk; \
+		sudo apt-get install -qqy --no-install-suggests openjdk-11-jdk; \
 	fi
 
 gpg:
