@@ -1,4 +1,4 @@
-FROM python:3.9.20-bullseye
+FROM python:3.11.9-bookworm
 
 # Install runtime dependencies.
 # python3-crcmod for faster gsutil checksum
@@ -17,7 +17,7 @@ RUN gcloud config set disable_usage_reporting false
 RUN rm -f $HOME/.config/gcloud/gce
 
 # Setup and activate virtualenv.
-RUN virtualenv -p python3.9 /env
+RUN virtualenv -p python3.11 /env
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
