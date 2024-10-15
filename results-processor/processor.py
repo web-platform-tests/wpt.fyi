@@ -2,9 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import fnmatch
 import logging
 import os
-import re
+import posixpath
 import shutil
 import sys
 import tempfile
@@ -187,13 +188,14 @@ class Processor(object):
             return
         with zipfile.ZipFile(artifact, mode='r') as z:
             for f in z.infolist():
-                # ZipInfo.is_dir isn't available in Python 3.5.
-                if f.filename.endswith('/'):
+                if f.is_dir():
                     continue
-                path = z.extract(f, path=self._temp_dir)
-                if re.match(r'^.*/wpt_report.*\.json$', f.filename):
+                basename = posixpath.basename(f.filename)
+                if fnmatch.fnmatchcase(basename, 'wpt_report*.json'):
+                    path = z.extract(f, path=self._temp_dir)
                     self.results.append(path)
-                if re.match(r'^.*/wpt_screenshot.*\.txt$', f.filename):
+                elif fnmatch.fnmatchcase(basename, 'wpt_screenshot*.txt'):
+                    path = z.extract(f, path=self._temp_dir)
                     self.screenshots.append(path)
 
     def download(self, results, screenshots, archives):
