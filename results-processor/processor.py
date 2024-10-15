@@ -118,7 +118,7 @@ class Processor(object):
     def _secret(self, token_name):
         _log.info('Reading secret: %s', token_name)
         key = self.datastore.key('Token', token_name)
-        return self.datastore.get(key)['secret']
+        return self.datastore.get(key)['Secret']
 
     @property
     def _github_token(self):
