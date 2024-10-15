@@ -11,10 +11,14 @@ import tempfile
 import time
 import traceback
 import zipfile
+from types import TracebackType
+from typing import Callable, List, Optional, Tuple, Type
 from urllib.parse import urlparse, urlsplit
 
 import requests
 from google.cloud import datastore
+from typing_extensions import Self
+from werkzeug.datastructures.structures import MultiDict
 
 import config
 import gsutil
@@ -32,39 +36,44 @@ class Processor(object):
     GITHUB_API_VERSION = '2022-11-28'
     GITHUB_API_HOSTNAME = 'api.github.com'
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Delay creating Datastore.client so that tests don't need creds.
-        self._datastore = None
-        self._auth = None
+        self._datastore: Optional[datastore.Client] = None
+        self._auth: Optional[Tuple[str, str]] = None
         # Temporary directories to be created in __enter__:
         self._temp_dir = '/tempdir/for/raw/results/screenshots'
         self._upload_dir = '/tempdir/for/split/results'
 
         # Local paths to downloaded results and screenshots:
-        self.results = []
-        self.screenshots = []
+        self.results: List[str] = []
+        self.screenshots: List[str] = []
         # To be loaded/initialized later:
         self.report = wptreport.WPTReport()
         self.test_run_id = 0
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self._temp_dir = tempfile.mkdtemp()
         self._upload_dir = tempfile.mkdtemp()
         return self
 
-    def __exit__(self, *args):
+    def __exit__(
+        self,
+        t: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         shutil.rmtree(self._temp_dir)
         shutil.rmtree(self._upload_dir)
 
     @property
-    def datastore(self):
+    def datastore(self) -> datastore.Client:
         """An authenticated Datastore client."""
         if self._datastore is None:
             self._datastore = datastore.Client()
         return self._datastore
 
     @property
-    def auth(self):
+    def auth(self) -> Tuple[str, str]:
         """A (username, password) tuple."""
         if self._auth is None:
             user = self.datastore.get(
@@ -73,24 +82,24 @@ class Processor(object):
         return self._auth
 
     @property
-    def raw_results_gs_url(self):
+    def raw_results_gs_url(self) -> str:
         return 'gs://{}/{}/report.json'.format(
             config.raw_results_bucket(), self.report.sha_product_path)
 
     @property
-    def raw_results_url(self):
+    def raw_results_url(self) -> str:
         return gsutil.gs_to_public_url(self.raw_results_gs_url)
 
     @property
-    def results_gs_url(self):
+    def results_gs_url(self) -> str:
         return 'gs://{}/{}'.format(
             config.results_bucket(), self.report.sha_summary_path)
 
     @property
-    def results_url(self):
+    def results_url(self) -> str:
         return gsutil.gs_to_public_url(self.results_gs_url)
 
-    def check_existing_run(self):
+    def check_existing_run(self) -> bool:
         """Returns true if an existing run already has raw_results_url.
 
         This is used to abort early if the result already exists in Datastore.
@@ -107,7 +116,7 @@ class Processor(object):
         return len(run) > 0
 
     @staticmethod
-    def known_extension(path):
+    def known_extension(path: str) -> Optional[str]:
         """Returns the extension of the path if known, otherwise None."""
         EXT = ('.json.gz', '.txt.gz', '.gz', '.zip', '.json', '.txt')
         for e in EXT:
@@ -115,16 +124,18 @@ class Processor(object):
                 return e
         return None
 
-    def _secret(self, token_name):
+    def _secret(self, token_name: str) -> str:
         _log.info('Reading secret: %s', token_name)
         key = self.datastore.key('Token', token_name)
-        return self.datastore.get(key)['Secret']
+        secret = self.datastore.get(key)['Secret']
+        assert isinstance(secret, str)
+        return secret
 
     @property
-    def _github_token(self):
+    def _github_token(self) -> str:
         return self._secret('github-wpt-fyi-bot-token')
 
-    def _download_gcs(self, gcs):
+    def _download_gcs(self, gcs: str) -> str:
         assert gcs.startswith('gs://')
         ext = self.known_extension(gcs)
         fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
@@ -133,7 +144,7 @@ class Processor(object):
         gsutil.copy(gcs, path)
         return path
 
-    def _download_http(self, url):
+    def _download_http(self, url: str) -> Optional[str]:
         assert url.startswith('http://') or url.startswith('https://')
         _log.debug('Downloading %s', url)
         extra_headers = None
@@ -176,12 +187,12 @@ class Processor(object):
         # Closing f will automatically close the underlying fd.
         return path
 
-    def _download_single(self, uri):
+    def _download_single(self, uri: str) -> Optional[str]:
         if uri.startswith('gs://'):
             return self._download_gcs(uri)
         return self._download_http(uri)
 
-    def _download_archive(self, archive_url):
+    def _download_archive(self, archive_url: str) -> None:
         artifact = self._download_http(archive_url)
         if artifact is None:
             return
@@ -196,7 +207,9 @@ class Processor(object):
                 if re.match(r'^.*/wpt_screenshot.*\.txt$', f.filename):
                     self.screenshots.append(path)
 
-    def download(self, results, screenshots, archives):
+    def download(
+        self, results: List[str], screenshots: List[str], archives: List[str]
+    ) -> None:
         """Downloads all necessary inputs.
 
         Args:
@@ -217,19 +230,19 @@ class Processor(object):
             p for p in (self._download_single(i) for i in screenshots)
             if p is not None]
 
-    def load_report(self):
+    def load_report(self) -> None:
         """Loads and merges all downloaded results."""
         for r in self.results:
             self.report.load_file(r)
 
-    def upload_raw(self):
+    def upload_raw(self) -> None:
         """Uploads the merged raw JSON report to GCS."""
         with tempfile.NamedTemporaryFile(
                 suffix='.json.gz', dir=self._temp_dir) as temp:
             self.report.serialize_gzip(temp.name)
             gsutil.copy(temp.name, self.raw_results_gs_url, gzipped=True)
 
-    def upload_split(self):
+    def upload_split(self) -> None:
         """Uploads the individual results recursively to GCS."""
         self.report.populate_upload_directory(output_dir=self._upload_dir)
 
@@ -253,7 +266,13 @@ class Processor(object):
                 self.results_gs_url[:self.results_gs_url.rfind('/')],
                 gzipped=True)
 
-    def create_run(self, run_id, labels, uploader, callback_url=None):
+    def create_run(
+        self,
+        run_id: str,
+        labels: str,
+        uploader: str,
+        callback_url: Optional[str] = None,
+    ) -> None:
         """Creates a TestRun record.
 
         Args:
@@ -273,7 +292,13 @@ class Processor(object):
             callback_url)
         assert self.test_run_id
 
-    def update_status(self, run_id, stage, error=None, callback_url=None):
+    def update_status(
+        self,
+        run_id: str,
+        stage: str,
+        error: Optional[str] = None,
+        callback_url: Optional[str] = None,
+    ) -> None:
         assert stage, "stage cannot be empty"
         if int(run_id) == 0:
             _log.error('Cannot update run status: missing run_id')
@@ -305,7 +330,7 @@ class Processor(object):
         except requests.RequestException as e:
             _log.error('Cannot update status for run %s: %s', run_id, str(e))
 
-    def run_hooks(self, tasks):
+    def run_hooks(self, tasks: List[Callable[[Self], None]]) -> None:
         """Runs post-new-run tasks.
 
         Args:
@@ -323,7 +348,7 @@ class Processor(object):
 # Tasks are supposed to be independent; exceptions are ignored (but logged).
 # Each task is a function that takes a Processor.
 
-def _upload_screenshots(processor):
+def _upload_screenshots(processor: Processor) -> None:
     for screenshot in processor.screenshots:
         with WPTScreenshot(screenshot, processor.report.run_info,
                            auth=processor.auth) as s:
@@ -332,7 +357,7 @@ def _upload_screenshots(processor):
 # ==== End of tasks ====
 
 
-def process_report(task_id, params):
+def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
     # Mandatory fields (will throw if key does not exist):
     uploader = params['uploader']
     # Repeatable fields
@@ -370,8 +395,9 @@ def process_report(task_id, params):
                 os_version=params.get('os_version'),
             )
             p.report.finalize()
-        except wptreport.WPTReportError:
-            etype, e, tb = sys.exc_info()
+        except wptreport.WPTReportError as e:
+            etype, e_, tb = sys.exc_info()
+            assert e is e_
             e.path = results
             # This will register an error in Stackdriver.
             traceback.print_exception(etype, e, tb)

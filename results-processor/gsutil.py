@@ -5,30 +5,34 @@
 import logging
 import re
 import subprocess
-
+from typing import List, Tuple
 
 _log = logging.getLogger(__name__)
 
 
-def _call(command):
+def _call(command: List[str]) -> None:
     _log.info('EXEC: %s', ' '.join(command))
     subprocess.check_call(command)
 
 
-def split_gcs_path(gcs_path):
+def split_gcs_path(gcs_path: str) -> Tuple[str, str]:
     """Splits /bucket/path into (bucket, path)."""
     match = re.match(r'/([^/]+)/(.*)', gcs_path)
     assert match
-    return match.groups()
+    g = match.groups()
+    assert len(g) == 2
+    return g
 
 
-def gs_to_public_url(gs_url):
+def gs_to_public_url(gs_url: str) -> str:
     """Converts a gs:// URI to a HTTP URL."""
     assert gs_url.startswith('gs://')
     return gs_url.replace('gs://', 'https://storage.googleapis.com/', 1)
 
 
-def copy(path1, path2, gzipped=False, quiet=True):
+def copy(
+    path1: str, path2: str, gzipped: bool = False, quiet: bool = True
+) -> None:
     """Copies path1 to path2 with gsutil cp.
 
     Args:

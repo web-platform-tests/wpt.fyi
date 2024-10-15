@@ -9,9 +9,11 @@ import logging
 import multiprocessing
 import os
 import time
-from typing import List, IO, Optional, Tuple, TypeVar
+from types import TracebackType
+from typing import IO, List, Optional, Tuple, Type
 
 import requests
+from typing_extensions import Self
 
 import config
 import wptreport
@@ -61,8 +63,6 @@ def _upload(images: List[str]) -> None:
 # End of worker functions
 ############################
 
-T = TypeVar('T', bound='WPTScreenshot')
-
 
 class WPTScreenshot(object):
     """A class to parse screenshots.db and upload screenshots.
@@ -75,7 +75,7 @@ class WPTScreenshot(object):
                  run_info: Optional[wptreport.RunInfo] = None,
                  api: Optional[str] = None,
                  auth: Optional[Tuple[str, str]] = None,
-                 processes: Optional[int] = None):
+                 processes: Optional[int] = None) -> None:
         """Creates a WPTScreenshot context manager.
 
         Usage:
@@ -103,7 +103,7 @@ class WPTScreenshot(object):
         self._f: Optional[IO[str]] = None
         self._pool: Optional[multiprocessing.pool.Pool] = None
 
-    def __enter__(self: T) -> T:
+    def __enter__(self) -> Self:
         """Starts and initializes all workers."""
         assert self._pool is None
         assert self._f is None
@@ -116,7 +116,12 @@ class WPTScreenshot(object):
             self._f = open(self._filename, 'rt', encoding='ascii')
         return self
 
-    def __exit__(self, *args):
+    def __exit__(
+        self,
+        t: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         """Waits for work to finish and frees all resources."""
         if self._pool is not None:
             self._pool.close()
@@ -124,7 +129,9 @@ class WPTScreenshot(object):
         if self._f is not None:
             self._f.close()
 
-    def process(self):
+    def process(self) -> None:
+        assert self._pool is not None
+        assert self._f is not None
         batch = []
         for line in self._f:
             line = line.rstrip()

@@ -5,12 +5,13 @@ import os
 import tempfile
 import time
 from http import HTTPStatus
+from typing import Any, Callable, TypeVar, cast
 
 import filelock
 import flask
+from flask.typing import ResponseReturnValue
 
 import processor
-
 
 # The file will be flock()'ed if a report is being processed.
 LOCK_FILE = '/tmp/results-processor.lock'
@@ -32,7 +33,7 @@ logging.getLogger('filelock').setLevel(logging.WARNING)
 app = flask.Flask(__name__)
 
 
-def _atomic_write(path, content):
+def _atomic_write(path: str, content: str) -> None:
     # Do not auto-delete the file because we will move it after closing it.
     temp = tempfile.NamedTemporaryFile(mode='wt', delete=False)
     temp.write(content)
@@ -41,12 +42,15 @@ def _atomic_write(path, content):
     os.replace(temp.name, path)
 
 
-def _serial_task(func):
+F = TypeVar('F', bound=Callable[..., Any])
+
+
+def _serial_task(func: F) -> F:
     lock = filelock.FileLock(LOCK_FILE)
 
     # It is important to use wraps() to preserve the original name & docstring.
     @functools.wraps(func)
-    def decorated_func(*args, **kwargs):
+    def decorated_func(*args: object, **kwargs: object) -> object:
         try:
             with lock.acquire(timeout=1):
                 return func(*args, **kwargs)
@@ -55,12 +59,12 @@ def _serial_task(func):
             return ('A result is currently being processed.',
                     HTTPStatus.SERVICE_UNAVAILABLE)
 
-    return decorated_func
+    return cast(F, decorated_func)
 
 
-def _internal_only(func):
+def _internal_only(func: F) -> F:
     @functools.wraps(func)
-    def decorated_func(*args, **kwargs):
+    def decorated_func(*args: object, **kwargs: object) -> object:
         if (not app.debug and
                 # This header cannot be set by external requests.
                 # https://cloud.google.com/tasks/docs/creating-appengine-handlers?hl=en#reading_app_engine_task_request_headers
@@ -68,11 +72,11 @@ def _internal_only(func):
             return ('External requests not allowed', HTTPStatus.FORBIDDEN)
         return func(*args, **kwargs)
 
-    return decorated_func
+    return cast(F, decorated_func)
 
 
 @app.route('/_ah/liveness_check')
-def liveness_check():
+def liveness_check() -> ResponseReturnValue:
     lock = filelock.FileLock(LOCK_FILE)
     try:
         lock.acquire(timeout=0.1)
@@ -91,7 +95,7 @@ def liveness_check():
 
 
 @app.route('/_ah/readiness_check')
-def readiness_check():
+def readiness_check() -> ResponseReturnValue:
     lock = filelock.FileLock(LOCK_FILE)
     try:
         lock.acquire(timeout=0.1)
@@ -106,7 +110,7 @@ def readiness_check():
 @app.route('/api/results/process', methods=['POST'])
 @_internal_only
 @_serial_task
-def task_handler():
+def task_handler() -> ResponseReturnValue:
     _atomic_write(TIMESTAMP_FILE, str(time.time()))
 
     task_id = flask.request.headers.get('X-AppEngine-TaskName')
