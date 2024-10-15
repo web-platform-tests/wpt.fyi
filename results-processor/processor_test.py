@@ -85,6 +85,36 @@ class ProcessorTest(unittest.TestCase):
             p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 0)
 
+    def test_download_github(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip',
+                'artifact_test_github.zip')
+
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+            self.assertEqual(len(p.results), 1)
+            self.assertTrue(p.results[0].endswith(
+                '/wpt_report_2.json'))
+            self.assertEqual(len(p.screenshots), 1)
+            self.assertTrue(p.screenshots[0].endswith(
+                '/wpt_screenshot_2.txt'))
+
+    def test_download_numberless(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip',
+                'artifact_test_numberless.zip')
+
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+            self.assertEqual(len(p.results), 1)
+            self.assertTrue(p.results[0].endswith(
+                '/wpt_report.json'))
+            self.assertEqual(len(p.screenshots), 1)
+            self.assertTrue(p.screenshots[0].endswith(
+                '/wpt_screenshot.txt'))
+
 
 class MockProcessorTest(unittest.TestCase):
     @patch('processor.Processor')
