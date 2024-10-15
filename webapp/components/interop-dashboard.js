@@ -5,6 +5,7 @@
  */
 
 import { InteropDataManager } from './interop-data-manager.js';
+import { WPTFlags } from './wpt-flags.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
@@ -14,7 +15,7 @@ import { afterNextRender } from '../node_modules/@polymer/polymer/lib/utils/rend
 // InteropDashboard is a custom element that holds the overall interop dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
 // graphs per feature, and a table of currently tracked tests.
-class InteropDashboard extends PolymerElement {
+class InteropDashboard extends WPTFlags(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -96,6 +97,10 @@ class InteropDashboard extends PolymerElement {
         }
 
         .channel-area[hidden] {
+          display: none;
+        }
+
+        paper-button[hidden] {
           display: none;
         }
 
@@ -297,12 +302,13 @@ class InteropDashboard extends PolymerElement {
       <div class="grid-container">
         <div class="grid-item grid-item-header">
           <h1>[[dashboardTitle]]</h1>
+          <div class="channel-area">
+            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
+            <paper-button id="toggleMobile" class\$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
+          </div>
           <div class="text-center" hidden$="[[!isMobileScoresView]]">
             <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
-          </div>
-          <div class="channel-area" hidden$="[[isMobileScoresView]]">
-            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
-            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
           </div>
         </div>
         <div class="grid-item grid-item-summary">
@@ -587,7 +593,7 @@ class InteropDashboard extends PolymerElement {
 
   static get observers() {
     return [
-      'updateUrlParams(embedded, stable, feature)',
+      'updateUrlParams(embedded, stable, feature, isMobileScoresView)',
       'updateTotals(features, stable)'
     ];
   }
@@ -596,7 +602,7 @@ class InteropDashboard extends PolymerElement {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.isMobileScoresView = params.get('mobileView') !== null;
+    this.isMobileScoresView = params.get('mobileView') !== null && this.showMobileScoresView;
     this.dataManager = new InteropDataManager(this.year, this.isMobileScoresView);
 
     if (this.isMobileScoresView) {
@@ -830,7 +836,7 @@ class InteropDashboard extends PolymerElement {
     this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName);
   }
 
-  updateUrlParams(embedded, stable, feature) {
+  updateUrlParams(embedded, stable, feature, isMobileScoresView) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -846,7 +852,7 @@ class InteropDashboard extends PolymerElement {
     if (embedded) {
       params.push('embedded');
     }
-    if (this.isMobileScoresView) {
+    if (isMobileScoresView) {
       params.push('mobileView');
     }
 
@@ -857,30 +863,71 @@ class InteropDashboard extends PolymerElement {
     history.pushState('', '', url);
   }
 
-  experimentalButtonClass(stable) {
-    return stable ? 'unselected' : 'selected';
+  experimentalButtonClass(stable, isMobileScoresView) {
+    return (isMobileScoresView || stable) ? 'unselected' : 'selected';
   }
 
-  stableButtonClass(stable) {
-    return stable ? 'selected' : 'unselected';
+  stableButtonClass(stable, isMobileScoresView) {
+    return (stable && !isMobileScoresView) ? 'selected' : 'unselected';
+  }
+
+  mobileButtonClass(isMobileScoresView) {
+    return isMobileScoresView ? 'selected' : 'unselected';
   }
 
   clickExperimental() {
-    if (!this.stable) {
+    if (!this.stable && !this.isMobileScoresView) {
       return;
     }
-    this.stable = false;
-    this.$.toggleStable.setAttribute('aria-pressed', false);
-    this.$.toggleExperimental.setAttribute('aria-pressed', true);
+    if (this.isMobileScoresView) {
+      this.toggleMobileView(false);
+    } else {
+      this.stable = false;
+      this.isMobileScoresView = false;
+      this.$.toggleStable.setAttribute('aria-pressed', false);
+      this.$.toggleExperimental.setAttribute('aria-pressed', true);
+    }
   }
 
   clickStable() {
-    if (this.stable) {
+    if (this.stable && !this.isMobileScoresView) {
       return;
     }
-    this.stable = true;
-    this.$.toggleStable.setAttribute('aria-pressed', true);
-    this.$.toggleExperimental.setAttribute('aria-pressed', false);
+    if (this.isMobileScoresView) {
+      this.toggleMobileView(false);
+    } else {
+      this.stable = true;
+      this.isMobileScoresView = false;
+      this.$.toggleStable.setAttribute('aria-pressed', true);
+      this.$.toggleExperimental.setAttribute('aria-pressed', false);
+    }
+  }
+
+  clickMobile() {
+    if (this.isMobileScoresView) {
+      return;
+    }
+    this.toggleMobileView(true);
+  }
+
+  toggleMobileView(showMobileScores) {
+    let queryString = ''
+    if (showMobileScores) {
+      queryString += 'mobileView';
+    }
+    if (this.stable) {
+      queryString += (queryString.length) ? '&stable' : 'stable'; 
+    }
+    if (queryString.length) {
+      queryString = `?${queryString}`;
+    }
+
+    const url = `${location.pathname}${queryString}`;
+    window.location = url;
+  }
+
+  shouldShowMobileScoresView() {
+    return this.showMobileScoresView && parseInt(this.year) >= 2024;
   }
 
   // Check if the table being rendered is the first table.
