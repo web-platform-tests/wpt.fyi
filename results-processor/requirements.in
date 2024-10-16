@@ -6,3 +6,4 @@ google-cloud-storage
 gunicorn
 mypy
 requests
+types-requests

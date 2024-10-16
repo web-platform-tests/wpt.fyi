@@ -15,20 +15,22 @@ import re
 import tempfile
 from datetime import datetime, timezone
 from typing import (
+    IO,
     Any,
     Callable,
     Dict,
-    IO,
     Iterator,
     List,
     Optional,
     Set,
+    Tuple,
+    TypedDict,
     Union,
     cast,
 )
 
 import requests
-from mypy_extensions import TypedDict
+from typing_extensions import NotRequired
 
 import config
 
@@ -68,11 +70,37 @@ class RunInfo(TypedDict, total=False):
     os_version: str
 
 
+class SubtestResult(TypedDict, total=False):
+    name: str
+    status: str
+
+
+class TestResult(TypedDict, total=False):
+    test: str
+    subtests: List[SubtestResult]
+    status: str
+
+
 class RawWPTReport(TypedDict, total=False):
-    results: List[Dict]
+    results: List[TestResult]
     run_info: RunInfo
     time_start: float
     time_end: float
+
+
+class TestRunMetadata(TypedDict):
+    browser_name: str
+    browser_version: str
+    os_name: str
+    revision: str
+    full_revision_hash: str
+    os_version: NotRequired[str]
+    time_start: NotRequired[str]
+    time_end: NotRequired[str]
+    id: NotRequired[int]
+    results_url: NotRequired[str]
+    raw_results_url: NotRequired[str]
+    labels: NotRequired[List[str]]
 
 
 class WPTReportError(Exception):
@@ -82,7 +110,7 @@ class WPTReportError(Exception):
         self.message = message
         self.path = path
 
-    def __str__(self):
+    def __str__(self) -> str:
         message = self.message
         if self.path:
             message += " (%s)" % self.path
@@ -118,7 +146,7 @@ class BufferedHashsum(object):
     """A simple buffered hash calculator."""
 
     def __init__(self,
-                 hash_ctor: Callable = hashlib.sha1,
+                 hash_ctor: Callable[[], "hashlib._Hash"] = hashlib.sha1,
                  block_size: int = 1024*1024) -> None:
         assert block_size > 0
         self._hash = hash_ctor()
@@ -144,7 +172,7 @@ class BufferedHashsum(object):
 
     def hashsum(self) -> str:
         """Returns the hexadecimal digest of the current hash."""
-        return cast(str, self._hash.hexdigest())
+        return self._hash.hexdigest()
 
 
 class WPTReport(object):
@@ -161,8 +189,12 @@ class WPTReport(object):
     def _add_chunk(self, chunk: RawWPTReport) -> None:
         self._report['results'].extend(chunk['results'])
 
-        def update_property(key: str, source: Dict, target: Dict,
-                            conflict_func: Optional[Callable] = None) -> bool:
+        def update_property(
+            key: str,
+            source: Dict[str, Any],
+            target: Dict[str, Any],
+            conflict_func: Optional[Callable[[Any, Any], Any]] = None,
+        ) -> bool:
             """Updates target[key] if source[key] is set.
 
             If target[key] is already set and different from source[key], we
@@ -186,8 +218,8 @@ class WPTReport(object):
         if 'run_info' in chunk:
             conflicts = []
             for key in chunk['run_info']:
-                source = cast(Dict, chunk['run_info'])
-                target = cast(Dict, self._report['run_info'])
+                source = cast(Dict[str, Any], chunk['run_info'])
+                target = cast(Dict[str, Any], self._report['run_info'])
 
                 # We clear the target value as part of update_property;
                 # record it here to be used in the conflict report if needed.
@@ -206,9 +238,18 @@ class WPTReport(object):
                 raise ConflictingDataError(', '.join(conflicts))
 
         update_property(
-            'time_start', cast(Dict, chunk), cast(Dict, self._report), min)
+            'time_start',
+            cast(Dict[str, Any], chunk),
+            cast(Dict[str, Any], self._report),
+            min,
+        )
+
         update_property(
-            'time_end', cast(Dict, chunk), cast(Dict, self._report), max)
+            'time_end',
+            cast(Dict[str, Any], chunk),
+            cast(Dict[str, Any], self._report),
+            max,
+        )
 
     def load_file(self, filename: str) -> None:
         """Loads wptreport from a local path.
@@ -261,9 +302,14 @@ class WPTReport(object):
         with gzip.GzipFile(fileobj=fileobj, mode='rb') as gzip_file:
             self.load_json(cast(IO[bytes], gzip_file))
 
-    def update_metadata(self, revision: str = '',
-                        browser_name: str = '', browser_version: str = '',
-                        os_name: str = '', os_version: str = '') -> None:
+    def update_metadata(
+        self,
+        revision: Optional[str] = '',
+        browser_name: Optional[str] = '',
+        browser_version: Optional[str] = '',
+        os_name: Optional[str] = '',
+        os_version: Optional[str] = '',
+    ) -> None:
         """Overwrites metadata of the report."""
         # Unfortunately, the names of the keys don't exactly match.
         if revision:
@@ -308,7 +354,7 @@ class WPTReport(object):
                 WPTReport.write_json(cast(IO[bytes], gz), payload)
 
     @property
-    def results(self) -> List[Dict]:
+    def results(self) -> List[TestResult]:
         """The 'results' field of the report."""
         return self._report['results']
 
@@ -450,7 +496,7 @@ class WPTReport(object):
         return self.sha_product_path + '-summary_v2.json.gz'
 
     @property
-    def test_run_metadata(self) -> Dict[str, str]:
+    def test_run_metadata(self) -> TestRunMetadata:
         """Returns a dict of metadata.
 
         The dict can be used as the payload for the test run creation API.
@@ -460,7 +506,7 @@ class WPTReport(object):
         """
         # Required fields:
         try:
-            payload = {
+            payload: TestRunMetadata = {
                 'browser_name': self.run_info['product'],
                 'browser_version': self.run_info['browser_version'],
                 'os_name': self.run_info['os'],
@@ -494,7 +540,7 @@ class WPTReport(object):
         if m:
             self.run_info['browser_version'] = m.group(1) + ' preview'
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Checks and finalizes the report.
 
         Populates all in-memory states (summary & metadata) and raises
@@ -511,7 +557,7 @@ class WPTReport(object):
         self.sha_product_path
         self.test_run_metadata
 
-    def serialize_gzip(self, filepath):
+    def serialize_gzip(self, filepath: str) -> None:
         """Serializes and gzips the in-memory report to a file.
 
         Args:
@@ -629,8 +675,16 @@ def normalize_product(report: WPTReport) -> Set[str]:
         return set()
 
 
-def create_test_run(report, run_id, labels_str, uploader, auth,
-                    results_url, raw_results_url, callback_url=None):
+def create_test_run(
+    report: WPTReport,
+    run_id: str,
+    labels_str: str,
+    uploader: str,
+    auth: Tuple[str, str],
+    results_url: str,
+    raw_results_url: str,
+    callback_url: Optional[str] = None,
+) -> int:
     """Creates a TestRun on the dashboard.
 
     By posting to the /api/results/create endpoint.
@@ -669,6 +723,7 @@ def create_test_run(report, run_id, labels_str, uploader, auth,
     response = requests.post(callback_url, auth=auth, json=payload)
     response.raise_for_status()
     response_data = response.json()
+    assert isinstance(response_data['id'], int)
     return response_data['id']
 
 

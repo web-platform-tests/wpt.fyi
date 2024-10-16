@@ -105,6 +105,10 @@ rsa==4.8
     # via google-auth
 tomli==2.0.1
     # via mypy
+types-requests==2.31.0.6
+    # via -r requirements.in
+types-urllib3==1.26.25.14
+    # via types-requests
 typing-extensions==4.7.1
     # via mypy
 urllib3==1.26.19
