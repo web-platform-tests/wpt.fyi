@@ -880,7 +880,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       return;
     }
     if (this.isMobileScoresView) {
-      this.toggleMobileView(false);
+      this.toggleMobileView(false, false);
     } else {
       this.stable = false;
       this.isMobileScoresView = false;
@@ -894,7 +894,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       return;
     }
     if (this.isMobileScoresView) {
-      this.toggleMobileView(false);
+      this.toggleMobileView(false, true);
     } else {
       this.stable = true;
       this.isMobileScoresView = false;
@@ -907,15 +907,15 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     if (this.isMobileScoresView) {
       return;
     }
-    this.toggleMobileView(true);
+    this.toggleMobileView(true, false);
   }
 
-  toggleMobileView(showMobileScores) {
+  toggleMobileView(showMobileScores, stable) {
     let queryString = ''
     if (showMobileScores) {
       queryString += 'mobileView';
     }
-    if (this.stable) {
+    if (stable) {
       queryString += (queryString.length) ? '&stable' : 'stable'; 
     }
     if (queryString.length) {
