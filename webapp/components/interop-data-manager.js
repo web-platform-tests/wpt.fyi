@@ -70,6 +70,14 @@ const BROWSER_INFO = {
     tableName: 'Safari',
     tooltipName: 'Safari',
   },
+  safari_mobile: {
+    experimentalIcon: 'wktr',
+    experimentalName: 'iOS',
+    graphColor: '#148cda',
+    stableIcon: 'safari',
+    tableName: 'Safari',
+    tooltipName: 'Safari',
+  }
 };
 
 // InteropDataManager encapsulates the loading of the CSV data that backs

@@ -392,6 +392,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                           </th>
                         </template>
                       </template>
+                      <template is="dom-if" if="{{isMobileScoresView}}">
+                        <th class="sortable-header">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/wktr_64x64.png" width="32" alt="Safari iOS" title="Safari iOS" />
+                          </div>
+                          <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
+                        </th>
+                      </template>
                       <th class="sortable-header">
                         <div class="interop-header">INTEROP</div>
                         <img class="sort-icon" src="[[getInteropSortIcon(sortColumn, isSortedAsc)]]" />
@@ -452,6 +460,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                           <td>[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
                         </template>
+                        <template is="dom-if" if="[[isMobileScoresView]]">
+                          <td>--%</td>
+                        </template>
                         <td>[[getInteropScoreForFeature(rowName, stable)]]</td>
                       </tr>
                     </template>
@@ -461,6 +472,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                       <td><strong>TOTAL</strong></td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                         <td>[[getSubtotalScore(itemsIndex, section, stable)]]</td>
+                      </template>
+                      <template is="dom-if" if="[[isMobileScoresView]]">
+                        <td>--%</td>
                       </template>
                       <td>[[getInteropSubtotalScore(section, stable)]]</td>
                     </tr>
@@ -956,7 +970,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   // Determine the icon that should be displayed on the interop column.
   getInteropSortIcon(sortColumn, isSortedAsc) {
-    const interopIndex = this.dataManager.getYearProp('numBrowsers') + 1;
+    const indexOffset = (this.isMobileScoresView) ? 2 : 1
+    const interopIndex = this.dataManager.getYearProp('numBrowsers') + indexOffset;
     if (interopIndex !== sortColumn) {
       return '/static/expand_inactive.svg';
     }
@@ -992,7 +1007,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   };
 
   numericalSort = (rows, featureOrder, sortColumn) => {
-    const browserIndex = sortColumn - 1;
+    const browserIndex = (this.isMobileScoresView && sortColumn === 4) ? 2 : sortColumn - 1;
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
@@ -1006,6 +1021,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   sortRows = (rows, index, sortColumn, isSortedAsc) => {
     if(index !== 0) {
+      return rows;
+    }
+    // Safari column will not have data for mobile and cannot be sorted.
+    if (this.isMobileScoresView && sortColumn === 3) {
       return rows;
     }
     const sortedFeatureOrder = [];

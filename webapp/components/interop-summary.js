@@ -143,6 +143,24 @@ class InteropSummary extends PolymerElement {
               </template>
             </div>
           </template>
+          <template is="dom-if" if="{{isMobileScoresView}}">
+            <div class="summary-flex-item" tabindex="0">
+              <div class="summary-number score-number smaller-summary-number">--</div>
+              <div class="summary-browser-name">
+                <figure>
+                  <img src="/static/wktr_64x64.png" width="36" alt="Safari iOS" />
+                  <template is="dom-if" if="[[stable]]">
+                    <figcaption>Safari</figcaption>
+                  </template>
+                  <template is="dom-if" if="[[!stable]]">
+                    <figcaption>
+                      Safari<br>iOS<br>
+                    </figcaption>
+                  </template>
+                </figure>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 `;
@@ -230,13 +248,16 @@ class InteropSummary extends PolymerElement {
     const scores = this.stable ? this.scores.stable : this.scores.experimental;
     const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
     // If the elements have not rendered yet, don't update the scores.
-    if (scoreElements.length !== scores.length) {
+    if ((!this.isMobileScoresView && scoreElements.length !== scores.length) ||
+        (this.isMobileScoresView && scoreElements.length !== scores.length + 1)) {
       return;
     }
-    // Update interop summary number first.
-    this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
+    if (!this.isMobileScoresView) {
+      // Update interop summary number first.
+      this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
+    }
     // Update the rest of the browser scores.
-    for (let i = 1; i < scoreElements.length; i++) {
+    for (let i = 1; i < scores.length; i++) {
       this.updateSummaryScore(scoreElements[i], scores[i - 1][summaryFeatureName]);
     }
 
