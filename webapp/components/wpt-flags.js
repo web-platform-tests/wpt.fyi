@@ -50,6 +50,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'structuredQueries',
       'triageMetadataUI',
       'webPlatformTestsLive',
+      'anyInteropView',
     ];
   }
 });
@@ -256,6 +257,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{showBSF}}">
         Enable Browser Specific Failures graph
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{anyInteropView}}">
+        Allow Interop View to be selected for any result set.
       </paper-checkbox>
     </paper-item>
 `;
