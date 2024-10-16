@@ -15,7 +15,7 @@ Once you have confirmed that the desired version is available:
 - tooling [Dockerfile](../Dockerfile) at the root of the repo
 - searchcache [Dockerfile](../api/query/cache/service/Dockerfile)
 
-The tooling image and the first stage of searchcache use the same Golang image. Check out the Golang [page](https://hub.docker.com/_/golang?tab=tags) on Docker Hub for the latest tags. Currently, we are using the `bullseye` [release](https://wiki.debian.org/DebianReleases) of Debian. As a result pick the `golang:<latest stable version>-bullseye` tag. If bullseye is superseded by a new version, you should change that as well.
+The tooling image and the first stage of searchcache use the same Golang image. Check out the Golang [page](https://hub.docker.com/_/golang?tab=tags) on Docker Hub for the latest tags. Currently, we are using the `bookworm` [release](https://wiki.debian.org/DebianReleases) of Debian. As a result pick the `golang:<latest stable version>-bookworm` tag. If bookworm is superseded by a new version, you should change that as well.
 
 ## Step 3 - Change the version in go.mod
 
