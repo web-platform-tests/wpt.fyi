@@ -925,12 +925,12 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   toggleMobileView(showMobileScores, stable) {
-    let queryString = ''
+    let queryString = '';
     if (showMobileScores) {
       queryString += 'mobileView';
     }
     if (stable) {
-      queryString += (queryString.length) ? '&stable' : 'stable'; 
+      queryString += (queryString.length) ? '&stable' : 'stable';
     }
     if (queryString.length) {
       queryString = `?${queryString}`;
@@ -970,7 +970,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   // Determine the icon that should be displayed on the interop column.
   getInteropSortIcon(sortColumn, isSortedAsc) {
-    const indexOffset = (this.isMobileScoresView) ? 2 : 1
+    const indexOffset = (this.isMobileScoresView) ? 2 : 1;
     const interopIndex = this.dataManager.getYearProp('numBrowsers') + indexOffset;
     if (interopIndex !== sortColumn) {
       return '/static/expand_inactive.svg';
