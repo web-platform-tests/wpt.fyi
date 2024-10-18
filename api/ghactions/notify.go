@@ -175,15 +175,14 @@ func chooseLabels( // nolint:ireturn // TODO: Fix ireturn lint error
 ) mapset.Set {
 	labels := mapset.NewSet()
 
-	if (*workflowRun.Event == "push" &&
-		*workflowRun.HeadRepository.Owner.Login == owner &&
+	// We don't actually check the event here, provided it meets
+	// the criteria to be a run on master.
+	if (*workflowRun.HeadRepository.Owner.Login == owner &&
 		*workflowRun.HeadRepository.Name == repo) &&
 		(*workflowRun.HeadBranch == "master" ||
 			epochBranchesRegex.MatchString(*workflowRun.HeadBranch)) {
 		labels.Add(shared.MasterLabel)
-	}
-
-	if *workflowRun.Event == "pull_request" {
+	} else if *workflowRun.Event == "pull_request" {
 		if prHeadRegex.MatchString(artifactName) {
 			labels.Add(shared.PRHeadLabel)
 		} else if prBaseRegex.MatchString(artifactName) {
