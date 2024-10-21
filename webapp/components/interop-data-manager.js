@@ -291,7 +291,7 @@ class InteropDataManager {
 
         let testScore = 0.0;
         // Mobile csv does not have an Interop version column to account for.
-        let versionOffset = (this.isMobileScoresView && browserName === 'Interop') ? 0 : 1;
+        const versionOffset = (this.isMobileScoresView && browserName === 'Interop') ? 0 : 1;
 
         headers.forEach((feature, j) => {
           let score = 0;

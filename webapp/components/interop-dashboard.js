@@ -616,7 +616,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.isMobileScoresView = params.get('mobileView') !== null && this.showMobileScoresView;
+    this.isMobileScoresView = params.get('mobile-view') !== null && this.showMobileScoresView;
     this.dataManager = new InteropDataManager(this.year, this.isMobileScoresView);
 
     if (this.isMobileScoresView) {
@@ -867,7 +867,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       params.push('embedded');
     }
     if (isMobileScoresView) {
-      params.push('mobileView');
+      params.push('mobile-view');
     }
 
     let url = location.pathname;
@@ -927,7 +927,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   toggleMobileView(showMobileScores, stable) {
     let queryString = '';
     if (showMobileScores) {
-      queryString += 'mobileView';
+      queryString += 'mobile-view';
     }
     if (stable) {
       queryString += (queryString.length) ? '&stable' : 'stable';

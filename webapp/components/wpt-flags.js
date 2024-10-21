@@ -261,7 +261,7 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     </paper-item>
     <paper-item>
       <paper-checkbox checked="{{showMobileScoresView}}">
-        Allow mobile results view on Interop dashboard
+        Enable mobile results view on Interop dashboard
       </paper-checkbox>
     </paper-item>
 `;

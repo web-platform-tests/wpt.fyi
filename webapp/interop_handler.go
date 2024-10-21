@@ -38,7 +38,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	isMobileView, err := shared.ParseBooleanParam(q, "mobileView")
+	isMobileView, err := shared.ParseBooleanParam(q, "mobile-view")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
