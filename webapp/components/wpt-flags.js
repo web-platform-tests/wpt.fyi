@@ -47,6 +47,7 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'queryBuilder',
       'queryBuilderSHA',
       'showBSF',
+      'showMobileScoresView',
       'structuredQueries',
       'triageMetadataUI',
       'webPlatformTestsLive',
@@ -256,6 +257,11 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox checked="{{showBSF}}">
         Enable Browser Specific Failures graph
+      </paper-checkbox>
+    </paper-item>
+    <paper-item>
+      <paper-checkbox checked="{{showMobileScoresView}}">
+        Enable mobile results view on Interop dashboard
       </paper-checkbox>
     </paper-item>
 `;

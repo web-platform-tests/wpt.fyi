@@ -39,6 +39,28 @@ func TestInteropHandler_redirect(t *testing.T) {
 	assert.Equal(t, loc.RawQuery, "embedded")
 }
 
+func TestInteropHandler_redirectMobile(t *testing.T) {
+	// 2021 is an invalid interop mobile year and should be redirected.
+	req := httptest.NewRequest("GET", "/interop-2021?mobile-view", strings.NewReader("{}"))
+	req = mux.SetURLVars(req, map[string]string{
+		"name":     "interop",
+		"year":     "2021",
+		"mobileView": "true",
+	})
+
+	w := httptest.NewRecorder()
+	interopHandler(w, req)
+	resp := w.Result()
+	assert.Equal(t, resp.StatusCode, http.StatusTemporaryRedirect)
+
+	loc, err := resp.Location()
+	assert.Nil(t, err)
+	// Check that the path has been properly updated to the current interop effort.
+	assert.Equal(t, loc.Path, "/interop-2024")
+	// Check if mobileView param is maintained after redirect.
+	assert.Equal(t, loc.RawQuery, "mobile-view")
+}
+
 func TestInteropHandler_redirectdefault(t *testing.T) {
 	// /interop route should redirect to the current default interop year dashboard.
 	req := httptest.NewRequest("GET", "/interop?embedded", strings.NewReader("{}"))
@@ -80,6 +102,22 @@ func TestInteropHandler_success(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{
 		"name": "interop",
 		"year": defaultRedirectYear,
+	})
+
+	w := httptest.NewRecorder()
+	interopHandler(w, req)
+	resp := w.Result()
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+}
+
+func TestInteropHandler_mobileSuccess(t *testing.T) {
+	// A typical "/interop-20XX" path with a valid mobile year should not redirect.
+	req := httptest.NewRequest(
+		"GET", "/interop-"+defaultRedirectYear+"?mobile-view", strings.NewReader("{}"))
+	req = mux.SetURLVars(req, map[string]string{
+		"name": "interop",
+		"year": defaultRedirectYear,
+		"mobileView": "true",
 	})
 
 	w := httptest.NewRecorder()

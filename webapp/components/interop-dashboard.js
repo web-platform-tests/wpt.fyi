@@ -5,6 +5,7 @@
  */
 
 import { InteropDataManager } from './interop-data-manager.js';
+import { WPTFlags } from './wpt-flags.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
@@ -14,7 +15,7 @@ import { afterNextRender } from '../node_modules/@polymer/polymer/lib/utils/rend
 // InteropDashboard is a custom element that holds the overall interop dashboard.
 // The dashboard breaks down into top-level summary scores, a small description,
 // graphs per feature, and a table of currently tracked tests.
-class InteropDashboard extends PolymerElement {
+class InteropDashboard extends WPTFlags(PolymerElement) {
   static get template() {
     return html`
       <style>
@@ -81,6 +82,10 @@ class InteropDashboard extends PolymerElement {
           grid-area: bottom-desc;
         }
 
+        .text-center {
+          text-align: center;
+        }
+
         .channel-area {
           display: flex;
           max-width: fit-content;
@@ -89,6 +94,14 @@ class InteropDashboard extends PolymerElement {
           margin-bottom: 35px;
           border-radius: 3px;
           box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+        }
+
+        .channel-area[hidden] {
+          display: none;
+        }
+
+        paper-button[hidden] {
+          display: none;
         }
 
         .channel-area > paper-button {
@@ -220,10 +233,6 @@ class InteropDashboard extends PolymerElement {
           background: hsl(0 0% 0% / 5%);
         }
 
-        .interop-years {
-          text-align: center;
-        }
-
         .interop-year-text {
           display: inline-block;
           padding: 0 5px;
@@ -292,14 +301,24 @@ class InteropDashboard extends PolymerElement {
       </div>
       <div class="grid-container">
         <div class="grid-item grid-item-header">
-          <h1>Interop [[year]] Dashboard</h1>
+          <h1>[[dashboardTitle]]</h1>
           <div class="channel-area">
-            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable)]]" on-click="clickStable">Stable</paper-button>
-            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable)]]" on-click="clickExperimental">Experimental</paper-button>
+            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
+            <paper-button id="toggleMobile" class\$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
+          </div>
+          <div class="text-center" hidden$="[[!isMobileScoresView]]">
+            <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
           </div>
         </div>
         <div class="grid-item grid-item-summary">
-          <interop-summary year="[[year]]" data-manager="[[dataManager]]" scores="[[scores]]" stable="[[stable]]"></interop-summary>
+          <interop-summary
+            year="[[year]]"
+            data-manager="[[dataManager]]"
+            scores="[[scores]]"
+            stable="[[stable]]"
+            is-mobile-scores-view="[[isMobileScoresView]]">
+          </interop-summary>
         </div>
         <div class="grid-item grid-item-description">
           <p>Interop [[year]] is a cross-browser effort to improve the interoperability of the web —
@@ -373,6 +392,14 @@ class InteropDashboard extends PolymerElement {
                           </th>
                         </template>
                       </template>
+                      <template is="dom-if" if="{{isMobileScoresView}}">
+                        <th class="sortable-header">
+                          <div class="browser-icons single-browser-icon">
+                            <img src="/static/wktr_64x64.png" width="32" alt="Safari iOS" title="Safari iOS" />
+                          </div>
+                          <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
+                        </th>
+                      </template>
                       <th class="sortable-header">
                         <div class="interop-header">INTEROP</div>
                         <img class="sort-icon" src="[[getInteropSortIcon(sortColumn, isSortedAsc)]]" />
@@ -433,6 +460,9 @@ class InteropDashboard extends PolymerElement {
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                           <td>[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
                         </template>
+                        <template is="dom-if" if="[[isMobileScoresView]]">
+                          <td>--%</td>
+                        </template>
                         <td>[[getInteropScoreForFeature(rowName, stable)]]</td>
                       </tr>
                     </template>
@@ -442,6 +472,9 @@ class InteropDashboard extends PolymerElement {
                       <td><strong>TOTAL</strong></td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                         <td>[[getSubtotalScore(itemsIndex, section, stable)]]</td>
+                      </template>
+                      <template is="dom-if" if="[[isMobileScoresView]]">
+                        <td>--%</td>
                       </template>
                       <td>[[getInteropSubtotalScore(section, stable)]]</td>
                     </tr>
@@ -510,7 +543,7 @@ class InteropDashboard extends PolymerElement {
         </div>
       </div>
       <footer class="compat-footer">
-        <div class="interop-years">
+        <div class="text-center">
           <div class="interop-year-text">
             <p>View by year: </p>
           </div>
@@ -543,10 +576,15 @@ class InteropDashboard extends PolymerElement {
         type: Number,
         value: 0
       },
+      dashboardTitle: String,
       currentInteropYear: Number,
       isCurrentYear: {
         type: Boolean,
         value: true,
+      },
+      isMobileScoresView: {
+        type: Boolean,
+        value: false,
       },
       isSortedAsc: {
         type: Boolean,
@@ -569,7 +607,7 @@ class InteropDashboard extends PolymerElement {
 
   static get observers() {
     return [
-      'updateUrlParams(embedded, stable, feature)',
+      'updateUrlParams(embedded, stable, feature, isMobileScoresView)',
       'updateTotals(features, stable)'
     ];
   }
@@ -578,7 +616,16 @@ class InteropDashboard extends PolymerElement {
     const params = (new URL(document.location)).searchParams;
 
     this.stable = params.get('stable') !== null;
-    this.dataManager = new InteropDataManager(this.year);
+    this.isMobileScoresView = params.get('mobile-view') !== null && this.showMobileScoresView;
+    this.dataManager = new InteropDataManager(this.year, this.isMobileScoresView);
+
+    if (this.isMobileScoresView) {
+      this.dashboardTitle = `Interop ${this.year} Mobile Dashboard`;
+      // No stable view for mobile results.
+      this.stable = false;
+    } else {
+      this.dashboardTitle = `Interop ${this.year} Dashboard`;
+    }
 
     this.scores = {};
     this.scores.experimental = await this.dataManager.getMostRecentScores(false);
@@ -610,7 +657,7 @@ class InteropDashboard extends PolymerElement {
     this.$.toggleStable.setAttribute('aria-pressed', this.stable);
     this.$.toggleExperimental.setAttribute('aria-pressed', !this.stable);
     // Keep the block-level design for interop 2021-2022
-    if (this.year === '2021' || this.year === '2022') {
+    if (this.year === '2021' || this.year === '2022' || this.isMobileScoresView) {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
       gridContainerDiv.style.width = '700px';
@@ -663,7 +710,6 @@ class InteropDashboard extends PolymerElement {
     // - https://github.com/whatwg/url/issues/762
     // - https://github.com/whatwg/url/issues/461
     // - https://github.com/whatwg/url/issues/335
-
     // Test results are defined as absolute paths from this origin.
     const url = new URL(testsURL, window.location.origin);
     // Test results URLs can have multiple 'label' params. Grab them all.
@@ -804,7 +850,7 @@ class InteropDashboard extends PolymerElement {
     this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName);
   }
 
-  updateUrlParams(embedded, stable, feature) {
+  updateUrlParams(embedded, stable, feature, isMobileScoresView) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -820,6 +866,9 @@ class InteropDashboard extends PolymerElement {
     if (embedded) {
       params.push('embedded');
     }
+    if (isMobileScoresView) {
+      params.push('mobile-view');
+    }
 
     let url = location.pathname;
     if (params.length) {
@@ -828,30 +877,71 @@ class InteropDashboard extends PolymerElement {
     history.pushState('', '', url);
   }
 
-  experimentalButtonClass(stable) {
-    return stable ? 'unselected' : 'selected';
+  experimentalButtonClass(stable, isMobileScoresView) {
+    return (isMobileScoresView || stable) ? 'unselected' : 'selected';
   }
 
-  stableButtonClass(stable) {
-    return stable ? 'selected' : 'unselected';
+  stableButtonClass(stable, isMobileScoresView) {
+    return (stable && !isMobileScoresView) ? 'selected' : 'unselected';
+  }
+
+  mobileButtonClass(isMobileScoresView) {
+    return isMobileScoresView ? 'selected' : 'unselected';
   }
 
   clickExperimental() {
-    if (!this.stable) {
+    if (!this.stable && !this.isMobileScoresView) {
       return;
     }
-    this.stable = false;
-    this.$.toggleStable.setAttribute('aria-pressed', false);
-    this.$.toggleExperimental.setAttribute('aria-pressed', true);
+    if (this.isMobileScoresView) {
+      this.toggleMobileView(false, false);
+    } else {
+      this.stable = false;
+      this.isMobileScoresView = false;
+      this.$.toggleStable.setAttribute('aria-pressed', false);
+      this.$.toggleExperimental.setAttribute('aria-pressed', true);
+    }
   }
 
   clickStable() {
-    if (this.stable) {
+    if (this.stable && !this.isMobileScoresView) {
       return;
     }
-    this.stable = true;
-    this.$.toggleStable.setAttribute('aria-pressed', true);
-    this.$.toggleExperimental.setAttribute('aria-pressed', false);
+    if (this.isMobileScoresView) {
+      this.toggleMobileView(false, true);
+    } else {
+      this.stable = true;
+      this.isMobileScoresView = false;
+      this.$.toggleStable.setAttribute('aria-pressed', true);
+      this.$.toggleExperimental.setAttribute('aria-pressed', false);
+    }
+  }
+
+  clickMobile() {
+    if (this.isMobileScoresView) {
+      return;
+    }
+    this.toggleMobileView(true, false);
+  }
+
+  toggleMobileView(showMobileScores, stable) {
+    let queryString = '';
+    if (showMobileScores) {
+      queryString += 'mobile-view';
+    }
+    if (stable) {
+      queryString += (queryString.length) ? '&stable' : 'stable';
+    }
+    if (queryString.length) {
+      queryString = `?${queryString}`;
+    }
+
+    const url = `${location.pathname}${queryString}`;
+    window.location = url;
+  }
+
+  shouldShowMobileScoresView() {
+    return this.showMobileScoresView && parseInt(this.year) >= 2024;
   }
 
   // Check if the table being rendered is the first table.
@@ -880,7 +970,8 @@ class InteropDashboard extends PolymerElement {
 
   // Determine the icon that should be displayed on the interop column.
   getInteropSortIcon(sortColumn, isSortedAsc) {
-    const interopIndex = this.dataManager.getYearProp('numBrowsers') + 1;
+    const indexOffset = (this.isMobileScoresView) ? 2 : 1;
+    const interopIndex = this.dataManager.getYearProp('numBrowsers') + indexOffset;
     if (interopIndex !== sortColumn) {
       return '/static/expand_inactive.svg';
     }
@@ -916,7 +1007,7 @@ class InteropDashboard extends PolymerElement {
   };
 
   numericalSort = (rows, featureOrder, sortColumn) => {
-    const browserIndex = sortColumn - 1;
+    const browserIndex = (this.isMobileScoresView && sortColumn === 4) ? 2 : sortColumn - 1;
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
@@ -930,6 +1021,10 @@ class InteropDashboard extends PolymerElement {
 
   sortRows = (rows, index, sortColumn, isSortedAsc) => {
     if(index !== 0) {
+      return rows;
+    }
+    // Safari column will not have data for mobile and cannot be sorted.
+    if (this.isMobileScoresView && sortColumn === 3) {
       return rows;
     }
     const sortedFeatureOrder = [];

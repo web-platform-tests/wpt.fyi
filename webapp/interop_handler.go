@@ -19,6 +19,7 @@ type interopData struct {
 
 // Set of years that are valid for Interop 20XX.
 var validYears = map[string]bool{"2021": true, "2022": true, "2023": true, "2024": true}
+var validMobileYears = map[string]bool{"2024": true}
 
 // Year that any invalid year will redirect to.
 // TODO(danielrsmith): Change this redirect for next year's interop page.
@@ -36,6 +37,18 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		needsRedirect = true
 	}
 
+	q := r.URL.Query()
+	isMobileView, err := shared.ParseBooleanParam(q, "mobile-view")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	_, isValidMobileYear := validMobileYears[year];
+	if isMobileView != nil && !isValidMobileYear {
+		year = defaultRedirectYear
+		needsRedirect = true
+	}
+
 	if needsRedirect {
 		destination := *(r.URL)
 
@@ -49,7 +62,6 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := r.URL.Query()
 	embedded, err := shared.ParseBooleanParam(q, "embedded")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
