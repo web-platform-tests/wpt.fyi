@@ -810,7 +810,8 @@ export const interopData = {
           'interop-2022-viewport',
           'interop-2023-webcodecs',
           'interop-2022-webcompat',
-          'interop-2023-webcompat'
+          'interop-2023-webcompat',
+          'interop-2023-webcomponents'
         ],
         'score_as_group': false
       }
