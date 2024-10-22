@@ -832,7 +832,8 @@ export const interopData = {
         'name': 'Mobile Testing',
         'url': 'https://github.com/web-platform-tests/interop-mobile-testing',
         'scores_over_time': [
-          { 'date': '2024-04-23', 'score': 130 }
+          { 'date': '2024-04-23', 'score': 130 },
+          { 'date': '2024-10-22', 'score': 625 },
         ]
       },
       {
