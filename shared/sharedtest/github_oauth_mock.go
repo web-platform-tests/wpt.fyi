@@ -23,6 +23,7 @@ import (
 type MockGitHubOAuth struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubOAuthMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubOAuthMockRecorder is the mock recorder for MockGitHubOAuth.
@@ -85,10 +86,10 @@ func (mr *MockGitHubOAuthMockRecorder) GetAccessToken() *gomock.Call {
 }
 
 // GetAuthCodeURL mocks base method.
-func (m *MockGitHubOAuth) GetAuthCodeURL(arg0 string, arg1 ...oauth2.AuthCodeOption) string {
+func (m *MockGitHubOAuth) GetAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0}
-	for _, a := range arg1 {
+	varargs := []any{state}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAuthCodeURL", varargs...)
@@ -97,58 +98,59 @@ func (m *MockGitHubOAuth) GetAuthCodeURL(arg0 string, arg1 ...oauth2.AuthCodeOpt
 }
 
 // GetAuthCodeURL indicates an expected call of GetAuthCodeURL.
-func (mr *MockGitHubOAuthMockRecorder) GetAuthCodeURL(arg0 any, arg1 ...any) *gomock.Call {
+func (mr *MockGitHubOAuthMockRecorder) GetAuthCodeURL(state any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0}, arg1...)
+	varargs := append([]any{state}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthCodeURL", reflect.TypeOf((*MockGitHubOAuth)(nil).GetAuthCodeURL), varargs...)
 }
 
 // GetUser mocks base method.
-func (m *MockGitHubOAuth) GetUser(arg0 *github.Client) (*github.User, error) {
+func (m *MockGitHubOAuth) GetUser(client *github.Client) (*github.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", arg0)
+	ret := m.ctrl.Call(m, "GetUser", client)
 	ret0, _ := ret[0].(*github.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUser indicates an expected call of GetUser.
-func (mr *MockGitHubOAuthMockRecorder) GetUser(arg0 any) *gomock.Call {
+func (mr *MockGitHubOAuthMockRecorder) GetUser(client any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGitHubOAuth)(nil).GetUser), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGitHubOAuth)(nil).GetUser), client)
 }
 
 // NewClient mocks base method.
-func (m *MockGitHubOAuth) NewClient(arg0 string) (*github.Client, error) {
+func (m *MockGitHubOAuth) NewClient(oauthCode string) (*github.Client, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewClient", arg0)
+	ret := m.ctrl.Call(m, "NewClient", oauthCode)
 	ret0, _ := ret[0].(*github.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewClient indicates an expected call of NewClient.
-func (mr *MockGitHubOAuthMockRecorder) NewClient(arg0 any) *gomock.Call {
+func (mr *MockGitHubOAuthMockRecorder) NewClient(oauthCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewClient", reflect.TypeOf((*MockGitHubOAuth)(nil).NewClient), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewClient", reflect.TypeOf((*MockGitHubOAuth)(nil).NewClient), oauthCode)
 }
 
 // SetRedirectURL mocks base method.
-func (m *MockGitHubOAuth) SetRedirectURL(arg0 string) {
+func (m *MockGitHubOAuth) SetRedirectURL(url string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetRedirectURL", arg0)
+	m.ctrl.Call(m, "SetRedirectURL", url)
 }
 
 // SetRedirectURL indicates an expected call of SetRedirectURL.
-func (mr *MockGitHubOAuthMockRecorder) SetRedirectURL(arg0 any) *gomock.Call {
+func (mr *MockGitHubOAuthMockRecorder) SetRedirectURL(url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRedirectURL", reflect.TypeOf((*MockGitHubOAuth)(nil).SetRedirectURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRedirectURL", reflect.TypeOf((*MockGitHubOAuth)(nil).SetRedirectURL), url)
 }
 
 // MockGitHubAccessControl is a mock of GitHubAccessControl interface.
 type MockGitHubAccessControl struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubAccessControlMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubAccessControlMockRecorder is the mock recorder for MockGitHubAccessControl.

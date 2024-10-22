@@ -20,6 +20,7 @@ import (
 type MockCachedStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockCachedStoreMockRecorder
+	isgomock struct{}
 }
 
 // MockCachedStoreMockRecorder is the mock recorder for MockCachedStore.
@@ -40,23 +41,24 @@ func (m *MockCachedStore) EXPECT() *MockCachedStoreMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockCachedStore) Get(arg0, arg1, arg2 any) error {
+func (m *MockCachedStore) Get(cacheID, storeID, value any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Get", cacheID, storeID, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockCachedStoreMockRecorder) Get(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockCachedStoreMockRecorder) Get(cacheID, storeID, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCachedStore)(nil).Get), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCachedStore)(nil).Get), cacheID, storeID, value)
 }
 
 // MockObjectCache is a mock of ObjectCache interface.
 type MockObjectCache struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectCacheMockRecorder
+	isgomock struct{}
 }
 
 // MockObjectCacheMockRecorder is the mock recorder for MockObjectCache.
@@ -77,37 +79,38 @@ func (m *MockObjectCache) EXPECT() *MockObjectCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockObjectCache) Get(arg0, arg1 any) error {
+func (m *MockObjectCache) Get(id, value any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1)
+	ret := m.ctrl.Call(m, "Get", id, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockObjectCacheMockRecorder) Get(arg0, arg1 any) *gomock.Call {
+func (mr *MockObjectCacheMockRecorder) Get(id, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectCache)(nil).Get), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectCache)(nil).Get), id, value)
 }
 
 // Put mocks base method.
-func (m *MockObjectCache) Put(arg0, arg1 any) error {
+func (m *MockObjectCache) Put(id, value any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", arg0, arg1)
+	ret := m.ctrl.Call(m, "Put", id, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockObjectCacheMockRecorder) Put(arg0, arg1 any) *gomock.Call {
+func (mr *MockObjectCacheMockRecorder) Put(id, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectCache)(nil).Put), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectCache)(nil).Put), id, value)
 }
 
 // MockObjectStore is a mock of ObjectStore interface.
 type MockObjectStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectStoreMockRecorder
+	isgomock struct{}
 }
 
 // MockObjectStoreMockRecorder is the mock recorder for MockObjectStore.
@@ -128,23 +131,24 @@ func (m *MockObjectStore) EXPECT() *MockObjectStoreMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockObjectStore) Get(arg0, arg1 any) error {
+func (m *MockObjectStore) Get(id, value any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1)
+	ret := m.ctrl.Call(m, "Get", id, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockObjectStoreMockRecorder) Get(arg0, arg1 any) *gomock.Call {
+func (mr *MockObjectStoreMockRecorder) Get(id, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectStore)(nil).Get), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockObjectStore)(nil).Get), id, value)
 }
 
 // MockReadWritable is a mock of ReadWritable interface.
 type MockReadWritable struct {
 	ctrl     *gomock.Controller
 	recorder *MockReadWritableMockRecorder
+	isgomock struct{}
 }
 
 // MockReadWritableMockRecorder is the mock recorder for MockReadWritable.
@@ -198,6 +202,7 @@ func (mr *MockReadWritableMockRecorder) NewWriteCloser(arg0 any) *gomock.Call {
 type MockReadable struct {
 	ctrl     *gomock.Controller
 	recorder *MockReadableMockRecorder
+	isgomock struct{}
 }
 
 // MockReadableMockRecorder is the mock recorder for MockReadable.
@@ -236,6 +241,7 @@ func (mr *MockReadableMockRecorder) NewReadCloser(arg0 any) *gomock.Call {
 type MockRedisSet struct {
 	ctrl     *gomock.Controller
 	recorder *MockRedisSetMockRecorder
+	isgomock struct{}
 }
 
 // MockRedisSetMockRecorder is the mock recorder for MockRedisSet.
@@ -256,44 +262,44 @@ func (m *MockRedisSet) EXPECT() *MockRedisSetMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockRedisSet) Add(arg0, arg1 string) error {
+func (m *MockRedisSet) Add(key, value string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", arg0, arg1)
+	ret := m.ctrl.Call(m, "Add", key, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockRedisSetMockRecorder) Add(arg0, arg1 any) *gomock.Call {
+func (mr *MockRedisSetMockRecorder) Add(key, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockRedisSet)(nil).Add), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockRedisSet)(nil).Add), key, value)
 }
 
 // GetAll mocks base method.
-func (m *MockRedisSet) GetAll(arg0 string) ([]string, error) {
+func (m *MockRedisSet) GetAll(key string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0)
+	ret := m.ctrl.Call(m, "GetAll", key)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockRedisSetMockRecorder) GetAll(arg0 any) *gomock.Call {
+func (mr *MockRedisSetMockRecorder) GetAll(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockRedisSet)(nil).GetAll), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockRedisSet)(nil).GetAll), key)
 }
 
 // Remove mocks base method.
-func (m *MockRedisSet) Remove(arg0, arg1 string) error {
+func (m *MockRedisSet) Remove(key, value string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Remove", arg0, arg1)
+	ret := m.ctrl.Call(m, "Remove", key, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Remove indicates an expected call of Remove.
-func (mr *MockRedisSetMockRecorder) Remove(arg0, arg1 any) *gomock.Call {
+func (mr *MockRedisSetMockRecorder) Remove(key, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockRedisSet)(nil).Remove), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockRedisSet)(nil).Remove), key, value)
 }

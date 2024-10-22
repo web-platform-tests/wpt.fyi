@@ -21,6 +21,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -56,16 +57,16 @@ func (mr *MockAPIMockRecorder) GetTaskGroupInfo(arg0, arg1 any) *gomock.Call {
 }
 
 // ListCheckRuns mocks base method.
-func (m *MockAPI) ListCheckRuns(arg0, arg1 string, arg2 int64) ([]*github.CheckRun, error) {
+func (m *MockAPI) ListCheckRuns(owner, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCheckRuns", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ListCheckRuns", owner, repo, checkSuiteID)
 	ret0, _ := ret[0].([]*github.CheckRun)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCheckRuns indicates an expected call of ListCheckRuns.
-func (mr *MockAPIMockRecorder) ListCheckRuns(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ListCheckRuns(owner, repo, checkSuiteID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCheckRuns", reflect.TypeOf((*MockAPI)(nil).ListCheckRuns), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCheckRuns", reflect.TypeOf((*MockAPI)(nil).ListCheckRuns), owner, repo, checkSuiteID)
 }

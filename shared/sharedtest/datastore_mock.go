@@ -21,6 +21,7 @@ import (
 type MockDatastore struct {
 	ctrl     *gomock.Controller
 	recorder *MockDatastoreMockRecorder
+	isgomock struct{}
 }
 
 // MockDatastoreMockRecorder is the mock recorder for MockDatastore.
@@ -69,161 +70,161 @@ func (mr *MockDatastoreMockRecorder) Done() *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockDatastore) Get(arg0 shared.Key, arg1 any) error {
+func (m *MockDatastore) Get(key shared.Key, dst any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1)
+	ret := m.ctrl.Call(m, "Get", key, dst)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockDatastoreMockRecorder) Get(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) Get(key, dst any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDatastore)(nil).Get), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDatastore)(nil).Get), key, dst)
 }
 
 // GetAll mocks base method.
-func (m *MockDatastore) GetAll(arg0 shared.Query, arg1 any) ([]shared.Key, error) {
+func (m *MockDatastore) GetAll(q shared.Query, dst any) ([]shared.Key, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetAll", q, dst)
 	ret0, _ := ret[0].([]shared.Key)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockDatastoreMockRecorder) GetAll(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) GetAll(q, dst any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDatastore)(nil).GetAll), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDatastore)(nil).GetAll), q, dst)
 }
 
 // GetMulti mocks base method.
-func (m *MockDatastore) GetMulti(arg0 []shared.Key, arg1 any) error {
+func (m *MockDatastore) GetMulti(keys []shared.Key, dst any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMulti", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMulti", keys, dst)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GetMulti indicates an expected call of GetMulti.
-func (mr *MockDatastoreMockRecorder) GetMulti(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) GetMulti(keys, dst any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockDatastore)(nil).GetMulti), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockDatastore)(nil).GetMulti), keys, dst)
 }
 
 // Insert mocks base method.
-func (m *MockDatastore) Insert(arg0 shared.Key, arg1 any) error {
+func (m *MockDatastore) Insert(key shared.Key, src any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Insert", arg0, arg1)
+	ret := m.ctrl.Call(m, "Insert", key, src)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Insert indicates an expected call of Insert.
-func (mr *MockDatastoreMockRecorder) Insert(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) Insert(key, src any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockDatastore)(nil).Insert), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockDatastore)(nil).Insert), key, src)
 }
 
 // NewIDKey mocks base method.
-func (m *MockDatastore) NewIDKey(arg0 string, arg1 int64) shared.Key {
+func (m *MockDatastore) NewIDKey(typeName string, id int64) shared.Key {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewIDKey", arg0, arg1)
+	ret := m.ctrl.Call(m, "NewIDKey", typeName, id)
 	ret0, _ := ret[0].(shared.Key)
 	return ret0
 }
 
 // NewIDKey indicates an expected call of NewIDKey.
-func (mr *MockDatastoreMockRecorder) NewIDKey(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) NewIDKey(typeName, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIDKey", reflect.TypeOf((*MockDatastore)(nil).NewIDKey), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIDKey", reflect.TypeOf((*MockDatastore)(nil).NewIDKey), typeName, id)
 }
 
 // NewIncompleteKey mocks base method.
-func (m *MockDatastore) NewIncompleteKey(arg0 string) shared.Key {
+func (m *MockDatastore) NewIncompleteKey(typeName string) shared.Key {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewIncompleteKey", arg0)
+	ret := m.ctrl.Call(m, "NewIncompleteKey", typeName)
 	ret0, _ := ret[0].(shared.Key)
 	return ret0
 }
 
 // NewIncompleteKey indicates an expected call of NewIncompleteKey.
-func (mr *MockDatastoreMockRecorder) NewIncompleteKey(arg0 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) NewIncompleteKey(typeName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIncompleteKey", reflect.TypeOf((*MockDatastore)(nil).NewIncompleteKey), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIncompleteKey", reflect.TypeOf((*MockDatastore)(nil).NewIncompleteKey), typeName)
 }
 
 // NewNameKey mocks base method.
-func (m *MockDatastore) NewNameKey(arg0, arg1 string) shared.Key {
+func (m *MockDatastore) NewNameKey(typeName, name string) shared.Key {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewNameKey", arg0, arg1)
+	ret := m.ctrl.Call(m, "NewNameKey", typeName, name)
 	ret0, _ := ret[0].(shared.Key)
 	return ret0
 }
 
 // NewNameKey indicates an expected call of NewNameKey.
-func (mr *MockDatastoreMockRecorder) NewNameKey(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) NewNameKey(typeName, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewNameKey", reflect.TypeOf((*MockDatastore)(nil).NewNameKey), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewNameKey", reflect.TypeOf((*MockDatastore)(nil).NewNameKey), typeName, name)
 }
 
 // NewQuery mocks base method.
-func (m *MockDatastore) NewQuery(arg0 string) shared.Query {
+func (m *MockDatastore) NewQuery(typeName string) shared.Query {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewQuery", arg0)
+	ret := m.ctrl.Call(m, "NewQuery", typeName)
 	ret0, _ := ret[0].(shared.Query)
 	return ret0
 }
 
 // NewQuery indicates an expected call of NewQuery.
-func (mr *MockDatastoreMockRecorder) NewQuery(arg0 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) NewQuery(typeName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewQuery", reflect.TypeOf((*MockDatastore)(nil).NewQuery), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewQuery", reflect.TypeOf((*MockDatastore)(nil).NewQuery), typeName)
 }
 
 // Put mocks base method.
-func (m *MockDatastore) Put(arg0 shared.Key, arg1 any) (shared.Key, error) {
+func (m *MockDatastore) Put(key shared.Key, src any) (shared.Key, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", arg0, arg1)
+	ret := m.ctrl.Call(m, "Put", key, src)
 	ret0, _ := ret[0].(shared.Key)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockDatastoreMockRecorder) Put(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) Put(key, src any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDatastore)(nil).Put), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDatastore)(nil).Put), key, src)
 }
 
 // PutMulti mocks base method.
-func (m *MockDatastore) PutMulti(arg0 []shared.Key, arg1 any) ([]shared.Key, error) {
+func (m *MockDatastore) PutMulti(keys []shared.Key, src any) ([]shared.Key, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutMulti", arg0, arg1)
+	ret := m.ctrl.Call(m, "PutMulti", keys, src)
 	ret0, _ := ret[0].([]shared.Key)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PutMulti indicates an expected call of PutMulti.
-func (mr *MockDatastoreMockRecorder) PutMulti(arg0, arg1 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) PutMulti(keys, src any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutMulti", reflect.TypeOf((*MockDatastore)(nil).PutMulti), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutMulti", reflect.TypeOf((*MockDatastore)(nil).PutMulti), keys, src)
 }
 
 // ReserveID mocks base method.
-func (m *MockDatastore) ReserveID(arg0 string) (shared.Key, error) {
+func (m *MockDatastore) ReserveID(typeName string) (shared.Key, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReserveID", arg0)
+	ret := m.ctrl.Call(m, "ReserveID", typeName)
 	ret0, _ := ret[0].(shared.Key)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ReserveID indicates an expected call of ReserveID.
-func (mr *MockDatastoreMockRecorder) ReserveID(arg0 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) ReserveID(typeName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReserveID", reflect.TypeOf((*MockDatastore)(nil).ReserveID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReserveID", reflect.TypeOf((*MockDatastore)(nil).ReserveID), typeName)
 }
 
 // TestRunQuery mocks base method.
@@ -241,15 +242,15 @@ func (mr *MockDatastoreMockRecorder) TestRunQuery() *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockDatastore) Update(arg0 shared.Key, arg1 any, arg2 func(any) error) error {
+func (m *MockDatastore) Update(key shared.Key, dst any, mutator func(any) error) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Update", key, dst, mutator)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockDatastoreMockRecorder) Update(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockDatastoreMockRecorder) Update(key, dst, mutator any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDatastore)(nil).Update), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDatastore)(nil).Update), key, dst, mutator)
 }

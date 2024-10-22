@@ -22,6 +22,7 @@ import (
 type MockDiffAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockDiffAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockDiffAPIMockRecorder is the mock recorder for MockDiffAPI.
@@ -42,44 +43,44 @@ func (m *MockDiffAPI) EXPECT() *MockDiffAPIMockRecorder {
 }
 
 // GetDiffURL mocks base method.
-func (m *MockDiffAPI) GetDiffURL(arg0, arg1 shared.TestRun, arg2 *shared.DiffFilterParam) *url.URL {
+func (m *MockDiffAPI) GetDiffURL(before, after shared.TestRun, diffFilter *shared.DiffFilterParam) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDiffURL", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetDiffURL", before, after, diffFilter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetDiffURL indicates an expected call of GetDiffURL.
-func (mr *MockDiffAPIMockRecorder) GetDiffURL(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockDiffAPIMockRecorder) GetDiffURL(before, after, diffFilter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetDiffURL), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetDiffURL), before, after, diffFilter)
 }
 
 // GetMasterDiffURL mocks base method.
-func (m *MockDiffAPI) GetMasterDiffURL(arg0 shared.TestRun, arg1 *shared.DiffFilterParam) *url.URL {
+func (m *MockDiffAPI) GetMasterDiffURL(testRun shared.TestRun, diffFilter *shared.DiffFilterParam) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMasterDiffURL", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMasterDiffURL", testRun, diffFilter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetMasterDiffURL indicates an expected call of GetMasterDiffURL.
-func (mr *MockDiffAPIMockRecorder) GetMasterDiffURL(arg0, arg1 any) *gomock.Call {
+func (mr *MockDiffAPIMockRecorder) GetMasterDiffURL(testRun, diffFilter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMasterDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetMasterDiffURL), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMasterDiffURL", reflect.TypeOf((*MockDiffAPI)(nil).GetMasterDiffURL), testRun, diffFilter)
 }
 
 // GetRunsDiff mocks base method.
-func (m *MockDiffAPI) GetRunsDiff(arg0, arg1 shared.TestRun, arg2 shared.DiffFilterParam, arg3 mapset.Set) (shared.RunDiff, error) {
+func (m *MockDiffAPI) GetRunsDiff(before, after shared.TestRun, filter shared.DiffFilterParam, paths mapset.Set) (shared.RunDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRunsDiff", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetRunsDiff", before, after, filter, paths)
 	ret0, _ := ret[0].(shared.RunDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRunsDiff indicates an expected call of GetRunsDiff.
-func (mr *MockDiffAPIMockRecorder) GetRunsDiff(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockDiffAPIMockRecorder) GetRunsDiff(before, after, filter, paths any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsDiff", reflect.TypeOf((*MockDiffAPI)(nil).GetRunsDiff), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsDiff", reflect.TypeOf((*MockDiffAPI)(nil).GetRunsDiff), before, after, filter, paths)
 }
