@@ -25,6 +25,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -45,17 +46,17 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // CancelRun mocks base method.
-func (m *MockAPI) CancelRun(arg0, arg1, arg2 string, arg3 *github.CheckRun, arg4 *github.Installation) error {
+func (m *MockAPI) CancelRun(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelRun", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "CancelRun", sender, owner, repo, run, installation)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CancelRun indicates an expected call of CancelRun.
-func (mr *MockAPIMockRecorder) CancelRun(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) CancelRun(sender, owner, repo, run, installation any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelRun", reflect.TypeOf((*MockAPI)(nil).CancelRun), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelRun", reflect.TypeOf((*MockAPI)(nil).CancelRun), sender, owner, repo, run, installation)
 }
 
 // Context mocks base method.
@@ -73,10 +74,10 @@ func (mr *MockAPIMockRecorder) Context() *gomock.Call {
 }
 
 // CreateWPTCheckSuite mocks base method.
-func (m *MockAPI) CreateWPTCheckSuite(arg0, arg1 int64, arg2 string, arg3 ...int) (bool, error) {
+func (m *MockAPI) CreateWPTCheckSuite(appID, installationID int64, sha string, prNumbers ...int) (bool, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1, arg2}
-	for _, a := range arg3 {
+	varargs := []any{appID, installationID, sha}
+	for _, a := range prNumbers {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateWPTCheckSuite", varargs...)
@@ -86,9 +87,9 @@ func (m *MockAPI) CreateWPTCheckSuite(arg0, arg1 int64, arg2 string, arg3 ...int
 }
 
 // CreateWPTCheckSuite indicates an expected call of CreateWPTCheckSuite.
-func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(arg0, arg1, arg2 any, arg3 ...any) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateWPTCheckSuite(appID, installationID, sha any, prNumbers ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1, arg2}, arg3...)
+	varargs := append([]any{appID, installationID, sha}, prNumbers...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWPTCheckSuite", reflect.TypeOf((*MockAPI)(nil).CreateWPTCheckSuite), varargs...)
 }
 
@@ -150,17 +151,17 @@ func (mr *MockAPIMockRecorder) GetHostname() *gomock.Call {
 }
 
 // GetResultsURL mocks base method.
-func (m *MockAPI) GetResultsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAPI) GetResultsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResultsURL", arg0)
+	ret := m.ctrl.Call(m, "GetResultsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetResultsURL indicates an expected call of GetResultsURL.
-func (mr *MockAPIMockRecorder) GetResultsURL(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetResultsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAPI)(nil).GetResultsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAPI)(nil).GetResultsURL), filter)
 }
 
 // GetResultsUploadURL mocks base method.
@@ -178,61 +179,61 @@ func (mr *MockAPIMockRecorder) GetResultsUploadURL() *gomock.Call {
 }
 
 // GetRunsURL mocks base method.
-func (m *MockAPI) GetRunsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAPI) GetRunsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRunsURL", arg0)
+	ret := m.ctrl.Call(m, "GetRunsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetRunsURL indicates an expected call of GetRunsURL.
-func (mr *MockAPIMockRecorder) GetRunsURL(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetRunsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAPI)(nil).GetRunsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAPI)(nil).GetRunsURL), filter)
 }
 
 // GetServiceHostname mocks base method.
-func (m *MockAPI) GetServiceHostname(arg0 string) string {
+func (m *MockAPI) GetServiceHostname(service string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServiceHostname", arg0)
+	ret := m.ctrl.Call(m, "GetServiceHostname", service)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetServiceHostname indicates an expected call of GetServiceHostname.
-func (mr *MockAPIMockRecorder) GetServiceHostname(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetServiceHostname(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAPI)(nil).GetServiceHostname), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAPI)(nil).GetServiceHostname), service)
 }
 
 // GetSuitesForSHA mocks base method.
-func (m *MockAPI) GetSuitesForSHA(arg0 string) ([]shared.CheckSuite, error) {
+func (m *MockAPI) GetSuitesForSHA(sha string) ([]shared.CheckSuite, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSuitesForSHA", arg0)
+	ret := m.ctrl.Call(m, "GetSuitesForSHA", sha)
 	ret0, _ := ret[0].([]shared.CheckSuite)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSuitesForSHA indicates an expected call of GetSuitesForSHA.
-func (mr *MockAPIMockRecorder) GetSuitesForSHA(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetSuitesForSHA(sha any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuitesForSHA", reflect.TypeOf((*MockAPI)(nil).GetSuitesForSHA), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuitesForSHA", reflect.TypeOf((*MockAPI)(nil).GetSuitesForSHA), sha)
 }
 
 // GetUploader mocks base method.
-func (m *MockAPI) GetUploader(arg0 string) (shared.Uploader, error) {
+func (m *MockAPI) GetUploader(uploader string) (shared.Uploader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUploader", arg0)
+	ret := m.ctrl.Call(m, "GetUploader", uploader)
 	ret0, _ := ret[0].(shared.Uploader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUploader indicates an expected call of GetUploader.
-func (mr *MockAPIMockRecorder) GetUploader(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetUploader(uploader any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAPI)(nil).GetUploader), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAPI)(nil).GetUploader), uploader)
 }
 
 // GetVersion mocks base method.
@@ -279,58 +280,58 @@ func (mr *MockAPIMockRecorder) GetWPTRepoAppInstallationIDs() *gomock.Call {
 }
 
 // IgnoreFailure mocks base method.
-func (m *MockAPI) IgnoreFailure(arg0, arg1, arg2 string, arg3 *github.CheckRun, arg4 *github.Installation) error {
+func (m *MockAPI) IgnoreFailure(sender, owner, repo string, run *github.CheckRun, installation *github.Installation) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IgnoreFailure", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "IgnoreFailure", sender, owner, repo, run, installation)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // IgnoreFailure indicates an expected call of IgnoreFailure.
-func (mr *MockAPIMockRecorder) IgnoreFailure(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) IgnoreFailure(sender, owner, repo, run, installation any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFailure", reflect.TypeOf((*MockAPI)(nil).IgnoreFailure), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFailure", reflect.TypeOf((*MockAPI)(nil).IgnoreFailure), sender, owner, repo, run, installation)
 }
 
 // IsFeatureEnabled mocks base method.
-func (m *MockAPI) IsFeatureEnabled(arg0 string) bool {
+func (m *MockAPI) IsFeatureEnabled(featureName string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsFeatureEnabled", arg0)
+	ret := m.ctrl.Call(m, "IsFeatureEnabled", featureName)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsFeatureEnabled indicates an expected call of IsFeatureEnabled.
-func (mr *MockAPIMockRecorder) IsFeatureEnabled(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) IsFeatureEnabled(featureName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), featureName)
 }
 
 // ScheduleResultsProcessing mocks base method.
-func (m *MockAPI) ScheduleResultsProcessing(arg0 string, arg1 shared.ProductSpec) error {
+func (m *MockAPI) ScheduleResultsProcessing(sha string, browser shared.ProductSpec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleResultsProcessing", arg0, arg1)
+	ret := m.ctrl.Call(m, "ScheduleResultsProcessing", sha, browser)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ScheduleResultsProcessing indicates an expected call of ScheduleResultsProcessing.
-func (mr *MockAPIMockRecorder) ScheduleResultsProcessing(arg0, arg1 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleResultsProcessing(sha, browser any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsProcessing", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsProcessing), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsProcessing", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsProcessing), sha, browser)
 }
 
 // ScheduleTask mocks base method.
-func (m *MockAPI) ScheduleTask(arg0, arg1, arg2 string, arg3 url.Values) (string, error) {
+func (m *MockAPI) ScheduleTask(queueName, taskName, target string, params url.Values) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ScheduleTask", queueName, taskName, target, params)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleTask indicates an expected call of ScheduleTask.
-func (mr *MockAPIMockRecorder) ScheduleTask(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleTask(queueName, taskName, target, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), queueName, taskName, target, params)
 }

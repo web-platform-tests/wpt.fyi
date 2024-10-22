@@ -26,6 +26,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -46,18 +47,18 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // AddTestRun mocks base method.
-func (m *MockAPI) AddTestRun(arg0 *shared.TestRun) (shared.Key, error) {
+func (m *MockAPI) AddTestRun(testRun *shared.TestRun) (shared.Key, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddTestRun", arg0)
+	ret := m.ctrl.Call(m, "AddTestRun", testRun)
 	ret0, _ := ret[0].(shared.Key)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddTestRun indicates an expected call of AddTestRun.
-func (mr *MockAPIMockRecorder) AddTestRun(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) AddTestRun(testRun any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTestRun", reflect.TypeOf((*MockAPI)(nil).AddTestRun), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTestRun", reflect.TypeOf((*MockAPI)(nil).AddTestRun), testRun)
 }
 
 // Context mocks base method.
@@ -132,17 +133,17 @@ func (mr *MockAPIMockRecorder) GetHostname() *gomock.Call {
 }
 
 // GetResultsURL mocks base method.
-func (m *MockAPI) GetResultsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAPI) GetResultsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResultsURL", arg0)
+	ret := m.ctrl.Call(m, "GetResultsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetResultsURL indicates an expected call of GetResultsURL.
-func (mr *MockAPIMockRecorder) GetResultsURL(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetResultsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAPI)(nil).GetResultsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAPI)(nil).GetResultsURL), filter)
 }
 
 // GetResultsUploadURL mocks base method.
@@ -160,46 +161,46 @@ func (mr *MockAPIMockRecorder) GetResultsUploadURL() *gomock.Call {
 }
 
 // GetRunsURL mocks base method.
-func (m *MockAPI) GetRunsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAPI) GetRunsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRunsURL", arg0)
+	ret := m.ctrl.Call(m, "GetRunsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetRunsURL indicates an expected call of GetRunsURL.
-func (mr *MockAPIMockRecorder) GetRunsURL(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetRunsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAPI)(nil).GetRunsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAPI)(nil).GetRunsURL), filter)
 }
 
 // GetServiceHostname mocks base method.
-func (m *MockAPI) GetServiceHostname(arg0 string) string {
+func (m *MockAPI) GetServiceHostname(service string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServiceHostname", arg0)
+	ret := m.ctrl.Call(m, "GetServiceHostname", service)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetServiceHostname indicates an expected call of GetServiceHostname.
-func (mr *MockAPIMockRecorder) GetServiceHostname(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetServiceHostname(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAPI)(nil).GetServiceHostname), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAPI)(nil).GetServiceHostname), service)
 }
 
 // GetUploader mocks base method.
-func (m *MockAPI) GetUploader(arg0 string) (shared.Uploader, error) {
+func (m *MockAPI) GetUploader(uploader string) (shared.Uploader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUploader", arg0)
+	ret := m.ctrl.Call(m, "GetUploader", uploader)
 	ret0, _ := ret[0].(shared.Uploader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUploader indicates an expected call of GetUploader.
-func (mr *MockAPIMockRecorder) GetUploader(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetUploader(uploader any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAPI)(nil).GetUploader), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAPI)(nil).GetUploader), uploader)
 }
 
 // GetVersion mocks base method.
@@ -245,73 +246,73 @@ func (mr *MockAPIMockRecorder) IsAdmin(arg0 any) *gomock.Call {
 }
 
 // IsFeatureEnabled mocks base method.
-func (m *MockAPI) IsFeatureEnabled(arg0 string) bool {
+func (m *MockAPI) IsFeatureEnabled(featureName string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsFeatureEnabled", arg0)
+	ret := m.ctrl.Call(m, "IsFeatureEnabled", featureName)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsFeatureEnabled indicates an expected call of IsFeatureEnabled.
-func (mr *MockAPIMockRecorder) IsFeatureEnabled(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) IsFeatureEnabled(featureName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAPI)(nil).IsFeatureEnabled), featureName)
 }
 
 // ScheduleResultsTask mocks base method.
-func (m *MockAPI) ScheduleResultsTask(arg0 string, arg1, arg2, arg3 []string, arg4 map[string]string) (string, error) {
+func (m *MockAPI) ScheduleResultsTask(uploader string, results, screenshots, archives []string, extraParams map[string]string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleResultsTask", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "ScheduleResultsTask", uploader, results, screenshots, archives, extraParams)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleResultsTask indicates an expected call of ScheduleResultsTask.
-func (mr *MockAPIMockRecorder) ScheduleResultsTask(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleResultsTask(uploader, results, screenshots, archives, extraParams any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleResultsTask", reflect.TypeOf((*MockAPI)(nil).ScheduleResultsTask), uploader, results, screenshots, archives, extraParams)
 }
 
 // ScheduleTask mocks base method.
-func (m *MockAPI) ScheduleTask(arg0, arg1, arg2 string, arg3 url.Values) (string, error) {
+func (m *MockAPI) ScheduleTask(queueName, taskName, target string, params url.Values) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ScheduleTask", queueName, taskName, target, params)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleTask indicates an expected call of ScheduleTask.
-func (mr *MockAPIMockRecorder) ScheduleTask(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) ScheduleTask(queueName, taskName, target, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAPI)(nil).ScheduleTask), queueName, taskName, target, params)
 }
 
 // UpdatePendingTestRun mocks base method.
-func (m *MockAPI) UpdatePendingTestRun(arg0 shared.PendingTestRun) error {
+func (m *MockAPI) UpdatePendingTestRun(pendingRun shared.PendingTestRun) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePendingTestRun", arg0)
+	ret := m.ctrl.Call(m, "UpdatePendingTestRun", pendingRun)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdatePendingTestRun indicates an expected call of UpdatePendingTestRun.
-func (mr *MockAPIMockRecorder) UpdatePendingTestRun(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) UpdatePendingTestRun(pendingRun any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePendingTestRun", reflect.TypeOf((*MockAPI)(nil).UpdatePendingTestRun), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePendingTestRun", reflect.TypeOf((*MockAPI)(nil).UpdatePendingTestRun), pendingRun)
 }
 
 // UploadToGCS mocks base method.
-func (m *MockAPI) UploadToGCS(arg0 string, arg1 io.Reader, arg2 bool) error {
+func (m *MockAPI) UploadToGCS(gcsPath string, f io.Reader, gzipped bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadToGCS", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UploadToGCS", gcsPath, f, gzipped)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UploadToGCS indicates an expected call of UploadToGCS.
-func (mr *MockAPIMockRecorder) UploadToGCS(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) UploadToGCS(gcsPath, f, gzipped any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToGCS", reflect.TypeOf((*MockAPI)(nil).UploadToGCS), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToGCS", reflect.TypeOf((*MockAPI)(nil).UploadToGCS), gcsPath, f, gzipped)
 }

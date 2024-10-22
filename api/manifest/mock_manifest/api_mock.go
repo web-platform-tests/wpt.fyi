@@ -21,6 +21,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -57,15 +58,15 @@ func (mr *MockAPIMockRecorder) GetManifestForSHA(arg0 any) *gomock.Call {
 }
 
 // NewRedis mocks base method.
-func (m *MockAPI) NewRedis(arg0 time.Duration) shared.ReadWritable {
+func (m *MockAPI) NewRedis(duration time.Duration) shared.ReadWritable {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewRedis", arg0)
+	ret := m.ctrl.Call(m, "NewRedis", duration)
 	ret0, _ := ret[0].(shared.ReadWritable)
 	return ret0
 }
 
 // NewRedis indicates an expected call of NewRedis.
-func (mr *MockAPIMockRecorder) NewRedis(arg0 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) NewRedis(duration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRedis", reflect.TypeOf((*MockAPI)(nil).NewRedis), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRedis", reflect.TypeOf((*MockAPI)(nil).NewRedis), duration)
 }

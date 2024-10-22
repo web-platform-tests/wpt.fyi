@@ -25,6 +25,7 @@ import (
 type MockAppEngineAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAppEngineAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAppEngineAPIMockRecorder is the mock recorder for MockAppEngineAPI.
@@ -116,17 +117,17 @@ func (mr *MockAppEngineAPIMockRecorder) GetHostname() *gomock.Call {
 }
 
 // GetResultsURL mocks base method.
-func (m *MockAppEngineAPI) GetResultsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAppEngineAPI) GetResultsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResultsURL", arg0)
+	ret := m.ctrl.Call(m, "GetResultsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetResultsURL indicates an expected call of GetResultsURL.
-func (mr *MockAppEngineAPIMockRecorder) GetResultsURL(arg0 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) GetResultsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetResultsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResultsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetResultsURL), filter)
 }
 
 // GetResultsUploadURL mocks base method.
@@ -144,46 +145,46 @@ func (mr *MockAppEngineAPIMockRecorder) GetResultsUploadURL() *gomock.Call {
 }
 
 // GetRunsURL mocks base method.
-func (m *MockAppEngineAPI) GetRunsURL(arg0 shared.TestRunFilter) *url.URL {
+func (m *MockAppEngineAPI) GetRunsURL(filter shared.TestRunFilter) *url.URL {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRunsURL", arg0)
+	ret := m.ctrl.Call(m, "GetRunsURL", filter)
 	ret0, _ := ret[0].(*url.URL)
 	return ret0
 }
 
 // GetRunsURL indicates an expected call of GetRunsURL.
-func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(arg0 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) GetRunsURL(filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunsURL", reflect.TypeOf((*MockAppEngineAPI)(nil).GetRunsURL), filter)
 }
 
 // GetServiceHostname mocks base method.
-func (m *MockAppEngineAPI) GetServiceHostname(arg0 string) string {
+func (m *MockAppEngineAPI) GetServiceHostname(service string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServiceHostname", arg0)
+	ret := m.ctrl.Call(m, "GetServiceHostname", service)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetServiceHostname indicates an expected call of GetServiceHostname.
-func (mr *MockAppEngineAPIMockRecorder) GetServiceHostname(arg0 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) GetServiceHostname(service any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetServiceHostname), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceHostname", reflect.TypeOf((*MockAppEngineAPI)(nil).GetServiceHostname), service)
 }
 
 // GetUploader mocks base method.
-func (m *MockAppEngineAPI) GetUploader(arg0 string) (shared.Uploader, error) {
+func (m *MockAppEngineAPI) GetUploader(uploader string) (shared.Uploader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUploader", arg0)
+	ret := m.ctrl.Call(m, "GetUploader", uploader)
 	ret0, _ := ret[0].(shared.Uploader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUploader indicates an expected call of GetUploader.
-func (mr *MockAppEngineAPIMockRecorder) GetUploader(arg0 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) GetUploader(uploader any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).GetUploader), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUploader", reflect.TypeOf((*MockAppEngineAPI)(nil).GetUploader), uploader)
 }
 
 // GetVersion mocks base method.
@@ -215,30 +216,30 @@ func (mr *MockAppEngineAPIMockRecorder) GetVersionedHostname() *gomock.Call {
 }
 
 // IsFeatureEnabled mocks base method.
-func (m *MockAppEngineAPI) IsFeatureEnabled(arg0 string) bool {
+func (m *MockAppEngineAPI) IsFeatureEnabled(featureName string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsFeatureEnabled", arg0)
+	ret := m.ctrl.Call(m, "IsFeatureEnabled", featureName)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsFeatureEnabled indicates an expected call of IsFeatureEnabled.
-func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(arg0 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) IsFeatureEnabled(featureName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFeatureEnabled", reflect.TypeOf((*MockAppEngineAPI)(nil).IsFeatureEnabled), featureName)
 }
 
 // ScheduleTask mocks base method.
-func (m *MockAppEngineAPI) ScheduleTask(arg0, arg1, arg2 string, arg3 url.Values) (string, error) {
+func (m *MockAppEngineAPI) ScheduleTask(queueName, taskName, target string, params url.Values) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScheduleTask", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ScheduleTask", queueName, taskName, target, params)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScheduleTask indicates an expected call of ScheduleTask.
-func (mr *MockAppEngineAPIMockRecorder) ScheduleTask(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockAppEngineAPIMockRecorder) ScheduleTask(queueName, taskName, target, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAppEngineAPI)(nil).ScheduleTask), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleTask", reflect.TypeOf((*MockAppEngineAPI)(nil).ScheduleTask), queueName, taskName, target, params)
 }

@@ -20,6 +20,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -40,44 +41,44 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // GetAzureArtifactsURL mocks base method.
-func (m *MockAPI) GetAzureArtifactsURL(arg0, arg1 string, arg2 int64) string {
+func (m *MockAPI) GetAzureArtifactsURL(owner, repo string, buildID int64) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAzureArtifactsURL", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetAzureArtifactsURL", owner, repo, buildID)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetAzureArtifactsURL indicates an expected call of GetAzureArtifactsURL.
-func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetAzureArtifactsURL(owner, repo, buildID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAzureArtifactsURL", reflect.TypeOf((*MockAPI)(nil).GetAzureArtifactsURL), owner, repo, buildID)
 }
 
 // GetBuild mocks base method.
-func (m *MockAPI) GetBuild(arg0, arg1 string, arg2 int64) (*azure.Build, error) {
+func (m *MockAPI) GetBuild(owner, repo string, buildID int64) (*azure.Build, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBuild", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetBuild", owner, repo, buildID)
 	ret0, _ := ret[0].(*azure.Build)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBuild indicates an expected call of GetBuild.
-func (mr *MockAPIMockRecorder) GetBuild(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetBuild(owner, repo, buildID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuild", reflect.TypeOf((*MockAPI)(nil).GetBuild), owner, repo, buildID)
 }
 
 // GetBuildURL mocks base method.
-func (m *MockAPI) GetBuildURL(arg0, arg1 string, arg2 int64) string {
+func (m *MockAPI) GetBuildURL(owner, repo string, buildID int64) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBuildURL", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetBuildURL", owner, repo, buildID)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetBuildURL indicates an expected call of GetBuildURL.
-func (mr *MockAPIMockRecorder) GetBuildURL(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetBuildURL(owner, repo, buildID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBuildURL", reflect.TypeOf((*MockAPI)(nil).GetBuildURL), owner, repo, buildID)
 }

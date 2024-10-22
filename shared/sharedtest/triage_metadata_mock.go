@@ -20,6 +20,7 @@ import (
 type MockTriageMetadata struct {
 	ctrl     *gomock.Controller
 	recorder *MockTriageMetadataMockRecorder
+	isgomock struct{}
 }
 
 // MockTriageMetadataMockRecorder is the mock recorder for MockTriageMetadata.
@@ -40,16 +41,16 @@ func (m *MockTriageMetadata) EXPECT() *MockTriageMetadataMockRecorder {
 }
 
 // Triage mocks base method.
-func (m *MockTriageMetadata) Triage(arg0 shared.MetadataResults) (string, error) {
+func (m *MockTriageMetadata) Triage(metadata shared.MetadataResults) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Triage", arg0)
+	ret := m.ctrl.Call(m, "Triage", metadata)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Triage indicates an expected call of Triage.
-func (mr *MockTriageMetadataMockRecorder) Triage(arg0 any) *gomock.Call {
+func (mr *MockTriageMetadataMockRecorder) Triage(metadata any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Triage", reflect.TypeOf((*MockTriageMetadata)(nil).Triage), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Triage", reflect.TypeOf((*MockTriageMetadata)(nil).Triage), metadata)
 }
