@@ -238,13 +238,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           padding: 0 5px;
         }
 
-        .warning {
+        #mobileWarning {
           background-color: khaki;
           border: 1px dashed rgba(0, 0, 0, .5);
           border-radius: 5px;
-        }
-
-        #mobileWarning {
           margin-bottom: 32px;
         }
 
