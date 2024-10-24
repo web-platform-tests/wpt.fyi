@@ -196,8 +196,8 @@ class InteropSummary extends PolymerElement {
     }
 
     const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    // Don't display the interop score for Interop 2021 or mobile view.
-    if (this.year === '2021' || this.isMobileScoresView) {
+    // Don't display the interop score for Interop 2021.
+    if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       summaryDiv.style.minHeight = '275px';
@@ -213,7 +213,7 @@ class InteropSummary extends PolymerElement {
 
   shouldDisplayInvestigationNumber() {
     const scores = this.dataManager.getYearProp('investigationScores');
-    return scores !== null && scores !== undefined && !this.isMobileScoresView;
+    return scores !== null && scores !== undefined;
   }
 
   // roundScore defines the rounding rules for the top-level scores.
@@ -252,10 +252,8 @@ class InteropSummary extends PolymerElement {
         (this.isMobileScoresView && scoreElements.length !== scores.length + 1)) {
       return;
     }
-    if (!this.isMobileScoresView) {
-      // Update interop summary number first.
-      this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
-    }
+    // Update interop summary number first.
+    this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
     // Update the rest of the browser scores.
     for (let i = 1; i < scores.length; i++) {
       this.updateSummaryScore(scoreElements[i], scores[i - 1][summaryFeatureName]);

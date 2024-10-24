@@ -866,6 +866,15 @@ export const interopData = {
           'interop-2023-url',
         ],
         'score_as_group': false
+      },
+      {
+        'name': 'Active Investigations',
+        'rows': [
+          'Accessibility Testing',
+          'Mobile Testing',
+          'WebAssembly Testing'
+        ],
+        'score_as_group': true
       }
     ],
     'mobile_focus_areas': [
