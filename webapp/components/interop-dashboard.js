@@ -314,7 +314,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
             <paper-button id="toggleMobile" class\$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
           </div>
-          <div class="text-center warning" id="mobileWarning" hidden$="[[!isMobileScoresView]]">
+          <div class="text-center" id="mobileWarning" hidden$="[[!isMobileScoresView]]">
             <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
           </div>
         </div>
