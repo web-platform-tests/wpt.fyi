@@ -113,7 +113,7 @@ urllib3==2.2.3
     # via
     #   requests
     #   types-requests
-werkzeug==3.0.3
+werkzeug==3.0.6
     # via flask
 zipp==3.19.1
     # via importlib-metadata
