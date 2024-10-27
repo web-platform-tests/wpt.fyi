@@ -74,6 +74,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         width: 100%;
         border-collapse: collapse;
       }
+      tr:nth-child(2n) {
+        background-color: #7F7F7F1F;
+      }
       tr.spec {
         background-color: var(--paper-grey-200);
       }
