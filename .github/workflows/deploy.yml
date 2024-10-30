@@ -30,10 +30,26 @@ jobs:
       - name: Set DOCKER_INSTANCE
         run: echo "DOCKER_INSTANCE=wptd-dev-$(echo $RANDOM)" >> $GITHUB_ENV
 
+      - name: Docker config check
+        uses: dorny/paths-filter@v3
+        id: dockerchanges
+        with:
+          filters: |
+            dockerconf:
+              - 'Dockerfile'
+
+      # run only if Docker configuration was changed
+      - if: steps.dockerchanges.outputs.dockerconf == 'true'
+        name: Rebuild Docker image
+        run: docker build -t webplatformtests/wpt.fyi:latest .
+
+      # run only if Docker configuration was not changed
+      - if: steps.dockerchanges.outputs.dockerconf == 'false'
+        name: Fetch latest Docker image
+        run: docker pull "${DOCKER_IMAGE}"
+
       - name: pre-installation
-        run: |
-          docker pull "${DOCKER_IMAGE}"
-          bash ./util/docker-dev/run.sh -d -q
+        run: bash ./util/docker-dev/run.sh -d -q
 
       - name: installation
         run: docker exec -t "${DOCKER_INSTANCE}" make go_build;
