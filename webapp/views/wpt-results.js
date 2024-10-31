@@ -93,6 +93,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         top: 0;
         z-index: 1;
       }
+      path-part {
+        vertical-align: bottom;
+      }
       .path {
         margin-bottom: 16px;
       }
