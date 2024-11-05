@@ -7,8 +7,8 @@ RUN chmod a+rx $HOME && useradd --uid 9999 --user-group --create-home browser
 
 # Add apt repositories for Java, Node.js and Google Cloud CLI
 RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) && \
-    echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $DISTRO_CODENAME main" > /etc/apt/sources.list.d/adoptium.list && \
-    curl -s https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /usr/share/keyrings/adoptium.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/correto.gpg] https://apt.corretto.aws stable main" > /etc/apt/sources.list.d/adoptium.list && \
+    curl -s https://apt.corretto.aws/corretto.key | gpg --dearmor -o /usr/share/keyrings/correto.gpg && \
     export NODE_VERSION="18.x" && \
     export ARCH=$(dpkg --print-architecture) && \
     echo "deb [arch=$ARCH signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
@@ -18,16 +18,16 @@ RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-rele
 
 # Sort the package names!
 # firefox-esr: provides deps for Firefox (we don't use ESR directly)
+# java-11-amazon-corretto-jdk: provides JDK/JRE to Selenium & gcloud SDK
 # python-crcmod: native module to speed up CRC checksum in gsutil
-# temurin-11-jdk: provides JDK/JRE to Selenium & gcloud SDK
 RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         curl \
         firefox-esr \
+        java-11-amazon-corretto-jdk \
         nodejs \
         python3.11 \
         python3-crcmod \
         sudo \
-        temurin-11-jdk \
         tox \
         wget \
         xvfb && \
