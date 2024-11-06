@@ -7,8 +7,8 @@ RUN chmod a+rx $HOME && useradd --uid 9999 --user-group --create-home browser
 
 # Add apt repositories for Java, Node.js and Google Cloud CLI
 RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) && \
-    echo "deb [signed-by=/usr/share/keyrings/correto.gpg] https://apt.corretto.aws stable main" > /etc/apt/sources.list.d/adoptium.list && \
-    curl -s https://apt.corretto.aws/corretto.key | gpg --dearmor -o /usr/share/keyrings/correto.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/corretto.gpg] https://apt.corretto.aws stable main" > /etc/apt/sources.list.d/corretto.list && \
+    curl -s https://apt.corretto.aws/corretto.key | gpg --dearmor -o /usr/share/keyrings/corretto.gpg && \
     export NODE_VERSION="18.x" && \
     export ARCH=$(dpkg --print-architecture) && \
     echo "deb [arch=$ARCH signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
