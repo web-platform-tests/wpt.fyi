@@ -1,6 +1,6 @@
 ## Basics
 
-The results processor runs on Python 3.9. The entry point is a Flask web server
+The results processor runs on Python 3.11. The entry point is a Flask web server
 (`main.py`). In production, gunicorn is used as the WSGI (see `Dockerfile`) and
 the container runs as a custom AppEngine Flex instance (see `app.yaml`).
 
@@ -10,7 +10,7 @@ We can create a virtualenv to recreate a setup close to production for daily
 development.
 
 ```bash
-virtualenv env -p python3.9
+virtualenv env -p python3.11
 . env/bin/activate
 pip install -r requirements.txt
 ```
@@ -38,8 +38,8 @@ Dependabot is used to automatically update `requirements.txt`. To manually
 update dependencies, run the following commands:
 
 ```bash
-pip3.9 install --user pip-tools
-python3.9 -m piptools compile requirements.in
+pip3.11 install --user pip-tools
+python3.11 -m piptools compile requirements.in
 ```
 
 ## Local debugging
