@@ -80,6 +80,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       tr td {
         padding: 0.25em 0.5em;
       }
+      tr:nth-of-type(2n) td:first-child {
+        background-color: var(--paper-grey-100);
+      }
       tr.spec td {
         padding: 0.2em 0.5em;
         border: solid 1px var(--paper-grey-300);
