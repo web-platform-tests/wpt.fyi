@@ -826,6 +826,7 @@ export const interopData = {
           { 'date': '2024-06-28', 'score': 120 },
           { 'date': '2024-08-13', 'score': 242 },
           { 'date': '2024-10-01', 'score': 458 },
+          { 'date': '2024-11-11', 'score': 558 },
         ]
       },
       {
