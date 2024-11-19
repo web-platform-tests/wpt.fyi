@@ -74,7 +74,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         width: 100%;
         border-collapse: collapse;
       }
-      tr.spec {
+      tr:nth-child(2n), tr.spec {
         background-color: var(--paper-grey-200);
       }
       tr td {
@@ -92,6 +92,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         position: sticky;
         top: 0;
         z-index: 1;
+      }
+      path-part {
+        vertical-align: bottom;
       }
       .path {
         margin-bottom: 16px;
