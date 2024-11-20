@@ -1,6 +1,7 @@
 module github.com/web-platform-tests/wpt.fyi
 
 go 1.22.4
+toolchain go1.22.9
 
 require (
 	cloud.google.com/go/cloudtasks v1.13.2
@@ -31,7 +32,7 @@ require (
 	google.golang.org/api v0.207.0
 	google.golang.org/genproto v0.0.0-20241113202542-65e8d215514f
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28
-	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc v1.68.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
