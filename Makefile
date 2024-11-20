@@ -143,10 +143,11 @@ dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-
 # Note: If we change to downloading chrome from Chrome For Testing, modify the
 # `chromedriver` target below to use the `known-good-versions-with-downloads.json` endpoint.
 # More details can be found in the comment for the `chromedriver` target.
+# TODO: pinning Chrome to 130 due to https://github.com/web-platform-tests/wpt.fyi/issues/4129
 chrome: wget
 	if [[ -z "$$(which google-chrome)" ]]; then \
-		ARCHIVE=google-chrome-stable_current_amd64.deb; \
-		wget -q https://dl.google.com/linux/direct/$${ARCHIVE}; \
+		ARCHIVE=google-chrome-stable_130.0.6723.116-1_amd64.deb; \
+		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/$${ARCHIVE}; \
 		sudo apt-get update; \
 		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
 		sudo apt-get install --fix-broken --fix-missing -qqy; \
