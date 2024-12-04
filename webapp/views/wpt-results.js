@@ -1176,7 +1176,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       return `${this.getTestNumbersDisplay(passes, total, isDir)} subtests`;
     }
 
-    const formatPercent = parseFloat((passes / total * 100).toFixed(0));
+    const formatPercent = parseFloat((passes / total * 100).toFixed(1));
     let cellDisplay = '';
     // Show flat 0% or 100% only if none or all tests/subtests pass.
     if (passes === 0) {
