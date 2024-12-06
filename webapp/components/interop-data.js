@@ -840,7 +840,9 @@ export const interopData = {
       {
         'name': 'WebAssembly Testing',
         'url': 'https://github.com/web-platform-tests/interop-2024-wasm',
-        'scores_over_time': []
+        'scores_over_time': [
+          { 'date': '2024-11-19', 'score': 333 },
+        ]
       }
     ],
     'investigation_weight': 0.0,
