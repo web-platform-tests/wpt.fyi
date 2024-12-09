@@ -1,6 +1,6 @@
 # Production deployment spec for query cache service.
 
-FROM golang:1.22.9-bookworm as builder
+FROM golang:1.22.10-bookworm as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git
