@@ -1,4 +1,4 @@
-FROM python:3.11.9-bookworm
+FROM python:3.11.11-bookworm
 
 # Install runtime dependencies.
 # python3-crcmod for faster gsutil checksum
