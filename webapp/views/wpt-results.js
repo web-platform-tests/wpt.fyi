@@ -176,6 +176,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       .pointer {
         cursor: help;
       }
+      .interop-totals {
+        cursor: help;
+        border-bottom: 1px dotted #000;
+        text-decoration: none;
+      }
       
       .channel-area {
         display: flex;
@@ -359,7 +364,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
                   <td class\$="numbers [[ getTotalsClass(columnTotal) ]]">
-                    <span class\$="total [[ getTotalsClass(columnTotal) ]]">{{ getTotalDisplay(columnTotal) }}</span>
+                    <template is="dom-if" if="[[ isInteropView() ]]">
+                      <span class\$="total [[ getTotalsClass(columnTotal) ]]">
+                        <span class="interop-totals" title="This number may contain slight differences compared to the Interop Dashboard. Please reference the Interop Dashboard for accurate interop scores.">
+                          {{ getTotalDisplay(columnTotal) }}
+                        </span>
+                      </span>
+                    </template>
+                    <template is="dom-if" if="[[ !isInteropView() ]]">
+                      <span class\$="total [[ getTotalsClass(columnTotal) ]]">{{ getTotalDisplay(columnTotal) }}</span>
+                    </template>
                   </td>
                 </template>
               </tr>
