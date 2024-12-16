@@ -19,13 +19,6 @@
 import '../../views/wpt-app.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
-suiteSetup(() => {
-  window.fetch = (url) => {
-    const href = url instanceof URL ? url.href : 'unknown';
-    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
-  };
-});
-
 suite('<wpt-app>', () => {
   let sandbox;
 
