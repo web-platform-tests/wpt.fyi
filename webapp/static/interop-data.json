@@ -887,6 +887,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio",
         "spec": "https://drafts.csswg.org/css-sizing/#aspect-ratio",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2021-aspect-ratio",
         "countsTowardScore": false,
         "labels": [
           "interop-2021-aspect-ratio"
@@ -897,6 +898,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/position",
         "spec": "https://drafts.csswg.org/css-position/#position-property",
         "tests": "/results/css/css-position/sticky?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-position-sticky",
+        "mobile_tests": "/results/css/css-position/sticky?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2021-position-sticky",
         "countsTowardScore": false,
         "labels": [
           "interop-2021-position-sticky"
@@ -907,6 +909,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/@layer",
         "spec": "https://drafts.csswg.org/css-cascade/#layering",
         "tests": "/results/css/css-cascade?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-cascade",
+        "mobile_tests": "/results/css/css-cascade?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-cascade",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-cascade"
@@ -917,6 +920,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
         "spec": "https://html.spec.whatwg.org/multipage/interactive-elements.html#the-dialog-element",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-dialog",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-dialog",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-dialog"
@@ -927,6 +931,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/length#relative_length_units_based_on_viewport",
         "spec": "",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-text",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-text",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-text"
@@ -937,6 +942,7 @@
         "mdn": "",
         "spec": "https://drafts.csswg.org/css-values/#viewport-relative-units",
         "tests": "/results/css/css-values?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-viewport",
+        "mobile_tests": "/results/css/css-values?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-viewport",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-viewport"
@@ -947,6 +953,7 @@
         "mdn": "",
         "spec": "",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-webcompat",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-webcompat",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-webcompat"
@@ -957,6 +964,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Glossary/Accessible_name",
         "spec": "",
         "tests": "/results/?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-accessibility",
+        "mobile_tests": "/results/?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-accessibility",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-accessibility"
@@ -967,6 +975,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style",
         "spec": "",
         "tests": "/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior",
+        "mobile_tests": "/results/css?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-starting-style",
@@ -978,6 +987,7 @@
         "mdn": "",
         "spec": "",
         "tests": "/shadow-dom?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dsd",
+        "mobile_tests": "/shadow-dom?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-dsd",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-dsd"
@@ -988,6 +998,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/:dir",
         "spec": "",
         "tests": "/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dir",
+        "mobile_tests": "/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-dir",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-dir"
@@ -998,6 +1009,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/font-size-adjust",
         "spec": "",
         "tests": "/results/css/css-fonts?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust",
+        "mobile_tests": "/results/css/css-fonts?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-font-size-adjust"
@@ -1008,6 +1020,7 @@
         "mdn": "",
         "spec": "https://websockets.spec.whatwg.org/ ",
         "tests": "/results/websockets?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-websockets",
+        "mobile_tests": "/results/websockets?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-websockets",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-websockets"
@@ -1018,6 +1031,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB",
         "spec": "",
         "tests": "/results/IndexedDB?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-indexeddb",
+        "mobile_tests": "/results/IndexedDB?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-indexeddb",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-indexeddb"
@@ -1028,6 +1042,7 @@
         "mdn": "",
         "spec": "",
         "tests": "/results/css?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox%20or%20label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid%20or%20label%3Ainterop-2022-subgrid",
+        "mobile_tests": "/results/css?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox%20or%20label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid%20or%20label%3Ainterop-2022-subgrid",
         "countsTowardScore": true,
         "labels": [
           "interop-2021-flexbox",
@@ -1042,6 +1057,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting",
         "spec": "",
         "tests": "/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-nesting",
+        "mobile_tests": "/results/css?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-nesting",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-nesting"
@@ -1052,6 +1068,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Popover_API",
         "spec": "",
         "tests": "/results/html/semantics/popovers?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-popover",
+        "mobile_tests": "/results/html/semantics/popovers?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-popover",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-popover"
@@ -1062,6 +1079,7 @@
         "mdn": "",
         "spec": "",
         "tests": "/results/css/css-color?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-relative-color",
+        "mobile_tests": "/results/css/css-color?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-relative-color",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-relative-color"
@@ -1072,6 +1090,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback",
         "spec": "",
         "tests": "/results/video-rvfc?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-video-rvfc",
+        "mobile_tests": "/results/video-rvfc?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-video-rvfc",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-video-rvfc"
@@ -1082,6 +1101,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-width",
         "spec": "",
         "tests": "/results/css?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-scrollbar",
+        "mobile_tests": "/results/css?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-scrollbar",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-scrollbar"
@@ -1092,6 +1112,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap",
         "spec": "",
         "tests": "/results/css/css-text?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-text-wrap",
+        "mobile_tests": "/results/css/css-text?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-text-wrap",
         "countsTowardScore": true,
         "labels": [
           "interop-2024-text-wrap"
@@ -1102,6 +1123,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/border-image",
         "spec": "https://www.w3.org/TR/css-backgrounds-3/#the-border-image",
         "tests": "/results/css/css-backgrounds?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage",
+        "mobile_tests": "/results/css/css-backgrounds?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-cssborderimage",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-cssborderimage"
@@ -1112,6 +1134,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/color_value",
         "spec": "https://w3c.github.io/csswg-drafts/css-color/#color-syntax",
         "tests": "/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color",
+        "mobile_tests": "/results/css?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-color%20or%20label%3Ainterop-2023-color",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-color",
@@ -1123,6 +1146,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Container_Queries",
         "spec": "https://drafts.csswg.org/css-contain-3/#container-queries",
         "tests": "/results/css/css-contain/container-queries?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-container",
+        "mobile_tests": "/results/css/css-contain/container-queries?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-container",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-container"
@@ -1133,6 +1157,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/contain",
         "spec": "https://drafts.csswg.org/css-contain/#contain-property",
         "tests": "/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain",
+        "mobile_tests": "/results/css?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-contain%20or%20label%3Ainterop-2023-contain",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-contain",
@@ -1144,6 +1169,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/Pseudo-classes",
         "spec": "https://drafts.csswg.org/selectors/",
         "tests": "/results/css/selectors?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-pseudos",
+        "mobile_tests": "/results/css/selectors?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-pseudos",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-pseudos"
@@ -1154,6 +1180,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/@property",
         "spec": "https://drafts.css-houdini.org/css-properties-values-api/",
         "tests": "/results/css/css-properties-values-api?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-property",
+        "mobile_tests": "/results/css/css-properties-values-api?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-property",
         "countsTowardScore": true,
         "labels": [
           "interop-2023-property"
@@ -1164,6 +1191,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/font-palette",
         "spec": "https://drafts.csswg.org/css-fonts-4/#font-palette-prop",
         "tests": "/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-fonts",
+        "mobile_tests": "/results/css?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-fonts",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-fonts"
@@ -1174,6 +1202,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Element/form",
         "spec": "https://html.spec.whatwg.org/multipage/forms.html#the-form-element",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-forms%20or%20label%3Ainterop-2023-forms",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-forms%20or%20label%3Ainterop-2023-forms",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-forms",
@@ -1185,6 +1214,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/:has",
         "spec": "https://drafts.csswg.org/selectors-4/#relational",
         "tests": "/results/css/selectors?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-has",
+        "mobile_tests": "/results/css/selectors?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-has",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-has"
@@ -1195,6 +1225,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/HTML/Global_attributes/inert",
         "spec": "https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute",
         "tests": "/results/inert?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-inert",
+        "mobile_tests": "/results/inert?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-inert",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-inert"
@@ -1205,6 +1236,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Masking",
         "spec": "https://drafts.fxtf.org/css-masking/",
         "tests": "/results/css/css-masking?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-cssmasking",
+        "mobile_tests": "/results/css/css-masking?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-cssmasking",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-cssmasking"
@@ -1215,6 +1247,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Functions#math_functions",
         "spec": "https://drafts.csswg.org/css-values-4/#math",
         "tests": "/results/css/css-values?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
+        "mobile_tests": "/results/css/css-values?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-mathfunctions",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-mathfunctions"
@@ -1225,6 +1258,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/Media_Queries/Using_media_queries",
         "spec": "https://www.w3.org/TR/mediaqueries-4/",
         "tests": "/results/css/mediaqueries?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
+        "mobile_tests": "/results/css/mediaqueries?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-mediaqueries",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-mediaqueries"
@@ -1235,6 +1269,7 @@
         "mdn": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules",
         "spec": "https://tc39.es/proposal-import-assertions/",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-modules",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-modules"
@@ -1245,6 +1280,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/CSS_Motion_Path",
         "spec": "https://drafts.fxtf.org/motion-1/",
         "tests": "/results/css/motion?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-motion",
+        "mobile_tests": "/results/css/motion?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-motion",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-motion"
@@ -1255,6 +1291,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/API/OffscreenCanvas",
         "spec": "https://html.spec.whatwg.org/multipage/canvas.html#the-offscreencanvas-interface",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-offscreencanvas",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-offscreencanvas"
@@ -1265,6 +1302,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/API/Pointer_events",
         "spec": "https://w3c.github.io/pointerevents/",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-events",
         "countsTowardScore": true,
         "labels": [
           "interop-2023-events"
@@ -1275,6 +1313,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/overflow",
         "spec": "https://drafts.csswg.org/css-overflow/#propdef-overflow",
         "tests": "/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2022-scrolling",
+        "mobile_tests": "/results/css?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2022-scrolling",
         "countsTowardScore": false,
         "labels": [
           "interop-2022-scrolling"
@@ -1285,6 +1324,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/CSS/transform",
         "spec": "https://drafts.csswg.org/css-transforms/",
         "tests": "/results/css/css-transforms?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-transforms",
+        "mobile_tests": "/results/css/css-transforms?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2021-transforms",
         "countsTowardScore": false,
         "labels": [
           "interop-2021-transforms"
@@ -1295,6 +1335,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/API/URL",
         "spec": "https://url.spec.whatwg.org",
         "tests": "/results/url?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-url",
+        "mobile_tests": "/results/url?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-url",
         "countsTowardScore": true,
         "labels": [
           "interop-2023-url"
@@ -1305,6 +1346,7 @@
         "mdn": "",
         "spec": "",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-webcompat",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-webcompat"
@@ -1315,6 +1357,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/API/WebCodecs_API",
         "spec": "https://www.w3.org/TR/webcodecs/",
         "tests": "/results/webcodecs?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
+        "mobile_tests": "/results/webcodecs?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-webcodecs",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-webcodecs"
@@ -1325,6 +1368,7 @@
         "mdn": "https://developer.mozilla.org/docs/Web/Web_Components",
         "spec": "https://www.w3.org/wiki/WebComponents/",
         "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-webcomponents",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-webcomponents",
         "countsTowardScore": false,
         "labels": [
           "interop-2023-webcomponents"

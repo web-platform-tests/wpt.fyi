@@ -689,7 +689,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   featureLinks(feature, stable) {
     const data = this.getYearProp('focusAreas')[feature];
-    const testsURL = this.formatTestsURL(data?.tests, stable);
+    const rawURL = (this.isMobileScoresView) ? data?.mobile_tests : data?.tests;
+    const testsURL = this.formatTestsURL(rawURL, stable);
 
     return [
       { text: 'Spec', href: data?.spec },
@@ -736,7 +737,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   // Get the tests URL for a row and add the stable/experimental label.
   getTestsURL(name, stable) {
-    return this.formatTestsURL(this.getRowInfo(name, 'tests'), stable);
+    const urlKey = (this.isMobileScoresView) ? 'mobile_tests' : 'tests';
+    return this.formatTestsURL(this.getRowInfo(name, urlKey), stable);
   }
 
   getInvestigationScore(rowName, isPreviousYear) {
