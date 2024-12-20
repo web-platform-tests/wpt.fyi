@@ -842,6 +842,7 @@ export const interopData = {
         'url': 'https://github.com/web-platform-tests/interop-2024-wasm',
         'scores_over_time': [
           { 'date': '2024-11-19', 'score': 333 },
+          { 'date': '2024-12-20', 'score': 666 },
         ]
       }
     ],
