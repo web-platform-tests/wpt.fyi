@@ -36,7 +36,7 @@
     "cpy-cli": "5.0.0",
     "eslint": "9.17.0",
     "eslint-plugin-html": "8.1.2",
-    "globals": "^15.13.0",
+    "globals": "^15.14.0",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.7",
     "web-component-tester": "6.9.2"
