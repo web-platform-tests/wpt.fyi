@@ -86,7 +86,6 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     target[feature] = {
       type: Boolean,
       readOnly: readOnly && !wpt.MUTABLE_FLAGS,
-      notify: true,
       value: value,
     };
   }
@@ -194,73 +193,73 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       }
     </style>
     <paper-item>
-      <paper-checkbox checked="{{queryBuilder}}">
+      <paper-checkbox checked="[[queryBuilder]]">
         Query Builder component
       </paper-checkbox>
     </paper-item>
     <paper-item sub-item>
-      <paper-checkbox checked="{{queryBuilderSHA}}">
+      <paper-checkbox checked="[[queryBuilderSHA]]">
         SHA input
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{diffFromAPI}}">
+      <paper-checkbox checked="[[diffFromAPI]]">
         Compute diffs using /api/diff
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{colorHomepage}}">
+      <paper-checkbox checked="[[colorHomepage]]">
         Use pass-rate colors on the homepage
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{structuredQueries}}">
+      <paper-checkbox checked="[[structuredQueries]]">
         Interpret query strings as structured queries over test names and test
         status/result values
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{githubCommitLinks}}">
+      <paper-checkbox checked="[[githubCommitLinks]]">
         Show links to the commit on GitHub in the header row.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{permalinks}}">
+      <paper-checkbox checked="[[permalinks]]">
         Show dialog for copying a permalink (on /results page).
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{webPlatformTestsLive}}">
+      <paper-checkbox checked="[[webPlatformTestsLive]]">
         Use wpt.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{displayMetadata}}">
+      <paper-checkbox checked="[[displayMetadata]]">
         Show metadata Information on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
       <paper-item>
-      <paper-checkbox checked="{{triageMetadataUI}}">
+      <paper-checkbox checked="[[triageMetadataUI]]">
         Show Triage Metadata UI on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{processorTab}}">
+      <paper-checkbox checked="[[processorTab]]">
         Show the "Processor" (status) tab.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{githubLogin}}">
+      <paper-checkbox checked="[[githubLogin]]">
         Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{showBSF}}">
+      <paper-checkbox checked="[[showBSF]]">
         Enable Browser Specific Failures graph
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{showMobileScoresView}}">
+      <paper-checkbox checked="[[showMobileScoresView]]">
         Enable mobile results view on Interop dashboard
       </paper-checkbox>
     </paper-item>
@@ -284,49 +283,49 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
 
     <h3>Server-side only features</h3>
     <paper-item>
-      <paper-checkbox checked="{{diffRenames}}">
+      <paper-checkbox checked="[[diffRenames]]">
         Compute renames in diffs with the GitHub API
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{paginationTokens}}">
+      <paper-checkbox checked="[[paginationTokens]]">
         Return "wpt-next-page" pagination token HTTP header in /api/runs
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{runsByPRNumber}}">
+      <paper-checkbox checked="[[runsByPRNumber]]">
         Allow /api/runs?pr=[GitHub PR number]
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{ignoreHarnessInTotal}}">
+      <paper-checkbox checked="[[ignoreHarnessInTotal]]">
         Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
     </paper-item>
     <h4>GitHub Status Checks</h4>
     <paper-item>
-      <paper-checkbox checked="{{searchcacheDiffs}}">
+      <paper-checkbox checked="[[searchcacheDiffs]]">
         Use searchcache (not summaries) to compute diffs when processing check run events.
       </paper-checkbox>
     </paper-item>
     <paper-item sub-item>
-      <paper-checkbox checked="{{onlyChangesAsRegressions}}">
+      <paper-checkbox checked="[[onlyChangesAsRegressions]]">
         Only treat C (changed) differences as possible regressions.
         (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/main/api/README.md#apidiff">See docs for definition</a>)
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{failChecksOnRegression}}">
+      <paper-checkbox checked="[[failChecksOnRegression]]">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{checksAllUsers}}">
+      <paper-checkbox checked="[[checksAllUsers]]">
         Run the wpt.fyi GitHub status check for all users.
       </paper-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{pendingChecks}}">
+      <paper-checkbox checked="[[pendingChecks]]">
         Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
