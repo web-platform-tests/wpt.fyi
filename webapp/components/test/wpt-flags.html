@@ -70,9 +70,9 @@ suite('wpt-flags', () => {
     test('localStorage', () => {
       assert.isTrue(editor instanceof WPTFlagsEditor);
       editor.queryBuilder = true;
-      expect(window.localStorage.getItem("features.queryBuilder")).to.equal('true');
+      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('true');
       editor.queryBuilder = false;
-      expect(window.localStorage.getItem("features.queryBuilder")).to.equal('false');
+      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('false');
     });
   });
 });
