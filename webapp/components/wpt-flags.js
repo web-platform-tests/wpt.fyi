@@ -85,7 +85,7 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
     }
     target[feature] = {
       type: Boolean,
-      readOnly: readOnly && !wpt.MUTABLE_FLAGS,
+      readOnly: readOnly,
       value: value,
     };
   }
