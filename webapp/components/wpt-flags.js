@@ -107,6 +107,8 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
 
   setLocalStorageFlag(value, feature) {
     localStorage.setItem(`features.${feature}`, JSON.stringify(value));
+    // flagUpdated is used in tests.
+    window.document.dispatchEvent(new CustomEvent('flagUpdated', { bubbles: true }));
   }
 
   getLocalStorageFlag(feature) {
@@ -174,10 +176,12 @@ const FlagsEditorClass = (environmentFlags) =>
           alert(`Failed to save feature ${feature}.\n\n${e}`);
         });
       } else {
-        return localStorage.setItem(
+        localStorage.setItem(
           `features.${feature}`,
           JSON.stringify(value));
       }
+    // flagUpdated is used in tests.
+    window.document.dispatchEvent(new CustomEvent('flagUpdated', { bubbles: true }));
     }
 
     handleChange(e) {

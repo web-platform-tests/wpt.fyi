@@ -67,12 +67,28 @@ suite('wpt-flags', () => {
       sandbox.restore();
     });
 
-    test('localStorage', () => {
+    test('toggling checkboxes updates localStorage', () => {
       assert.isTrue(editor instanceof WPTFlagsEditor);
       editor.queryBuilder = true;
       expect(window.localStorage.getItem('features.queryBuilder')).to.equal('true');
       editor.queryBuilder = false;
       expect(window.localStorage.getItem('features.queryBuilder')).to.equal('false');
+    });
+
+    test('click updates localStorage', () => {
+      assert.isTrue(editor instanceof WPTFlagsEditor);
+      editor.queryBuilder = true;
+      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('true');
+      const queryBuilder = editor.shadowRoot.querySelector('#queryBuilder');
+
+      const flagUpdated = new Promise(resolve => {
+        window.document.addEventListener("flagUpdated", () => resolve(), { once: true });
+      });
+
+      queryBuilder.dispatchEvent(new MouseEvent('click'));
+      return flagUpdated.then(() => {
+        expect(window.localStorage.getItem('features.queryBuilder')).to.equal('false');
+      });
     });
   });
 });
