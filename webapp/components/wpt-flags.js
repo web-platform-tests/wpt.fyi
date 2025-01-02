@@ -180,8 +180,8 @@ const FlagsEditorClass = (environmentFlags) =>
           `features.${feature}`,
           JSON.stringify(value));
       }
-    // flagUpdated is used in tests.
-    window.document.dispatchEvent(new CustomEvent('flagUpdated', { bubbles: true }));
+      // flagUpdated is used in tests.
+      window.document.dispatchEvent(new CustomEvent('flagUpdated', { bubbles: true }));
     }
 
     handleChange(e) {

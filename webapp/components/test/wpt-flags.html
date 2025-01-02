@@ -82,7 +82,7 @@ suite('wpt-flags', () => {
       const queryBuilder = editor.shadowRoot.querySelector('#queryBuilder');
 
       const flagUpdated = new Promise(resolve => {
-        window.document.addEventListener("flagUpdated", () => resolve(), { once: true });
+        window.document.addEventListener('flagUpdated', () => resolve(), { once: true });
       });
 
       queryBuilder.dispatchEvent(new MouseEvent('click'));
