@@ -41,7 +41,7 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
   }
 
   pathChanged() {
-    this.selectedMetadata = [];
+    this.set('selectedMetadata', []);
   }
 
   computeHasSelections(selectedMetadata) {
@@ -53,7 +53,7 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
       for (const cell of this.selectedCells) {
         cell.removeAttribute('selected');
       }
-      this.selectedCells = [];
+      this.set('selectedCells', []);
     }
   }
 
@@ -68,17 +68,29 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
     td.setAttribute('triage', 'triage');
   }
 
-  handleSelect(td, browser, test, toast) {
+  _updateSelectedMetadataAndCells(td, browser, test) {
     if (this.selectedMetadata.find(s => s.test === test && s.product === browser)) {
-      this.selectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
-      this.selectedCells = this.selectedCells.filter(c => c !== td);
+      const newSelectedMetadata = this.selectedMetadata.filter(s => !(s.test === test && s.product === browser));
+      this.set('selectedMetadata', newSelectedMetadata);
+
+      const newSelectedCells = this.selectedCells.filter(c => c !== td);
+      this.set('selectedCells', newSelectedCells);
+
       td.removeAttribute('selected');
     } else {
       const selected = { test: test, product: browser };
-      this.selectedMetadata = [...this.selectedMetadata, selected];
+      const newSelectedMetadata = [...this.selectedMetadata, selected];
+      this.set('selectedMetadata', newSelectedMetadata);
+
       td.setAttribute('selected', 'selected');
-      this.selectedCells.push(td);
+
+      const newSelectedCells = [...this.selectedCells, td];
+      this.set('selectedCells', newSelectedCells);
     }
+  }
+
+  handleSelect(td, browser, test, toast) {
+    this._updateSelectedMetadataAndCells(td, browser, test);
 
     if (this.selectedMetadata.length) {
       toast.show();
@@ -92,7 +104,7 @@ const AmendMetadataMixin = (superClass) => class extends superClass {
     }
 
     if (this.selectedMetadata.length > 0) {
-      this.selectedMetadata = [];
+      this.set('selectedMetadata', []);
     }
     toast.hide();
   }
@@ -163,9 +175,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
-              <paper-input label="Bug URL" on-input="handleFieldInput" value="{{node.url}}" autofocus></paper-input>
+              <paper-input label="Bug URL" on-input="handleFieldInput" value="[[node.url]]" autofocus></paper-input>
               <template is="dom-if" if="[[!node.product]]">
-                <paper-input label="Label" on-input="handleFieldInput" value="{{node.label}}"></paper-input>
+                <paper-input label="Label" on-input="handleFieldInput" value="[[node.label]]"></paper-input>
               </template>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
@@ -198,7 +210,6 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       fieldsFilled: Object,
       selectedMetadata: {
         type: Array,
-        notify: true,
       },
       displayedMetadata: {
         type: Array,
@@ -223,15 +234,15 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   open() {
-    this.dialog.open();
     this.populateDisplayData();
+    this.dialog.open();
     this.dialog.addEventListener('keydown', this.enter);
   }
 
   close() {
     this.dialog.removeEventListener('keydown', this.enter);
     this.triageSubmitDisabled = true;
-    this.selectedMetadata = [];
+    this.set('selectedMetadata', []);
     this.fieldsFilled = {filled: [], numEmpty: 0};
     this.dialog.close();
   }
@@ -359,7 +370,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   populateDisplayData() {
-    this.displayedMetadata = [];
+    this.set('displayedMetadata', []);
     // Info to keep track of which fields have been filled.
     this.fieldsFilled = {filled: [], numEmpty: 0};
 
@@ -377,6 +388,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       browserMap[entry.product].push(test);
     }
 
+    const newDisplayedMetadata = [];
     for (const key in browserMap) {
       let node = { product: key, url: '', tests: browserMap[key] };
       // when key (product) is empty, we will set a label field because
@@ -384,9 +396,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       if (key === '') {
         node['label'] = '';
       }
-      this.displayedMetadata.push(node);
+      newDisplayedMetadata.push(node);
       this.fieldsFilled.filled.push(false);
     }
+
+    this.set('displayedMetadata', newDisplayedMetadata);
     // A URL or label must be supplied for every triage item,
     // which are all currently empty.
     this.fieldsFilled.numEmpty = this.displayedMetadata.length;
@@ -395,8 +409,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   handleFieldInput(event) {
     // Detect which input was filled.
     const index = event.model.__data.index;
-    const url = this.displayedMetadata[index].url;
-    const label = this.displayedMetadata[index].label;
+    const path = `displayedMetadata.${index}.url`;
+    const labelPath = `displayedMetadata.${index}.label`;
+
+    const url = this.get(path);
+    const label = this.get(labelPath);
 
     // Check if the input is empty.
     if (url === '' && (label === '' || label === undefined)) {
@@ -411,6 +428,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       this.fieldsFilled.filled[index] = true;
     }
 
+    this.set(path, event.target.value);
+    if (labelPath) {
+      this.set(labelPath, event.target.value);
+    }
+
     // If all triage items have input, triage can be submitted.
     this.triageSubmitDisabled = this.fieldsFilled.numEmpty > 0;
   }
@@ -421,7 +443,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
     const triagedMetadataMap = this.getTriagedMetadataMap(this.displayedMetadata);
     if (Object.keys(triagedMetadataMap).length === 0) {
-      this.selectedMetadata = [];
+      this.set('selectedMetadata', []);
       let errMsg = '';
       if (this.displayedMetadata.length > 0 && this.displayedMetadata[0].product === '') {
         errMsg = 'Failed to triage: Bug URL and Label fields cannot both be empty.';
@@ -464,7 +486,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         toast.open();
       });
 
-    this.selectedMetadata = [];
+    this.set('selectedMetadata', []);
   }
 }
 
