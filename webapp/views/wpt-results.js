@@ -401,11 +401,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
                     search-results="[[searchResults]]"
-                    metadata-map="{{metadataMap}}"
-                    label-map="{{labelMap}}"
+                    metadata-map="[[metadataMap]]"
+                    label-map="[[labelMap}]]"
                     triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
