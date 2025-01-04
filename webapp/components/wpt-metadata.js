@@ -13,7 +13,7 @@ import {
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
-import { PathInfo } from '../components/path.js';
+import { PathInfo } from './path.js';
 import { ProductInfo } from './product-info.js';
 
 class WPTMetadataNode extends ProductInfo(PolymerElement) {
@@ -100,7 +100,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
               ></wpt-metadata-node>
             </template>
           </iron-collapse>
-          <paper-button id="metadata-toggle" onclick="[[openCollapsible]]">
+          <paper-button id="metadata-toggle" on-click="handleOpenCollapsible">
             Show more
           </paper-button>
         </template>
@@ -146,20 +146,15 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       },
       metadataMap: {
         type: Object,
-        notify: true,
       },
       labelMap: {
         type: Object,
-        notify: true,
       },
-      triageNotifier: Boolean,
+      triageNotifier: {
+        type: Boolean,
+        observer: 'loadPendingMetadata',
+      },
     };
-  }
-
-  static get observers() {
-    return [
-      'loadPendingMetadata(triageNotifier)',
-    ];
   }
 
   constructor() {
@@ -179,6 +174,10 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
 
   // loadMergedMetadata is called when products is changed.
   loadMergedMetadata(products) {
+    if (!products) {
+      return;
+    }
+
     let productVal = [];
     for (let i = 0; i < products.length; i++) {
       productVal.push(products[i].browser_name);
@@ -308,8 +307,8 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
       }
     }
 
-    this.labelMap = labelMap;
-    this.metadataMap = metadataMap;
+    this.set('labelMap', labelMap);
+    this.set('metadataMap', metadataMap);
     this._resetSelectors();
     return displayedMetadata;
   }
