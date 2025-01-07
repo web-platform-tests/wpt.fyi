@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/cloudtasks v1.13.3
 	cloud.google.com/go/datastore v1.20.0
 	cloud.google.com/go/logging v1.12.0
-	cloud.google.com/go/secretmanager v1.14.2
+	cloud.google.com/go/secretmanager v1.14.3
 	cloud.google.com/go/storage v1.49.0
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da
