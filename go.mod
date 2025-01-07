@@ -5,7 +5,7 @@ go 1.22.7
 toolchain go1.22.9
 
 require (
-	cloud.google.com/go/cloudtasks v1.13.2
+	cloud.google.com/go/cloudtasks v1.13.3
 	cloud.google.com/go/datastore v1.20.0
 	cloud.google.com/go/logging v1.12.0
 	cloud.google.com/go/secretmanager v1.14.2
