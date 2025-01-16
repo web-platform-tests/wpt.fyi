@@ -409,8 +409,13 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   handleFieldInput(event) {
     // Detect which input was filled.
     const index = event.model.__data.index;
+    const isLabel = event.target.label === 'Label';
     const path = `displayedMetadata.${index}.url`;
     const labelPath = `displayedMetadata.${index}.label`;
+    const updatedPath = isLabel ? labelPath : path;
+
+    const newValue = event.target.value;
+    this.set(updatedPath, newValue);
 
     const url = this.get(path);
     const label = this.get(labelPath);
@@ -426,11 +431,6 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       // If the field was previously empty, it is now considered filled.
       this.fieldsFilled.numEmpty--;
       this.fieldsFilled.filled[index] = true;
-    }
-
-    this.set(path, event.target.value);
-    if (labelPath) {
-      this.set(labelPath, event.target.value);
     }
 
     // If all triage items have input, triage can be submitted.
