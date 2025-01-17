@@ -372,8 +372,8 @@ suite('<test-search>', () => {
     test('simple link search', () => {
       assertQueryParse('link:2dcontext', {exists: [{link: '2dcontext'}]});
       assertQueryParse(
-        'link:bugs.chromium.org/p/chromium/issues/detail',
-        {exists: [{link: 'bugs.chromium.org/p/chromium/issues/detail'}]}
+        'link:issues.chromium.org/issues/',
+        {exists: [{link: 'issues.chromium.org/issues/'}]}
       );
     });
 
