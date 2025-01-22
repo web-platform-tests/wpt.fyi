@@ -563,6 +563,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
     this.sortTestName = this.sortTestName.bind(this);
     this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);
+    this.addEventListener('metadata-map-changed', this.metadataMapChanged);
+    this.addEventListener('label-map-changed', this.labelMapChanged);
   }
 
   connectedCallback() {
@@ -1491,6 +1493,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   selectedMetadataChanged(e) {
     this.selectedMetadata = e.detail.value;
+  }
+
+  metadataMapChanged(e) {
+    this.metadataMap = e.detail.value;
+  }
+
+  labelMapChanged(e) {
+    this.labelMap = e.detail.value;
   }
 
   handleTriageHover() {

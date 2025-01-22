@@ -307,7 +307,17 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     }
 
     this.set('labelMap', labelMap);
+    this.dispatchEvent(new CustomEvent('label-map-changed', {
+      bubbles: true,
+      composed: true,
+      detail: { value: labelMap }
+    }));
     this.set('metadataMap', metadataMap);
+    this.dispatchEvent(new CustomEvent('metadata-map-changed', {
+      bubbles: true,
+      composed: true,
+      detail: { value: metadataMap }
+    }));
     this._resetSelectors();
     return displayedMetadata;
   }
