@@ -160,7 +160,6 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
   constructor() {
     super();
     this.loadPendingMetadata();
-    this.openCollapsible = this.handleOpenCollapsible.bind(this);
   }
 
   _resetSelectors() {
