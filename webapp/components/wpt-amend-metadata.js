@@ -243,6 +243,11 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     this.dialog.removeEventListener('keydown', this.enter);
     this.triageSubmitDisabled = true;
     this.set('selectedMetadata', []);
+    this.dispatchEvent(new CustomEvent('selected-metadata-changed', {
+      bubbles: true,
+      composed: true,
+      detail: { value: [] }
+    }));
     this.fieldsFilled = {filled: [], numEmpty: 0};
     this.dialog.close();
   }

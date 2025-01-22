@@ -295,6 +295,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
     };
+    this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);
   }
 
   computeDisplayedProducts(testRuns) {
@@ -457,7 +458,13 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata);
+    if (this.selectedMetadata.length === 0) {
+      this.handleClear(this.selectedMetadata);
+    }
+  }
+
+  selectedMetadataChanged(e) {
+    this.selectedMetadata = e.detail.value;
   }
 
   handleTriageMode(isTriageMode) {

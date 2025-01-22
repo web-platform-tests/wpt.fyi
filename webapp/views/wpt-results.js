@@ -562,6 +562,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
     this.sortTestName = this.sortTestName.bind(this);
+    this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);
   }
 
   connectedCallback() {
@@ -1483,7 +1484,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata);
+    if (this.selectedMetadata.length === 0) {
+      this.handleClear(this.selectedMetadata);
+    }
+  }
+
+  selectedMetadataChanged(e) {
+    this.selectedMetadata = e.detail.value;
   }
 
   handleTriageHover() {
