@@ -457,7 +457,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status);
   }
 
-  clearSelectedCells(selectedMetadata) {
+  clearSelectedCells() {
     if (this.selectedMetadata.length === 0) {
       this.handleClear(this.selectedMetadata);
     }

@@ -1483,7 +1483,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.handleTriageModeChange(isTriageMode, this.$['selected-toast']);
   }
 
-  clearSelectedCells(selectedMetadata) {
+  clearSelectedCells() {
     if (this.selectedMetadata.length === 0) {
       this.handleClear(this.selectedMetadata);
     }

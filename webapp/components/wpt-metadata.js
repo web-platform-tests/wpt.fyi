@@ -254,7 +254,7 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
     }
 
     // This loop constructs both the metadataMap, which is used to show inline
-    // bug icons in the test results, and displayedMetdata, which is the list of
+    // bug icons in the test results, and displayedMetadata, which is the list of
     // metadata links shown at the bottom of the page.
     let metadataMap = {};
     let labelMap = {};
