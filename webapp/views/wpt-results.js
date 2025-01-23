@@ -401,11 +401,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       <wpt-metadata products="[[displayedProducts]]"
                     path="[[path]]"
                     search-results="[[searchResults]]"
-                    metadata-map="{{metadataMap}}"
-                    label-map="{{labelMap}}"
+                    metadata-map="[[metadataMap]]"
+                    label-map="[[labelMap}]]"
                     triage-notifier="[[triageNotifier]]"></wpt-metadata>
     </template>
-    <wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
+    <wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -562,6 +562,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.dismissToast = e => e.target.closest('paper-toast').close();
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
     this.sortTestName = this.sortTestName.bind(this);
+    this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);
+    this.addEventListener('metadata-map-changed', this.metadataMapChanged);
+    this.addEventListener('label-map-changed', this.labelMapChanged);
   }
 
   connectedCallback() {
@@ -1482,8 +1485,22 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.handleTriageModeChange(isTriageMode, this.$['selected-toast']);
   }
 
-  clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata);
+  clearSelectedCells() {
+    if (this.selectedMetadata.length === 0) {
+      this.handleClear(this.selectedMetadata);
+    }
+  }
+
+  selectedMetadataChanged(e) {
+    this.selectedMetadata = e.detail.value;
+  }
+
+  metadataMapChanged(e) {
+    this.metadataMap = e.detail.value;
+  }
+
+  labelMapChanged(e) {
+    this.labelMap = e.detail.value;
   }
 
   handleTriageHover() {

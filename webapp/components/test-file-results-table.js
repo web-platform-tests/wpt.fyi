@@ -195,7 +195,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     </template>
   </tbody>
 </table>
-<wpt-amend-metadata id="amend" selected-metadata="{{selectedMetadata}}" path="[[path]]"></wpt-amend-metadata>
+<wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
   }
 
@@ -295,6 +295,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;
     };
+    this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);
   }
 
   computeDisplayedProducts(testRuns) {
@@ -456,8 +457,14 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
     return ['FAIL', 'ERROR', 'TIMEOUT'].includes(status);
   }
 
-  clearSelectedCells(selectedMetadata) {
-    this.handleClear(selectedMetadata);
+  clearSelectedCells() {
+    if (this.selectedMetadata.length === 0) {
+      this.handleClear(this.selectedMetadata);
+    }
+  }
+
+  selectedMetadataChanged(e) {
+    this.selectedMetadata = e.detail.value;
   }
 
   handleTriageMode(isTriageMode) {
