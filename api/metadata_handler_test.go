@@ -292,7 +292,7 @@ func TestMetadataHandler_POST_MissingProducts(t *testing.T) {
 	body :=
 		`{
         "exists": [{
-            "link": "bugs.chromium.org"
+            "link": "issues.chromium.org"
         }]
     }`
 	bodyReader := strings.NewReader(body)
@@ -309,7 +309,7 @@ func TestMetadataHandler_POST_NotLink(t *testing.T) {
 	body :=
 		`{
         "exists": [{
-            "pattern": "bugs.chromium.org"
+            "pattern": "issues.chromium.org/"
         }]
     }`
 	bodyReader := strings.NewReader(string(body))
@@ -327,7 +327,7 @@ func TestMetadataHandler_POST_NotJustLink(t *testing.T) {
 		`{
         "exists": [{
             "and": [
-                {"pattern": "bugs.chromium.org"},
+                {"pattern": "issues.chromium.org"},
                 {"link": "abc"}
             ]
         }]

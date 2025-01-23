@@ -154,12 +154,12 @@ suite('wpt-amend-metadata', () => {
       assert.deepEqual(appFixture.displayedMetadata, expected);
     });
     test('getSearchURL', () => {
-      expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-      expect(appFixture.getSearchURL('/a/b.html', 'chrome')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-      expect(appFixture.getSearchURL('/a/b', 'chrome')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-      expect(appFixture.getSearchURL('/a/b.any.html', 'chrome')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-      expect(appFixture.getSearchURL('/a/b.worker.html', 'chrome')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
-      expect(appFixture.getSearchURL('/a/b.html', 'edge')).to.equal('https://bugs.chromium.org/p/chromium/issues/list?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b.html', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b.any.html', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b.worker.html', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
+      expect(appFixture.getSearchURL('/a/b.html', 'edge')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'firefox')).to.equal('https://bugzilla.mozilla.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'safari')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'wktr')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');

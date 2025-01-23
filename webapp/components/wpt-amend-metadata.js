@@ -332,7 +332,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     }
 
     if (product === 'chrome' || product === 'chromium' || product === 'edge') {
-      return `https://bugs.chromium.org/p/chromium/issues/list?q="${testName}"`;
+      return `https://issues.chromium.org/issues?q="${testName}"`;
     }
 
     if (product === 'deno') {

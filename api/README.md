@@ -576,7 +576,7 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 
 #### Post Examples
 - POST /api/metadata?product=chrome\&product=firefox \
-    exists:='[{"link":"bugs.chromium.org"}]'
+    exists:='[{"link":"issues.chromium.org"}]'
 
 <details><summary><b>Example JSON</b></summary>
 
@@ -584,12 +584,12 @@ __`product`__ : browser[version[os[version]]]. e.g. `chrome-63.0-linux`
 {
   "/IndexedDB/bindings-inject-key.html": [
     {
-      "url": "bugs.chromium.org/p/chromium/issues/detail?id=934844"
+      "url": "issues.chromium.org/issues/934844"
     }
   ],
   "/html/browsers/history/the-history-interface/007.html": [
     {
-      "url": "bugs.chromium.org/p/chromium/issues/detail?id=592874"
+      "url": "issues.chromium.org/issues/592874"
     }
   ]
 }

@@ -305,11 +305,11 @@ Same as satuts, but with a specific product-spec.
 
 Search untriaged issues -
 
-    chrome:fail and !link:bugs.chromium.org
+    chrome:fail and !link:issues.chromium.org
 
 Search triaged issues -
 
-    chrome:pass and link:bugs.chromium.org
+    chrome:pass and link:issues.chromium.org
 
 #### triaged
 
