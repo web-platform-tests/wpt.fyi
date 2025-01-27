@@ -14,7 +14,7 @@ charset-normalizer==2.0.12
     # via requests
 click==8.1.7
     # via flask
-filelock==3.16.1
+filelock==3.17.0
     # via -r requirements.in
 flake8==7.1.1
     # via -r requirements.in
