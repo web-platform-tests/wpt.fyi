@@ -1403,5 +1403,357 @@ export const interopData = {
         ]
       }
     }
+  },
+  '2025': {
+    'browsers': ['chrome_canary', 'edge', 'firefox', 'safari'],
+    'mobile_browsers': ['chrome_android', 'firefox_android'],
+    'table_sections': [
+      {
+        'name': 'Active Focus Areas',
+        'rows': [
+          'interop-2025-anchor-positioning',
+          'interop-2025-core-web-vitals',
+          'interop-2025-modules',
+          'interop-2025-navigation',
+          'interop-2025-backdrop-filter',
+          'interop-2025-remove-mutation-events',
+          'interop-2023-events',
+          'interop-2024-layout',
+          'interop-2025-scrollend',
+          'interop-2025-storageaccess',
+          'interop-2025-details',
+          'interop-2025-textdecoration',
+          'interop-2025-scope',
+          'interop-2025-view-transitions',
+          'interop-2025-webassembly',
+          'interop-2025-writingmodes',
+          'interop-2025-urlpattern',
+          'interop-2025-webcompat',
+          'interop-2025-webrtc'
+        ],
+        'score_as_group': false
+      },
+      {
+        'name': 'Active Investigations',
+        'rows': [
+          'Accessibility Testing',
+          'Gaming',
+          'Mobile Testing',
+          'Privacy',
+          'WebVTT'
+        ],
+        'score_as_group': true
+      }
+    ],
+    'investigation_scores': [
+      {
+        'name': 'Accessibility Testing',
+        'url': 'https://github.com/web-platform-tests/interop-accessibility',
+        'scores_over_time': []
+      },
+      {
+        'name': 'Gaming',
+        'url': '',
+        'scores_over_time': []
+      },
+      {
+        'name': 'Mobile Testing',
+        'url': 'https://github.com/web-platform-tests/interop-mobile-testing',
+        'scores_over_time': []
+      },
+      {
+        'name': 'Privacy',
+        'url': '',
+        'scores_over_time': []
+      },
+      {
+        'name': 'WebVTT',
+        'url': '',
+        'scores_over_time': []
+      }
+    ],
+    'investigation_weight': 0.0,
+    'mobile_table_sections': [
+      {
+        'name': 'Active Focus Areas',
+        'rows': [
+          'interop-2025-anchor-positioning',
+          'interop-2025-core-web-vitals',
+          'interop-2025-modules',
+          'interop-2025-navigation',
+          'interop-2025-backdrop-filter',
+          'interop-2025-remove-mutation-events',
+          'interop-2023-events',
+          'interop-2024-layout',
+          'interop-2025-scrollend',
+          'interop-2025-storageaccess',
+          'interop-2025-details',
+          'interop-2025-textdecoration',
+          'interop-2025-scope',
+          'interop-2025-view-transitions',
+          'interop-2025-webassembly',
+          'interop-2025-writingmodes',
+          'interop-2025-urlpattern',
+          'interop-2025-webcompat',
+          'interop-2025-webrtc'
+        ],
+        'score_as_group': false
+      },
+      {
+        'name': 'Active Investigations',
+        'rows': [
+          'Accessibility Testing',
+          'Gaming',
+          'Mobile Testing',
+          'Privacy',
+          'WebVTT'
+        ],
+        'score_as_group': true
+      }
+    ],
+    'mobile_focus_areas': [
+      'interop-2025-anchor-positioning',
+      'interop-2025-core-web-vitals',
+      'interop-2025-modules',
+      'interop-2025-navigation',
+      'interop-2025-backdrop-filter',
+      'interop-2025-remove-mutation-events',
+      'interop-2023-events',
+      'interop-2024-layout',
+      'interop-2025-scrollend',
+      'interop-2025-storageaccess',
+      'interop-2025-details',
+      'interop-2025-textdecoration',
+      'interop-2025-scope',
+      'interop-2025-view-transitions',
+      'interop-2025-webassembly',
+      'interop-2025-writingmodes',
+      'interop-2025-urlpattern',
+      'interop-2025-webcompat',
+      'interop-2025-webrtc'
+    ],
+    /**
+     * More information on results generation at
+     * https://github.com/web-platform-tests/results-analysis
+    **/
+    'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2025/interop-2025-{stable|experimental}-v2.csv',
+    'summary_feature_name': 'summary',
+    'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
+    'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2025/README.md',
+    'focus_areas': {
+      'interop-2025-anchor-positioning': {
+        'description': 'Anchor positioning',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
+        'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
+        'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-anchor-positioning',
+        'mobile_tests': '/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-anchor-positioning',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-anchor-positioning'
+        ]
+      },
+      'interop-2025-core-web-vitals': {
+        'description': 'Core Web Vitals',
+        'mdn': '',
+        'spec': '',
+        'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-core-web-vitals',
+        'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-core-web-vitals',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-core-web-vitals'
+        ]
+      },
+      'interop-2025-scope': {
+        'description': '@scope',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/@scope',
+        'spec': 'https://drafts.csswg.org/css-cascade-6/#scoped-styles',
+        'tests': '/results/css/css-cascade?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-scope',
+        'mobile_tests': '/results/css/css-cascade?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-scope',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-scope'
+        ]
+      },
+      'interop-2025-writingmodes': {
+        'description': 'Writing modes',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/writing-mode',
+        'spec': 'https://drafts.csswg.org/css-writing-modes/',
+        'tests': '/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-writingmodes',
+        'mobile_tests': '/results/css?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-writingmodes',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-writingmodes'
+        ]
+      },
+      'interop-2024-layout': {
+        'description': 'Layout',
+        'mdn': '',
+        'spec': '',
+        'tests': '/results/css?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox%20or%20label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid%20or%20label%3Ainterop-2022-subgrid',
+        'mobile_tests': '/results/css?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2021-flexbox%20or%20label%3Ainterop-2023-flexbox%20or%20label%3Ainterop-2021-grid%20or%20label%3Ainterop-2023-grid%20or%20label%3Ainterop-2022-subgrid',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2021-flexbox',
+          'interop-2021-grid',
+          'interop-2022-subgrid',
+          'interop-2023-flexbox',
+          'interop-2023-grid'
+        ]
+      },
+      'interop-2025-modules': {
+        'description': 'Modules',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import/with',
+        'spec': 'https://tc39.es/proposal-import-attributes/',
+        'tests': '/results/html/semantics/scripting-1/the-script-element?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-modules',
+        'mobile_tests': '/results/html/semantics/scripting-1/the-script-element?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-modules',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-modules'
+        ]
+      },
+      'interop-2025-navigation': {
+        'description': 'Navigation',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API',
+        'spec': 'https://html.spec.whatwg.org/multipage/nav-history-apis.html#navigation-api',
+        'tests': '/results/navigation-api?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-navigation',
+        'mobile_tests': '/results/navigation-api?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-navigation',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-navigation'
+        ]
+      },
+      'interop-2025-backdrop-filter': {
+        'description': 'backdrop-filter',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter',
+        'spec': 'https://drafts.fxtf.org/filter-effects-2/#BackdropFilterProperty',
+        'tests': '/results/css/filter-effects?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-backdrop-filter',
+        'mobile_tests': '/results/css/filter-effects?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-backdrop-filter',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-backdrop-filter'
+        ]
+      },
+      'interop-2025-remove-mutation-events': {
+        'description': 'Remove mutation events',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/MutationEvent',
+        'spec': '',
+        'tests': '/results/dom?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-remove-mutation-events',
+        'mobile_tests': '/results/dom?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-remove-mutation-events',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-remove-mutation-events'
+        ]
+      },
+      'interop-2023-events': {
+        'description': 'Pointer and Mouse events',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Pointer_events',
+        'spec': 'https://w3c.github.io/pointerevents/',
+        'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events',
+        'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-events',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2023-events'
+        ]
+      },
+      'interop-2025-scrollend': {
+        'description': 'scrollend event',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Document/scrollend_event',
+        'spec': 'https://drafts.csswg.org/cssom-view/#eventdef-document-scrollend',
+        'tests': '/results/dom/events/scrolling?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-scrollend',
+        'mobile_tests': '/results/dom/events/scrolling?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-scrollend',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-scrollend'
+        ]
+      },
+      'interop-2025-storageaccess': {
+        'description': 'Storage Access API',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API',
+        'spec': 'https://privacycg.github.io/storage-access/',
+        'tests': '/results/storage-access-api?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-storageaccess',
+        'mobile_tests': '/results/storage-access-api?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-storageaccess',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-storageaccess'
+        ]
+      },
+      'interop-2025-details': {
+        'description': '<details> element',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details',
+        'spec': 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-details-element',
+        'tests': '/results/html?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-details',
+        'mobile_tests': '/results/html?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-details',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-details'
+        ]
+      },
+      'interop-2025-textdecoration': {
+        'description': 'text-decoration',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration',
+        'spec': 'https://drafts.csswg.org/css-text-decor/#text-decoration-property',
+        'tests': '/results/css/css-text-decor/parsing?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-textdecoration',
+        'mobile_tests': '/results/css/css-text-decor/parsing?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-textdecoration',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-textdecoration'
+        ]
+      },
+      'interop-2025-view-transitions': {
+        'description': 'View Transitions',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API',
+        'spec': 'https://drafts.csswg.org/css-view-transitions/',
+        'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-view-transitions',
+        'mobile_tests': '/results/css/css-view-transitions?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-view-transitions',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-view-transitions'
+        ]
+      },
+      'interop-2025-webassembly': {
+        'description': 'WebAssembly',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/WebAssembly',
+        'spec': 'https://webassembly.github.io/spec/',
+        'tests': '/results/wasm/jsapi?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webassembly',
+        'mobile_tests': '/results/wasm/jsapi?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-webassembly',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-webassembly'
+        ]
+      },
+      'interop-2025-urlpattern': {
+        'description': 'URLPattern',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API',
+        'spec': 'https://urlpattern.spec.whatwg.org/',
+        'tests': '/results/urlpattern?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-urlpattern',
+        'mobile_tests': '/results/urlpattern?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-urlpattern',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-urlpattern'
+        ]
+      },
+      'interop-2025-webcompat': {
+        'description': 'Web compatibility',
+        'mdn': '',
+        'spec': '',
+        'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webcompat',
+        'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-webcompat',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-webcompat'
+        ]
+      },
+      'interop-2025-webrtc': {
+        'description': 'WebRTC',
+        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API',
+        'spec': 'https://w3c.github.io/webrtc-pc/',
+        'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webrtc',
+        'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&view=interop&q=label%3Ainterop-2025-webrtc',
+        'countsTowardScore': true,
+        'labels': [
+          'interop-2025-webrtc'
+        ]
+      }
+    }
   }
 };

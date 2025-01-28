@@ -106,6 +106,7 @@ class InteropDataManager {
 
     const yearInfo = paramsByYear[this.year];
     const previousYear = String(parseInt(this.year) - 1);
+    this.validMobileYears = paramsByYear.valid_mobile_years;
 
     // Calc and save investigation scores.
     this.investigationScores = yearInfo.investigation_scores;
