@@ -201,8 +201,8 @@ class InteropSummary extends PolymerElement {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       summaryDiv.style.minHeight = '275px';
-    } else if (this.year === '2024') {
-      summaryDiv.style.minHeight = '350px';
+    } else if (parseInt(this.year) >= 2024) {
+      summaryDiv.style.minHeight = '380px';
     }
 
     // The summary score elements are given class names asynchronously,

@@ -52,7 +52,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           margin: 0 2em;
           display: grid;
           grid-template-columns: 9fr 11fr;
-          grid-template-rows: 0fr 0.55fr 0fr 0fr 1fr;
+          grid-template-rows: 0fr 0fr 0fr 0fr 1fr;
           column-gap: 75px;
           grid-template-areas:
             "header scores"
@@ -950,7 +950,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   shouldShowMobileScoresView() {
-    return this.showMobileScoresView && parseInt(this.year) >= 2024;
+    const validYears = this.dataManager.getYearProp('validMobileYears');
+    return this.showMobileScoresView && validYears.includes(this.year);
   }
 
   // Check if the table being rendered is the first table.
