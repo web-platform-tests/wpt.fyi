@@ -1,4 +1,24 @@
+## Updating the pinned Chromium revision in WPT
+These scripts exists as cloud functions in GCP and will need to be redeployed
+after subsequent changes to the file.
+
+_check_chromium_revision.py_
+
+The purpose of this script is to find a new Chromium revision that is available
+for all major platforms (Win/Mac/Linux) and trigger the WPT CI check suite to
+run against this new revision.
+
+
+_update_chromium_revision.py_
+
+The purpose of this script is to check the WPT CI check suite to see if all
+tests passed for the new revision, and to update the pinned revision if so.
+
+The current PR used for running the check suites is at https://github.com/web-platform-tests/wpt/pull/50375
+
 ## Build Test History
+_build_test_history.py_
+
 This script exists as a cloud function in GCP and will need to be redeployed
 after subsequent changes to the file. The `BUCKET_NAME`, `PROJECT_NAME`,
 and `RUNS_API_URL` constants will need to be changed based on which environment
