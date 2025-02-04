@@ -52,8 +52,7 @@ github_action_go_setup:
 	fi
 # NOTE: We prune before generate, because node_modules are embedded into the
 # binary (and part of the build).
-go_build: git mockgen github_action_go_setup
-	make webapp_node_modules_prod
+go_build: git mockgen github_action_go_setup webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
 	go build -v ./...
@@ -77,7 +76,7 @@ go_lint: golint go_test_tag_lint
 golangci_lint: golangci-lint github_action_go_setup
 	golangci-lint cache clean
 	golangci-lint run ./api/...
-	
+
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
