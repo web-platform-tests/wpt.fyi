@@ -177,9 +177,9 @@ chromedriver: wget unzip chrome jq
 
 firefox: bzip2 wget
 	if [[ -z "$$(which firefox)" ]]; then \
-		wget -O firefox.tar.bz2 -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"; \
+		wget -O firefox.tar.xz -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"; \
 		mkdir -p $$HOME/browsers; \
-		tar -xjf firefox.tar.bz2 -C $$HOME/browsers; \
+		tar -xaf firefox.tar.xz -C $$HOME/browsers; \
 		sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
 	fi
 
