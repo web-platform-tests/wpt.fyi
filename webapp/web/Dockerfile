@@ -12,8 +12,8 @@ COPY $LOCAL_SRC .
 RUN make go_build
 
 # Application image.
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian12
 
-COPY --from=builder /go/src/wpt.fyi/webapp/web /usr/local/bin/app
+COPY --from=builder /go/src/wpt.fyi/web /usr/local/bin/app
 
 CMD ["/usr/local/bin/app"]
