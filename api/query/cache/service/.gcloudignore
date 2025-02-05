@@ -1,4 +1,4 @@
-# Files matching the following rules won't be uploaded to AppEngine (webapp).
+# Files matching the following rules won't be uploaded to AppEngine (searchcache).
 # The syntax is the same as `.gitignore`; we do not use `.gitignore` directly
 # because we need to update some generated files.
 

@@ -9,7 +9,7 @@ WORKDIR /go/src/wpt.fyi
 # Default to the existing path when running inside the development docker container.
 ARG LOCAL_SRC=wpt.fyi
 COPY $LOCAL_SRC .
-RUN CGO_ENABLED=0  make go_build
+RUN CGO_ENABLED=0 make go_build
 
 # Application image.
 FROM gcr.io/distroless/static-debian12
