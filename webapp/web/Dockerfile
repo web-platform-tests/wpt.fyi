@@ -15,5 +15,11 @@ RUN CGO_ENABLED=0 make go_build
 FROM gcr.io/distroless/static-debian12
 
 COPY --from=builder /go/src/wpt.fyi/web /usr/local/bin/app
+COPY --from=builder /go/src/wpt.fyi/webapp/dynamic-components /usr/local/bin/dynamic-components/
+COPY --from=builder /go/src/wpt.fyi/webapp/components /usr/local/bin/webapp/components/
+COPY --from=builder /go/src/wpt.fyi/webapp/static /usr/local/bin/webapp/static/
+COPY --from=builder /go/src/wpt.fyi/webapp/templates /usr/local/bin/webapp/templates/
+COPY --from=builder /go/src/wpt.fyi/webapp/views /usr/local/bin/webapp/views/
 
-CMD ["/usr/local/bin/app"]
+WORKDIR /usr/local/bin
+CMD ["app"]
