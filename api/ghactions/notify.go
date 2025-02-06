@@ -13,7 +13,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/gobwas/glob"
-	"github.com/google/go-github/v65/github"
+	"github.com/google/go-github/v69/github"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
