@@ -1733,7 +1733,7 @@ export const interopData = {
         ]
       },
       'interop-2025-webcompat': {
-        'description': 'Web compatibility',
+        'description': 'Web Compat',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webcompat',
