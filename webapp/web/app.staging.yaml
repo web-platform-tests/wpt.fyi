@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-runtime: go122
+runtime: custom
+env: flex
 instance_class: F4_1G
 
 inbound_services:
@@ -10,6 +11,8 @@ inbound_services:
 
 default_expiration: "1d"
 
+# TODO: can we remove this now that service 'default' is not App Engine
+# Standard? Same change for app.yaml and the VPC mention in app-engine.md.
 vpc_access_connector:
   name: projects/wptdashboard-staging/locations/us-east4/connectors/appengine-connector
 
@@ -17,6 +20,7 @@ env_variables:
   REDISHOST: "10.171.142.203"
   REDISPORT: "6379"
 
+# TODO: Remove these handlers and align with app.yaml once #4231 is completed.
 # Also refer to dispatch.yaml for higher-priority routing rules.
 handlers:
 # Special dynamic components:
