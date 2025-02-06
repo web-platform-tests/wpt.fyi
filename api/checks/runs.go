@@ -100,7 +100,9 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 	}
 
 	var runs []*github.CheckRun
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	options := github.ListCheckRunsOptions{
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page; see
 			// https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received

@@ -108,6 +108,7 @@ func processBuild(
 		return false, err
 	}
 
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	opts := &github.ListOptions{PerPage: 100}
 
 	archiveURLs := []string{}

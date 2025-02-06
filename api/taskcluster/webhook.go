@@ -471,7 +471,9 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	var runs []*github.CheckRun
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	options := github.ListCheckRunsOptions{
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page[0], but due to
 			// https://github.com/web-platform-tests/wpt/issues/27243 we
