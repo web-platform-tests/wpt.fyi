@@ -19,3 +19,41 @@ vpc_access_connector:
 env_variables:
   REDISHOST: "10.171.142.203"
   REDISPORT: "6379"
+
+# TODO: Remove these handlers and align with app.yaml once #4231 is completed.
+# Also refer to dispatch.yaml for higher-priority routing rules.
+handlers:
+# Special dynamic components:
+- url: /dynamic-components/wpt-env-flags.js
+  script: auto
+  secure: always
+- url: /node_modules/.*
+  script: auto
+  secure: always
+# Static files:
+- url: /static
+  static_dir: webapp/static
+  secure: always
+- url: /favicon.ico
+  static_files: webapp/static/favicon.ico
+  upload: webapp/static/favicon.ico
+  secure: always
+- url: /robots.txt
+  static_files: webapp/static/robots.txt
+  upload: webapp/static/robots.txt
+  secure: always
+# Static files that change often (i.e. our own code).
+- url: /components
+  static_dir: webapp/components
+  expiration: 10m
+  secure: always
+- url: /views
+  static_dir: webapp/views
+  expiration: 10m
+  secure: always
+
+
+# Everything else (templates & APIs):
+- url: /.*
+  script: auto
+  secure: always
