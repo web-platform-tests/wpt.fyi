@@ -18,24 +18,28 @@ PLATFORM_INFO = [
     ("Mac", "chrome-mac.zip")
 ]
 SNAPSHOTS_PATH = "https://storage.googleapis.com/chromium-browser-snapshots/"
-PR_NUMBER = "50375"
-REPO_OWNER = "web-platform-tests"
-REPO_NAME = "wpt"
 
 
 def trigger_ci_tests() -> str | None:
     # Reopen the PR to run the CI tests.
     s = requests.Session()
-    s.headers.update({"Authorization": f"token {get_token()}"})
-    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/pulls/{PR_NUMBER}"
+    s.headers.update({
+        "Authorization": f"token {get_token()}",
+        # Specified API version. See https://docs.github.com/en/rest/about-the-rest-api/api-versions
+        "X-GitHub-Api-Version": "2022-11-28",
+    })
+    repo_owner = os.environ["REPO_OWNER"]
+    repo_name = os.environ["REPO_NAME"]
+    pr_number = os.environ["PR_NUMBER"]
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls/{pr_number}"
 
     response = s.patch(url, data='{"state": "closed"}')
     if response.status_code != 200:
-        return f'Failed to close PR {PR_NUMBER}'
+        return f'Failed to close PR {pr_number}'
     
     response = s.patch(url, data='{"state": "open"}')
     if response.status_code != 200:
-        return f'Failed to open PR {PR_NUMBER}'
+        return f'Failed to open PR {pr_number}'
 
 
 def get_token() -> str | None:
