@@ -52,8 +52,7 @@ github_action_go_setup:
 	fi
 # NOTE: We prune before generate, because node_modules are embedded into the
 # binary (and part of the build).
-go_build: git mockgen github_action_go_setup
-	make webapp_node_modules_prod
+go_build: git mockgen github_action_go_setup webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
 	go build -v ./...
@@ -77,7 +76,7 @@ go_lint: golint go_test_tag_lint
 golangci_lint: golangci-lint github_action_go_setup
 	golangci-lint cache clean
 	golangci-lint run ./api/...
-	
+
 go_test_tag_lint:
 	@ # Printing a list of test files without +build tag, asserting empty...
 	@TAGLESS=$$(grep -PL '\/\/(\s?\+build|go:build) !?(small|medium|large|cloud)' $(GO_TEST_FILES)); \
@@ -204,10 +203,12 @@ package_service: var-APP_PATH
 	# Trim the potential "app.staging.yaml" suffix.
 	if [[ "$(APP_PATH)" == "api/query/cache/service"* ]]; then \
 		APP_PATH="api/query/cache/service"; \
+	elif [[ "$(APP_PATH)" == "webapp/web"* ]]; then \
+		APP_PATH="webapp/web"; \
 	else \
 		APP_PATH="$(APP_PATH)"; \
 	fi ; \
-	if [[ "$${APP_PATH}" == "api/query/cache/service" ]]; then \
+	if [[ "$${APP_PATH}" == "api/query/cache/service" || "$${APP_PATH}" == "webapp/web" ]]; then \
 		TMP_DIR=$$(mktemp -d); \
 		rm -rf $(WPTD_PATH)$${APP_PATH}/wpt.fyi; \
 		cp -r $(WPTD_PATH)* $${TMP_DIR}/; \
@@ -292,6 +293,7 @@ deploy_staging: deployment_state var-BRANCH_NAME
 		util/deploy.sh -q -b $(BRANCH_NAME) $(APP_PATH); \
 	fi
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
+	rm -rf $(WPTD_PATH)webapp/web/wpt.fyi
 
 cleanup_staging_versions: gcloud_login
 	$(WPTD_PATH)/util/cleanup-versions.sh
@@ -300,6 +302,7 @@ deploy_production: deployment_state
 	gcloud config set project wptdashboard
 	util/deploy.sh -r $(APP_PATH)
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
+	rm -rf $(WPTD_PATH)webapp/web/wpt.fyi
 
 webapp_node_modules_all: node
 	cd webapp; npm install
