@@ -1,5 +1,5 @@
 ## Updating the pinned Chromium revision in WPT
-These scripts exists as cloud functions in GCP and will need to be redeployed
+These scripts exists as Cloud Functions in GCP and will need to be redeployed
 after subsequent changes to the file.
 
 _check_chromium_revision.py_
