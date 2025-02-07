@@ -14,6 +14,12 @@ default_expiration: "1d"
 vpc_access_connector:
   name: projects/wptdashboard/locations/us-central1/connectors/appengine-connector
 
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
+
 env_variables:
   REDISHOST: "10.171.142.203"
   REDISPORT: "6379"

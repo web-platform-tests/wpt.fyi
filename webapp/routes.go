@@ -5,6 +5,8 @@
 package webapp
 
 import (
+	"net/http"
+
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
@@ -57,7 +59,27 @@ func RegisterRoutes() {
 	shared.AddRoute("/results/", "results", testResultsHandler)
 	shared.AddRoute("/results/{path:.*}", "results", testResultsHandler)
 
+	// Service readiness and liveness check handlers.
+	shared.AddRoute("/_ah/liveness_check", "liveness-check", livenessCheckHandler)
+	shared.AddRoute("/_ah/readiness_check", "readiness-check", readinessCheckHandler)
+
 	// Legacy wildcard match
 	shared.AddRoute("/", "results-legacy", testResultsHandler)
 	shared.AddRoute("/{path:.*}", "results-legacy", testResultsHandler)
+}
+
+func livenessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Alive"))
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in liveness check handler: %s", err.Error())
+	}
+}
+
+func readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Ready"))
+	if err != nil {
+		logger := shared.GetLogger(r.Context())
+		logger.Warningf("Failed to write data in readiness check handler: %s", err.Error())
+	}
 }
