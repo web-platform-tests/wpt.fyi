@@ -29,7 +29,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.5.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.26.0
 	google.golang.org/api v0.219.0
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4
 	google.golang.org/genproto/googleapis/api v0.0.0-20250124145028-65684f501c47
