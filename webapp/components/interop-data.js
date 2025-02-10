@@ -2,8 +2,8 @@
 // The JSON file is used by some Mozilla infrastructure, so the file should
 // not be deleted and should match the data in this file.
 export const interopData = {
-  'valid_years': ['2021', '2022', '2023', '2024'],
-  'valid_mobile_years': ['2024'],
+  'valid_years': ['2021', '2022', '2023', '2024', '2025'],
+  'valid_mobile_years': ['2024', '2025'],
   '2021': {
     'table_sections': [
       {
