@@ -112,12 +112,11 @@ func TestInteropHandler_success(t *testing.T) {
 
 func TestInteropHandler_mobileSuccess(t *testing.T) {
 	// A typical "/interop-20XX" path with a valid mobile year should not redirect.
-	// 2024 is the most recent interop year with a valid mobile view.
 	req := httptest.NewRequest(
-		"GET", "/interop-2024?mobile-view", strings.NewReader("{}"))
+		"GET", "/interop-"+defaultRedirectYear+"?mobile-view", strings.NewReader("{}"))
 	req = mux.SetURLVars(req, map[string]string{
 		"name":       "interop",
-		"year":       "2024",
+		"year":       defaultRedirectYear,
 		"mobileView": "true",
 	})
 
