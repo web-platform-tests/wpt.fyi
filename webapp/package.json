@@ -7,7 +7,7 @@
     "url": "https://github.com/web-platform-tests/wpt.fyi.git"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "7.26.5",
+    "@babel/eslint-parser": "7.26.8",
     "@babel/plugin-syntax-import-assertions": "7.26.0",
     "@browser-logos/chrome": "2.0.0",
     "@browser-logos/chrome-beta": "3.0.0",
