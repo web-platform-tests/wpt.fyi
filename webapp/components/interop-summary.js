@@ -201,6 +201,11 @@ class InteropSummary extends PolymerElement {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
       summaryDiv.style.minHeight = '275px';
+    // This min-height is added to this section to ensure that the section below
+    // is not moved after the user selects between STABLE and EXPERIMENTAL
+    // (experimental browser names are longer and add additional lines).
+    // TODO(DanielRyanSmith): Choose a better option to set these section heights
+    // rather than targeting by year.
     } else if (parseInt(this.year) >= 2024) {
       summaryDiv.style.minHeight = '380px';
     }
