@@ -7,7 +7,7 @@
     "url": "https://github.com/web-platform-tests/wpt.fyi.git"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "7.26.5",
+    "@babel/eslint-parser": "7.26.8",
     "@babel/plugin-syntax-import-assertions": "7.26.0",
     "@browser-logos/chrome": "2.0.0",
     "@browser-logos/chrome-beta": "3.0.0",
@@ -31,10 +31,10 @@
     "@browser-logos/uc": "1.1.0",
     "@browser-logos/webkit-nightly": "2.0.2",
     "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^9.20.0",
     "@polymer/test-fixture": "4.0.2",
     "cpy-cli": "5.0.0",
-    "eslint": "9.19.0",
+    "eslint": "9.20.1",
     "eslint-plugin-html": "8.1.2",
     "globals": "^15.14.0",
     "wct-browser-legacy": "1.0.2",

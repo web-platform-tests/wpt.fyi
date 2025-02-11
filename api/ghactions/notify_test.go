@@ -10,7 +10,7 @@ package ghactions
 import (
 	"testing"
 
-	"github.com/google/go-github/v65/github"
+	"github.com/google/go-github/v69/github"
 	"github.com/stretchr/testify/assert"
 )
 
