@@ -43,8 +43,8 @@ func TestInteropHandler_redirectMobile(t *testing.T) {
 	// 2021 is an invalid interop mobile year and should be redirected.
 	req := httptest.NewRequest("GET", "/interop-2021?mobile-view", strings.NewReader("{}"))
 	req = mux.SetURLVars(req, map[string]string{
-		"name":     "interop",
-		"year":     "2021",
+		"name":       "interop",
+		"year":       "2021",
 		"mobileView": "true",
 	})
 
@@ -115,8 +115,8 @@ func TestInteropHandler_mobileSuccess(t *testing.T) {
 	req := httptest.NewRequest(
 		"GET", "/interop-"+defaultRedirectYear+"?mobile-view", strings.NewReader("{}"))
 	req = mux.SetURLVars(req, map[string]string{
-		"name": "interop",
-		"year": defaultRedirectYear,
+		"name":       "interop",
+		"year":       defaultRedirectYear,
 		"mobileView": "true",
 	})
 

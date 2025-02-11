@@ -9,6 +9,19 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {afterNextRender} from  '../node_modules/@polymer/polymer/lib/utils/render-status.js';
 
+// This min-height is added to this section to ensure that the section below
+// is not moved after the user selects between STABLE and EXPERIMENTAL
+// (experimental browser names are longer and add additional lines).
+// Different years have different initial heights for these sections.
+const SUMMARY_CONTAINER_MIN_HEIGHTS = {
+  '2021': '275px',
+  '2022': '470px',
+  '2023': '470px',
+  '2024': '380px',
+  '2025': '380px',
+};
+
+
 class InteropSummary extends PolymerElement {
   static get template() {
     return html`
@@ -196,13 +209,11 @@ class InteropSummary extends PolymerElement {
     }
 
     const summaryDiv = this.shadowRoot.querySelector('.summary-container');
+    summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
     // Don't display the interop score for Interop 2021.
     if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
       interopDiv.style.display = 'none';
-      summaryDiv.style.minHeight = '275px';
-    } else if (this.year === '2024') {
-      summaryDiv.style.minHeight = '350px';
     }
 
     // The summary score elements are given class names asynchronously,

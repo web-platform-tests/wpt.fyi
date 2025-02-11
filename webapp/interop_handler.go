@@ -43,7 +43,7 @@ func interopHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, isValidMobileYear := validMobileYears[year];
+	_, isValidMobileYear := validMobileYears[year]
 	if isMobileView != nil && !isValidMobileYear {
 		year = defaultRedirectYear
 		needsRedirect = true
