@@ -3,7 +3,7 @@
 // not be deleted and should match the data in this file.
 export const interopData = {
   'valid_years': ['2021', '2022', '2023', '2024', '2025'],
-  'valid_mobile_years': ['2024'],
+  'valid_mobile_years': ['2024', '2025'],
   '2021': {
     'table_sections': [
       {
@@ -1439,7 +1439,7 @@ export const interopData = {
           'Accessibility Testing',
           'Gaming',
           'Mobile Testing',
-          'Privacy',
+          'Privacy Testing',
           'WebVTT'
         ],
         'score_as_group': true
@@ -1453,7 +1453,7 @@ export const interopData = {
       },
       {
         'name': 'Gaming',
-        'url': '',
+        'url': 'https://github.com/web-platform-tests/interop/issues/786',
         'scores_over_time': []
       },
       {
@@ -1462,13 +1462,13 @@ export const interopData = {
         'scores_over_time': []
       },
       {
-        'name': 'Privacy',
-        'url': '',
+        'name': 'Privacy Testing',
+        'url': 'https://github.com/web-platform-tests/interop/issues/831',
         'scores_over_time': []
       },
       {
         'name': 'WebVTT',
-        'url': '',
+        'url': 'https://github.com/web-platform-tests/interop/issues/860',
         'scores_over_time': []
       }
     ],
@@ -1505,7 +1505,7 @@ export const interopData = {
           'Accessibility Testing',
           'Gaming',
           'Mobile Testing',
-          'Privacy',
+          'Privacy Testing',
           'WebVTT'
         ],
         'score_as_group': true
@@ -1613,7 +1613,7 @@ export const interopData = {
         ]
       },
       'interop-2025-navigation': {
-        'description': 'Navigation',
+        'description': 'Navigation API',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API',
         'spec': 'https://html.spec.whatwg.org/multipage/nav-history-apis.html#navigation-api',
         'tests': '/results/navigation-api?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-navigation',
