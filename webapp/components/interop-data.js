@@ -1505,7 +1505,7 @@ export const interopData = {
           'Accessibility Testing',
           'Gaming',
           'Mobile Testing',
-          'Privacy',
+          'Privacy Testing',
           'WebVTT'
         ],
         'score_as_group': true
