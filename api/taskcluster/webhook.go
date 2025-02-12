@@ -17,9 +17,9 @@ import (
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/v65/github"
+	"github.com/google/go-github/v69/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/v67/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v80/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -471,7 +471,9 @@ func (api apiImpl) GetTaskGroupInfo(rootURL string, groupID string) (*TaskGroupI
 
 func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) ([]*github.CheckRun, error) {
 	var runs []*github.CheckRun
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	options := github.ListCheckRunsOptions{
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ListOptions: github.ListOptions{
 			// 100 is the maximum allowed items per page[0], but due to
 			// https://github.com/web-platform-tests/wpt/issues/27243 we

@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-runtime: go122
+runtime: custom
+env: flex
 instance_class: F4_1G
 
 inbound_services:
@@ -13,43 +14,13 @@ default_expiration: "1d"
 vpc_access_connector:
   name: projects/wptdashboard/locations/us-central1/connectors/appengine-connector
 
+liveness_check:
+  path: "/_ah/liveness_check"
+
+readiness_check:
+  path: "/_ah/readiness_check"
+
 env_variables:
   REDISHOST: "10.171.142.203"
   REDISPORT: "6379"
 
-# Also refer to dispatch.yaml for higher-priority routing rules.
-handlers:
-# Special dynamic components:
-- url: /dynamic-components/wpt-env-flags.js
-  script: auto
-  secure: always
-- url: /node_modules/.*
-  script: auto
-  secure: always
-# Static files:
-- url: /static
-  static_dir: webapp/static
-  secure: always
-- url: /favicon.ico
-  static_files: webapp/static/favicon.ico
-  upload: webapp/static/favicon.ico
-  secure: always
-- url: /robots.txt
-  static_files: webapp/static/robots.txt
-  upload: webapp/static/robots.txt
-  secure: always
-# Static files that change often (i.e. our own code).
-- url: /components
-  static_dir: webapp/components
-  expiration: 10m
-  secure: always
-- url: /views
-  static_dir: webapp/views
-  expiration: 10m
-  secure: always
-
-
-# Everything else (templates & APIs):
-- url: /.*
-  script: auto
-  secure: always

@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/google/go-github/v65/github"
+	"github.com/google/go-github/v69/github"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/summaries"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -97,6 +97,7 @@ func (s checksAPIImpl) IgnoreFailure(
 	// somebody ignored the failure.
 	output := run.GetOutput()
 	if output == nil {
+		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		output = &github.CheckRunOutput{}
 	}
 	prepend := fmt.Sprintf("This check was marked as a success by @%s via the _Ignore_ action.\n\n", sender)
@@ -136,6 +137,7 @@ func (s checksAPIImpl) CancelRun(
 	// somebody ignored the failure.
 	summary := fmt.Sprintf("This check was cancelled by @%s via the _Cancel_ action.", sender)
 	title := run.GetOutput().GetTitle()
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 	output := &github.CheckRunOutput{
 		Title:   &title,
 		Summary: &summary,

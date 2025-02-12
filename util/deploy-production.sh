@@ -129,7 +129,7 @@ ${UTIL_DIR}/docker-dev/run.sh -s
 # Confirm that everything works as expected and redirect traffic.
 VERSION_URL=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .version.versionUrl')
 LATEST_VERSION=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .id')
-MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search, test expansion, show history). Redirect traffic now?"
+MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search, test expansion, show history). Wait 15 minutes before redirecting traffic (https://cloud.google.com/appengine/docs/flexible/known-issues). Redirect traffic now?"
 if confirm "$MESSAGE"; then
   for SERVICE in $SERVICES
   do

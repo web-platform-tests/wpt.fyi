@@ -904,7 +904,7 @@ export const interopData = {
      * More information on results generation at
      * https://github.com/web-platform-tests/results-analysis
     **/
-    'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2024/interop-2024-{stable|experimental}-v2.csv',
+    'csv_url': '/static/interop-2024-{stable|experimental}.csv',
     'mobile_csv_url': 'https://api.github.com/repos/jgraham/interop-results/contents/2024/latest/aligned/mobile-{stable|experimental}-current.csv?ref=main',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
@@ -1537,6 +1537,7 @@ export const interopData = {
      * https://github.com/web-platform-tests/results-analysis
     **/
     'csv_url': 'https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2025/interop-2025-{stable|experimental}-v2.csv',
+    'mobile_csv_url': 'https://api.github.com/repos/jgraham/interop-results/contents/2025/latest/aligned/mobile-{stable|experimental}-current.csv?ref=main',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2025/README.md',
@@ -1733,7 +1734,7 @@ export const interopData = {
         ]
       },
       'interop-2025-webcompat': {
-        'description': 'Web compatibility',
+        'description': 'Web Compat',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webcompat',

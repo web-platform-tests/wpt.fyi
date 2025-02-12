@@ -11,8 +11,7 @@ each of which has an `app.yaml` file in its directory and in some cases an
 3. **searchcache**: `/api/query/cache/service/`, an in-memory cache and query
    executor for [structured searches](../api/query/README.md).
 
-The `default` service is a standard App Engine service while the other two are
-Flex.
+All services are App Engine Flex services.
 
 ## Deploy the app
 
