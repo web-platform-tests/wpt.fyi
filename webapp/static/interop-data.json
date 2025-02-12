@@ -1,6 +1,6 @@
 {
-  "valid_years": ["2021", "2022", "2023", "2024"],
-  "valid_mobile_years": ["2024"],
+  "valid_years": ["2021", "2022", "2023", "2024", "2025"],
+  "valid_mobile_years": ["2024", "2025"],
   "2021": {
     "table_sections": [
       {

@@ -34,7 +34,7 @@ func TestInteropHandler_redirect(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check that the path has been properly updated to the current interop effort.
-	assert.Equal(t, loc.Path, "/interop-2024")
+	assert.Equal(t, loc.Path, "/interop-2025")
 	// Check if embedded param is maintained after redirect.
 	assert.Equal(t, loc.RawQuery, "embedded")
 }
@@ -56,7 +56,7 @@ func TestInteropHandler_redirectMobile(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check that the path has been properly updated to the current interop effort.
-	assert.Equal(t, loc.Path, "/interop-2024")
+	assert.Equal(t, loc.Path, "/interop-2025")
 	// Check if mobileView param is maintained after redirect.
 	assert.Equal(t, loc.RawQuery, "mobile-view")
 }
@@ -77,7 +77,7 @@ func TestInteropHandler_redirectdefault(t *testing.T) {
 	loc, err := resp.Location()
 	assert.Nil(t, err)
 	// Check that the path has been properly updated to the current interop effort.
-	assert.Equal(t, loc.Path, "/interop-2024")
+	assert.Equal(t, loc.Path, "/interop-2025")
 	// Check if embedded param is maintained after redirect.
 	assert.Equal(t, loc.RawQuery, "embedded")
 }
