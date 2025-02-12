@@ -387,7 +387,8 @@ async function fetchCsvContents(url, isMobileScoresView) {
   }
 
   let csvLines;
-  if (isMobileScoresView) {
+  // Active mobile scores require decoding.
+  if (isMobileScoresView && !url.startsWith('/static/')) {
     const respJson = await csvResp.json();
     const csvText = atob(respJson['content']);
     csvLines = csvText.split('\r\n').filter(l => l);
