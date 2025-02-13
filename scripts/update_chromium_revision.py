@@ -2,6 +2,17 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+This script requires the following environment variables to be set:
+
+GIT_CHECK_PR_STATUS_TOKEN:  A GitHub personal access token with permissions to
+  update pull request statuses.
+REPO_OWNER: The owner of the GitHub repository (e.g., "owner_name").
+REPO_NAME: The name of the GitHub repository (e.g., "repo_name").
+PR_NUMBER: The number of the pull request.
+
+Please ensure these variables are configured before running the script.
+"""
 
 import os
 import requests
@@ -18,11 +29,7 @@ def all_passing_checks(repo_owner: str, repo_name: str, pr_number: str) -> bool:
     """Check if all CI tests passed."""
     s = requests.Session()
     sha = get_sha(repo_owner, repo_name, pr_number)
-    s.headers.update({
-        'Authorization': f'token {get_token()}',
-        # Specified API version. See https://docs.github.com/en/rest/about-the-rest-api/api-versions
-        'X-GitHub-Api-Version': '2022-11-28',
-    })
+    s.headers.update(get_github_api_headers())
     url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/commits/{sha}/check-suites'
     response = s.get(url)
     if response.status_code != 200:
@@ -52,7 +59,7 @@ def update_pr_body(
 
     body = '{"body":"' + body + '"}'
     s = requests.Session()
-    s.headers.update({'Authorization': f'token {get_token()}'})
+    s.headers.update(get_github_api_headers())
     url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/pulls/{pr_number}'
     response = s.patch(url, data=body)
     return response.status_code == 200
@@ -74,6 +81,14 @@ def update_chromium_revision(new_revision) -> None:
     blob.upload_from_string(new_revision)
 
 
+def get_github_api_headers():
+    return {
+        'Authorization': f'token {get_token()}',
+        # Specified API version. See https://docs.github.com/en/rest/about-the-rest-api/api-versions
+        'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+
 def get_token() -> str:
     """Get token to check on the CI runs."""
     return os.environ['GIT_CHECK_PR_STATUS_TOKEN']
@@ -81,8 +96,9 @@ def get_token() -> str:
 
 def get_sha(repo_owner: str, repo_name: str, pr_number: str) -> str:
     """Get head sha from PR."""
-    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/pulls/{pr_number}'
     s = requests.Session()
+    s.headers.update(get_github_api_headers())
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/pulls/{pr_number}'
     response = s.get(url)
     pr_info = response.json()
     return pr_info['head']['sha']

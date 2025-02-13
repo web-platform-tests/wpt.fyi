@@ -2,6 +2,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+This script requires the following environment variables to be set:
+
+GIT_CHECK_PR_STATUS_TOKEN:  A GitHub personal access token with permissions to
+  update pull request statuses.
+REPO_OWNER: The owner of the GitHub repository (e.g., "owner_name").
+REPO_NAME: The name of the GitHub repository (e.g., "repo_name").
+PR_NUMBER: The number of the pull request.
+
+Please ensure these variables are configured before running the script.
+"""
+
 import os
 import requests
 from time import time
