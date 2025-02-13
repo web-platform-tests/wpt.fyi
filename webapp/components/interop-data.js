@@ -905,7 +905,7 @@ export const interopData = {
      * https://github.com/web-platform-tests/results-analysis
     **/
     'csv_url': '/static/interop-2024-{stable|experimental}.csv',
-    'mobile_csv_url': 'https://api.github.com/repos/jgraham/interop-results/contents/2024/latest/aligned/mobile-{stable|experimental}-current.csv?ref=main',
+    'mobile_csv_url': '/static/interop-2024-mobile-experimental.csv',
     'summary_feature_name': 'summary',
     'issue_url': 'https://github.com/web-platform-tests/interop/issues/new',
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2024/README.md',
