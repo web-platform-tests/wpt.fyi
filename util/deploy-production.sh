@@ -8,9 +8,9 @@ set -e
 
 usage() {
   USAGE="Usage: deploy-production.sh [-f] [-b] [-q]
-    -b : skip GitHub issue creation
+    -b : Skip GitHub issue creation
     -f : Always deploy (even if checks have failed)
-    -q : Disable all interactive prompts when running gcloud deploy commands"
+    -q : Disable all interactive prompts and debugging output when running gcloud deploy commands"
   echo "${USAGE}"
 }
 
@@ -18,7 +18,7 @@ usage() {
 delete_oldest_version() {
   OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=$1" --limit=1 --format=json | jq -r '.[] | .id')
   echo "Deleting $1 service version $OLDEST_REV"
-  gcloud app versions delete --service=$SERVICE $OLDEST_REV ${QUIET:+--quiet}
+  gcloud app versions delete --service=$SERVICE ${QUIET:+--quiet} $OLDEST_REV
 }
 
 while getopts ':bfqh' flag; do

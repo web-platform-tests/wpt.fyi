@@ -300,7 +300,7 @@ cleanup_staging_versions: gcloud_login
 
 deploy_production: deployment_state
 	gcloud config set project wptdashboard
-	util/deploy.sh -r $(APP_PATH) ${QUIET:+-q}
+	util/deploy.sh -r ${QUIET:+-q} $(APP_PATH)
 	rm -rf $(WPTD_PATH)api/query/cache/service/wpt.fyi
 	rm -rf $(WPTD_PATH)webapp/web/wpt.fyi
 
