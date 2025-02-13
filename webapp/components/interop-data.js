@@ -1436,10 +1436,10 @@ export const interopData = {
       {
         'name': 'Active Investigations',
         'rows': [
-          'Accessibility Testing',
-          'Gaming',
-          'Mobile Testing',
-          'Privacy Testing',
+          'Accessibility testing',
+          'Gamepad API testing',
+          'Mobile testing',
+          'Privacy testing',
           'WebVTT'
         ],
         'score_as_group': true
@@ -1502,10 +1502,10 @@ export const interopData = {
       {
         'name': 'Active Investigations',
         'rows': [
-          'Accessibility Testing',
-          'Gaming',
-          'Mobile Testing',
-          'Privacy Testing',
+          'Accessibility testing',
+          'Gamepad API testing',
+          'Mobile testing',
+          'Privacy testing',
           'WebVTT'
         ],
         'score_as_group': true
@@ -1543,7 +1543,7 @@ export const interopData = {
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2025/README.md',
     'focus_areas': {
       'interop-2025-anchor-positioning': {
-        'description': 'Anchor positioning',
+        'description': 'CSS anchor positioning',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
         'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-anchor-positioning',
@@ -1646,7 +1646,7 @@ export const interopData = {
         ]
       },
       'interop-2023-events': {
-        'description': 'Pointer and Mouse events',
+        'description': 'Pointer and mouse events',
         'mdn': 'https://developer.mozilla.org/docs/Web/API/Pointer_events',
         'spec': 'https://w3c.github.io/pointerevents/',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-events',
@@ -1701,7 +1701,7 @@ export const interopData = {
         ]
       },
       'interop-2025-view-transitions': {
-        'description': 'View Transitions',
+        'description': 'View Transition API',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API',
         'spec': 'https://drafts.csswg.org/css-view-transitions/',
         'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-view-transitions',
@@ -1734,7 +1734,7 @@ export const interopData = {
         ]
       },
       'interop-2025-webcompat': {
-        'description': 'Web Compat',
+        'description': 'Web compat',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&view=interop&q=label%3Ainterop-2025-webcompat',
