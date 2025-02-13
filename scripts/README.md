@@ -1,4 +1,24 @@
+## Updating the pinned Chromium revision in WPT
+These scripts exists as Cloud Functions in GCP and will need to be redeployed
+after subsequent changes to the file.
+
+_check_chromium_revision.py_
+
+The purpose of this script is to find a new Chromium revision that is available
+for all major platforms (Win/Mac/Linux) and trigger the WPT CI check suite to
+run against this new revision.
+
+
+_update_chromium_revision.py_
+
+The purpose of this script is to check the WPT CI check suite to see if all
+tests passed for the new revision, and to update the pinned revision if so.
+
+The current PR used for running the check suites is at https://github.com/web-platform-tests/wpt/pull/50375
+
 ## Build Test History
+_process_test_history.py_
+
 This script exists as a cloud function in GCP and will need to be redeployed
 after subsequent changes to the file. The `BUCKET_NAME`, `PROJECT_NAME`,
 and `RUNS_API_URL` constants will need to be changed based on which environment
@@ -30,7 +50,7 @@ command.
 will take a considerable amount of time (hours).
 
 ```sh
-python scripts/build_test_history.py -v --delete-history-entities
+python scripts/process_test_history.py -v --delete-history-entities
 ```
 
 Additionally, the `Date` property of the
@@ -40,7 +60,7 @@ in the CLI in ISO format.
 
 ```sh
 # Set history processing start date to the beginning of 2023
-python scripts/build_test_history.py --set-history-start-date=2023-01-01T00:00:00.000Z
+python scripts/process_test_history.py --set-history-start-date=2023-01-01T00:00:00.000Z
 ```
 
 Once all entities have been deleted, new JSON files will need to be generated
@@ -53,5 +73,5 @@ is stopped early, entities will again need to be deleted and this command
 will need to be re-invoked.
 
 ```sh
-python scripts/build_test_history.py --generate-new-statuses-json
+python scripts/process_test_history.py --generate-new-statuses-json
 ```
