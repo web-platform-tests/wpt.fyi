@@ -7,9 +7,10 @@
 set -e
 
 usage() {
-  USAGE="Usage: deploy-production.sh [-f] [-b]
-    -b : skip GitHub issue creation
-    -f : Always deploy (even if checks have failed)"
+  USAGE="Usage: deploy-production.sh [-f] [-b] [-q]
+    -b : Skip GitHub issue creation
+    -f : Always deploy (even if checks have failed)
+    -q : Disable all interactive prompts and debugging output when running gcloud deploy commands"
   echo "${USAGE}"
 }
 
@@ -17,17 +18,14 @@ usage() {
 delete_oldest_version() {
   OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=$1" --limit=1 --format=json | jq -r '.[] | .id')
   echo "Deleting $1 service version $OLDEST_REV"
-  if confirm "Delete $1 service version $OLDEST_REV?"; then
-    gcloud app versions delete --service=$SERVICE $OLDEST_REV
-  else
-    echo "Skipping $1 service version $OLDEST_REV"
-  fi
+  gcloud app versions delete --service=$SERVICE ${QUIET:+--quiet} $OLDEST_REV
 }
 
-while getopts ':bfh' flag; do
+while getopts ':bfqh' flag; do
   case "${flag}" in
     b) SKIP_ISSUE_CREATION='true' ;;
     f) FORCE_DEPLOY='true' ;;
+    q) QUIET='true' ;;
     h|*) usage && exit 0;;
   esac
 done
@@ -116,11 +114,11 @@ ${UTIL_DIR}/docker-dev/run.sh -d
 # Login to gcloud if not already logged in.
 wptd_exec_it gcloud auth login
 # Deploy the services.
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
-wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web ${QUIET:+QUIET=true}
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor ${QUIET:+QUIET=true}
+wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service ${QUIET:+QUIET=true}
 cd webapp/web
-gcloud app deploy --project=wptdashboard index.yaml queue.yaml dispatch.yaml
+gcloud app deploy ${QUIET:+--quiet} --project=wptdashboard index.yaml queue.yaml dispatch.yaml
 cd ../..
 
 # Stop docker.
