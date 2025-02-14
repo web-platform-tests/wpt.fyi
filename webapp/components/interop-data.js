@@ -1452,7 +1452,7 @@ export const interopData = {
         'scores_over_time': []
       },
       {
-        'name': 'Gaming API testing',
+        'name': 'Gamepad API testing',
         'url': 'https://github.com/web-platform-tests/interop/issues/786',
         'scores_over_time': []
       },
