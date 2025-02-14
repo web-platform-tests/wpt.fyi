@@ -1447,22 +1447,22 @@ export const interopData = {
     ],
     'investigation_scores': [
       {
-        'name': 'Accessibility Testing',
+        'name': 'Accessibility testing',
         'url': 'https://github.com/web-platform-tests/interop-accessibility',
         'scores_over_time': []
       },
       {
-        'name': 'Gaming',
+        'name': 'Gaming API testing',
         'url': 'https://github.com/web-platform-tests/interop/issues/786',
         'scores_over_time': []
       },
       {
-        'name': 'Mobile Testing',
+        'name': 'Mobile testing',
         'url': 'https://github.com/web-platform-tests/interop-mobile-testing',
         'scores_over_time': []
       },
       {
-        'name': 'Privacy Testing',
+        'name': 'Privacy testing',
         'url': 'https://github.com/web-platform-tests/interop/issues/831',
         'scores_over_time': []
       },
