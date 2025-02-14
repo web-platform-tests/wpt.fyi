@@ -671,6 +671,9 @@ def normalize_product(report: WPTReport) -> Set[str]:
     elif product == 'webkitgtk_minibrowser':
         report.run_info['product'] = 'webkitgtk'
         return {'webkitgtk', 'minibrowser'}
+    elif product == 'wpewebkit_minibrowser':
+        report.run_info['product'] = 'wpewebkit'
+        return {'wpewebkit', 'minibrowser'}
     else:
         return set()
 
