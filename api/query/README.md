@@ -364,10 +364,10 @@ feature label, regardless of browsers.
 
 Where web-feature-name is a string, case-insensitive and matches the filename base
 for any of the .yml files in the
-[feature-group-definitions](https://github.com/web-platform-dx/web-features/tree/main/feature-group-definitions) directory.
+[features](https://github.com/web-platform-dx/web-features/blob/main/features/) directory.
 
  E.g.
 
-Search the [nesting](https://github.com/web-platform-dx/web-features/blob/main/feature-group-definitions/nesting.yml) feature:
+Search the [nesting](https://github.com/web-platform-dx/web-features/blob/main/features/nesting.yml) feature:
 
     feature:nesting
