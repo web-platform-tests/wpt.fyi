@@ -102,6 +102,8 @@ func (p ProductSpec) DisplayName() string {
 		return "macOS WebKit"
 	case "webkitgtk":
 		return "WebKitGTK"
+	case "wpewebkit":
+		return "WPE WebKit"
 	default:
 		return p.BrowserName
 	}
