@@ -164,6 +164,7 @@ suite('wpt-amend-metadata', () => {
       expect(appFixture.getSearchURL('/a/b.html', 'safari')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'wktr')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'webkitgtk')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
+      expect(appFixture.getSearchURL('/a/b.html', 'wpewebkit')).to.equal('https://bugs.webkit.org/buglist.cgi?quicksearch="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'servo')).to.equal('https://github.com/servo/servo/issues?q="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'ladybird')).to.equal('https://github.com/LadybirdBrowser/ladybird/issues?q="/a/b"');
     });

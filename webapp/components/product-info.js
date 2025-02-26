@@ -22,6 +22,7 @@ const DisplayNames = (() => {
   m.set('uc', 'UC Browser');
   m.set('wktr', 'macOS WebKit');
   m.set('webkitgtk', 'WebKitGTK');
+  m.set('wpewebkit', 'WPE WebKit');
   // Platforms
   m.set('android', 'Android');
   m.set('linux', 'Linux');
@@ -50,7 +51,7 @@ const versionPatterns = Object.freeze({
 
 // The set of all browsers known to the wpt.fyi UI.
 const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
-  'chromium', 'deno', 'edge', 'firefox_android', 'firefox', 'flow', 'ladybird', 'node.js', 'safari', 'servo', 'webkitgtk', 'wktr']);
+  'chromium', 'deno', 'edge', 'firefox_android', 'firefox', 'flow', 'ladybird', 'node.js', 'safari', 'servo', 'webkitgtk', 'wpewebkit', 'wktr']);
 
 // The list of default browsers used in cases where the user has not otherwise
 // chosen a set of browsers (e.g. which browsers to show runs for). Stored as
@@ -183,7 +184,7 @@ const ProductInfo = (superClass) => class extends superClass {
       // although it would be better to have some variant of the Firefox logo.
       return '/static/geckoview_64x64.png';
 
-    } else if (name !== 'chromium' && name !== 'deno' && name !== 'flow' && name !== 'ladybird' && name !== 'node.js' && name !== 'servo' && name !== 'wktr') {  // Products without per-channel logos.
+    } else if (name !== 'chromium' && name !== 'deno' && name !== 'flow' && name !== 'ladybird' && name !== 'node.js' && name !== 'servo' && name !== 'wktr' && name !== 'webkitgtk' && name !== 'wpewebkit') {  // Products without per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
       for (const label of candidates) {
@@ -207,7 +208,7 @@ const ProductInfo = (superClass) => class extends superClass {
   }
 
   minorIsSignificant(browserName) {
-    return browserName === 'deno' || browserName === 'flow' || browserName === 'safari' || browserName === 'webkitgtk';
+    return browserName === 'deno' || browserName === 'flow' || browserName === 'safari' || browserName === 'webkitgtk' || browserName === 'wpewebkit';
   }
 
   /**
