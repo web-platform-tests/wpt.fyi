@@ -101,7 +101,7 @@ requests==2.32.3
     #   google-cloud-storage
 rsa==4.8
     # via google-auth
-types-requests==2.32.0.20241016
+types-requests==2.32.0.20250301
     # via -r requirements.in
 typing-extensions==4.7.1
     # via mypy
