@@ -6,14 +6,13 @@
     "type": "git",
     "url": "https://github.com/web-platform-tests/wpt.fyi.git"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "mocha --ui tdd --timeout 12000 webdriver.js"
   },
   "dependencies": {
     "chai": "5.2.0",
     "debug": "4.4.0",
-    "flags": "0.2.2",
+    "flg": "^3.0.0",
     "mocha": "11.1.0",
     "puppeteer": "24.3.0"
   }
