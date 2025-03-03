@@ -28,7 +28,7 @@ require (
 	go.uber.org/mock v0.5.0
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 	golang.org/x/oauth2 v0.26.0
-	google.golang.org/api v0.221.0
+	google.golang.org/api v0.223.0
 	google.golang.org/genproto v0.0.0-20250207221924-e9438ea467c6
 	google.golang.org/genproto/googleapis/api v0.0.0-20250207221924-e9438ea467c6
 	google.golang.org/grpc v1.70.0
@@ -38,7 +38,7 @@ require (
 require (
 	cel.dev/expr v0.19.2 // indirect
 	cloud.google.com/go v0.118.2 // indirect
-	cloud.google.com/go/auth v0.14.1 // indirect
+	cloud.google.com/go/auth v0.15.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.3.1 // indirect
@@ -89,7 +89,7 @@ require (
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250207221924-e9438ea467c6 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
