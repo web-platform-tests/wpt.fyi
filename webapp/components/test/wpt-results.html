@@ -328,9 +328,8 @@ suite('<wpt-results>', () => {
       const passes = 1;
       const total = 1;
       const status = 'P';
-      const isDir = true; // Test view, directory implies isDir is true (default)
       trf.view = VIEW_ENUM.Test;
-      const formatted = trf.formatCellDisplay(passes, total, status); // Omit isDir, use default
+      const formatted = trf.formatCellDisplay(passes, total, status); // Omit isDir, use default, implies isDir is true (default)
       expect(formatted).to.equal('1 / 1');
     });
 
