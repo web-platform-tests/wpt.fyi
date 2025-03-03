@@ -15,7 +15,7 @@
   </test-fixture>
 
   <script type="module">
-import { WPTResults } from '../../views/wpt-results.js';
+import { WPTResults, VIEW_ENUM } from '../../views/wpt-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
 suiteSetup(() => {
@@ -198,6 +198,191 @@ suite('<wpt-results>', () => {
 
         assert.equal(trf.getTestLabel('/a.html', labelMap), 'interop1,interop2');
       });
+    });
+  });
+
+  suite('refreshDisplayedNodes', () => {
+    setup(() => {
+      trf.path = '/';
+      trf.onlyShowDifferences = false;
+      trf.searchResults = [];
+      trf.diffResults = {};
+      trf.renames = {};
+      trf.displayedNodes =[];
+      trf.displayedTotals = [];
+      trf.testRuns = [
+        {
+          results_url: 0,
+          browser_name: 'test_browser'
+        }
+      ];
+    });
+
+    test('empty search results', () => {
+      trf.searchResults = [];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes).to.be.empty;
+    });
+
+    test('filtering by path', () => {
+      trf.path = '/foo';
+      trf.searchResults = [
+        { test: '/foo/bar.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+        { test: '/baz/qux.html', legacy_status: [{ status: 'F', passes: 0, total: 1, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes).to.have.lengthOf(1);
+      expect(trf.displayedNodes[0].path).to.equal('/foo/bar.html');
+    });
+
+    test('directory vs. file nodes', () => {
+      trf.path = '/';
+      trf.searchResults = [
+        { test: '/foo/bar.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+        { test: '/baz.html', legacy_status: [{ status: 'F', passes: 0, total: 1, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes).to.have.lengthOf(2);
+      expect(trf.displayedNodes[0].isDir).to.be.true;
+      expect(trf.displayedNodes[1].isDir).to.be.false;
+    });
+
+    test('aggregation of results', () => {
+      trf.path = '/';
+      trf.searchResults = [
+        { test: '/foo/bar.html', legacy_status: [{ status: 'P', passes: 1, total: 4, newAggProcess: true }] },
+        { test: '/foo/baz.html', legacy_status: [{ status: 'F', passes: 5, total: 10, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes).to.have.lengthOf(1);
+      const expected = {
+        path: '/foo',
+        isDir: true,
+        results: [{
+          passes: 0.75, // 1/4 + 5/10 = 0.25 + 0.5 = 0.75
+          total: 2,     // (4 + 10) / 8 = 14 / 8 = 1.75, rounded to 2
+          singleSubtest: false,
+          status: 'F',
+          subtest_passes: 6,  // 1 + 5 = 6
+          subtest_total: 14,   // 4 + 10 = 14
+          test_view_passes: 0,   // Should be 0
+          test_view_total: 2    // Should be 2
+        }]
+      };
+      expect(trf.displayedNodes[0]).to.deep.equal(
+        expected,
+        `displayedNodes comparison failure. actual: ${JSON.stringify(trf.displayedNodes[0])}, expected: ${JSON.stringify(expected)}`);
+    });
+
+    test('status propagation (file node)', () => {
+      trf.path = '/';
+      trf.searchResults = [
+        { test: '/test.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes[0].results[0].status).to.equal('P');
+    });
+
+    test('status aggregation (directory node)', () => {
+      trf.path = '/';
+      trf.searchResults = [
+        { test: '/foo/bar.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+        { test: '/foo/baz.html', legacy_status: [{ status: 'F', passes: 0, total: 1, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      expect(trf.displayedNodes[0].results[0].status).to.equal('F'); // Expect 'F' due to aggregation
+    });
+  });
+
+  suite('formatCellDisplay', () => {
+    // Ratio Formatting Tests (Subtest View)
+    test('should format single pass (subtest view)', () => {
+      const passes = 1;
+      const total = 1;
+      const status = 'P';
+      const isDir = false; // Subtest view implies isDir is false
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('1 / 1');
+    });
+
+    test('should format some passes (subtest view)', () => {
+      const passes = 2;
+      const total = 5;
+      const status = 'F';
+      const isDir = false;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('2 / 5');
+    });
+
+    test('should format zero passes (subtest view)', () => {
+      const passes = 0;
+      const total = 3;
+      const status = 'F';
+      const isDir = false;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('0 / 3');
+    });
+
+    // Ratio Formatting Tests (Test View, Directory)
+    test('should format single pass (test view, directory)', () => {
+      const passes = 1;
+      const total = 1;
+      const status = 'P';
+      const isDir = true; // Test view, directory implies isDir is true (default)
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status); // Omit isDir, use default
+      expect(formatted).to.equal('1 / 1');
+    });
+
+    test('should format some passes (test view, directory)', () => {
+      const passes = 2;
+      const total = 5;
+      const status = 'F';
+      const isDir = true;
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('2 / 5');
+    });
+
+    test('should format zero passes (test view, directory)', () => {
+      const passes = 0;
+      const total = 3;
+      const status = 'F';
+      const isDir = true;
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('0 / 3');
+    });
+
+    // Status Output Tests (Test View, File)
+    test('should display PASS for passing status (test view, file)', () => {
+      const passes = 1;
+      const total = 1;
+      const status = 'P';
+      const isDir = false; // Test view, file implies isDir is false
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('PASS');
+    });
+
+    test('should display FAIL for failing status (test view, file)', () => {
+      const passes = 2;
+      const total = 5;
+      const status = 'F';
+      const isDir = false;
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('FAIL');
+    });
+
+    test('should display PASS for empty status (test view, file)', () => {
+      const passes = 5;
+      const total = 5;
+      const status = '';
+      const isDir = false;
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      expect(formatted).to.equal('PASS');
     });
   });
 

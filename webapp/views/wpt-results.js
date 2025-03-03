@@ -56,7 +56,7 @@ const STATUS_ABBREVIATIONS = {
 const PASSING_STATUSES = ['O', 'P'];
 
 // VIEW_ENUM contains the different values for the `view` query parameter.
-const VIEW_ENUM = {
+export const VIEW_ENUM = {
   Subtest: 'subtest',
   Interop: 'interop',
   Test: 'test'
@@ -1204,11 +1204,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   formatCellDisplayTestView(passes, total, status, isDir) {
 
     // At the test level:
-    // 1. Show PASS is passes == total for subtests AND (status is undefined (legacy) OR isPassingStatus (v2)).
+    // 1. Show PASS is passes == total for subtests AND (status is undefined or empty string (legacy) OR isPassingStatus (v2)).
     // 2. Show FAIL if status is undefined (legacy summaries) or 'O' (because showing OK would be misleading).
     // 3. Show FAIL otherwise.
     if (!isDir) {
-      if (passes === total && ((status === undefined) || (PASSING_STATUSES.includes(status)))) {
+      if (passes === total && (
+          (status === undefined) || (status === '') || (PASSING_STATUSES.includes(status))
+          )) {
         return "PASS"
       } else if ((status === undefined) || (status === 'O')) {
         return "FAIL";
