@@ -6,8 +6,8 @@ service: searchcache
 # but should otherwise be the same as prod.
 
 resources:
-  cpu: 2
-  memory_gb: 10
+  cpu: 32
+  memory_gb: 207.5
 
 manual_scaling:
   instances: 1
