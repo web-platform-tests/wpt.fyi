@@ -13,7 +13,7 @@
   "dependencies": {
     "chai": "5.2.0",
     "debug": "4.4.0",
-    "flags": "0.2.2",
+    "flags": "3.1.1",
     "mocha": "11.1.0",
     "puppeteer": "24.3.0"
   }
