@@ -62,6 +62,24 @@ export const VIEW_ENUM = {
   Test: 'test'
 }
 
+/**
+ * Determines if a test view result should be considered a "PASS".
+ * This function is defined outside the WPTResults class to avoid 'this' binding issues.
+ * For example, if this function were a method of WPTResults and passed as a callback
+ * to another function (e.g., within a loop), the 'this' context within the callback
+ * might not refer to the WPTResults instance, leading to errors when trying to
+ * access component properties or methods.
+ * @param {number} total - The total number of subtests.
+ * @param {number} passes - The number of passing subtests.
+ * @param {string | undefined} status - The status of the test.
+ * @returns {boolean} True if the test view result should be "PASS", false otherwise.
+ */
+function isViewTestPass(total, passes, status) {
+  return (passes === total && (
+    (status === undefined) || (status === '') || (PASSING_STATUSES.includes(status))
+  ));
+}
+
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
   static get template() {
     return html`
@@ -719,12 +737,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.showHistory = false
   }
 
-  isViewTestPass(total, passes, status) {
-    return (passes === total && (
-      (status === undefined) || (status === '') || (PASSING_STATUSES.includes(status))
-      ))
-  }
-
   aggregateTestTotals(nodes, row, rs, diffRun) {
     // Aggregation is done by test aggregation and subtest aggregation.
     const aggregateTotalsBySubtest = (rs, i, diffRun) => {
@@ -795,7 +807,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       nodes.totals[i].subtest_passes += passes;
       row.results[i].subtest_total += total;
       nodes.totals[i].subtest_total += total;
-      const test_view_pass = this.isViewTestPass(total, passes, status) ? 1: 0;
+      const test_view_pass = isViewTestPass(total, passes, status) ? 1: 0;
       row.results[i].test_view_passes += test_view_pass;
       nodes.totals[i].test_view_passes += test_view_pass;
       row.results[i].test_view_total++;
@@ -1214,7 +1226,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // 2. Show FAIL if status is undefined (legacy summaries) or 'O' (because showing OK would be misleading).
     // 3. Show FAIL otherwise.
     if (!isDir) {
-      if (this.isViewTestPass(total, passes, status)) {
+      if (isViewTestPass(total, passes, status)) {
         return "PASS"
       } else if ((status === undefined) || (status === 'O')) {
         return "FAIL";
