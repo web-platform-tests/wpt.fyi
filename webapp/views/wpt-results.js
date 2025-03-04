@@ -63,7 +63,7 @@ export const VIEW_ENUM = {
 }
 
 /**
- * Determines if a test view result should be considered a "PASS".
+ * Determines if a test result for view=test should be considered a "PASS".
  * This function is defined outside the WPTResults class to avoid 'this' binding issues.
  * For example, if this function were a method of WPTResults and passed as a callback
  * to another function (e.g., within a loop), the 'this' context within the callback
@@ -72,7 +72,7 @@ export const VIEW_ENUM = {
  * @param {number} total - The total number of subtests.
  * @param {number} passes - The number of passing subtests.
  * @param {string | undefined} status - The status of the test.
- * @returns {boolean} True if the test view result should be "PASS", false otherwise.
+ * @returns {boolean}
  */
 function isViewTestPass(total, passes, status) {
   return (passes === total && (
