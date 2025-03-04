@@ -16,7 +16,6 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-
 type searchError struct {
 	// Detail is the internal error that should not be exposed to the end-user.
 	Detail error
