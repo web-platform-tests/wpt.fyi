@@ -19,7 +19,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/google/go-github/v69/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
-	"github.com/taskcluster/taskcluster/v80/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v83/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
