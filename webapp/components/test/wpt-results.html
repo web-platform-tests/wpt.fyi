@@ -383,6 +383,17 @@ suite('<wpt-results>', () => {
       const formatted = trf.formatCellDisplay(passes, total, status, isDir);
       expect(formatted).to.equal('PASS');
     });
+
+    test('should display Missing for missing test (test view, file)', () => {
+      const passes = 0;
+      const total = 0;
+      const status = '';
+      const isDir = false;
+      trf.view = VIEW_ENUM.Test;
+      const formatted = trf.formatCellDisplay(passes, total, status, isDir);
+      // test-file-results-table.js takes care of capitalizing it to MISSING.
+      expect(formatted).to.equal('Missing');
+    });
   });
 
   teardown(() => {
