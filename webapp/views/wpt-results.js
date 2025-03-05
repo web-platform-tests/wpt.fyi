@@ -75,9 +75,24 @@ export const VIEW_ENUM = {
  * @returns {boolean}
  */
 function isViewTestPass(total, passes, status) {
-  return (passes === total && (
+  return (passes === total && !isTestMissing(total, status) && (
     (status === undefined) || (status === '') || (PASSING_STATUSES.includes(status))
   ));
+}
+
+/**
+ * Determines if a test result is missing.
+ * This function is defined outside the WPTResults class to avoid 'this' binding issues.
+ * For example, if this function were a method of WPTResults and passed as a callback
+ * to another function (e.g., within a loop), the 'this' context within the callback
+ * might not refer to the WPTResults instance, leading to errors when trying to
+ * access component properties or methods.
+ * @param {number} total - The total number of subtests.
+ * @param {string | undefined} status - The status of the test.
+ * @returns {boolean}
+ */
+function isTestMissing(total, status) {
+  return status === '' && total === 0
 }
 
 class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathInfo(LoadingState(TestRunsUIBase)))))) {
@@ -784,7 +799,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
     for (let i = 0; i < rs.length; i++) {
       const status = rs[i].status;
-      const isMissing = status === '' && rs[i].total === 0;
+      const isMissing = isTestMissing(rs[i].total, status);
       row.results[i].singleSubtest = (rs[i].total === 0 && status && status !== 'O') || isMissing;
       row.results[i].status = status;
       let passes, total = 0;
