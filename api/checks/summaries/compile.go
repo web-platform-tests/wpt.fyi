@@ -37,6 +37,7 @@ func init() {
 
 // escapeMD returns the escaped MD equivalent of the plain text data s.
 func escapeMD(s string) string {
+	// nolint:staticcheck
 	return strings.Replace(s, `|`, `\|`, -1)
 }
 

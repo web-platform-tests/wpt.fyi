@@ -70,7 +70,7 @@ func getWPTMetadataArchiveWithURL(client *http.Client, url string, ref *string) 
 
 	statusCode := resp.StatusCode
 	if !(statusCode >= 200 && statusCode <= 299) {
-		err := fmt.Errorf("Bad status code:%d, Unable to download wpt-metadata", statusCode)
+		err := fmt.Errorf("bad status code:%d, Unable to download wpt-metadata", statusCode)
 		return nil, err
 	}
 

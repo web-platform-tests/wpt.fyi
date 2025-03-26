@@ -313,7 +313,7 @@ func getDiffSummary(
 			}
 		}
 		success := "success"
-		data.CheckState.Conclusion = &success
+		data.Conclusion = &success
 		summary = data
 	} else {
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error
@@ -333,7 +333,7 @@ func getDiffSummary(
 		}
 		if checksCanBeNonNeutral {
 			actionRequired := "action_required"
-			data.CheckState.Conclusion = &actionRequired
+			data.Conclusion = &actionRequired
 		}
 		summary = data
 	}

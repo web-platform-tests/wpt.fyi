@@ -27,14 +27,14 @@ import (
 )
 
 var (
-	errNilRun             = errors.New("Test run is nil")
-	errNoQuery            = errors.New("No query provided")
-	errNoRuns             = errors.New("No runs")
-	errRunExists          = errors.New("Run already exists in index")
-	errRunLoading         = errors.New("Run currently being loaded into index")
-	errSomeShardsRequired = errors.New("Index must have at least one shard")
-	errZeroRun            = errors.New("Cannot ingest run with ID of 0")
-	errEmptyReport        = errors.New("Report contains no results")
+	errNilRun             = errors.New("test run is nil")
+	errNoQuery            = errors.New("no query provided")
+	errNoRuns             = errors.New("no runs")
+	errRunExists          = errors.New("run already exists in index")
+	errRunLoading         = errors.New("run currently being loaded into index")
+	errSomeShardsRequired = errors.New("index must have at least one shard")
+	errZeroRun            = errors.New("cannot ingest run with ID of 0")
+	errEmptyReport        = errors.New("report contains no results")
 )
 
 // ErrRunExists returns the error associated with an attempt to perform
@@ -365,7 +365,7 @@ func (i *shardedWPTIndex) syncGetRun(id RunID) (shared.TestRun, error) {
 
 	run, loaded := i.runs[id]
 	if !loaded {
-		return shared.TestRun{}, fmt.Errorf("Unknown run ID: %v", id)
+		return shared.TestRun{}, fmt.Errorf("unknown run ID: %v", id)
 	}
 
 	return run, nil
@@ -379,7 +379,7 @@ func (i *shardedWPTIndex) syncGetRuns(ids []RunID) ([]shared.TestRun, error) {
 	for j := range ids {
 		run, ok := i.runs[ids[j]]
 		if !ok {
-			return nil, fmt.Errorf("Unknown run ID: %v", ids[j])
+			return nil, fmt.Errorf("unknown run ID: %v", ids[j])
 		}
 
 		runs[j] = run
@@ -442,7 +442,7 @@ func syncStoreRunOnShard(shard *wptIndex, id RunID, shardData map[TestID]testDat
 
 	runResults := NewRunResults()
 	for t, data := range shardData {
-		shard.tests.Add(t, data.testName.name, data.testName.subName)
+		shard.tests.Add(t, data.name, data.subName)
 		runResults.Add(data.ResultID, t)
 	}
 
@@ -513,7 +513,7 @@ func syncMakeIndex(shard *wptIndex, ids []RunID) (index, error) {
 	for _, id := range ids {
 		rrs := shard.results.ForRun(id)
 		if rrs == nil {
-			return index{}, fmt.Errorf("Run is unknown to shard: RunID=%v", id)
+			return index{}, fmt.Errorf("run is unknown to shard: RunID=%v", id)
 		}
 		runResults[id] = shard.results.ForRun(id)
 	}

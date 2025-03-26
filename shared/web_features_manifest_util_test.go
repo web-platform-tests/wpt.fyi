@@ -60,15 +60,15 @@ func TestGetWPTWebFeaturesManifest(t *testing.T) {
 		},
 		{
 			name:           "Downloader Error",
-			mockDownloader: &mockDownloader{returnErr: errors.New("Download failed")},
+			mockDownloader: &mockDownloader{returnErr: errors.New("download failed")},
 			// ... (mockParser doesn't matter in this case)
-			expectedError: errors.New("Download failed"),
+			expectedError: errors.New("download failed"),
 		},
 		{
 			name:           "Parser Error",
 			mockDownloader: &mockDownloader{returnData: io.NopCloser(strings.NewReader(`{}`))},
-			mockParser:     &mockParser{returnErr: errors.New("Parsing failed")},
-			expectedError:  errors.New("Parsing failed"),
+			mockParser:     &mockParser{returnErr: errors.New("parsing failed")},
+			expectedError:  errors.New("parsing failed"),
 		},
 	}
 

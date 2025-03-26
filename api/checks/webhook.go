@@ -71,6 +71,7 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	var processed bool
 	api := NewAPI(ctx)
+	// nolint:staticcheck
 	if event == "check_suite" {
 		processed, err = handleCheckSuiteEvent(api, payload)
 	} else if event == "check_run" {
@@ -308,7 +309,7 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 	products = shared.ProductSpecs(products).OrDefault()
 	runsByProduct, err := store.TestRunQuery().LoadTestRuns(products, nil, shared.SHAs{sha}, nil, nil, nil, nil)
 	if err != nil {
-		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
+		return false, fmt.Errorf("failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
 	api := NewAPI(ctx)
