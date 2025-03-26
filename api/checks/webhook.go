@@ -18,13 +18,13 @@ import (
 const requestedAction = "requested"
 const rerequestedAction = "rerequested"
 
-// WebhookGithubEvent represents the allowed GitHub webhook event types.
-type WebhookGithubEvent string
+// webhookGithubEvent represents the allowed GitHub webhook event types.
+type webhookGithubEvent string
 
 const (
-	EventCheckSuite  WebhookGithubEvent = "check_suite"
-	EventCheckRun    WebhookGithubEvent = "check_run"
-	EventPullRequest WebhookGithubEvent = "pull_request"
+	eventCheckSuite  webhookGithubEvent = "check_suite"
+	eventCheckRun    webhookGithubEvent = "check_run"
+	eventPullRequest webhookGithubEvent = "pull_request"
 )
 
 var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
@@ -50,9 +50,9 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	event := r.Header.Get("X-GitHub-Event")
-	inputEvent := WebhookGithubEvent(event)
+	inputEvent := webhookGithubEvent(event)
 	switch inputEvent {
-	case EventCheckSuite, EventCheckRun, EventPullRequest:
+	case eventCheckSuite, eventCheckRun, eventPullRequest:
 		break
 	default:
 		log.Debugf("Ignoring %s event", event)
@@ -82,11 +82,11 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var processed bool
 	api := NewAPI(ctx)
 	switch inputEvent {
-	case EventCheckSuite:
+	case eventCheckSuite:
 		processed, err = handleCheckSuiteEvent(api, payload)
-	case EventCheckRun:
+	case eventCheckRun:
 		processed, err = handleCheckRunEvent(api, payload)
-	case EventPullRequest:
+	case eventPullRequest:
 		processed, err = handlePullRequestEvent(api, payload)
 	}
 
