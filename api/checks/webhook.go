@@ -18,6 +18,15 @@ import (
 const requestedAction = "requested"
 const rerequestedAction = "rerequested"
 
+// webhookGithubEvent represents the allowed GitHub webhook event types.
+type webhookGithubEvent string
+
+const (
+	eventCheckSuite  webhookGithubEvent = "check_suite"
+	eventCheckRun    webhookGithubEvent = "check_run"
+	eventPullRequest webhookGithubEvent = "pull_request"
+)
+
 var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
 
 func isWPTFYIApp(appID int64) bool {
@@ -41,8 +50,9 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	event := r.Header.Get("X-GitHub-Event")
-	switch event {
-	case "check_suite", "check_run", "pull_request":
+	inputEvent := webhookGithubEvent(event)
+	switch inputEvent {
+	case eventCheckSuite, eventCheckRun, eventPullRequest:
 		break
 	default:
 		log.Debugf("Ignoring %s event", event)
@@ -71,13 +81,15 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	var processed bool
 	api := NewAPI(ctx)
-	if event == "check_suite" {
+	switch inputEvent {
+	case eventCheckSuite:
 		processed, err = handleCheckSuiteEvent(api, payload)
-	} else if event == "check_run" {
+	case eventCheckRun:
 		processed, err = handleCheckRunEvent(api, payload)
-	} else if event == "pull_request" {
+	case eventPullRequest:
 		processed, err = handlePullRequestEvent(api, payload)
 	}
+
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -308,7 +320,7 @@ func scheduleProcessingForExistingRuns(ctx context.Context, sha string, products
 	products = shared.ProductSpecs(products).OrDefault()
 	runsByProduct, err := store.TestRunQuery().LoadTestRuns(products, nil, shared.SHAs{sha}, nil, nil, nil, nil)
 	if err != nil {
-		return false, fmt.Errorf("Failed to load test runs: %s", err.Error())
+		return false, fmt.Errorf("failed to load test runs: %s", err.Error())
 	}
 	createdSome := false
 	api := NewAPI(ctx)

@@ -171,7 +171,7 @@ func (tm triageMetadata) createWPTMetadataPR(sha *string, triagedMetadataMap map
 
 	if ref == nil {
 		log.Errorf("No error returned but the reference is nil")
-		return "", errors.New("No error returned but the reference is nil")
+		return "", errors.New("no error returned but the reference is nil")
 	}
 
 	tree, err := tm.getTree(ref, triagedMetadataMap)

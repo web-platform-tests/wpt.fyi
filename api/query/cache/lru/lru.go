@@ -41,7 +41,7 @@ type lruEntries []lruEntry
 // Satisfy the Sort interface requirements (https://golang.org/pkg/sort/#Sort)
 func (s lruEntries) Len() int           { return len(s) }
 func (s lruEntries) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s lruEntries) Less(i, j int) bool { return s[i].Time.Before(s[j].Time) }
+func (s lruEntries) Less(i, j int) bool { return (s[i].Time).Before(s[j].Time) }
 
 func (l *lru) Access(v int64) {
 	l.syncAccess(v)

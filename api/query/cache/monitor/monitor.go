@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	errStopped         = errors.New("Monitor stopped")
-	errRunning         = errors.New("Monitor running")
-	errNegativePercent = errors.New("Invalid percentage (negative)")
-	errPercentTooLarge = errors.New("Invalid percentage (greater than 1.00)")
+	errStopped         = errors.New("monitor stopped")
+	errRunning         = errors.New("monitor running")
+	errNegativePercent = errors.New("invalid percentage (negative)")
+	errPercentTooLarge = errors.New("invalid percentage (greater than 1.00)")
 )
 
 // Runtime is a wrapper for the go runtime package. It allows tests to mock

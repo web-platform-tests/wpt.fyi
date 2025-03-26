@@ -437,7 +437,7 @@ func (n Not) Filter(t TestID) bool {
 // nolint:ireturn // TODO: Fix ireturn lint error
 func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 	if q == nil {
-		return nil, errors.New("Nil ConcreteQuery provided")
+		return nil, errors.New("nil ConcreteQuery provided")
 	}
 	switch v := q.(type) {
 	case query.True:
@@ -507,7 +507,7 @@ func newFilter(idx index, q query.ConcreteQuery) (filter, error) {
 
 		return Not{idx, f}, nil
 	default:
-		return nil, fmt.Errorf("Unknown ConcreteQuery type %s", reflect.TypeOf(q))
+		return nil, fmt.Errorf("unknown ConcreteQuery type %s", reflect.TypeOf(q))
 	}
 }
 
