@@ -18,6 +18,15 @@ import (
 const requestedAction = "requested"
 const rerequestedAction = "rerequested"
 
+// WebhookGithubEvent represents the allowed GitHub webhook event types.
+type WebhookGithubEvent string
+
+const (
+	EventCheckSuite  WebhookGithubEvent = "check_suite"
+	EventCheckRun    WebhookGithubEvent = "check_run"
+	EventPullRequest WebhookGithubEvent = "pull_request"
+)
+
 var runNameRegex = regexp.MustCompile(`^(?:(?:staging\.)?wpt\.fyi - )(.*)$`)
 
 func isWPTFYIApp(appID int64) bool {
@@ -41,8 +50,9 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	event := r.Header.Get("X-GitHub-Event")
-	switch event {
-	case "check_suite", "check_run", "pull_request":
+	inputEvent := WebhookGithubEvent(event)
+	switch inputEvent {
+	case EventCheckSuite, EventCheckRun, EventPullRequest:
 		break
 	default:
 		log.Debugf("Ignoring %s event", event)
@@ -71,14 +81,15 @@ func checkWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	var processed bool
 	api := NewAPI(ctx)
-	// nolint:staticcheck
-	if event == "check_suite" {
+	switch inputEvent {
+	case EventCheckSuite:
 		processed, err = handleCheckSuiteEvent(api, payload)
-	} else if event == "check_run" {
+	case EventCheckRun:
 		processed, err = handleCheckRunEvent(api, payload)
-	} else if event == "pull_request" {
+	case EventPullRequest:
 		processed, err = handlePullRequestEvent(api, payload)
 	}
+
 	if err != nil {
 		log.Errorf("%v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
