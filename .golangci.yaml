@@ -1,36 +1,28 @@
+version: "2"
 linters:
-  # Disable all linters enabled by default.
-  # See: https://golangci-lint.run/usage/linters
-  disable-all: true  
-  # Enabling specified linters.
-  # See: https://github.com/web-platform-tests/wpt.fyi/issues/2983
-  enable: 
-    - staticcheck
-    - errcheck
-    - gosimple
-    - govet
-    - typecheck
-    - unused
-    - ineffassign
+  default: none
+  enable:
     - containedctx
-    - dupl
+    - copyloopvar
     - dogsled
+    - dupl
+    - errcheck
     - errname
     - errorlint
     - exhaustive
     - exhaustruct
-    - copyloopvar
     - gochecknoglobals
     - gocognit
     - goconst
     - gocyclo
     - godot
     - godox
-    - gofmt
     - goheader
     - gomoddirectives
     - gosec
+    - govet
     - importas
+    - ineffassign
     - ireturn
     - lll
     - misspell
@@ -38,27 +30,45 @@ linters:
     - nestif
     - nilerr
     - nilnil
-    - nlreturn  
+    - nlreturn
     - noctx
     - prealloc
     - revive
+    - staticcheck
     - unparam
+    - unused
     - usestdlibvars
+  settings:
+    exhaustruct:
+      exclude:
+        - github\.com/google/go-github/v65/github\.CheckRunOutput
+        - github\.com/google/go-github/v65/github\.ListCheckRunsOptions
+        - github\.com/google/go-github/v65/github\.ListOptions
+        - github\.com/golang-jwt/jwt\.StandardClaims
+        - net/http\.Client
+    gomoddirectives:
+      replace-allow-list:
+        - launchpad.net/gocheck
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-linters-settings:
-  exhaustruct:
-    # List of regular expressions to exclude struct packages and names from check.
-    # We exclude third-party structs with entirely optional (omitempty) fields.
-    exclude: 
-      - 'github\.com/google/go-github/v65/github\.CheckRunOutput'
-      - 'github\.com/google/go-github/v65/github\.ListCheckRunsOptions'
-      - 'github\.com/google/go-github/v65/github\.ListOptions'
-      - 'github\.com/golang-jwt/jwt\.StandardClaims'
-      - 'net/http\.Client'
-  gomoddirectives:  
-    # List of allowed `replace directives`
-    # See: https://github.com/web-platform-tests/wpt.fyi/blob/main/go.mod
-    replace-allow-list:
-      - launchpad.net/gocheck
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

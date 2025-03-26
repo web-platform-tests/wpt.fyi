@@ -68,7 +68,7 @@ func NewRunResults() RunResults {
 func (rs *resultsMap) Add(ru RunID, rr RunResults) error {
 	_, wasLoaded := rs.byRunTest.LoadOrStore(ru, rr)
 	if wasLoaded {
-		return fmt.Errorf("Already loaded into results index: %v", ru)
+		return fmt.Errorf("already loaded into results index: %v", ru)
 	}
 
 	return nil
@@ -77,7 +77,7 @@ func (rs *resultsMap) Add(ru RunID, rr RunResults) error {
 func (rs *resultsMap) Delete(ru RunID) error {
 	_, ok := rs.byRunTest.Load(ru)
 	if !ok {
-		return fmt.Errorf(`No such run in results index; run ID: %v`, ru)
+		return fmt.Errorf(`no such run in results index; run ID: %v`, ru)
 	}
 
 	rs.byRunTest.Delete(ru)

@@ -47,7 +47,7 @@ func TestGet_cacheMiss(t *testing.T) {
 	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
 	data := []byte("{}")
-	errMissing := errors.New("Failed to fetch from store")
+	errMissing := errors.New("failed to fetch from store")
 	cw := sharedtest.NewMockWriteCloser(t)
 	sr := sharedtest.NewMockReadCloser(t, data)
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, errMissing)
@@ -71,7 +71,7 @@ func TestGet_missing(t *testing.T) {
 	store := sharedtest.NewMockReadable(mockCtrl)
 	cs := shared.NewByteCachedStore(sharedtest.NewTestContext(), cache, store)
 
-	errMissing := errors.New("Failed to fetch from store")
+	errMissing := errors.New("failed to fetch from store")
 	cache.EXPECT().NewReadCloser(&cacheID).Return(nil, errMissing)
 	store.EXPECT().NewReadCloser(&storeID).Return(nil, errMissing)
 

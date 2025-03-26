@@ -31,7 +31,7 @@ func TestFetchErr(t *testing.T) {
 	store := sharedtest.NewMockDatastore(ctrl)
 	query := sharedtest.NewMockTestRunQuery(ctrl)
 	idx := index.NewMockIndex(ctrl)
-	expected := errors.New("Fetch error")
+	expected := errors.New("fetch error")
 	store.EXPECT().TestRunQuery().Return(query)
 	query.EXPECT().LoadTestRuns(gomock.Any(), nil, nil, nil, nil, gomock.Any(), nil).Return(nil, expected)
 	_, err := FillIndex(store, nil, nil, 1, uint(10), uint64(1), 0.0, idx)

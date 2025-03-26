@@ -94,7 +94,7 @@ func (d cloudDatastore) ReserveID(typeName string) (Key, error) {
 	if err != nil {
 		return nil, err
 	} else if len(keys) < 1 {
-		return nil, errors.New("Failed to create a key")
+		return nil, errors.New("failed to create a key")
 	}
 	return cloudKey{
 		key: keys[0],
