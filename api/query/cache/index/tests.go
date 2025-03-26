@@ -51,7 +51,7 @@ func (ts *testsMap) Add(t TestID, name string, subName *string) {
 func (ts *testsMap) GetName(id TestID) (string, *string, error) {
 	name, ok := ts.tests[id]
 	if !ok {
-		return "", nil, fmt.Errorf(`Test not found; ID: %v`, id)
+		return "", nil, fmt.Errorf(`test not found; ID: %v`, id)
 	}
 
 	return name.name, name.subName, nil
@@ -71,7 +71,7 @@ func computeTestID(name string, subPtr *string) (TestID, error) {
 	if subPtr != nil && *subPtr != "" {
 		s = farm.Fingerprint64([]byte(*subPtr))
 		if s == 0 {
-			return TestID{}, fmt.Errorf(`Subtest ID for string "%s" is 0`, *subPtr)
+			return TestID{}, fmt.Errorf(`subtest ID for string "%s" is 0`, *subPtr)
 		}
 	}
 

@@ -58,7 +58,7 @@ func ParseSHA(shaParam string) (sha string, err error) {
 	if shaParam != "" && shaParam != "latest" {
 		sha = shaParam
 		if !SHARegex.MatchString(shaParam) {
-			return "latest", fmt.Errorf("Invalid sha param value: %s", shaParam)
+			return "latest", fmt.Errorf("invalid sha param value: %s", shaParam)
 		}
 	}
 	return sha, err
@@ -161,7 +161,7 @@ func ParseVersion(version string) (result *Version, err error) {
 	pieces := strings.Split(version, " ")
 	channel := ""
 	if len(pieces) > 2 {
-		return nil, fmt.Errorf("Invalid version: %s", version)
+		return nil, fmt.Errorf("invalid version: %s", version)
 	} else if len(pieces) > 1 {
 		channel = " " + pieces[1]
 		version = pieces[0]
@@ -176,13 +176,13 @@ func ParseVersion(version string) (result *Version, err error) {
 
 	pieces = strings.Split(version, ".")
 	if len(pieces) > 4 {
-		return nil, fmt.Errorf("Invalid version: %s", version)
+		return nil, fmt.Errorf("invalid version: %s", version)
 	}
 	numbers := make([]int, len(pieces))
 	for i, piece := range pieces {
 		n, err := strconv.ParseInt(piece, 10, 0)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid version: %s", version)
+			return nil, fmt.Errorf("invalid version: %s", version)
 		}
 		numbers[i] = int(n)
 	}
@@ -214,7 +214,7 @@ func ParseBrowserParam(v url.Values) (product *Product, err error) {
 			BrowserName: browser,
 		}, nil
 	}
-	return nil, fmt.Errorf("Invalid browser param value: %s", browser)
+	return nil, fmt.Errorf("invalid browser param value: %s", browser)
 }
 
 // ParseBrowsersParam returns a list of browser params for the request.
@@ -227,7 +227,7 @@ func ParseBrowsersParam(v url.Values) (browsers []string, err error) {
 	}
 	for _, b := range browserParams {
 		if !IsBrowserName(b) {
-			return nil, fmt.Errorf("Invalid browser param value %s", b)
+			return nil, fmt.Errorf("invalid browser param value %s", b)
 		}
 		browsers = append(browsers, b)
 	}
@@ -502,7 +502,7 @@ func ParseQueryParamInt(v url.Values, key string) (*int, error) {
 	}
 	i, err := strconv.Atoi(value)
 	if err != nil {
-		return &i, fmt.Errorf("Invalid %s value: %s", key, value)
+		return &i, fmt.Errorf("invalid %s value: %s", key, value)
 	}
 	return &i, err
 }

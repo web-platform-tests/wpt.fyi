@@ -23,7 +23,7 @@ type failReader struct{}
 type okHandler struct{}
 
 var (
-	errFailRead = errors.New("Failed read")
+	errFailRead = errors.New("failed read")
 	ok          = []byte("OK")
 )
 

@@ -98,7 +98,7 @@ func getSearchElement(wd selenium.WebDriver) (selenium.WebElement, error) {
 	if err != nil {
 		return nil, err
 	} else if len(inputs) < 1 {
-		return nil, errors.New("Failed to find any test-search input.query elements")
+		return nil, errors.New("failed to find any test-search input.query elements")
 	}
 	return inputs[0], err
 }
