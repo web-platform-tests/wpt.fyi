@@ -84,7 +84,7 @@ func TestHandleMetadataTriage_FailToCachePr(t *testing.T) {
 	mocktm.EXPECT().Triage(gomock.Any()).Return("https://github.com/web-platform-tests/wpt-metadata/pull/1", nil)
 
 	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
-	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(errors.New("Cache failed"))
+	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(errors.New("cache failed"))
 
 	handleMetadataTriage(ctx, mockgac, mocktm, nil, mockSet, w, req)
 
@@ -120,7 +120,7 @@ func TestHandleMetadataTriage_FailToCacheMetadata(t *testing.T) {
 	mockSet.EXPECT().Add(shared.PendingMetadataCacheKey, "1").Return(nil)
 
 	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
-	mockCache.EXPECT().Put(shared.PendingMetadataCachePrefix+"1", gomock.Any()).Return(errors.New("Cache failed"))
+	mockCache.EXPECT().Put(shared.PendingMetadataCachePrefix+"1", gomock.Any()).Return(errors.New("cache failed"))
 
 	handleMetadataTriage(ctx, mockgac, mocktm, mockCache, mockSet, w, req)
 
@@ -487,7 +487,7 @@ func TestPendingMetadataHandler_EmptyObjectCache(t *testing.T) {
 		shared.PendingMetadataCachePrefix + "456",
 	}
 	for _, key := range keys {
-		mockCache.EXPECT().Get(key, gomock.Any()).Return(errors.New("Cache miss"))
+		mockCache.EXPECT().Get(key, gomock.Any()).Return(errors.New("cache miss"))
 	}
 
 	handlePendingMetadata(ctx, mockCache, mockSet, w, r)
@@ -510,7 +510,7 @@ func TestPendingMetadataHandler_Fail(t *testing.T) {
 
 	mockCache := sharedtest.NewMockObjectCache(mockCtrl)
 	mockSet := sharedtest.NewMockRedisSet(mockCtrl)
-	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return(nil, errors.New("Cache miss"))
+	mockSet.EXPECT().GetAll(shared.PendingMetadataCacheKey).Return(nil, errors.New("cache miss"))
 
 	handlePendingMetadata(ctx, mockCache, mockSet, w, r)
 

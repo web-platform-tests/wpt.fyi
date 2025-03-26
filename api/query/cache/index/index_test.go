@@ -114,7 +114,7 @@ func TestIngestRun_loaderError(t *testing.T) {
 		ID:            1,
 		RawResultsURL: "http://example.com/results.json",
 	}
-	loaderErr := errors.New("Failed to load test results")
+	loaderErr := errors.New("failed to load test results")
 	loader.EXPECT().Load(run).Return(nil, loaderErr)
 	assert.Equal(t, loaderErr, i.IngestRun(run))
 }

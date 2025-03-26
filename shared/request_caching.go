@@ -56,7 +56,7 @@ func (w *cachingResponseWriter) WriteHeader(statusCode int) {
 
 func (w *cachingResponseWriter) WriteTo(wtr io.Writer) (int64, error) {
 	if w.bufErr != nil {
-		return 0, fmt.Errorf("Error writing response data to caching response writer: %v", w.bufErr)
+		return 0, fmt.Errorf("error writing response data to caching response writer: %v", w.bufErr)
 	}
 
 	return w.b.WriteTo(wtr)

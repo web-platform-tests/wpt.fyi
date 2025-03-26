@@ -16,7 +16,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
-var errNoProducts = errors.New("No products specified in request to load test runs")
+var errNoProducts = errors.New("no products specified in request to load test runs")
 
 // TestRunQuery abstracts complex queries of TestRun entities.
 type TestRunQuery interface {

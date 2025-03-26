@@ -123,14 +123,14 @@ func StringSliceContains(ss []string, s string) bool {
 func MapStringKeys(m interface{}) ([]string, error) {
 	mapType := reflect.ValueOf(m)
 	if mapType.Kind() != reflect.Map {
-		return nil, errors.New("Interface is not a map type")
+		return nil, errors.New("interface is not a map type")
 	}
 	keys := mapType.MapKeys()
 	strKeys := make([]string, len(keys))
 	for i, key := range keys {
 		var ok bool
 		if strKeys[i], ok = key.Interface().(string); !ok {
-			return nil, fmt.Errorf("Key %v was not a string type", key)
+			return nil, fmt.Errorf("key %v was not a string type", key)
 		}
 	}
 	return strKeys, nil

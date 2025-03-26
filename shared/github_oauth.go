@@ -149,7 +149,7 @@ func (gaci githubAccessControlImpl) IsValidWPTMember() (bool, error) {
 		return false, err
 	}
 	if !valid {
-		return false, errors.New("Invalid access token")
+		return false, errors.New("invalid access token")
 	}
 	isMember, _, err := gaci.botClient.Organizations.IsMember(gaci.ctx, "web-platform-tests", gaci.user.GitHubHandle)
 	return isMember, err
@@ -161,7 +161,7 @@ func (gaci githubAccessControlImpl) IsValidAdmin() (bool, error) {
 		return false, err
 	}
 	if !valid {
-		return false, errors.New("Invalid access token")
+		return false, errors.New("invalid access token")
 	}
 	key := gaci.ds.NewNameKey("Admin", gaci.user.GitHubHandle)
 	var dst struct{}

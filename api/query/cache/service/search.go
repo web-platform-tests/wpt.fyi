@@ -155,7 +155,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 	// Prepare user query based on `ids` that are (or at least were a moment ago)
 	// resident in `idx`. In the unlikely event that a run in `ids`/`runs` is no
 	// longer in `idx`, `idx.Bind()` below will return an error.
-	q := cq.PrepareUserQuery(ids, rq.AbstractQuery.BindToRuns(runs...))
+	q := cq.PrepareUserQuery(ids, rq.BindToRuns(runs...))
 
 	// Configure format, from request params.
 	urlQuery := r.URL.Query()

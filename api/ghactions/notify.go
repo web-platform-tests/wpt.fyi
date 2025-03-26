@@ -148,7 +148,7 @@ func processBuild(
 
 	uploader, err := aeAPI.GetUploader(uploaderName)
 	if err != nil {
-		return false, fmt.Errorf("Failed to get uploader creds from Datastore: %w", err)
+		return false, fmt.Errorf("failed to get uploader creds from Datastore: %w", err)
 	}
 
 	uploadClient := uc.NewClient(aeAPI)
@@ -162,7 +162,7 @@ func processBuild(
 		shared.ToStringSlice(labels))
 
 	if err != nil {
-		return false, fmt.Errorf("Failed to create run: %w", err)
+		return false, fmt.Errorf("failed to create run: %w", err)
 	}
 
 	return true, nil
