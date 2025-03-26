@@ -36,7 +36,7 @@ type backfillMonitor struct {
 // phases of search cache development.
 const bytesPerRun = uint64(6.5e+7)
 
-var errNilIndex = errors.New("Index to backfill is nil")
+var errNilIndex = errors.New("index to backfill is nil")
 
 // GetDatastore constructs a shared.Datastore interface that loads runs from Datastore
 // in reverse cronological order, by shared.TestRun.TimeStart.

@@ -128,10 +128,10 @@ func getExistingCheckRuns(ctx context.Context, suite shared.CheckSuite) ([]*gith
 		}
 
 		// Setup for the next call.
-		options.ListOptions.Page = response.NextPage
+		options.Page = response.NextPage
 	}
 
-	return nil, fmt.Errorf("More than 10 pages of CheckRuns returned for ref %s", suite.SHA)
+	return nil, fmt.Errorf("more than 10 pages of CheckRuns returned for ref %s", suite.SHA)
 }
 
 func updateExistingCheckRunSummary(
