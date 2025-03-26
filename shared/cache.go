@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	errNewReadCloserExpectedString       = errors.New("NewReadCloser(arg) expected arg string")
-	errRedisWriteCloserWriteAfterClose   = errors.New("redisWriteCloser: Write() after Close()")
+	errNewReadCloserExpectedString       = errors.New("newreadcloser(arg) expected arg string")
+	errRedisWriteCloserWriteAfterClose   = errors.New("rediswritecloser: Write() after Close()")
 	errRedisInvalidResponseType          = errors.New("redis: type received from GET is not []byte")
 	errByteCachedStoreExpectedByteSlice  = errors.New("contextualized byte CachedStore expected []byte output arg")
 	errDatastoreObjectStoreExpectedInt64 = errors.New("datastore ObjectStore expected int64 ID")
@@ -63,7 +63,7 @@ func (hr httpReadable) NewReadCloser(iURL interface{}) (io.ReadCloser, error) {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Unexpected status code from %s: %d", url, r.StatusCode)
+		return nil, fmt.Errorf("unexpected status code from %s: %d", url, r.StatusCode)
 	}
 
 	return r.Body, nil

@@ -37,7 +37,7 @@ func init() {
 
 // escapeMD returns the escaped MD equivalent of the plain text data s.
 func escapeMD(s string) string {
-	return strings.Replace(s, `|`, `\|`, -1)
+	return strings.ReplaceAll(s, "|", `\|`)
 }
 
 // Summary is the generic interface of a summary template data type.
