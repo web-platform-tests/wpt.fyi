@@ -86,8 +86,8 @@ github.com/gobwas/glob v0.2.3 h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=
 github.com/gobwas/glob v0.2.3/go.mod h1:d3Ez4x06l9bZtSvzIay5+Yzi0fmZzPgnTbPcKjJAkT8=
 github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
-github.com/golang-jwt/jwt/v4 v4.5.1 h1:JdqV9zKUdtaa9gdPlywC3aeoEsR681PlKC+4F5gQgeo=
-github.com/golang-jwt/jwt/v4 v4.5.1/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
+github.com/golang-jwt/jwt/v4 v4.5.2 h1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=
+github.com/golang-jwt/jwt/v4 v4.5.2/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/glog v1.2.4 h1:CNNw5U8lSiiBk7druxtSHHTsRWcxKoac6kZKm2peBBc=
 github.com/golang/glog v1.2.4/go.mod h1:6AhwSGph0fcJtXVM/PEHPqZlFeoLxhs7/t5UDAwmO+w=
@@ -95,7 +95,6 @@ github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da h1:oI5xCqsCo564l
 github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
-github.com/golang/mock v1.3.1 h1:qGJ6qTW+x6xX/my+8YUVl4WNpX9B7+/l2tRsHGZ7f2s=
 github.com/golang/mock v1.3.1/go.mod h1:sBzyDLLjw3U8JLTeZvSv8jJB+tU5PVekmnlKIyFUx0Y=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -178,8 +177,6 @@ github.com/taskcluster/slugid-go v1.1.0 h1:SWsUplliyamdYzOKVM4+lDohZKuL63fKreGkv
 github.com/taskcluster/slugid-go v1.1.0/go.mod h1:5sOAcPHjqso1UkKxSl77CkKgOwha0D9X0msBKBj0AOg=
 github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible h1:Q3kagxQiHw7QNckRoeeBV16FDvyQC+iSmda99bJEK+U=
 github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible/go.mod h1:ALqTgi15AmJGEGubRKM0ydlLAFatlQPrQrmal9YZpQs=
-github.com/taskcluster/taskcluster/v83 v83.3.0 h1:eEDtCjlGHoGBAf8y+RO9s4spQ54q/BXgAdsavp2f+ys=
-github.com/taskcluster/taskcluster/v83 v83.3.0/go.mod h1:cq/yuZNKMKu2pKwhqza/W6XLQyVnZQAbrdkC2rk3Hmw=
 github.com/taskcluster/taskcluster/v83 v83.4.0 h1:1mq5HeI6l5qOTnLMFuzHC54UFlxlU6o+6HcwU3W3zpM=
 github.com/taskcluster/taskcluster/v83 v83.4.0/go.mod h1:P0SXQQuKu+Ehk5FxCRqAGcCUywqqCDogrjZnTpuYnFA=
 github.com/tebeka/selenium v0.9.9 h1:cNziB+etNgyH/7KlNI7RMC1ua5aH1+5wUlFQyzeMh+w=
