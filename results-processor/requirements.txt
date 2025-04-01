@@ -16,7 +16,7 @@ click==8.1.7
     # via flask
 filelock==3.18.0
     # via -r requirements.in
-flake8==7.1.2
+flake8==7.2.0
     # via -r requirements.in
 flask==3.1.0
     # via -r requirements.in
@@ -90,9 +90,9 @@ pyasn1==0.4.8
     #   rsa
 pyasn1-modules==0.2.8
     # via google-auth
-pycodestyle==2.12.0
+pycodestyle==2.13.0
     # via flake8
-pyflakes==3.2.0
+pyflakes==3.3.2
     # via flake8
 requests==2.32.3
     # via
