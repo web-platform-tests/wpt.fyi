@@ -5,7 +5,7 @@
 package summaries
 
 import (
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v70/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 

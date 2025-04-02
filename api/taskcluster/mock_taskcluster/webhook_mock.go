@@ -12,7 +12,7 @@ package mock_taskcluster
 import (
 	reflect "reflect"
 
-	github "github.com/google/go-github/v69/github"
+	github "github.com/google/go-github/v70/github"
 	taskcluster "github.com/web-platform-tests/wpt.fyi/api/taskcluster"
 	gomock "go.uber.org/mock/gomock"
 )
