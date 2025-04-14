@@ -1,6 +1,7 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.23.7
+go 1.23.8
+
 toolchain go1.24.1
 
 require (
