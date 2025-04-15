@@ -362,12 +362,13 @@ feature label, regardless of browsers.
 
     {"feature": [web-feature-name]}
 
-Where web-feature-name is a string, case-insensitive and matches the filename base
-for any of the .yml files in the
-[feature-group-definitions](https://github.com/web-platform-dx/web-features/tree/main/feature-group-definitions) directory.
+Where web-feature-name is a string, case-insensitive and matches the feature
+keyword found in any of the WEB_FEATURES.yml files in the
+[WPT repository](https://github.com/web-platform-tests/wpt).
 
  E.g.
 
-Search the [nesting](https://github.com/web-platform-dx/web-features/blob/main/feature-group-definitions/nesting.yml) feature:
+Search the [nesting](https://github.com/web-platform-tests/wpt/blob/master/css/css-nesting/WEB_FEATURES.yml)
+feature:
 
     feature:nesting
