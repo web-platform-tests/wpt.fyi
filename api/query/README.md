@@ -362,9 +362,10 @@ feature label, regardless of browsers.
 
     {"feature": [web-feature-name]}
 
-Where web-feature-name is a string, case-insensitive and matches the feature
-keyword found in any of the WEB_FEATURES.yml files in the
-[WPT repository](https://github.com/web-platform-tests/wpt).
+Where web-feature-name is a string, case-insensitive and matches the filename
+base for any of the .yml files in the
+[features](https://github.com/web-platform-dx/web-features/tree/main/features)
+directory.
 
  E.g.
 
