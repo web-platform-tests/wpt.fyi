@@ -309,6 +309,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
 
   hasSearchURL(product) {
     return [
+      'blitz',
       'chrome',
       'chromium',
       'deno',
@@ -330,6 +331,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       testName = testName.split('.')[0];
     } else {
       testName = testName.replace(/((\/\*)?$)/, '');
+    }
+
+    if (product === 'blitz') {
+      return `https://github.com/DioxusLabs/blitz/issues?q="${testName}"`;
     }
 
     if (product === 'chrome' || product === 'chromium' || product === 'edge') {
