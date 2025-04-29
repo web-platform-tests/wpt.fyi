@@ -1,9 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
 go 1.23.8
-
-toolchain go1.24.1
-
 require (
 	cloud.google.com/go/cloudtasks v1.13.6
 	cloud.google.com/go/datastore v1.20.0
@@ -25,7 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v83 v83.5.6
+	github.com/taskcluster/taskcluster/v83 v83.5.8
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.5.1
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
