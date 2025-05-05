@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "7.27.0",
-    "@babel/plugin-syntax-import-assertions": "7.26.0",
+    "@babel/plugin-syntax-import-assertions": "7.27.1",
     "@browser-logos/chrome": "2.0.0",
     "@browser-logos/chrome-beta": "3.0.0",
     "@browser-logos/chrome-canary": "2.0.0",
