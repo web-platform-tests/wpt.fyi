@@ -27,7 +27,7 @@ require (
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
 	github.com/taskcluster/taskcluster/v83 v83.5.6
 	github.com/tebeka/selenium v0.9.9
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.5.2
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.231.0
