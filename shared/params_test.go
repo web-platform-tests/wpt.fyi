@@ -157,6 +157,20 @@ func TestGetProductsOrDefault_BrowserParam_SafariChrome(t *testing.T) {
 	assert.Equal(t, "chrome", products[1].BrowserName)
 }
 
+func TestGetProductsOrDefault_BrowserParam_WebKitNightly(t *testing.T) {
+	r := httptest.NewRequest("GET", "https://wpt.fyi/results/?products=wpewebkit-2.49.1%20(294826@main)@0123456789,webkitgtk-2.47.1%20(263120@main)", nil)
+	filters, err := ParseTestRunFilterParams(r.URL.Query())
+	products := filters.GetProductsOrDefault()
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(products))
+	assert.Equal(t, "wpewebkit", products[0].BrowserName)
+	assert.Equal(t, "2.49.1 (294826@main)", products[0].BrowserVersion)
+	assert.Equal(t, "0123456789", products[0].Revision)
+	assert.Equal(t, "webkitgtk", products[1].BrowserName)
+	assert.Equal(t, "2.47.1 (263120@main)", products[1].BrowserVersion)
+	assert.Equal(t, "latest", products[1].Revision)
+}
+
 func TestGetProductsOrDefault_BrowserParam_MultiBrowserParam_SafariChrome(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://wpt.fyi/?browser=safari&browser=chrome", nil)
 	filters, err := ParseTestRunFilterParams(r.URL.Query())
@@ -516,6 +530,18 @@ func TestParseProductSpec_BrowserVersion(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "safari", productSpec.BrowserName)
 	assert.Equal(t, "100 preview", productSpec.BrowserVersion)
+
+	productSpec, err = ParseProductSpec("wpewebkit-2.49.1 (294826@main)")
+	assert.Nil(t, err)
+	assert.Equal(t, "wpewebkit", productSpec.BrowserName)
+	assert.Equal(t, "2.49.1 (294826@main)", productSpec.BrowserVersion)
+	assert.Equal(t, "latest", productSpec.Revision)
+
+	productSpec, err = ParseProductSpec("webkitgtk-2.49.1 (294826@main)@0123456789aaaaabbbbbcccccdddddeeeeefffff")
+	assert.Nil(t, err)
+	assert.Equal(t, "webkitgtk", productSpec.BrowserName)
+	assert.Equal(t, "2.49.1 (294826@main)", productSpec.BrowserVersion)
+	assert.Equal(t, "0123456789aaaaabbbbbcccccdddddeeeeefffff", productSpec.Revision)
 }
 
 func TestParseProductSpec_OS(t *testing.T) {
