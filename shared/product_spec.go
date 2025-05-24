@@ -70,6 +70,8 @@ func (p ProductSpec) IsExperimental() bool {
 // DisplayName returns a capitalized version of the product's name.
 func (p ProductSpec) DisplayName() string {
 	switch p.BrowserName {
+	case "blitz":
+		return "Blitz"
 	case "chrome":
 		return "Chrome"
 	case "chromium":
