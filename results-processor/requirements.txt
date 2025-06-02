@@ -70,12 +70,14 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.15.0
+mypy==1.16.0
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
 packaging==23.1
     # via gunicorn
+pathspec==0.12.1
+    # via mypy
 proto-plus==1.22.3
     # via google-cloud-datastore
 protobuf==4.25.4
