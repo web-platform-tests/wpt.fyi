@@ -77,13 +77,43 @@ func ParseProductSpecs(specs ...string) (products ProductSpecs, err error) {
 	return products, nil
 }
 
+// splitAtNonMainAt returns the string split at the "@" characters but avoiding to
+// split the string on the first ocurrence of "@main". This is needed because
+// WebKit nightlies have versions in the format of "wpewebkit-2.49.1 (294826@main)"
+// where "2.49.1 (294826@main)" is the BrowserVersion.
+func splitAtNonMainAt(stringInput string) []string {
+    if !strings.Contains(stringInput, "@main") {
+        return strings.Split(stringInput, "@")
+    }
+    if strings.Count(stringInput, "@") == 1 {
+        return []string{stringInput}
+    }
+    posFirstAtNoMain := -1
+    for i := 0; i < len(stringInput); i++ {
+        if stringInput[i] == '@' {
+            if !(i+5 <= len(stringInput) && stringInput[i+1:i+5] == "main") {
+                posFirstAtNoMain = i
+                break
+            }
+        }
+    }
+    posFirstAtMain := strings.Index(stringInput, "@main")
+    if posFirstAtNoMain == -1 || posFirstAtMain > posFirstAtNoMain {
+        return strings.Split(stringInput, "@")
+    }
+    beforeFirstAtNoMain := stringInput[:posFirstAtNoMain]
+    afterFirstAtNoMain  := stringInput[posFirstAtNoMain+1:] // drop the "@"
+    partsAfterFirstAtNoMain  := strings.Split(afterFirstAtNoMain, "@")
+    return append([]string{beforeFirstAtNoMain}, partsAfterFirstAtNoMain...)
+}
+
 // ParseProductSpec parses a test-run spec into a ProductAtRevision struct.
 func ParseProductSpec(spec string) (productSpec ProductSpec, err error) {
 	errMsg := "invalid product spec: " + spec
 	productSpec.Revision = "latest"
 	name := spec
 	// @sha (optional)
-	atSHAPieces := strings.Split(spec, "@")
+	atSHAPieces := splitAtNonMainAt(spec)
 	if len(atSHAPieces) > 2 {
 		return productSpec, errors.New(errMsg)
 	} else if len(atSHAPieces) == 2 {
