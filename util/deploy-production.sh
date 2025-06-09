@@ -18,7 +18,7 @@ usage() {
 delete_oldest_version() {
   OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=$1" --limit=1 --format=json | jq -r '.[] | .id')
   echo "Deleting $1 service version $OLDEST_REV"
-  gcloud app versions delete --service=$SERVICE ${QUIET:+--quiet} $OLDEST_REV
+  gcloud app --project=wptdashboard versions delete --service=$SERVICE ${QUIET:+--quiet} $OLDEST_REV
 }
 
 while getopts ':bfqh' flag; do
@@ -131,7 +131,7 @@ MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search,
 if confirm "$MESSAGE"; then
   for SERVICE in $SERVICES
   do
-    gcloud app services set-traffic $SERVICE --splits $LATEST_VERSION=1
+    gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1
   done
 else
   echo "Don't forget to migrate traffic to the new version."
