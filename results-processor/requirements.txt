@@ -97,7 +97,7 @@ pycodestyle==2.13.0
     # via flake8
 pyflakes==3.3.2
     # via flake8
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r requirements.in
     #   google-api-core
