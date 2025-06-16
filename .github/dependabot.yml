@@ -68,3 +68,17 @@ updates:
       update-types:
         - "version-update:semver-major"
         - "version-update:semver-minor"
+- package-ecosystem: "docker"
+  directory: "/webapp/web"
+  schedule:
+    interval: "weekly"
+  # Searchcache Docker image should ignore major and minor updates to Docker Go Image
+  # Searchcache follows the bring-your-own-container paradigm because it uses
+  # App Engine Flex. While we could use the latest version, we want this Go
+  # version to follow the same version used in the webapp above (which uses
+  # App Engine Standard).
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-major"
+        - "version-update:semver-minor"
