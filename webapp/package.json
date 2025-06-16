@@ -91,7 +91,7 @@
     "@vaadin/vaadin-date-picker": "4.4.1",
     "@vaadin/vaadin-grid": "5.7.13",
     "@webcomponents/webcomponentsjs": "2.8.0",
-    "countup.js": "2.8.2",
+    "countup.js": "2.9.0",
     "pluralize": "8.0.0"
   }
 }
