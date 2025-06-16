@@ -70,7 +70,7 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.16.0
+mypy==1.16.1
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
