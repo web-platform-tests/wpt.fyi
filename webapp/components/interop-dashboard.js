@@ -286,12 +286,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           display: none;
         }
 
-        @media only screen and (max-width: 800px) {
+        @media only screen and (max-width: 768px) {
           .grid-container {
             margin: 0 1em;
           }
-
-          /* --- RESPONSIVE TABLE STYLES --- */
           .table-title-mobile {
             display: block;
           }
@@ -327,7 +325,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             border-radius: 5px;
             margin-bottom: 1em;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            overflow: hidden; /* To contain the floated pseudo-elements */
+            overflow: hidden;
           }
           .score-table .subtotal-row,
           .score-table tfoot tr {
@@ -342,7 +340,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             line-height: 1.5;
           }
           .score-table td[data-label="Interop"] {
-            /* Hide the separate Interop row in our new layout */
             display: none;
           }
           .score-table td:last-child {
@@ -353,7 +350,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             font-weight: bold;
             background-color: hsl(0 0% 0% / 5%);
             border-bottom: 1px solid #ddd;
-            padding: 0; /* Padding is now on the inner element */
+            padding: 0;
           }
           .score-table td:first-child .card-header-mobile {
             padding: 0.75em;
@@ -375,7 +372,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
              content: "Progress";
           }
         }
-        @media only screen and (min-width: 801px) {
+        @media only screen and (min-width: 769px) {
           .score-table tbody > tr:nth-child(odd) {
             background: hsl(0 0% 0% / 5%);
           }
@@ -545,7 +542,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         <td>
                           <div class="card-header-mobile">
                             <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
-                            <span class="interop-score-mobile">[[getInteropScoreForFeature(rowName, stable)]]</span>
+                            <span
+                              class="interop-score-mobile"
+                              style$="[[getScoreStyle(rowName, stable)]]"
+                            >[[getInteropScoreForFeature(rowName, stable)]]</span>
                           </div>
                         </td>
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
@@ -563,7 +563,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         <td>
                           <div class="card-header-mobile">
                             <strong>TOTAL</strong>
-                            <span class="interop-score-mobile">[[getInteropSubtotalScore(section, stable)]]</span>
+                            <span
+                              class="interop-score-mobile"
+                              style$="[[getSubtotalScoreStyle(section, stable)]]"
+                            >[[getInteropSubtotalScore(section, stable)]]</span>
                           </div>
                         </td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
@@ -659,10 +662,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return {
       year: String,
       embedded: Boolean,
-      stable: {
-        type: Boolean,
-        observer: '_stableChanged',
-      },
+      stable: Boolean,
       feature: String,
       features: {
         type: Array,
@@ -768,33 +768,51 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     afterNextRender(this, this.addSortEvents);
   }
 
-  _stableChanged() {
-    this.updateSummaryScores();
+  calculateColor(score) {
+    const gradient = [
+      // Red.
+      { scale: 0, color: [250, 0, 0] },
+      // Orange.
+      { scale: 33.33, color: [250, 125, 0] },
+      // Yellow.
+      { scale: 66.67, color: [220, 220, 0] },
+      // Green.
+      { scale: 100, color: [0, 160, 0] },
+    ];
+
+    let color1, color2;
+    for (let i = 1; i < gradient.length; i++) {
+      if (score <= gradient[i].scale) {
+        color1 = gradient[i - 1];
+        color2 = gradient[i];
+        break;
+      }
+    }
+    const colorWeight = ((score - color1.scale) / (color2.scale - color1.scale));
+    const color = [
+      Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
+      Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
+      Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
+    ];
+
+    return [
+      `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+      `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.15)`,
+    ];
   }
 
-  async updateSummaryScores() {
-    const scoreElements = this.shadowRoot.querySelectorAll('.interop-score-mobile');
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
-    const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
-    console.log(this.scores);
-    // If the elements have not rendered yet, don't update the scores.
-    if ((!this.isMobileScoresView && scoreElements.length !== scores.length) ||
-        (this.isMobileScoresView && scoreElements.length !== scores.length + 1)) {
-      return;
-    }
-    // // Update interop summary number first.
-    // this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
-    // // Update the rest of the browser scores.
-    // for (let i = 1; i < scores.length; i++) {
-    //   this.updateSummaryScore(scoreElements[i], scores[i - 1][summaryFeatureName]);
-    // }
+  getSubtotalScoreStyle(section, stable) {
+    const interopIndex = this.dataManager.getYearProp('numBrowsers');
+    const score = this.getNumericalSubtotalScore(interopIndex, section, stable);
+    const colors = this.calculateColor(score);
+    return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
+  }
 
-    // // Update investigation summary separately.
-    // if (this.shouldDisplayInvestigationNumber()) {
-    //   const investigationNumber = this.shadowRoot.querySelector('#investigationNumber');
-    //   this.updateSummaryScore(
-    //     investigationNumber, this.dataManager.getYearProp('investigationTotalScore'));
-    // }
+  getScoreStyle(feature, stable) {
+    const interopIndex = this.dataManager.getYearProp('numBrowsers');
+    const score = this.getNumericalBrowserScoreByFeature(interopIndex, feature, stable);
+    const colors = this.calculateColor(score);
+    return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
   }
 
   // Add the on-click handlers for sorting by a specific table header.
@@ -897,23 +915,27 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return `${(total / 10).toFixed(1)}%`;
   }
 
-  getSubtotalScore(browserIndex, section, stable) {
+  getNumericalSubtotalScore(browserIndex, section, stable) {
     const scores = stable ? this.scores.stable : this.scores.experimental;
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
     const avg = Math.floor(totalScore / section.rows.length) / 10;
+    return avg;
+  }
+
+  getSubtotalScore(browserIndex, section, stable) {
+    const score = this.getNumericalSubtotalScore(browserIndex, section, stable);
     // Don't display decimal places for a 100% score.
-    if (avg >= 100) {
+    if (score >= 100) {
       return '100%';
     }
-    return `${avg.toFixed(1)}%`;
+    return `${score.toFixed(1)}%`;
   }
 
   getInteropSubtotalScore(section, isStable) {
     const numBrowsers = this.getYearProp('numBrowsers');
-    const score = this.getSubtotalScore(numBrowsers, section, isStable);
-    return score;
+    return this.getSubtotalScore(numBrowsers, section, isStable);
   }
 
   getSummaryOptionText() {
@@ -932,8 +954,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return !scoreAsGroup && !this.showBrowserIcons(index);
   }
 
-  getBrowserScoreForFeature(browserIndex, feature) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+  getBrowserScoreForFeature(browserIndex, feature, stable) {
+    const scores = stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
     // Don't display decimal places for a 100% score.
     if (score / 10 >= 100) {
@@ -942,15 +964,15 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return `${(score / 10).toFixed(1)}%`;
   }
 
-  getInteropScoreForFeature(feature, isStable) {
+  getInteropScoreForFeature(feature, stable) {
     const numBrowsers = this.getYearProp('numBrowsers');
-    return this.getBrowserScoreForFeature(numBrowsers, feature, isStable);
+    return this.getBrowserScoreForFeature(numBrowsers, feature, stable);
   }
 
   // getNumericalBrowserScoreByFeature returns the same score as
   // getBrowserScoreForFeature but as a number instead of a string
-  getNumericalBrowserScoreByFeature(browserIndex, feature) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+  getNumericalBrowserScoreByFeature(browserIndex, feature, stable) {
+    const scores = stable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
     const roundedScore = Math.round(score * 100) / 100;
     return roundedScore / 10;
@@ -974,9 +996,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
 
     const summaryFeatureName = this.getYearProp('summaryFeatureName');
-    this.totalChromium = this.getBrowserScoreForFeature(0, summaryFeatureName);
-    this.totalFirefox = this.getBrowserScoreForFeature(1, summaryFeatureName);
-    this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName);
+    this.totalChromium = this.getBrowserScoreForFeature(0, summaryFeatureName, this.stable);
+    this.totalFirefox = this.getBrowserScoreForFeature(1, summaryFeatureName, this.stable);
+    this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName, this.stable);
   }
 
   updateUrlParams(embedded, stable, feature, isMobileScoresView) {
@@ -1141,7 +1163,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
-      individualScores[i] = [feature, this.getNumericalBrowserScoreByFeature(browserIndex, feature)];
+      individualScores[i] = [
+        feature,
+        this.getNumericalBrowserScoreByFeature(browserIndex, feature, this.stable)
+      ];
     }
     individualScores.sort((a, b) => a[1] - b[1]);
     for (let i = 0; i < individualScores.length; i++) {

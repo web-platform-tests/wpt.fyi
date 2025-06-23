@@ -55,7 +55,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         justify-content: space-between;
       }
       .mobile-title {
-        display: none; /* Shown on desktop via media query */
+        display: none;
       }
       .logo-area > a {
         align-items: center;
@@ -67,11 +67,11 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         vertical-align: middle;
       }
       .login-area {
-        display: none; /* Shown on desktop via media query */
+        display: none;
       }
 
       .menu-button {
-        display: none; /* Hidden on desktop */
+        display: none;
         flex-direction: column;
         justify-content: space-around;
         width: 30px;
@@ -80,7 +80,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         border: none;
         cursor: pointer;
         padding: 0;
-        z-index: 1001; /* Above the nav panel */
+        z-index: 3;
       }
       .menu-button span {
         display: block;
@@ -100,11 +100,10 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       .menu-button.open span:nth-of-type(3) {
         transform: rotate(-45deg) translate(7px, -7px);
       }
+
       header nav a {
         margin-right: 1em;
       }
-
-      /* Navigation Links */
       .nav-links {
         display: flex;
         align-items: center;
@@ -118,7 +117,6 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         margin-right: 0;
       }
 
-      /* Mobile Styles */
       @media (max-width: 768px) {
         header h1 {
           margin-bottom: 0;
@@ -136,7 +134,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           display: flex;
         }
         .menu-button {
-          display: flex; /* Show button on mobile */
+          display: flex;
         }
         .nav-links {
           display: flex;
@@ -153,8 +151,6 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           max-width: 300px;
           padding-top: 6em;
           box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-          
-          /* Hidden by default, slides in */
           transform: translateX(100%);
           transition: transform 0.3s ease-in-out;
         }
@@ -168,16 +164,14 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           padding: 0.5em 0;
           margin: 0;
         }
-        /* Hide the main nav container, but not the links inside the panel */
         nav {
           display: none;
         }
       }
 
-      /* Desktop Styles */
       @media (min-width: 769px) {
         .login-area {
-          display: block; /* Show login on desktop */
+          display: block;
         }
 
         #mobile-navigation {
@@ -195,7 +189,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         <h1>
       </div>
       <template is="dom-if" if="[[githubLogin]]">
-        <github-login user="[[user]]" is-triage-mode="[[isTriageMode]]"></github-login>
+        <div id="desktop-login">
+          <github-login user="[[user]]" is-triage-mode="[[isTriageMode]]"></github-login>
+        </div>
       </template>
       <button
           class$="[[_computeMenuButtonClass(_isMenuOpen)]]"

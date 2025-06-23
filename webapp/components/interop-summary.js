@@ -93,30 +93,25 @@ class InteropSummary extends PolymerElement {
           display: none;
         }
 
-        /* Media Query for Mobile Devices */
         @media (max-width: 768px) {
           .summary-container {
             min-height: 340px;
           }
-
           .summary-number {
             font-size: 2em;
             width: 2.5ch;
             height: 2.5ch;
             padding: 5px;
           }
-
           #totalSummaryRow > .summary-flex-item > .summary-number {
             font-size: 4em;
             width: 2.5ch;
             height: 2.5ch;
             padding: 4px;
           }
-
           .browser-score {
             font-size: 2em;
           }
-
           .summary-browser-name > figure > figcaption {
             line-height: 1.1;
             margin: 0 -10px;
@@ -239,7 +234,7 @@ class InteropSummary extends PolymerElement {
     }
 
     const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    if (window.innerWidth > 768) {
+    if (window.innerWidth > 800) {
       summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
     }
     // Don't display the interop score for Interop 2021.
