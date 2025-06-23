@@ -29,7 +29,7 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
-        #summaryNumberRow {
+        .summary-number-row {
           display: flex;
           justify-content: center;
           gap: 30px;
@@ -92,9 +92,39 @@ class InteropSummary extends PolymerElement {
         .summary-browser-name:not([data-stable-browsers]) > .stable {
           display: none;
         }
+
+        /* Media Query for Mobile Devices */
+        @media (max-width: 768px) {
+          .summary-container {
+            min-height: 340px;
+          }
+
+          .summary-number {
+            font-size: 2em;
+            width: 2.5ch;
+            height: 2.5ch;
+            padding: 5px;
+          }
+
+          #totalSummaryRow > .summary-flex-item > .summary-number {
+            font-size: 4em;
+            width: 2.5ch;
+            height: 2.5ch;
+            padding: 4px;
+          }
+
+          .browser-score {
+            font-size: 2em;
+          }
+
+          .summary-browser-name > figure > figcaption {
+            line-height: 1.1;
+            margin: 0 -10px;
+          }
+        }
       </style>
       <div class="summary-container">
-        <div id="summaryNumberRow">
+        <div class="summary-number-row" id="totalSummaryRow">
           <!-- Interop -->
           <div id="interopSummary" class="summary-flex-item" tabindex="0">
             <div class="summary-number score-number smaller-summary-number">--</div>
@@ -106,10 +136,10 @@ class InteropSummary extends PolymerElement {
             <h3 class="summary-title">INVESTIGATIONS</h3>
           </div>
         </div>
-        <div id="summaryNumberRow">
+        <div class="summary-number-row" id="browserSummaryRow">
           <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number smaller-summary-number">--</div>
+              <div class="summary-number score-number browser-score smaller-summary-number">--</div>
               <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
                 <!-- Chrome/Edge -->
                 <template is="dom-if" if="[[stable]]">
@@ -158,7 +188,7 @@ class InteropSummary extends PolymerElement {
           </template>
           <template is="dom-if" if="{{isMobileScoresView}}">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number smaller-summary-number">--</div>
+              <div class="summary-number score-number browser-score smaller-summary-number">--</div>
               <div class="summary-browser-name">
                 <figure>
                   <img src="/static/wktr_64x64.png" width="36" alt="Safari iOS" />
@@ -209,7 +239,9 @@ class InteropSummary extends PolymerElement {
     }
 
     const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
+    if (window.innerWidth > 768) {
+      summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
+    }
     // Don't display the interop score for Interop 2021.
     if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');

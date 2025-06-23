@@ -291,14 +291,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             margin: 0 1em;
           }
         }
-
-        /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
-         * happens for p tags on mobile, but not for any other text (like the focus area table).
-         * Remove this when deeper mobile functionality has been added. */
-        p {
-          text-size-adjust: none;
-        }
-
       </style>
       <div class="previous-year-banner" hidden$=[[isCurrentYear]]>
         <p>

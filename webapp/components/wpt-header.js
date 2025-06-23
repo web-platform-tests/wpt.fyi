@@ -47,6 +47,41 @@ class WPTHeader extends WPTFlags(PolymerElement) {
       header nav a {
         margin-right: 1em;
       }
+
+      /* Media Query for Mobile Devices */
+      @media (max-width: 768px) {
+        header {
+          padding: 1em;
+        }
+        header h1 {
+          font-size: 1em; /* Slightly adjusted for balance */
+        }
+        header > div {
+          flex-direction: column; /* Stack logo/title and login button */
+          align-items: flex-start; /* Align items to the left */
+          gap: 1em; /* Add space between the stacked items */
+          margin-bottom: 1em;
+        }
+        nav {
+          display: flex;
+          flex-direction: column; /* Stack nav links vertically */
+          align-items: stretch; /* Stretch links to fill width */
+          border-top: 1px solid #e0e0e0;
+          padding-top: 0.5em;
+        }
+        nav a {
+          margin-right: 0;
+          padding: 0.25em;
+          text-align: center;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        nav a:last-child {
+          border-bottom: none;
+        }
+        img {
+          vertical-align: middle;
+        }
+      }
     </style>
     <header>
       <div>
