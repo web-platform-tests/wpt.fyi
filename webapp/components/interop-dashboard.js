@@ -38,10 +38,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         }
 
         .previous-year-banner {
-          height: 40px;
           background-color: #DEF;
           text-align: center;
-          padding-top: 16px;
+          padding: 16px 0;
         }
 
         .previous-year-banner p {
@@ -224,10 +223,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           text-align: right;
         }
 
-        .score-table tbody > tr:nth-child(odd) {
-          background: hsl(0 0% 0% / 5%);
-        }
-
         .subtotal-row {
           border-top: 1px solid GrayText;
           background: hsl(0 0% 0% / 5%);
@@ -286,9 +281,103 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           }
         }
 
+        .interop-score-mobile,
+        .table-title-mobile {
+          display: none;
+        }
+
         @media only screen and (max-width: 800px) {
           .grid-container {
             margin: 0 1em;
+          }
+
+          /* --- RESPONSIVE TABLE STYLES --- */
+          .table-title-mobile {
+            display: block;
+          }
+          .card-header-mobile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1em;
+          }
+          .interop-score-mobile {
+            display: flex;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #333;
+            background: #e0e0e0;
+            padding: 0.1em 0.5em;
+            border-radius: 4px;
+            white-space: nowrap;
+          }
+          .score-table thead {
+            border: none;
+            clip: rect(0 0 0 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+          }
+          .score-table tr {
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden; /* To contain the floated pseudo-elements */
+          }
+          .score-table .subtotal-row,
+          .score-table tfoot tr {
+            border-top: 2px solid #aaa;
+            font-weight: bold;
+          }
+          .score-table td {
+            display: block;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            padding: 0.75em;
+            line-height: 1.5;
+          }
+          .score-table td[data-label="Interop"] {
+            /* Hide the separate Interop row in our new layout */
+            display: none;
+          }
+          .score-table td:last-child {
+            border-bottom: 0;
+          }
+          .score-table td:first-child {
+            text-align: left;
+            font-weight: bold;
+            background-color: hsl(0 0% 0% / 5%);
+            border-bottom: 1px solid #ddd;
+            padding: 0; /* Padding is now on the inner element */
+          }
+          .score-table td:first-child .card-header-mobile {
+            padding: 0.75em;
+          }
+          .score-table td:not(:first-child)::before {
+            content: attr(data-label);
+            float: left;
+            font-weight: 500;
+            color: #555;
+          }
+          .score-table td[colspan="4"] {
+            background-color: hsl(0 0% 0% / 5%);
+            font-weight: bold;
+            text-align: left;
+            padding: 0.75em;
+
+          }
+          .score-table td[colspan="4"] + td::before {
+             content: "Progress";
+          }
+        }
+        @media only screen and (min-width: 801px) {
+          .score-table tbody > tr:nth-child(odd) {
+            background: hsl(0 0% 0% / 5%);
           }
         }
       </style>
@@ -302,9 +391,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-header">
           <h1>[[dashboardTitle]]</h1>
           <div class="channel-area">
-            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
-            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
-            <paper-button id="toggleMobile" class\$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
+            <paper-button id="toggleStable" class$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
+            <paper-button id="toggleMobile" class$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
           </div>
           <div class="text-center" id="mobileWarning" hidden$="[[!isMobileScoresView]]">
             <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
@@ -354,19 +443,19 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+              <h1 class="table-title-mobile">{{section.name}}</h1>
               <table class="score-table">
                 <thead>
-
                   <!-- First score table header with sort functionality -->
                   <template is="dom-if" if="[[isFirstTable(itemsIndex)]]">
                     <tr class="section-header">
-                      <th class="sortable-header">
+                      <th class="sortable-header" data-label$="[[section.name]]">
                         {{section.name}}
                         <img class="sort-icon-focus-areas" src="[[getFocusAreaSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                         <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
-                          <th class="sortable-header">
+                          <th class="sortable-header" data-label="Chrome/Edge">
                               <template is="dom-if" if="[[stable]]">
                                 <div class="browser-icons">
                                   <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
@@ -383,7 +472,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                           </th>
                         </template>
                         <template is="dom-if" if="{{!isChromeEdgeCombo(browserInfo)}}">
-                          <th class="sortable-header">
+                          <th class="sortable-header" data-label$="[[browserInfo.tableName]]">
                             <div class="browser-icons single-browser-icon">
                               <img src="[[getBrowserIcon(browserInfo, stable)]]" width="32" alt="[[getBrowserIconName(browserInfo, stable)]]" title="[[getBrowserIconName(browserInfo, stable)]]" />
                             </div>
@@ -392,14 +481,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         </template>
                       </template>
                       <template is="dom-if" if="{{isMobileScoresView}}">
-                        <th class="sortable-header">
+                        <th class="sortable-header" data-label="Safari iOS">
                           <div class="browser-icons single-browser-icon">
                             <img src="/static/wktr_64x64.png" width="32" alt="Safari iOS" title="Safari iOS" />
                           </div>
                           <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
                         </th>
                       </template>
-                      <th class="sortable-header">
+                      <th class="sortable-header" data-label="Interop">
                         <div class="interop-header">INTEROP</div>
                         <img class="sort-icon" src="[[getInteropSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
@@ -454,28 +543,36 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                     <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
-                          <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
+                          <div class="card-header-mobile">
+                            <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
+                            <span class="interop-score-mobile">[[getInteropScoreForFeature(rowName, stable)]]</span>
+                          </div>
                         </td>
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
-                          <td>[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
+                          <td data-label$="[[browserInfo.tableName]]">[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
                         </template>
                         <template is="dom-if" if="[[isMobileScoresView]]">
-                          <td>--%</td>
+                          <td data-label="Safari iOS">--%</td>
                         </template>
-                        <td>[[getInteropScoreForFeature(rowName, stable)]]</td>
+                        <td data-label="Interop">[[getInteropScoreForFeature(rowName, stable)]]</td>
                       </tr>
                     </template>
                   </tbody>
                   <tfoot>
                     <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
+                        <td>
+                          <div class="card-header-mobile">
+                            <strong>TOTAL</strong>
+                            <span class="interop-score-mobile">[[getInteropSubtotalScore(section, stable)]]</span>
+                          </div>
+                        </td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
-                        <td>[[getSubtotalScore(itemsIndex, section, stable)]]</td>
+                        <td data-label$="[[browserInfo.tableName]]">[[getSubtotalScore(itemsIndex, section, stable)]]</td>
                       </template>
                       <template is="dom-if" if="[[isMobileScoresView]]">
-                        <td>--%</td>
+                        <td data-label="Safari iOS">--%</td>
                       </template>
-                      <td>[[getInteropSubtotalScore(section, stable)]]</td>
+                      <td data-label="Interop">[[getInteropSubtotalScore(section, stable)]]</td>
                     </tr>
                   </tfoot>
                 </template>
@@ -483,18 +580,17 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                   <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr>
-                        <td colspan=4>
+                        <td colspan="4">
                           <a href$="[[getInvestigationUrl(rowName, section.previous_investigation)]]">[[rowName]]</a>
                         </td>
-                        <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
+                        <td data-label="Progress">[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
                   </tbody>
                   <tfoot>
                     <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
-                      <td colspan=3></td>
-                      <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
+                      <td colspan="4" class="card-header-mobile"><strong>TOTAL</strong></td>
+                      <td data-label="Total Progress">[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
                     </tr>
                   </tfoot>
                 </template>
@@ -534,9 +630,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             </div>
 
             <interop-feature-chart year="[[year]]"
-                                  data-manager="[[dataManager]]"
-                                  stable="[[stable]]"
-                                  feature="{{feature}}">
+                                   data-manager="[[dataManager]]"
+                                   stable="[[stable]]"
+                                   feature="{{feature}}">
             </interop-feature-chart>
           </section>
         </div>
@@ -553,7 +649,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           </template>
         </div>
       </footer>
-`;
+    `;
   }
   static get is() {
     return 'interop-dashboard';
@@ -563,7 +659,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return {
       year: String,
       embedded: Boolean,
-      stable: Boolean,
+      stable: {
+        type: Boolean,
+        observer: '_stableChanged',
+      },
       feature: String,
       features: {
         type: Array,
@@ -659,7 +758,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     if (this.year === '2021' || this.year === '2022' || this.isMobileScoresView) {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
-      gridContainerDiv.style.width = '700px';
+      gridContainerDiv.style.maxWidth = '700px';
       gridContainerDiv.style.margin = 'auto';
       // Dashboards after 2022 also display a special description,
       // which is not displayed in previous years.
@@ -667,6 +766,35 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       extraDescriptionDiv.style.display = 'none';
     }
     afterNextRender(this, this.addSortEvents);
+  }
+
+  _stableChanged() {
+    this.updateSummaryScores();
+  }
+
+  async updateSummaryScores() {
+    const scoreElements = this.shadowRoot.querySelectorAll('.interop-score-mobile');
+    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+    const summaryFeatureName = this.dataManager.getYearProp('summaryFeatureName');
+    console.log(this.scores);
+    // If the elements have not rendered yet, don't update the scores.
+    if ((!this.isMobileScoresView && scoreElements.length !== scores.length) ||
+        (this.isMobileScoresView && scoreElements.length !== scores.length + 1)) {
+      return;
+    }
+    // // Update interop summary number first.
+    // this.updateSummaryScore(scoreElements[0], scores[scores.length - 1][summaryFeatureName]);
+    // // Update the rest of the browser scores.
+    // for (let i = 1; i < scores.length; i++) {
+    //   this.updateSummaryScore(scoreElements[i], scores[i - 1][summaryFeatureName]);
+    // }
+
+    // // Update investigation summary separately.
+    // if (this.shouldDisplayInvestigationNumber()) {
+    //   const investigationNumber = this.shadowRoot.querySelector('#investigationNumber');
+    //   this.updateSummaryScore(
+    //     investigationNumber, this.dataManager.getYearProp('investigationTotalScore'));
+    // }
   }
 
   // Add the on-click handlers for sorting by a specific table header.
@@ -1067,7 +1195,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     // Reverse the sort order if the same column is clicked again.
     if (this.sortColumn === i) {
       this.isSortedAsc = !this.isSortedAsc;
-    } else  {
+    } else {
       // Otherwise, sort in descending order.
       this.isSortedAsc = false;
     }
