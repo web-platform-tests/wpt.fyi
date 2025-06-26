@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+import { calculateColor } from './utils.js';
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -272,7 +273,7 @@ class InteropSummary extends PolymerElement {
     new CountUp(number, score, {
       startVal: curScore === '--' ? 0 : curScore
     }).start();
-    const colors = this.calculateColor(score);
+    const colors = calculateColor(score);
     number.style.color = `color-mix(in lch, ${colors[0]} 70%, black)`;
     number.style.backgroundColor = colors[1];
   }
@@ -335,39 +336,6 @@ class InteropSummary extends PolymerElement {
   // render them with breaks. e.g. ["Safari", "Technology", "Preview"]
   getBrowserNameParts(browserInfo) {
     return [browserInfo.tableName, ...browserInfo.experimentalName.split(' ')];
-  }
-
-  calculateColor(score) {
-    const gradient = [
-      // Red.
-      { scale: 0, color: [250, 0, 0] },
-      // Orange.
-      { scale: 33.33, color: [250, 125, 0] },
-      // Yellow.
-      { scale: 66.67, color: [220, 220, 0] },
-      // Green.
-      { scale: 100, color: [0, 160, 0] },
-    ];
-
-    let color1, color2;
-    for (let i = 1; i < gradient.length; i++) {
-      if (score <= gradient[i].scale) {
-        color1 = gradient[i - 1];
-        color2 = gradient[i];
-        break;
-      }
-    }
-    const colorWeight = ((score - color1.scale) / (color2.scale - color1.scale));
-    const color = [
-      Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
-      Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
-      Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
-    ];
-
-    return [
-      `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-      `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.15)`,
-    ];
   }
 }
 export { InteropSummary };

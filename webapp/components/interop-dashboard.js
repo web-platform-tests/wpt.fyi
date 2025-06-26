@@ -6,6 +6,7 @@
 
 import { InteropDataManager } from './interop-data-manager.js';
 import { WPTFlags } from './wpt-flags.js';
+import { calculateColor } from './utils.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
@@ -768,58 +769,17 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     afterNextRender(this, this.addSortEvents);
   }
 
-  /**
-   * Generates a font and background color based on a score from 0 to 100.
-   * The colors are calculated on a gradient from red to green.
-   *
-   * @param {number} score - The score, ranging from 0 to 100.
-   * @returns {[string, string]} An array containing the font color as an RGB
-   * string and the background color as an RGBA string with 15% opacity.
-   */
-  calculateColor(score) {
-    const gradient = [
-      // Red.
-      { scale: 0, color: [250, 0, 0] },
-      // Orange.
-      { scale: 33.33, color: [250, 125, 0] },
-      // Yellow.
-      { scale: 66.67, color: [220, 220, 0] },
-      // Green.
-      { scale: 100, color: [0, 160, 0] },
-    ];
-
-    let color1, color2;
-    for (let i = 1; i < gradient.length; i++) {
-      if (score <= gradient[i].scale) {
-        color1 = gradient[i - 1];
-        color2 = gradient[i];
-        break;
-      }
-    }
-    const colorWeight = ((score - color1.scale) / (color2.scale - color1.scale));
-    const color = [
-      Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
-      Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
-      Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
-    ];
-
-    return [
-      `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-      `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.15)`,
-    ];
-  }
-
   getSubtotalScoreStyle(section, isStable) {
     const interopIndex = this.dataManager.getYearProp('numBrowsers');
     const score = this.getNumericalSubtotalScore(interopIndex, section, isStable);
-    const colors = this.calculateColor(score);
+    const colors = calculateColor(score);
     return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
   }
 
   getScoreStyle(feature, isStable) {
     const interopIndex = this.dataManager.getYearProp('numBrowsers');
     const score = this.getNumericalBrowserScoreByFeature(interopIndex, feature, isStable);
-    const colors = this.calculateColor(score);
+    const colors = calculateColor(score);
     return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
   }
 
