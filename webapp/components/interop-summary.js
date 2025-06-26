@@ -95,8 +95,13 @@ class InteropSummary extends PolymerElement {
         }
 
         @media (max-width: 768px) {
-          .summary-container {
-            min-height: 340px;
+          .summary-container,
+          .summary-container[data-year="2022"],
+          .summary-container[data-year="2023"] {
+            min-height: 335px;
+          }
+          .summary-container[data-year="2021"] {
+            min-height: 185px;
           }
           .summary-number {
             font-size: 2em;
