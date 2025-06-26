@@ -9,18 +9,6 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {afterNextRender} from  '../node_modules/@polymer/polymer/lib/utils/render-status.js';
 
-// This min-height is added to this section to ensure that the section below
-// is not moved after the user selects between STABLE and EXPERIMENTAL
-// (experimental browser names are longer and add additional lines).
-// Different years have different initial heights for these sections.
-const SUMMARY_CONTAINER_MIN_HEIGHTS = {
-  '2021': '275px',
-  '2022': '470px',
-  '2023': '470px',
-  '2024': '380px',
-  '2025': '380px',
-};
-
 
 class InteropSummary extends PolymerElement {
   static get template() {
@@ -29,6 +17,9 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
+        #interopSummary[data-year="2021"] {
+          display: none;
+        }
         .summary-number-row {
           display: flex;
           justify-content: center;
@@ -37,7 +28,7 @@ class InteropSummary extends PolymerElement {
         }
 
         .summary-container {
-          min-height: 470px;
+          min-height: 380px;
         }
 
         .summary-number {
@@ -93,6 +84,15 @@ class InteropSummary extends PolymerElement {
           display: none;
         }
 
+        .summary-container[data-year="2021"] {
+          min-height: 275px;
+        }
+
+        .summary-container[data-year="2022"],
+        .summary-container[data-year="2023"] {
+          min-height: 470px;
+        }
+
         @media (max-width: 768px) {
           .summary-container {
             min-height: 340px;
@@ -118,10 +118,10 @@ class InteropSummary extends PolymerElement {
           }
         }
       </style>
-      <div class="summary-container">
+      <div class="summary-container" data-year$="[[year]]">
         <div class="summary-number-row" id="totalSummaryRow">
           <!-- Interop -->
-          <div id="interopSummary" class="summary-flex-item" tabindex="0">
+          <div id="interopSummary" class="summary-flex-item" tabindex="0" data-year$="[[year]]">
             <div class="summary-number score-number smaller-summary-number">--</div>
             <h3 class="summary-title">INTEROP</h3>
           </div>
@@ -233,10 +233,6 @@ class InteropSummary extends PolymerElement {
       investigationDiv.style.display = 'none';
     }
 
-    const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    if (window.innerWidth > 800) {
-      summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
-    }
     // Don't display the interop score for Interop 2021.
     if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
