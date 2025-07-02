@@ -6,6 +6,7 @@
 
 import { InteropDataManager } from './interop-data-manager.js';
 import { WPTFlags } from './wpt-flags.js';
+import { calculateColor } from './utils.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
@@ -38,10 +39,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         }
 
         .previous-year-banner {
-          height: 40px;
           background-color: #DEF;
           text-align: center;
-          padding-top: 16px;
+          padding: 16px 0;
         }
 
         .previous-year-banner p {
@@ -224,10 +224,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           text-align: right;
         }
 
-        .score-table tbody > tr:nth-child(odd) {
-          background: hsl(0 0% 0% / 5%);
-        }
-
         .subtotal-row {
           border-top: 1px solid GrayText;
           background: hsl(0 0% 0% / 5%);
@@ -286,19 +282,102 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           }
         }
 
-        @media only screen and (max-width: 800px) {
+        .interop-score-mobile,
+        .table-title-mobile {
+          display: none;
+        }
+
+        @media only screen and (max-width: 768px) {
           .grid-container {
             margin: 0 1em;
           }
-        }
+          .table-title-mobile {
+            display: block;
+          }
+          .card-header-mobile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1em;
+          }
+          .interop-score-mobile {
+            display: flex;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #333;
+            background: #e0e0e0;
+            padding: 0.1em 0.5em;
+            border-radius: 4px;
+            white-space: nowrap;
+          }
+          .score-table thead {
+            border: none;
+            clip: rect(0 0 0 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+          }
+          .score-table tr {
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+          }
+          .score-table .subtotal-row,
+          .score-table tfoot tr {
+            border-top: 2px solid #aaa;
+            font-weight: bold;
+          }
+          .score-table td {
+            display: block;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            padding: 0.75em;
+            line-height: 1.5;
+          }
+          .score-table td[data-label="Interop"] {
+            display: none;
+          }
+          .score-table td:last-child {
+            border-bottom: 0;
+          }
+          .score-table td:first-child {
+            text-align: left;
+            font-weight: bold;
+            background-color: hsl(0 0% 0% / 5%);
+            border-bottom: 1px solid #ddd;
+            padding: 0;
+          }
+          .score-table td:first-child .card-header-mobile {
+            padding: 0.75em;
+          }
+          .score-table td:not(:first-child)::before {
+            content: attr(data-label);
+            float: left;
+            font-weight: 500;
+            color: #555;
+          }
+          .score-table td[colspan="4"] {
+            background-color: hsl(0 0% 0% / 5%);
+            font-weight: bold;
+            text-align: left;
+            padding: 0.75em;
 
-        /* TODO(danielrsmith): This is a workaround to avoid the text scaling that
-         * happens for p tags on mobile, but not for any other text (like the focus area table).
-         * Remove this when deeper mobile functionality has been added. */
-        p {
-          text-size-adjust: none;
+          }
+          .score-table td[colspan="4"] + td::before {
+             content: "Progress";
+          }
         }
-
+        @media only screen and (min-width: 769px) {
+          .score-table tbody > tr:nth-child(odd) {
+            background: hsl(0 0% 0% / 5%);
+          }
+        }
       </style>
       <div class="previous-year-banner" hidden$=[[isCurrentYear]]>
         <p>
@@ -310,9 +389,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-header">
           <h1>[[dashboardTitle]]</h1>
           <div class="channel-area">
-            <paper-button id="toggleStable" class\$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
-            <paper-button id="toggleExperimental" class\$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
-            <paper-button id="toggleMobile" class\$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
+            <paper-button id="toggleStable" class$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
+            <paper-button id="toggleExperimental" class$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
+            <paper-button id="toggleMobile" class$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
           </div>
           <div class="text-center" id="mobileWarning" hidden$="[[!isMobileScoresView]]">
             <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>
@@ -362,19 +441,19 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
+              <h1 class="table-title-mobile">{{section.name}}</h1>
               <table class="score-table">
                 <thead>
-
                   <!-- First score table header with sort functionality -->
                   <template is="dom-if" if="[[isFirstTable(itemsIndex)]]">
                     <tr class="section-header">
-                      <th class="sortable-header">
+                      <th class="sortable-header" data-label$="[[section.name]]">
                         {{section.name}}
                         <img class="sort-icon-focus-areas" src="[[getFocusAreaSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
                         <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
-                          <th class="sortable-header">
+                          <th class="sortable-header" data-label="Chrome/Edge">
                               <template is="dom-if" if="[[stable]]">
                                 <div class="browser-icons">
                                   <img src="/static/chrome_64x64.png" width="32" alt="Chrome" title="Chrome" />
@@ -391,7 +470,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                           </th>
                         </template>
                         <template is="dom-if" if="{{!isChromeEdgeCombo(browserInfo)}}">
-                          <th class="sortable-header">
+                          <th class="sortable-header" data-label$="[[browserInfo.tableName]]">
                             <div class="browser-icons single-browser-icon">
                               <img src="[[getBrowserIcon(browserInfo, stable)]]" width="32" alt="[[getBrowserIconName(browserInfo, stable)]]" title="[[getBrowserIconName(browserInfo, stable)]]" />
                             </div>
@@ -400,14 +479,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         </template>
                       </template>
                       <template is="dom-if" if="{{isMobileScoresView}}">
-                        <th class="sortable-header">
+                        <th class="sortable-header" data-label="Safari iOS">
                           <div class="browser-icons single-browser-icon">
                             <img src="/static/wktr_64x64.png" width="32" alt="Safari iOS" title="Safari iOS" />
                           </div>
                           <img class="sort-icon" src="[[getSortIcon(2, sortColumn, isSortedAsc)]]" />
                         </th>
                       </template>
-                      <th class="sortable-header">
+                      <th class="sortable-header" data-label="Interop">
                         <div class="interop-header">INTEROP</div>
                         <img class="sort-icon" src="[[getInteropSortIcon(sortColumn, isSortedAsc)]]" />
                       </th>
@@ -462,28 +541,42 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                     <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
-                          <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
+                          <div class="card-header-mobile">
+                            <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
+                            <span
+                              class="interop-score-mobile"
+                              style$="[[getScoreStyle(rowName, stable)]]"
+                            >[[getInteropScoreForFeature(rowName, stable)]]</span>
+                          </div>
                         </td>
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
-                          <td>[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
+                          <td data-label$="[[browserInfo.tableName]]">[[getBrowserScoreForFeature(itemsIndex, rowName, stable)]]</td>
                         </template>
                         <template is="dom-if" if="[[isMobileScoresView]]">
-                          <td>--%</td>
+                          <td data-label="Safari iOS">--%</td>
                         </template>
-                        <td>[[getInteropScoreForFeature(rowName, stable)]]</td>
+                        <td data-label="Interop">[[getInteropScoreForFeature(rowName, stable)]]</td>
                       </tr>
                     </template>
                   </tbody>
                   <tfoot>
                     <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
+                        <td>
+                          <div class="card-header-mobile">
+                            <strong>TOTAL</strong>
+                            <span
+                              class="interop-score-mobile"
+                              style$="[[getSubtotalScoreStyle(section, stable)]]"
+                            >[[getInteropSubtotalScore(section, stable)]]</span>
+                          </div>
+                        </td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
-                        <td>[[getSubtotalScore(itemsIndex, section, stable)]]</td>
+                        <td data-label$="[[browserInfo.tableName]]">[[getSubtotalScore(itemsIndex, section, stable)]]</td>
                       </template>
                       <template is="dom-if" if="[[isMobileScoresView]]">
-                        <td>--%</td>
+                        <td data-label="Safari iOS">--%</td>
                       </template>
-                      <td>[[getInteropSubtotalScore(section, stable)]]</td>
+                      <td data-label="Interop">[[getInteropSubtotalScore(section, stable)]]</td>
                     </tr>
                   </tfoot>
                 </template>
@@ -491,18 +584,17 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                   <tbody>
                     <template is="dom-repeat" items="{{section.rows}}" as="rowName">
                       <tr>
-                        <td colspan=4>
+                        <td colspan="4">
                           <a href$="[[getInvestigationUrl(rowName, section.previous_investigation)]]">[[rowName]]</a>
                         </td>
-                        <td>[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
+                        <td data-label="Progress">[[getInvestigationScore(rowName, section.previous_investigation)]]</td>
                       </tr>
                     </template>
                   </tbody>
                   <tfoot>
                     <tr class="subtotal-row">
-                      <td><strong>TOTAL</strong></td>
-                      <td colspan=3></td>
-                      <td>[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
+                      <td colspan="4" class="card-header-mobile"><strong>TOTAL</strong></td>
+                      <td data-label="Total Progress">[[getInvestigationScoreSubtotal(section.previous_investigation)]]</td>
                     </tr>
                   </tfoot>
                 </template>
@@ -542,9 +634,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             </div>
 
             <interop-feature-chart year="[[year]]"
-                                  data-manager="[[dataManager]]"
-                                  stable="[[stable]]"
-                                  feature="{{feature}}">
+                                   data-manager="[[dataManager]]"
+                                   stable="[[stable]]"
+                                   feature="{{feature}}">
             </interop-feature-chart>
           </section>
         </div>
@@ -561,7 +653,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           </template>
         </div>
       </footer>
-`;
+    `;
   }
   static get is() {
     return 'interop-dashboard';
@@ -667,7 +759,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     if (this.year === '2021' || this.year === '2022' || this.isMobileScoresView) {
       const gridContainerDiv = this.shadowRoot.querySelector('.grid-container');
       gridContainerDiv.style.display = 'block';
-      gridContainerDiv.style.width = '700px';
+      gridContainerDiv.style.maxWidth = '700px';
       gridContainerDiv.style.margin = 'auto';
       // Dashboards after 2022 also display a special description,
       // which is not displayed in previous years.
@@ -675,6 +767,20 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       extraDescriptionDiv.style.display = 'none';
     }
     afterNextRender(this, this.addSortEvents);
+  }
+
+  getSubtotalScoreStyle(section, isStable) {
+    const interopIndex = this.dataManager.getYearProp('numBrowsers');
+    const score = this.getNumericalSubtotalScore(interopIndex, section, isStable);
+    const colors = calculateColor(score);
+    return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
+  }
+
+  getScoreStyle(feature, isStable) {
+    const interopIndex = this.dataManager.getYearProp('numBrowsers');
+    const score = this.getNumericalBrowserScoreByFeature(interopIndex, feature, isStable);
+    const colors = calculateColor(score);
+    return `color: color-mix(in lch, ${colors[0]} 70%, black); background-color: ${colors[1]}`;
   }
 
   // Add the on-click handlers for sorting by a specific table header.
@@ -687,10 +793,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return feature === this.feature;
   }
 
-  featureLinks(feature, stable) {
+  featureLinks(feature, isStable) {
     const data = this.getYearProp('focusAreas')[feature];
     const rawURL = (this.isMobileScoresView) ? data?.mobile_tests : data?.tests;
-    const testsURL = this.formatTestsURL(rawURL, stable);
+    const testsURL = this.formatTestsURL(rawURL, isStable);
 
     return [
       { text: 'Spec', href: data?.spec },
@@ -708,7 +814,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   // Add the stable or experimental label to a tests URL depending on the view.
-  formatTestsURL(testsURL, stable) {
+  formatTestsURL(testsURL, isStable) {
     // Don't try to add a label if the URL is undefined or empty.
     if (!testsURL) {
       return '';
@@ -725,7 +831,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     // Remove any existing stable or experimental label param.
     const newLabels = existingLabels.filter(val => val !== 'stable' && val !== 'experimental');
     // Add the stable/experimental label depending on the dashboard view.
-    newLabels.push(stable ? 'stable' : 'experimental');
+    newLabels.push(isStable ? 'stable' : 'experimental');
     // Delete the existing label params and re-add them.
     url.searchParams.delete('label');
     for (const labelValue of newLabels) {
@@ -736,9 +842,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   // Get the tests URL for a row and add the stable/experimental label.
-  getTestsURL(name, stable) {
+  getTestsURL(name, isStable) {
     const urlKey = (this.isMobileScoresView) ? 'mobile_tests' : 'tests';
-    return this.formatTestsURL(this.getRowInfo(name, urlKey), stable);
+    return this.formatTestsURL(this.getRowInfo(name, urlKey), isStable);
   }
 
   getInvestigationScore(rowName, isPreviousYear) {
@@ -777,23 +883,26 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return `${(total / 10).toFixed(1)}%`;
   }
 
-  getSubtotalScore(browserIndex, section, stable) {
-    const scores = stable ? this.scores.stable : this.scores.experimental;
+  getNumericalSubtotalScore(browserIndex, section, isStable) {
+    const scores = isStable ? this.scores.stable : this.scores.experimental;
     const totalScore = section.rows.reduce((sum, rowName) => {
       return sum + scores[browserIndex][rowName];
     }, 0);
-    const avg = Math.floor(totalScore / section.rows.length) / 10;
+    return Math.floor(totalScore / section.rows.length) / 10;
+  }
+
+  getSubtotalScore(browserIndex, section, isStable) {
+    const score = this.getNumericalSubtotalScore(browserIndex, section, isStable);
     // Don't display decimal places for a 100% score.
-    if (avg >= 100) {
+    if (score >= 100) {
       return '100%';
     }
-    return `${avg.toFixed(1)}%`;
+    return `${score.toFixed(1)}%`;
   }
 
   getInteropSubtotalScore(section, isStable) {
     const numBrowsers = this.getYearProp('numBrowsers');
-    const score = this.getSubtotalScore(numBrowsers, section, isStable);
-    return score;
+    return this.getSubtotalScore(numBrowsers, section, isStable);
   }
 
   getSummaryOptionText() {
@@ -812,8 +921,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     return !scoreAsGroup && !this.showBrowserIcons(index);
   }
 
-  getBrowserScoreForFeature(browserIndex, feature) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+  getBrowserScoreForFeature(browserIndex, feature, isStable) {
+    const scores = isStable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
     // Don't display decimal places for a 100% score.
     if (score / 10 >= 100) {
@@ -829,8 +938,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   // getNumericalBrowserScoreByFeature returns the same score as
   // getBrowserScoreForFeature but as a number instead of a string
-  getNumericalBrowserScoreByFeature(browserIndex, feature) {
-    const scores = this.stable ? this.scores.stable : this.scores.experimental;
+  getNumericalBrowserScoreByFeature(browserIndex, feature, isStable) {
+    const scores = isStable ? this.scores.stable : this.scores.experimental;
     const score = scores[browserIndex][feature];
     const roundedScore = Math.round(score * 100) / 100;
     return roundedScore / 10;
@@ -854,12 +963,12 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
 
     const summaryFeatureName = this.getYearProp('summaryFeatureName');
-    this.totalChromium = this.getBrowserScoreForFeature(0, summaryFeatureName);
-    this.totalFirefox = this.getBrowserScoreForFeature(1, summaryFeatureName);
-    this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName);
+    this.totalChromium = this.getBrowserScoreForFeature(0, summaryFeatureName, this.stable);
+    this.totalFirefox = this.getBrowserScoreForFeature(1, summaryFeatureName, this.stable);
+    this.totalSafari = this.getBrowserScoreForFeature(2, summaryFeatureName, this.stable);
   }
 
-  updateUrlParams(embedded, stable, feature, isMobileScoresView) {
+  updateUrlParams(embedded, isStable, feature, isMobileScoresView) {
     // Our observer may be called before the feature is set, so debounce that.
     if (feature === undefined) {
       return;
@@ -869,7 +978,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     if (feature && feature !== this.getYearProp('summaryFeatureName')) {
       params.push(`feature=${feature}`);
     }
-    if (stable) {
+    if (isStable) {
       params.push('stable');
     }
     if (embedded) {
@@ -933,12 +1042,12 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     this.toggleMobileView(true, false);
   }
 
-  toggleMobileView(showMobileScores, stable) {
+  toggleMobileView(showMobileScores, isStable) {
     let queryString = '';
     if (showMobileScores) {
       queryString += 'mobile-view';
     }
-    if (stable) {
+    if (isStable) {
       queryString += (queryString.length) ? '&stable' : 'stable';
     }
     if (queryString.length) {
@@ -1021,7 +1130,10 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
-      individualScores[i] = [feature, this.getNumericalBrowserScoreByFeature(browserIndex, feature)];
+      individualScores[i] = [
+        feature,
+        this.getNumericalBrowserScoreByFeature(browserIndex, feature, this.stable)
+      ];
     }
     individualScores.sort((a, b) => a[1] - b[1]);
     for (let i = 0; i < individualScores.length; i++) {
@@ -1075,7 +1187,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     // Reverse the sort order if the same column is clicked again.
     if (this.sortColumn === i) {
       this.isSortedAsc = !this.isSortedAsc;
-    } else  {
+    } else {
       // Otherwise, sort in descending order.
       this.isSortedAsc = false;
     }
