@@ -18,12 +18,12 @@ RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-rele
 
 # Sort the package names!
 # firefox-esr: provides deps for Firefox (we don't use ESR directly)
-# java-11-amazon-corretto-jdk: provides JDK/JRE to Selenium & gcloud SDK
+# java-21-amazon-corretto-jdk: provides JDK/JRE to Selenium & gcloud SDK
 # python-crcmod: native module to speed up CRC checksum in gsutil
 RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
         curl \
         firefox-esr \
-        java-11-amazon-corretto-jdk \
+        java-21-amazon-corretto-jdk \
         nodejs \
         python3.11 \
         python3-crcmod \
