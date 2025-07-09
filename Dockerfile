@@ -38,14 +38,19 @@ RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
 # discard the setting.
 RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
+# We must stick to 527.0.0 because the datastore emulator only requires Java 11.
+# Versions 528.0.0 and onwards require Java 21.
+# However, we can't upgrade to a newer version of Java because when Chrome
+# runs with WCT/Selenium, it only runs with java 11 and not 17 or 21.
+ENV CLOUD_SDK_VERSION=527.0.0
 # Google Cloud SDK configuration
 # Based on https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/Dockerfile
 RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
-        google-cloud-cli \
-        google-cloud-cli-app-engine-python \
-        google-cloud-cli-app-engine-python-extras \
-        google-cloud-cli-app-engine-go \
-        google-cloud-cli-datastore-emulator && \
+        google-cloud-cli=${CLOUD_SDK_VERSION}-0 \
+        google-cloud-cli-app-engine-python=${CLOUD_SDK_VERSION}-0 \
+        google-cloud-cli-app-engine-python-extras=${CLOUD_SDK_VERSION}-0 \
+        google-cloud-cli-app-engine-go=${CLOUD_SDK_VERSION}-0 \
+        google-cloud-cli-datastore-emulator=${CLOUD_SDK_VERSION}-0 && \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud --version

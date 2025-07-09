@@ -15,8 +15,16 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-NODE_SELENIUM_PATH := $(WPTD_PATH)webapp/node_modules/selenium-standalone/.selenium/
+GECKODRIVER_TAG := v0.36.0
+GECKODRIVER_PATH=/usr/bin/geckodriver
 FIREFOX_PATH := /usr/bin/firefox
+CHROME_VERSION := 138.0.7204.94
+CHROME_INSTALL_DIR := /opt/chrome-for-testing
+ # CFT_BINARY can also be 'chrome-headless-shell'
+CFT_BINARY := chrome
+CFT_FOLDER := $(CFT_BINARY)-linux64
+CHROME_ACTUAL_PATH := $(CHROME_INSTALL_DIR)/$(CFT_FOLDER)/$(CFT_BINARY)
+# Needed because some tools are hardcoded to /usr/bin/google-chrome
 CHROME_PATH := /usr/bin/google-chrome
 CHROMEDRIVER_PATH=/usr/bin/chromedriver
 USE_FRAME_BUFFER := true
@@ -118,11 +126,11 @@ webdriver_node_deps:
 
 # _go_webdriver_test is not intended to be used directly; use go_firefox_test or
 # go_chrome_test instead.
-_go_webdriver_test: var-BROWSER java go_build xvfb geckodriver dev_appserver_deps gcc
+_go_webdriver_test: var-BROWSER java go_build xvfb geckodriver chromedriver dev_appserver_deps gcc
 	@ # This Go test manages Xvfb itself, so we don't start/stop Xvfb for it.
 	@ # The following variables are defined here because we don't know the
 	@ # path before installing geckodriver as it includes version strings.
-	GECKODRIVER_PATH="$(shell find $(NODE_SELENIUM_PATH)geckodriver/ -type f -name '*geckodriver')"; \
+	GECKODRIVER_PATH=$(GECKODRIVER_PATH) \
 	COMMAND="go test $(VERBOSE) -timeout=15m -tags=large ./webdriver -args \
 		-firefox_path=$(FIREFOX_PATH) \
 		-geckodriver_path=$$GECKODRIVER_PATH \
@@ -139,18 +147,19 @@ web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
-# Note: If we change to downloading chrome from Chrome For Testing, modify the
-# `chromedriver` target below to use the `known-good-versions-with-downloads.json` endpoint.
-# More details can be found in the comment for the `chromedriver` target.
-# TODO: pinning Chrome to 130 due to https://github.com/web-platform-tests/wpt.fyi/issues/4129
-chrome: wget
-	if [[ -z "$$(which google-chrome)" ]]; then \
-		ARCHIVE=google-chrome-stable_130.0.6723.116-1_amd64.deb; \
-		wget -q https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/$${ARCHIVE}; \
-		sudo apt-get update; \
-		sudo dpkg --install $${ARCHIVE} 2>/dev/null || true; \
-		sudo apt-get install --fix-broken --fix-missing -qqy; \
-		sudo dpkg --install $${ARCHIVE} 2>/dev/null; \
+chrome: wget unzip
+	if [[ ! -f "$(CHROME_ACTUAL_PATH)" ]]; then \
+		CHROME_CFT_URL="https://storage.googleapis.com/chrome-for-testing-public/$(CHROME_VERSION)/linux64/$(CFT_FOLDER).zip"; \
+		TEMP_DIR=$$(mktemp -d); \
+		wget -q -O $${TEMP_DIR}/$(CFT_FOLDER).zip $${CHROME_CFT_URL}; \
+		unzip -q $${TEMP_DIR}/$(CFT_FOLDER).zip -d $${TEMP_DIR}; \
+		sudo mkdir -p $(CHROME_INSTALL_DIR); \
+		sudo mv $${TEMP_DIR}/$(CFT_FOLDER) $(CHROME_INSTALL_DIR)/; \
+		sudo apt update; \
+		while read pkg ; do sudo apt-get satisfy -y --no-install-recommends "$${pkg}" ; done < $(CHROME_INSTALL_DIR)/$(CFT_FOLDER)/deb.deps; \
+		sudo chmod +x $(CHROME_ACTUAL_PATH); \
+		sudo ln -sf $(CHROME_ACTUAL_PATH) $(CHROME_PATH); \
+		rm -rf $${TEMP_DIR}; \
 	fi
 
 # Pull ChromeDriver from Chrome For Testing (CfT)
@@ -159,10 +168,6 @@ chrome: wget
 #
 # CfT only has ChromeDriver URLs for chrome versions >=115. But assuming `chrome`
 # target above remains pulling the latest stable, this will not be a problem.
-#
-# Until we also pull chrome from CfT, we should use the latest-patch-versions-per-build-with-downloads.json.
-# When we make the switch, we can download from the known-good-versions-with-downloads.json endpoint too.
-# More details: https://github.com/web-platform-tests/wpt.fyi/pull/3433/files#r1282787489
 chromedriver: wget unzip chrome jq
 	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
 		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
@@ -182,7 +187,16 @@ firefox: bzip2 wget
 		sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
 	fi
 
-geckodriver: node-wct-local
+geckodriver: wget unzip curl jq
+	if [[ ! -f "$(GECKODRIVER_PATH)" ]]; then \
+		GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_TAG}/geckodriver-${GECKODRIVER_TAG}-linux64.tar.gz"; \
+		TEMP_DIR=$$(mktemp -d); \
+		wget -q -O $${TEMP_DIR}/geckodriver-linux64.tar.gz $${GECKODRIVER_URL}; \
+		tar -xzf $${TEMP_DIR}/geckodriver-linux64.tar.gz -C $${TEMP_DIR}; \
+		sudo mv $${TEMP_DIR}/geckodriver $(GECKODRIVER_PATH); \
+		sudo chmod +x $(GECKODRIVER_PATH); \
+		rm -rf $${TEMP_DIR}; \
+	fi
 
 golangci-lint: curl gpg
 	if [ "$$(which golangci-lint)" == "" ]; then \
