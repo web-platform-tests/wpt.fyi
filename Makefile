@@ -189,7 +189,7 @@ firefox: bzip2 wget
 
 geckodriver: wget unzip curl jq
 	if [[ ! -f "$(GECKODRIVER_PATH)" ]]; then \
-		GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/$${GECKODRIVER_TAG}/geckodriver-$${GECKODRIVER_TAG}-linux64.tar.gz"; \
+		GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_TAG}/geckodriver-${GECKODRIVER_TAG}-linux64.tar.gz"; \
 		TEMP_DIR=$$(mktemp -d); \
 		wget -q -O $${TEMP_DIR}/geckodriver-linux64.tar.gz $${GECKODRIVER_URL}; \
 		tar -xzf $${TEMP_DIR}/geckodriver-linux64.tar.gz -C $${TEMP_DIR}; \
