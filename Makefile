@@ -27,16 +27,6 @@ CHROME_ACTUAL_PATH := $(CHROME_INSTALL_DIR)/$(CFT_FOLDER)/$(CFT_BINARY)
 # Needed because some tools are hardcoded to /usr/bin/google-chrome
 CHROME_PATH := /usr/bin/google-chrome
 CHROMEDRIVER_PATH=/usr/bin/chromedriver
-# WCT needs to be pinned to an older version because selenium-standalone uses an older driver
-# and we cannot use the PATH to our existing one. In the meantime, just install our own version.
-# Whenever we move to Lit and use web-test-runner, this will go away.
-# https://github.com/webdriverio/selenium-standalone/issues/810
-CHROME_WCT_VERSION := 130.0.6723.116
-CHROME_WCT_INSTALL_DIR := /opt/chrome-for-testing-wct
-CHROME_WCT_ACTUAL_PATH := $(CHROME_WCT_INSTALL_DIR)/$(CFT_FOLDER)/$(CFT_BINARY)
-# Can't have too many hyphens. It would have been nice to name it google-chrome-wct
-# https://github.com/web-padawan/launchpad/blob/fdd994d089572e2c2152d70cc74abf497d08d5b7/lib/local/version.js#L21-L25
-CHROME_WCT_PATH := /usr/bin/googlechromewct
 USE_FRAME_BUFFER := true
 STAGING := false
 VERBOSE := -v
@@ -152,15 +142,11 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver chromedriver dev_
 	if [ "$$UID" == "0" ]; then sudo -u browser $$COMMAND; else $$COMMAND; fi
 
 # NOTE: psmisc includes killall, needed by wct.sh
-web_components_test: xvfb firefox chrome-wct webapp_node_modules_all psmisc
+web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
 	util/wct.sh $(USE_FRAME_BUFFER)
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
-# Note: If we change to downloading chrome from Chrome For Testing, modify the
-# `chromedriver` target below to use the `known-good-versions-with-downloads.json` endpoint.
-# More details can be found in the comment for the `chromedriver` target.
-# TODO: pinning Chrome to 130 due to https://github.com/web-platform-tests/wpt.fyi/issues/4129
 chrome: wget unzip
 	if [[ ! -f "$(CHROME_ACTUAL_PATH)" ]]; then \
 		CHROME_CFT_URL="https://storage.googleapis.com/chrome-for-testing-public/$(CHROME_VERSION)/linux64/$(CFT_FOLDER).zip"; \
@@ -176,35 +162,12 @@ chrome: wget unzip
 		rm -rf $${TEMP_DIR}; \
 	fi
 
-# Note: If we change to downloading chrome from Chrome For Testing, modify the
-# `chromedriver` target below to use the `known-good-versions-with-downloads.json` endpoint.
-# More details can be found in the comment for the `chromedriver` target.
-# TODO: pinning Chrome to 130 due to https://github.com/web-platform-tests/wpt.fyi/issues/4129
-chrome-wct: wget unzip
-	if [[ ! -f "$(CHROME_WCT_ACTUAL_PATH)" ]]; then \
-		CHROME_CFT_URL="https://storage.googleapis.com/chrome-for-testing-public/$(CHROME_WCT_VERSION)/linux64/$(CFT_FOLDER).zip"; \
-		TEMP_DIR=$$(mktemp -d); \
-		wget -q -O $${TEMP_DIR}/$(CFT_FOLDER).zip $${CHROME_CFT_URL}; \
-		unzip -q $${TEMP_DIR}/$(CFT_FOLDER).zip -d $${TEMP_DIR}; \
-		sudo mkdir -p $(CHROME_WCT_INSTALL_DIR); \
-		sudo mv $${TEMP_DIR}/$(CFT_FOLDER) $(CHROME_WCT_INSTALL_DIR)/; \
-		sudo apt update; \
-		while read pkg ; do sudo apt-get satisfy -y --no-install-recommends "$${pkg}" ; done < $(CHROME_WCT_INSTALL_DIR)/$(CFT_FOLDER)/deb.deps; \
-		sudo chmod +x $(CHROME_WCT_ACTUAL_PATH); \
-		sudo ln -sf $(CHROME_WCT_ACTUAL_PATH) $(CHROME_WCT_PATH); \
-		rm -rf $${TEMP_DIR}; \
-	fi
-
 # Pull ChromeDriver from Chrome For Testing (CfT)
 # Need to create the CHROMEDRIVER_PATH and then move the files in because the
 # directory structure in chromedriver_linux64.zip has changed.
 #
 # CfT only has ChromeDriver URLs for chrome versions >=115. But assuming `chrome`
 # target above remains pulling the latest stable, this will not be a problem.
-#
-# Until we also pull chrome from CfT, we should use the latest-patch-versions-per-build-with-downloads.json.
-# When we make the switch, we can download from the known-good-versions-with-downloads.json endpoint too.
-# More details: https://github.com/web-platform-tests/wpt.fyi/pull/3433/files#r1282787489
 chromedriver: wget unzip chrome jq
 	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
 		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
