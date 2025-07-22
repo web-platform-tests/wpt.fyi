@@ -1463,12 +1463,12 @@ export const interopData = {
       },
       {
         'name': 'Privacy testing',
-        'url': 'https://github.com/web-platform-tests/interop/issues/831',
+        'url': 'https://github.com/web-platform-tests/interop-privacy',
         'scores_over_time': []
       },
       {
         'name': 'WebVTT',
-        'url': 'https://github.com/web-platform-tests/interop/issues/860',
+        'url': 'https://github.com/web-platform-tests/interop-webvtt',
         'scores_over_time': []
       }
     ],
