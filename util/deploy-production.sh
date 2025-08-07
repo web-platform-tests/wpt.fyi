@@ -6,6 +6,9 @@
 #set -x #echo on for debugging purposes
 set -e
 
+# Pull the latest version of the docker image
+docker pull webplatformtests/wpt.fyi:latest 
+
 usage() {
   USAGE="Usage: deploy-production.sh [-f] [-b] [-q]
     -b : Skip GitHub issue creation
