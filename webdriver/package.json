@@ -10,10 +10,10 @@
     "test": "mocha --ui tdd --timeout 12000 webdriver.js"
   },
   "dependencies": {
-    "chai": "5.2.1",
+    "chai": "5.3.1",
     "debug": "4.4.1",
     "flg": "^3.0.0",
     "mocha": "11.7.1",
-    "puppeteer": "24.16.1"
+    "puppeteer": "24.16.2"
   }
 }
