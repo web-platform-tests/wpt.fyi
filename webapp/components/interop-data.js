@@ -1455,7 +1455,7 @@ export const interopData = {
       },
       {
         'name': 'Gamepad API testing',
-        'url': 'https://github.com/web-platform-tests/interop/issues/786',
+        'url': 'https://github.com/web-platform-tests/interop-gamepad',
         'scores_over_time': []
       },
       {
