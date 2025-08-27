@@ -10,6 +10,7 @@ const DisplayNames = (() => {
   ['firefox', 'firefox-experimental'].forEach(n => m.set(n, 'Firefox'));
   ['safari', 'safari-experimental'].forEach(n => m.set(n, 'Safari'));
   m.set('android_webview', 'WebView');
+  m.set('blitz', 'Blitz');
   m.set('chrome_android', 'ChromeAndroid');
   m.set('chrome_ios', 'ChromeIOS');
   m.set('chromium', 'Chromium');
@@ -50,7 +51,7 @@ const versionPatterns = Object.freeze({
 });
 
 // The set of all browsers known to the wpt.fyi UI.
-const AllBrowserNames = Object.freeze(['android_webview', 'chrome_android', 'chrome_ios', 'chrome',
+const AllBrowserNames = Object.freeze(['android_webview', 'blitz', 'chrome_android', 'chrome_ios', 'chrome',
   'chromium', 'deno', 'edge', 'firefox_android', 'firefox', 'flow', 'ladybird', 'node.js', 'safari', 'servo', 'webkitgtk', 'wpewebkit', 'wktr']);
 
 // The list of default browsers used in cases where the user has not otherwise
@@ -184,7 +185,7 @@ const ProductInfo = (superClass) => class extends superClass {
       // although it would be better to have some variant of the Firefox logo.
       return '/static/geckoview_64x64.png';
 
-    } else if (name !== 'chromium' && name !== 'deno' && name !== 'flow' && name !== 'ladybird' && name !== 'node.js' && name !== 'servo' && name !== 'wktr' && name !== 'webkitgtk' && name !== 'wpewebkit') {  // Products without per-channel logos.
+    } else if (name !== 'blitz' && name !== 'chromium' && name !== 'deno' && name !== 'flow' && name !== 'ladybird' && name !== 'node.js' && name !== 'servo' && name !== 'wktr' && name !== 'webkitgtk' && name !== 'wpewebkit') {  // Products without per-channel logos.
       let channel;
       const candidates = ['beta', 'dev', 'canary', 'nightly', 'preview'];
       for (const label of candidates) {
