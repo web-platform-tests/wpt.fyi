@@ -304,7 +304,7 @@ var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payloa
 	}
 
 	if len(resp.Results) == 0 {
-		shared.GetLogger(ctx).Errorf("Query yielded no results; not caching")
+		shared.GetLogger(ctx).Infof("Query yielded no results; not caching")
 
 		return false
 	}
