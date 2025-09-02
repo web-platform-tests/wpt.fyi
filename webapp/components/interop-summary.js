@@ -4,22 +4,11 @@
  * found in the LICENSE file.
  */
 
+import { calculateColor } from './utils.js';
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import {afterNextRender} from  '../node_modules/@polymer/polymer/lib/utils/render-status.js';
-
-// This min-height is added to this section to ensure that the section below
-// is not moved after the user selects between STABLE and EXPERIMENTAL
-// (experimental browser names are longer and add additional lines).
-// Different years have different initial heights for these sections.
-const SUMMARY_CONTAINER_MIN_HEIGHTS = {
-  '2021': '275px',
-  '2022': '470px',
-  '2023': '470px',
-  '2024': '380px',
-  '2025': '380px',
-};
 
 
 class InteropSummary extends PolymerElement {
@@ -29,7 +18,10 @@ class InteropSummary extends PolymerElement {
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
 
       <style>
-        #summaryNumberRow {
+        #interopSummary[data-year="2021"] {
+          display: none;
+        }
+        .summary-number-row {
           display: flex;
           justify-content: center;
           gap: 30px;
@@ -37,7 +29,7 @@ class InteropSummary extends PolymerElement {
         }
 
         .summary-container {
-          min-height: 470px;
+          min-height: 380px;
         }
 
         .summary-number {
@@ -92,11 +84,50 @@ class InteropSummary extends PolymerElement {
         .summary-browser-name:not([data-stable-browsers]) > .stable {
           display: none;
         }
+
+        .summary-container[data-year="2021"] {
+          min-height: 275px;
+        }
+
+        .summary-container[data-year="2022"],
+        .summary-container[data-year="2023"] {
+          min-height: 470px;
+        }
+
+        @media (max-width: 768px) {
+          .summary-container,
+          .summary-container[data-year="2022"],
+          .summary-container[data-year="2023"] {
+            min-height: 335px;
+          }
+          .summary-container[data-year="2021"] {
+            min-height: 185px;
+          }
+          .summary-number {
+            font-size: 2em;
+            width: 2.5ch;
+            height: 2.5ch;
+            padding: 5px;
+          }
+          #totalSummaryRow > .summary-flex-item > .summary-number {
+            font-size: 4em;
+            width: 2.5ch;
+            height: 2.5ch;
+            padding: 4px;
+          }
+          .browser-score {
+            font-size: 2em;
+          }
+          .summary-browser-name > figure > figcaption {
+            line-height: 1.1;
+            margin: 0 -10px;
+          }
+        }
       </style>
-      <div class="summary-container">
-        <div id="summaryNumberRow">
+      <div class="summary-container" data-year$="[[year]]">
+        <div class="summary-number-row" id="totalSummaryRow">
           <!-- Interop -->
-          <div id="interopSummary" class="summary-flex-item" tabindex="0">
+          <div id="interopSummary" class="summary-flex-item" tabindex="0" data-year$="[[year]]">
             <div class="summary-number score-number smaller-summary-number">--</div>
             <h3 class="summary-title">INTEROP</h3>
           </div>
@@ -106,10 +137,10 @@ class InteropSummary extends PolymerElement {
             <h3 class="summary-title">INVESTIGATIONS</h3>
           </div>
         </div>
-        <div id="summaryNumberRow">
+        <div class="summary-number-row" id="browserSummaryRow">
           <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number smaller-summary-number">--</div>
+              <div class="summary-number score-number browser-score smaller-summary-number">--</div>
               <template is="dom-if" if="{{isChromeEdgeCombo(browserInfo)}}">
                 <!-- Chrome/Edge -->
                 <template is="dom-if" if="[[stable]]">
@@ -158,7 +189,7 @@ class InteropSummary extends PolymerElement {
           </template>
           <template is="dom-if" if="{{isMobileScoresView}}">
             <div class="summary-flex-item" tabindex="0">
-              <div class="summary-number score-number smaller-summary-number">--</div>
+              <div class="summary-number score-number browser-score smaller-summary-number">--</div>
               <div class="summary-browser-name">
                 <figure>
                   <img src="/static/wktr_64x64.png" width="36" alt="Safari iOS" />
@@ -208,8 +239,6 @@ class InteropSummary extends PolymerElement {
       investigationDiv.style.display = 'none';
     }
 
-    const summaryDiv = this.shadowRoot.querySelector('.summary-container');
-    summaryDiv.style.minHeight = SUMMARY_CONTAINER_MIN_HEIGHTS[this.year] || '470px';
     // Don't display the interop score for Interop 2021.
     if (this.year === '2021') {
       const interopDiv = this.shadowRoot.querySelector('#interopSummary');
@@ -249,7 +278,7 @@ class InteropSummary extends PolymerElement {
     new CountUp(number, score, {
       startVal: curScore === '--' ? 0 : curScore
     }).start();
-    const colors = this.calculateColor(score);
+    const colors = calculateColor(score);
     number.style.color = `color-mix(in lch, ${colors[0]} 70%, black)`;
     number.style.backgroundColor = colors[1];
   }
@@ -312,39 +341,6 @@ class InteropSummary extends PolymerElement {
   // render them with breaks. e.g. ["Safari", "Technology", "Preview"]
   getBrowserNameParts(browserInfo) {
     return [browserInfo.tableName, ...browserInfo.experimentalName.split(' ')];
-  }
-
-  calculateColor(score) {
-    const gradient = [
-      // Red.
-      { scale: 0, color: [250, 0, 0] },
-      // Orange.
-      { scale: 33.33, color: [250, 125, 0] },
-      // Yellow.
-      { scale: 66.67, color: [220, 220, 0] },
-      // Green.
-      { scale: 100, color: [0, 160, 0] },
-    ];
-
-    let color1, color2;
-    for (let i = 1; i < gradient.length; i++) {
-      if (score <= gradient[i].scale) {
-        color1 = gradient[i - 1];
-        color2 = gradient[i];
-        break;
-      }
-    }
-    const colorWeight = ((score - color1.scale) / (color2.scale - color1.scale));
-    const color = [
-      Math.round(color1.color[0] * (1 - colorWeight) + color2.color[0] * colorWeight),
-      Math.round(color1.color[1] * (1 - colorWeight) + color2.color[1] * colorWeight),
-      Math.round(color1.color[2] * (1 - colorWeight) + color2.color[2] * colorWeight),
-    ];
-
-    return [
-      `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-      `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.15)`,
-    ];
   }
 }
 export { InteropSummary };
