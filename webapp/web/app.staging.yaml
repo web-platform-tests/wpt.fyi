@@ -28,6 +28,11 @@ liveness_check:
 
 readiness_check:
   path: "/_ah/readiness_check"
+  app_start_timeout_sec: 300
+  check_interval_sec: 30
+  timeout_sec: 10
+  failure_threshold: 4
+  success_threshold: 2
 
 env_variables:
   REDISHOST: "10.171.142.203"
