@@ -196,7 +196,11 @@ func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.
 			msg = fmt.Sprintf("%s: %s", msg, string(errBody))
 			resp.Body = io.NopCloser(bytes.NewBuffer(errBody))
 		}
-		logger.Errorf(msg)
+		if resp.StatusCode == http.StatusUnprocessableEntity {
+			logger.Warningf(msg)
+		} else {
+			logger.Errorf(msg)
+		}
 	}
 
 	return resp, nil
