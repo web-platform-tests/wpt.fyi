@@ -160,8 +160,7 @@ if (($VERSIONS == 3)); then
       echo "Deleting $SERVICE service version $OLDEST_REV"
       gcloud app --project=wptdashboard versions delete --service=$SERVICE --quiet $OLDEST_REV
     done
-  elif (($VERSIONS > 3)); then
-    echo -e "\nUnexpectedly found $VERSIONS versions for the default service.\nPlease delete old versions for all services manually until there are no more than two left."
   fi
-
+elif (($VERSIONS > 3)); then
+  echo -e "\nUnexpectedly found $VERSIONS versions for the default service.\nPlease delete old versions for all services manually until there are no more than two left."
 fi
