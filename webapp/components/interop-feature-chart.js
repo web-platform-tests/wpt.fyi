@@ -26,10 +26,49 @@ class InteropFeatureChart extends PolymerElement {
           justify-content: center;
         }
 
+        #customLegend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            column-gap: 20px;
+            padding-bottom: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 4px;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+
+        .legend-label {
+            font-weight: 500;
+        }
+
         paper-dialog {
           max-width: 600px;
         }
       </style>
+      <div id="customLegend">
+        <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo" index-as="index">
+          <div class="legend-item" data-index$="[[index]]" on-click="_onLegendItemClick">
+              <span class="legend-line" style="background-color: [[browserInfo.graphColor]];"></span>
+              <span class="legend-label">[[browserInfo.tableName]]</span>
+          </div>
+        </template>
+        <div class="legend-item" on-click="_onLegendItemClick">
+            <span class="legend-line" style="background-color: #123301;"></span>
+            <span class="legend-label">Interop</span>
+        </div>
+      </div>
       <div id="failuresChart" class="chart"></div>
 
       <paper-dialog with-backdrop id="firefoxNightlyDialog">
@@ -83,6 +122,13 @@ class InteropFeatureChart extends PolymerElement {
       dataManager: Object,
       stable: Boolean,
       feature: String,
+      chart: {
+        type: Object,
+      },
+      selectedChartIndex: {
+        type: Number,
+        value: null,
+      },
     };
   }
 
@@ -119,9 +165,29 @@ class InteropFeatureChart extends PolymerElement {
     // Fetching the datatable first ensures that Google Charts has been loaded.
     const dataTable = await this.dataManager.getDataTable(feature, stable);
 
+    this.selectedChartIndex = null;
     const div = this.$.failuresChart;
-    const chart = new window.google.visualization.LineChart(div);
-    chart.draw(dataTable, this.getChartOptions(div, feature));
+    this.chart = new window.google.visualization.LineChart(div);
+    this.chart.draw(dataTable, this.getChartOptions(feature));
+  }
+
+  _onLegendItemClick(e) {
+    let index = parseInt(e.currentTarget.dataset.index, 10);
+    // Account for the interop line, since it is not an index in the browsers list.
+    if (isNaN(index)) {
+      index = this.getYearProp('browserInfo').length;
+    }
+
+    if (this.selectedChartIndex === index) {
+      // If the clicked item is already selected, deselect it.
+      this.selectedChartIndex = null;
+      this.chart.setSelection([]);
+    } else {
+      // Otherwise, select the new item.
+      this.selectedChartIndex = index;
+      // Adjust index to ensure we are targeting the correct chart index.
+      this.chart.setSelection([{ row: null, column: (index + 1) * 2 }]);
+    }
   }
 
   getChromeChangelogUrl(fromVersion, toVersion) {
@@ -148,7 +214,7 @@ class InteropFeatureChart extends PolymerElement {
     window.open(url);
   }
 
-  getChartOptions(containerDiv, feature) {
+  getChartOptions(feature) {
     // Show only the scores from this year on the charts.
     // The max date shown on the X-axis is the end of this year.
     const year = parseInt(this.year);
@@ -171,6 +237,7 @@ class InteropFeatureChart extends PolymerElement {
 
     const options = {
       height: 350,
+      width: '100%',
       fontSize: 14,
       lineWidth: 3,
       tooltip: {
@@ -202,21 +269,18 @@ class InteropFeatureChart extends PolymerElement {
         keepInBounds: true,
         maxZoomIn: 4.0,
       },
+      legend: { position: 'none' },
       colors: graphColors,
-    };
-
-    options.width = '100%';
-    options.legend = {
-      position: 'top',
-      alignment: 'center',
-      maxLines: 2,  // needed for displaying 5+ graph entities.
-    };
-    options.chartArea = {
-      left: 75,
-      width: '80%',
+      chartArea: {
+        top: 8,
+        left: 60,
+        width: '100%',
+        height: '80%',
+      },
     };
 
     return options;
   }
 }
+
 export { InteropFeatureChart };
