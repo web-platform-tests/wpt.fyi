@@ -251,6 +251,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           gap: 2ch;
           place-content: center;
           color: GrayText;
+          margin-bottom: 8px;
         }
 
         .compat-footer {
