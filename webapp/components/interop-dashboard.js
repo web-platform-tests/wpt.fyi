@@ -310,67 +310,29 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
             border-radius: 4px;
             white-space: nowrap;
           }
-          .score-table thead {
-            border: none;
-            clip: rect(0 0 0 0);
-            height: 1px;
-            margin: -1px;
-            overflow: hidden;
-            padding: 0;
+          .score-table {
+            margin-top: 4.5em;
+          }
+          .score-table th:first-child {
             position: absolute;
-            width: 1px;
-          }
-          .score-table tr {
-            display: block;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 1em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            overflow: hidden;
-          }
-          .score-table .subtotal-row,
-          .score-table tfoot tr {
-            border-top: 2px solid #aaa;
-            font-weight: bold;
-          }
-          .score-table td {
-            display: block;
-            text-align: right;
-            border-bottom: 1px solid #eee;
-            padding: 0.75em;
-            line-height: 1.5;
-          }
-          .score-table td[data-label="Interop"] {
-            display: none;
-          }
-          .score-table td:last-child {
-            border-bottom: 0;
+            margin-top: -3em;
           }
           .score-table td:first-child {
-            text-align: left;
-            font-weight: bold;
-            background-color: hsl(0 0% 0% / 5%);
-            border-bottom: 1px solid #ddd;
-            padding: 0;
+            position: absolute;
+            margin-top: -2em;
           }
-          .score-table td:first-child .card-header-mobile {
-            padding: 0.75em;
+          .score-table td {
+            vertical-align:
+            bottom; padding-top: 2em;
           }
-          .score-table td:not(:first-child)::before {
-            content: attr(data-label);
-            float: left;
-            font-weight: 500;
-            color: #555;
+          .score-table td:not(:first-child) {
+            border-bottom: 1px solid #333;
           }
-          .score-table td[colspan="4"] {
-            background-color: hsl(0 0% 0% / 5%);
-            font-weight: bold;
-            text-align: left;
-            padding: 0.75em;
-
+          .score-table tr > th:first-of-type {
+            width: unset;
           }
-          .score-table td[colspan="4"] + td::before {
-             content: "Progress";
+          .score-table td a {
+            font-weight: 700;
           }
         }
         @media only screen and (min-width: 769px) {
@@ -441,7 +403,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-scores">
           <div class="table-card">
             <template is="dom-repeat" items="{{getYearProp('tableSections')}}" as="section">
-              <h1 class="table-title-mobile">{{section.name}}</h1>
               <table class="score-table">
                 <thead>
                   <!-- First score table header with sort functionality -->
@@ -543,10 +504,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         <td>
                           <div class="card-header-mobile">
                             <a href$="[[getTestsURL(rowName, stable)]]">[[getRowInfo(rowName, 'description')]]</a>
-                            <span
-                              class="interop-score-mobile"
-                              style$="[[getScoreStyle(rowName, stable)]]"
-                            >[[getInteropScoreForFeature(rowName, stable)]]</span>
                           </div>
                         </td>
                         <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
@@ -564,10 +521,6 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                         <td>
                           <div class="card-header-mobile">
                             <strong>TOTAL</strong>
-                            <span
-                              class="interop-score-mobile"
-                              style$="[[getSubtotalScoreStyle(section, stable)]]"
-                            >[[getInteropSubtotalScore(section, stable)]]</span>
                           </div>
                         </td>
                       <template is="dom-repeat" items="{{getYearProp('browserInfo')}}" as="browserInfo">
