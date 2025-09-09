@@ -146,6 +146,11 @@ func processBuild(
 		opts.Page = resp.NextPage
 	}
 
+	var sha string
+	if *workflowRun.Event == "pull_request" {
+		sha = *workflowRun.HeadSHA
+	}
+
 	uploader, err := aeAPI.GetUploader(uploaderName)
 	if err != nil {
 		return false, fmt.Errorf("failed to get uploader creds from Datastore: %w", err)
@@ -153,7 +158,7 @@ func processBuild(
 
 	uploadClient := uc.NewClient(aeAPI)
 	err = uploadClient.CreateRun(
-		*workflowRun.HeadSHA,
+		sha,
 		uploader.Username,
 		uploader.Password,
 		nil,
