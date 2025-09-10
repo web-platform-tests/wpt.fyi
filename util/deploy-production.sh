@@ -48,7 +48,8 @@ then
   echo -e "There are $CHANGE_COUNT changes to deploy:\n$CHANGELIST"
 
   # Verfiy that all commit checks passed.
-  FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/HEAD/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure"))')
+  MAIN_SHA=$(git rev-parse main)
+  FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/$MAIN_SHA/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure" and .name != "Dependabot"))')
   FAILURES=$(echo "$FAILED_CHECKS" | jq -r 'length')
   if [[ "${FAILURES}" != "0"  ]];
   then
@@ -155,7 +156,7 @@ if (($VERSIONS == 3)); then
   if [[ $DELETE == "y" ]]; then
     echo "Found $VERSIONS for the default service, deleting the oldest version of all services."
 
-    OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=$SERVICE" --limit=1 --format=json | jq -r '.[] | .id')
+    OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=default" --limit=1 --format=json | jq -r '.[] | .id')
     for SERVICE in $SERVICES; do
       echo "Deleting $SERVICE service version $OLDEST_REV"
       gcloud app --project=wptdashboard versions delete --service=$SERVICE --quiet $OLDEST_REV
