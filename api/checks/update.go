@@ -67,7 +67,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
 		msg := "Could not find runs to compare: " + err.Error()
-		log.Errorf(msg)
+		log.Warningf(msg)
 		http.Error(w, msg, http.StatusNotFound)
 
 		return
