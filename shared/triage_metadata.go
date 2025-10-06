@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v74/github"
+	"github.com/google/go-github/v75/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,9 +86,13 @@ func getWptmetadataGitHubInfo(ctx context.Context, client *github.Client) wptmet
 }
 
 func (tm triageMetadata) getCommitBranchRef(sha *string) (ref *github.Reference, err error) {
+	if sha == nil {
+		tm.logger.Errorf("No SHA provided to create the commit branch from")
+		return nil, errors.New("no SHA provided to create the commit branch from")
+	}
 	client := tm.githubClient
-	newRef := &github.Reference{Ref: github.String("refs/heads/" + tm.commitBranch), Object: &github.GitObject{SHA: sha}}
-	ref, _, err = client.Git.CreateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, newRef)
+	newRef := &github.CreateRef{Ref: "refs/heads/" + tm.commitBranch, SHA: *sha}
+	ref, _, err = client.Git.CreateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, *newRef)
 	return ref, err
 }
 
@@ -120,13 +124,17 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 	date := time.Now()
 	author := &github.CommitAuthor{Date: &github.Timestamp{date}, Name: &tm.authorName, Email: &tm.authorEmail}
 	commit := &github.Commit{Author: author, Message: &tm.commitMessage, Tree: tree, Parents: []*github.Commit{parent.Commit}}
-	newCommit, _, err := client.Git.CreateCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, commit, &github.CreateCommitOptions{})
+	newCommit, _, err := client.Git.CreateCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, *commit, &github.CreateCommitOptions{})
 	if err != nil {
 		return err
 	}
 
 	ref.Object.SHA = newCommit.SHA
-	_, _, err = client.Git.UpdateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, ref, false)
+	updateRef := github.UpdateRef{
+		SHA:   *ref.Object.SHA,
+		Force: github.Ptr(false),
+	}
+	_, _, err = client.Git.UpdateRef(tm.ctx, tm.sourceOwner, tm.sourceRepo, *ref.Ref, updateRef)
 	return err
 }
 
