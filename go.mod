@@ -1,6 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.25.1
+go 1.25.2
 
 require (
 	cloud.google.com/go/cloudtasks v1.13.7
