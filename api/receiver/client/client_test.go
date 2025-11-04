@@ -1,5 +1,4 @@
 //go:build small
-// +build small
 
 // Copyright 2020 The WPT Dashboard Project. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -13,9 +12,9 @@ import (
 	"net/url"
 	"testing"
 
-	"go.uber.org/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCreateRun(t *testing.T) {
