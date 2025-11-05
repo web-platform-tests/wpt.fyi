@@ -1481,7 +1481,8 @@ export const interopData = {
         'name': 'WebVTT',
         'url': 'https://github.com/web-platform-tests/interop-webvtt',
         'scores_over_time': [
-          { 'date': '2025-06-23', 'score': 100 }
+          { 'date': '2025-06-23', 'score': 100 },
+          { 'date': '2025-11-05', 'score': 211 }
         ]
       }
     ],
