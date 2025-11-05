@@ -1451,7 +1451,8 @@ export const interopData = {
         'url': 'https://github.com/web-platform-tests/interop-accessibility',
         'scores_over_time': [
           { 'date': '2025-08-05', 'score': 300 },
-          { 'date': '2025-10-07', 'score': 450 }
+          { 'date': '2025-10-07', 'score': 450 },
+          { 'date': '2025-11-05', 'score': 510 }
         ]
       },
       {
