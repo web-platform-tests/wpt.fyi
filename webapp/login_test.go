@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v77/github"
 	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"
 
