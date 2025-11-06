@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v77/github"
 
 	mapset "github.com/deckarep/golang-set"
 )

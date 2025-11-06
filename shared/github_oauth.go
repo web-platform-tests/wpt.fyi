@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v77/github"
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"

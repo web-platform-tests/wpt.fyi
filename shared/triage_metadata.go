@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v77/github"
 	"gopkg.in/yaml.v3"
 )
 
