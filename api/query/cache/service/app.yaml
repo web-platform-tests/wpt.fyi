@@ -12,6 +12,7 @@ resources:
   # available on AppEngine Flex.
   cpu: 32
   memory_gb: 207.5 # Max: FloorToNearest256MB(32 vCPU * 6.5 - 0.4) = 207.5 GB
+  disk_size_gb: 20
 
 manual_scaling:
   instances: 2
