@@ -31,7 +31,7 @@ require (
 	google.golang.org/api v0.256.0
 	google.golang.org/genproto v0.0.0-20251103181224-f26f9409b101
 	google.golang.org/genproto/googleapis/api v0.0.0-20251103181224-f26f9409b101
-	google.golang.org/grpc v1.76.0
+	google.golang.org/grpc v1.77.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
