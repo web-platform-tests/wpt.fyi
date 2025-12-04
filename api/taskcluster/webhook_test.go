@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v77/github"
+	"github.com/google/go-github/v79/github"
 	"github.com/stretchr/testify/assert"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
 	tc "github.com/web-platform-tests/wpt.fyi/api/taskcluster"

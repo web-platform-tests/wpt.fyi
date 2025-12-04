@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-github/v77/github"
+	"github.com/google/go-github/v79/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/checks/mock_checks"
 	"github.com/web-platform-tests/wpt.fyi/shared"
