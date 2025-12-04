@@ -63,6 +63,8 @@ itsdangerous==2.2.0
     # via flask
 jinja2==3.1.6
     # via flask
+librt==0.6.3
+    # via mypy
 markupsafe==2.1.2
     # via
     #   flask
@@ -70,7 +72,7 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.18.2
+mypy==1.19.0
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
