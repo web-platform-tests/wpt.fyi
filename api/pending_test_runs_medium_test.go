@@ -1,6 +1,6 @@
 //go:build medium
 
-package api
+package api //nolint:revive
 
 import (
 	"context"

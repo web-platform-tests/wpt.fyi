@@ -49,12 +49,6 @@ linters:
     gomoddirectives:
       replace-allow-list:
         - launchpad.net/gocheck
-    revive:
-      rules:
-        - name: var-naming
-          arguments:
-            - []
-            - ["api"]
   exclusions:
     generated: lax
     presets:

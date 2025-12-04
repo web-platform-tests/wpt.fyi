@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package api
+package api //nolint:revive
 
 import (
 	"encoding/json"
@@ -14,11 +14,11 @@ import (
 	"strings"
 	"testing"
 
-	"go.uber.org/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/web-platform-tests/wpt.fyi/api/query"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"github.com/web-platform-tests/wpt.fyi/shared/sharedtest"
+	"go.uber.org/mock/gomock"
 )
 
 func TestHandleMetadataTriage_Success(t *testing.T) {
