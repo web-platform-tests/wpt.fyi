@@ -21,7 +21,7 @@ import (
 	gclog "cloud.google.com/go/logging"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/gomodule/redigo/redis"
-	"github.com/google/go-github/v77/github"
+	"github.com/google/go-github/v79/github"
 	apps "google.golang.org/api/appengine/v1"
 	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
