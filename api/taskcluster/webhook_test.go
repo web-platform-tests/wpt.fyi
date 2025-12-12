@@ -123,12 +123,13 @@ func TestParseTaskclusterURL(t *testing.T) {
 }
 
 func TestExtractArtifactURLs_all_success_master(t *testing.T) {
-	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 5)}
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 6)}
 	group.Tasks[0].Name = "wpt-firefox-nightly-testharness-1"
 	group.Tasks[1].Name = "wpt-firefox-nightly-testharness-2"
 	group.Tasks[2].Name = "wpt-chrome-dev-testharness-1"
 	group.Tasks[3].Name = "wpt-chrome-dev-reftest-1"
 	group.Tasks[4].Name = "wpt-chrome-dev-crashtest-1"
+	group.Tasks[5].Name = "wpt-chrome-dev-test262-1"
 	for i := 0; i < len(group.Tasks); i++ {
 		group.Tasks[i].State = "completed"
 		group.Tasks[i].TaskID = fmt.Sprint(i)
@@ -153,11 +154,13 @@ func TestExtractArtifactURLs_all_success_master(t *testing.T) {
 					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
 					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_report.json.gz",
 					"https://tc.example.com/api/queue/v1/task/4/artifacts/public/results/wpt_report.json.gz",
+					"https://tc.example.com/api/queue/v1/task/5/artifacts/public/results/wpt_report.json.gz",
 				},
 				Screenshots: []string{
 					"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
 					"https://tc.example.com/api/queue/v1/task/3/artifacts/public/results/wpt_screenshot.txt.gz",
 					"https://tc.example.com/api/queue/v1/task/4/artifacts/public/results/wpt_screenshot.txt.gz",
+					"https://tc.example.com/api/queue/v1/task/5/artifacts/public/results/wpt_screenshot.txt.gz",
 				},
 			},
 		}, urls)
