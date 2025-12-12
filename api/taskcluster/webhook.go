@@ -33,7 +33,7 @@ const completedState = "completed"
 var (
 	// TaskNameRegex is based on task names in
 	// https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml.
-	TaskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*)(?:-\d+)?$`)
+	TaskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*|test262)(?:-\d+)?$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
