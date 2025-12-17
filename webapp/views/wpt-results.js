@@ -35,7 +35,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
 
-const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec'];
+const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec', 'test262'];
 
 // Map of abbreviations for status values stored in summary files.
 // This is used to expand the status to its full value after being
