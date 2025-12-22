@@ -35,7 +35,7 @@ google-cloud-core==2.4.2
     # via
     #   google-cloud-datastore
     #   google-cloud-storage
-google-cloud-datastore==2.21.0
+google-cloud-datastore==2.23.0
     # via -r requirements.in
 google-cloud-storage==3.7.0
     # via -r requirements.in
@@ -52,6 +52,7 @@ googleapis-common-protos==1.61.0
 grpcio==1.53.2
     # via
     #   google-api-core
+    #   google-cloud-datastore
     #   grpcio-status
 grpcio-status==1.53.2
     # via google-api-core
