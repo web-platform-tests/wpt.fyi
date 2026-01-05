@@ -90,7 +90,7 @@ func getDatastore(ctx context.Context) (shared.Datastore, error) {
 	var client *datastore.Client
 	var err error
 	if gcpCredentialsFile != nil && *gcpCredentialsFile != "" {
-		client, err = datastore.NewClient(ctx, *projectID, option.WithCredentialsFile(*gcpCredentialsFile))
+		client, err = datastore.NewClient(ctx, *projectID, option.WithAuthCredentialsFile(option.ServiceAccount, *gcpCredentialsFile))
 	} else {
 		client, err = datastore.NewClient(ctx, *projectID)
 	}
