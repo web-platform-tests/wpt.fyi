@@ -4,7 +4,7 @@
 
 package summaries
 
-import "github.com/google/go-github/v79/github"
+import "github.com/google/go-github/v80/github"
 
 // Pending is the struct for pending.md.
 type Pending struct {

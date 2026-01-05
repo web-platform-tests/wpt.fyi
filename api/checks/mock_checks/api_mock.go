@@ -16,7 +16,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	github "github.com/google/go-github/v79/github"
+	github "github.com/google/go-github/v80/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	gomock "go.uber.org/mock/gomock"
 )
