@@ -183,8 +183,8 @@ github.com/taskcluster/slugid-go v1.1.0 h1:SWsUplliyamdYzOKVM4+lDohZKuL63fKreGkv
 github.com/taskcluster/slugid-go v1.1.0/go.mod h1:5sOAcPHjqso1UkKxSl77CkKgOwha0D9X0msBKBj0AOg=
 github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible h1:Q3kagxQiHw7QNckRoeeBV16FDvyQC+iSmda99bJEK+U=
 github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible/go.mod h1:ALqTgi15AmJGEGubRKM0ydlLAFatlQPrQrmal9YZpQs=
-github.com/taskcluster/taskcluster/v95 v95.0.2 h1:YL1xXWwVAuoQONz7Ox0bz482rPSlxOyxXHAjLEhrGFM=
-github.com/taskcluster/taskcluster/v95 v95.0.2/go.mod h1:FLmpgdaewi9y2GKSJC3HvNoKpdrzDPiOX5zBNUKjA3g=
+github.com/taskcluster/taskcluster/v95 v95.1.0 h1:bUH6oL4dQe9WosvxCT5lt6+mdcdg/DaLGVfVh7hU/UI=
+github.com/taskcluster/taskcluster/v95 v95.1.0/go.mod h1:+J9IlLLaHfL1GeVkg/iu/vCjYsznNFbe9MUnhx9LQMA=
 github.com/tebeka/selenium v0.9.9 h1:cNziB+etNgyH/7KlNI7RMC1ua5aH1+5wUlFQyzeMh+w=
 github.com/tebeka/selenium v0.9.9/go.mod h1:5Fr8+pUvU6B1OiPfkdCKdXZyr5znvVkxuPd0NOdZCQc=
 github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957 h1:6Fre/uvwovW5YY4nfHZk66cAg9HjT9YdFSAJHUUgOyQ=
