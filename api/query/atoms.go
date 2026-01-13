@@ -226,7 +226,7 @@ type AbstractCount struct {
 // number of runs that match the criteria.
 // nolint:ireturn // TODO: Fix ireturn lint error
 func (c AbstractCount) BindToRuns(runs ...shared.TestRun) ConcreteQuery {
-	byRun := []ConcreteQuery{}
+	byRun := make([]ConcreteQuery, 0, len(runs))
 	for _, run := range runs {
 		byRun = append(byRun, c.Where.BindToRuns(run))
 	}
