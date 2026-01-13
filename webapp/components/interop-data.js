@@ -1470,7 +1470,8 @@ export const interopData = {
         'url': 'https://github.com/web-platform-tests/interop-mobile-testing',
         'scores_over_time': [
           { 'date': '2025-06-10', 'score': 120 },
-          { 'date': '2025-08-26', 'score': 300 }
+          { 'date': '2025-08-26', 'score': 300 },
+          { 'date': '2025-12-31', 'score': 460 }
         ]
       },
       {
