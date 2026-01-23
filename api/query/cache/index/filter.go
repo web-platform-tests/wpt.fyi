@@ -169,7 +169,10 @@ func (tnp TestNamePattern) Filter(t TestID) bool {
 		return false
 	}
 
-	return strings.Contains(name, tnp.q.Pattern)
+	return strings.Contains(
+		strings.ToLower(name),
+		strings.ToLower(tnp.q.Pattern),
+	)
 }
 
 // Filter interprets a SubtestNamePattern as a filter function over TestIDs.

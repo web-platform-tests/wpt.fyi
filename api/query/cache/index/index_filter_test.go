@@ -142,6 +142,41 @@ func TestBindExecute_TestNamePattern(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_TestNamePattern_CaseInsensitive(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/custom-elements/Document-createElement-customized-builtins.html"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+				},
+			},
+		},
+	})
+
+	for _, pattern := range []string{"custom", "Custom", "CUSTOM", "createelement", "createElement", "CREATEELEMENT"} {
+		t.Run("pattern: "+pattern, func(t *testing.T) {
+			q := query.TestNamePattern{
+				Pattern: pattern,
+			}
+			srs := planAndExecute(t, runs, idx, q)
+
+			assert.Equal(t, 1, len(srs))
+			assert.Equal(t, matchingTestName, srs[0].Test)
+		})
+	}
+}
+
 func TestBindExecute_SubtestNamePattern(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -220,6 +255,65 @@ func TestBindExecute_SubtestNamePattern(t *testing.T) {
 			assert.Equal(t, expectedResult, srs[0])
 		})
 	}
+}
+func TestBindExecute_SubtestNamePattern_CaseInsensitive(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	runs := mockTestRuns(loader, idx, []testRunData{
+		{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   "/test.html",
+						Status: "OK",
+						Subtests: []metrics.SubTest{
+							{
+								Name:   "TestCase1",
+								Status: "PASS",
+							},
+							{
+								Name:   "TestCase2",
+								Status: "PASS",
+							},
+							{
+								Name:   "OtherTest",
+								Status: "FAIL",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	for _, pattern := range []string{"testcase", "TestCase", "TESTCASE"} {
+		t.Run("pattern: "+pattern, func(t *testing.T) {
+			q := query.SubtestNamePattern{
+				Subtest: pattern,
+			}
+			srs := planAndExecute(t, runs, idx, q)
+
+			assert.Equal(t, 1, len(srs))
+			expectedResult := shared.SearchResult{
+				Test: "/test.html",
+				LegacyStatus: []shared.LegacySearchRunResult{
+					{
+						Passes:        2, // Both TestCase1 and TestCase2 should match
+						Total:         2,
+						Status:        "",
+						NewAggProcess: true,
+					},
+				},
+			}
+			assert.Equal(t, expectedResult, srs[0])
+		})
+	}
+
 }
 
 func TestBindExecute_TestPath(t *testing.T) {
