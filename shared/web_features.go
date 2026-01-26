@@ -90,7 +90,7 @@ func (d webFeaturesManifestV1Data) prepareTestWebFeatureFilter() WebFeaturesData
 	testToWebFeaturesMap := make(map[string]map[string]interface{})
 	for webFeature, tests := range d {
 		for _, test := range tests {
-			key := strings.ToLower(test)
+			key := test
 			value := strings.ToLower(webFeature)
 			if set, found := testToWebFeaturesMap[key]; found {
 				set[value] = nil
