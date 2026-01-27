@@ -47,6 +47,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | Count
       | Sequential
       | Exists
+      | "(" Root ")"   -- parenRoot
 
     All = "all(" ListOf<Exp, space*> ")"
 
@@ -247,6 +248,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   OrQ: orConjunction,
   AndQ: andConjunction,
+  Q_parenRoot: (_, r, __) => r.eval(),
   EmptyListOf: function() {
     return [];
   },
