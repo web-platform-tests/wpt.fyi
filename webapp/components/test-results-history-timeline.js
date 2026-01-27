@@ -237,7 +237,7 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
         const runIDs = this.chartRunIDs[chartIndex];
 
         if (index !== undefined && runIDs.length > index) {
-          window.open(`/results/?run_id=${runIDs[index]}`, '_blank');
+          window.open(`/results${this.path}?run_id=${runIDs[index]}`, '_blank');
         }
       }
     };
