@@ -351,15 +351,11 @@ suite('<test-search>', () => {
 
       suite('root query (Q-level) negation', () => {
         test('not all', () => {
-          assertQueryParse('not all(status:PASS)', {
-            exists: [{not: {pattern: 'all'}}, {status: 'PASS'}]
-          });
+          assertQueryFail('not all(status:PASS)');
         });
 
         test('! shorthand', () => {
-          assertQueryParse('!all(status:PASS)', {
-            exists: [{not: {pattern: 'all'}}, {status: 'PASS'}]
-          });
+          assertQueryFail('!all(status:PASS)');
         });
 
         test('not count', () => {
@@ -371,44 +367,23 @@ suite('<test-search>', () => {
         });
 
         test('not exists', () => {
-          assertQueryParse('not exists(status:PASS)', {
-            exists: [{not: {pattern: 'exists'}}, {status: 'PASS'}]
-          });
+          assertQueryFail('not exists(status:PASS)');
         });
 
         test('combining negated queries with or', () => {
-          assertQueryParse('not all(status:PASS) or not all(status:OK)', {
-            exists: [
-              {not: {pattern: 'all'}},
-              {or: [{status: 'PASS'}, {not: {pattern: 'all'}}]},
-              {status: 'OK'}
-            ]
-          });
+          assertQueryFail('not all(status:PASS) or not all(status:OK)');
         });
 
         test('not none query', () => {
-          assertQueryParse('not none(status:fail)', {
-            exists: [{not: {pattern: 'none'}}, {status: 'FAIL'}]
-          });
+          assertQueryFail('not none(status:fail)');
         });
 
         test('not query in and expression', () => {
-          assertQueryParse('not all(status:pass) and status:fail', {
-            exists: [
-              {not: {pattern: 'all'}},
-              {and: [{status: 'PASS'}, {status: 'FAIL'}]}
-            ]
-          });
+          assertQueryFail('not all(status:pass) and status:fail');
         });
 
         test('multiple negations with and/or', () => {
-          assertQueryParse('!all(status:pass) and !none(status:fail)', {
-            exists: [
-              {not: {pattern: 'all'}},
-              {and: [{status: 'PASS'}, {not: {pattern: 'none'}}]},
-              {status: 'FAIL'}
-            ]
-          });
+          assertQueryFail('!all(status:pass) and !none(status:fail)');
         });
       });
     });
@@ -807,14 +782,7 @@ suite('<test-search>', () => {
 
     suite('keywords in context', () => {
       // Keywords that take parentheses immediately
-      // Maps keyword -> output key in parse result (e.g., 'seq' -> 'sequential')
-      const directParenKeywordMap = {
-        'all': 'all',
-        'none': 'none',
-        'seq': 'sequential',
-        'exists': 'exists'
-      };
-      const directParenKeywords = Object.keys(directParenKeywordMap);
+      const directParenKeywords = ['all', 'none', 'seq', 'exists'];
 
       // Expand via CountSpecifier to "KEYWORD" "(" Exp ")"
       // This means the opening parenthesis is a different token
@@ -843,25 +811,14 @@ suite('<test-search>', () => {
             continue;
           }
           test(`nested ${keyword}`, () => {
-            const query = `${keyword}(status:pass and ${keyword}(status:fail))`;
-            const expected = {
-              [keyword]: [
-                {and: [{status: 'PASS'}, {pattern: keyword}]},
-                {status: 'FAIL'}
-              ]
-            };
-            assertQueryParse(query, expected);
+            // Keywords cannot appear as bare patterns in the new grammar
+            assertQueryFail(`${keyword}(status:pass and ${keyword}(status:fail))`);
           });
         }
 
         test('nested seq', () => {
-          assertQueryParse('seq(status:pass seq(status:fail))', {
-            sequential: [
-              {status: 'PASS'},
-              {pattern: 'seq'},
-              {status: 'FAIL'}
-            ]
-          });
+          // seq keyword cannot appear as bare pattern even inside seq()
+          assertQueryFail('seq(status:pass seq(status:fail))');
         });
 
         for (const keyword of countShortcutKeywords) {
@@ -875,13 +832,11 @@ suite('<test-search>', () => {
         });
       });
 
-      for (const [rootKeyword, outputKey] of Object.entries(directParenKeywordMap)) {
+      for (const rootKeyword of directParenKeywords) {
         suite(`in ${rootKeyword}() context`, () => {
           for (const keyword of keywords) {
             test(`${keyword} in ${rootKeyword}()`, () => {
-              const expected = {};
-              expected[outputKey] = [{pattern: keyword}];
-              assertQueryParse(`${rootKeyword}(${keyword})`, expected);
+              assertQueryFail(`${rootKeyword}(${keyword})`);
             });
           }
         });
@@ -890,10 +845,7 @@ suite('<test-search>', () => {
       suite('in count() context', () => {
         for (const keyword of keywords) {
           test(`${keyword} in count:1()`, () => {
-            assertQueryParse(`count:1(${keyword})`, {
-              count: 1,
-              where: {pattern: keyword},
-            });
+            assertQueryFail(`count:1(${keyword})`);
           });
         }
       });
@@ -902,15 +854,11 @@ suite('<test-search>', () => {
         for (const operator of ['and', 'or']) {
           for (const keyword of colonKeywords) {
             test(`${keyword} ${operator} pattern`, () => {
-              assertQueryParse(`${keyword} ${operator} foo`, {
-                exists: [{ [operator]: [{pattern: keyword}, {pattern: 'foo'}] }]
-              });
+              assertQueryFail(`${keyword} ${operator} foo`);
             });
 
             test(`pattern ${operator} ${keyword}`, () => {
-              assertQueryParse(`foo ${operator} ${keyword}`, {
-                exists: [{ [operator]: [{pattern: 'foo'}, {pattern: keyword}] }]
-              });
+              assertQueryFail(`foo ${operator} ${keyword}`);
             });
           }
         }
@@ -918,27 +866,19 @@ suite('<test-search>', () => {
 
       suite('in parenthesized implicit patterns', () => {
         test('(keyword)', () => {
-          assertQueryParse('(status)', {
-            exists: [{pattern: 'status'}]
-          });
+          assertQueryFail('(status)');
         });
 
         test('(keyword or pattern)', () => {
-          assertQueryParse('(status or foo)', {
-            exists: [{or: [{pattern: 'status'}, {pattern: 'foo'}]}]
-          });
+          assertQueryFail('(status or foo)');
         });
 
         test('(pattern and keyword)', () => {
-          assertQueryParse('(foo and path)', {
-            exists: [{and: [{pattern: 'foo'}, {pattern: 'path'}]}]
-          });
+          assertQueryFail('(foo and path)');
         });
 
         test('(keyword and pattern)', () => {
-          assertQueryParse('(status and foo)', {
-            exists: [{and: [{pattern: 'status'}, {pattern: 'foo'}]}]
-          });
+          assertQueryFail('(status and foo)');
         });
       });
 
@@ -972,12 +912,7 @@ suite('<test-search>', () => {
       suite('keyword before root queries', () => {
         for (const testCase of rootQueryTests) {
           test(`keyword before ${testCase.name}`, () => {
-            assertQueryParse(`${testCase.keyword} ${testCase.query}`, {
-              and: [
-                {exists: [{pattern: testCase.keyword}]},
-                testCase.result
-              ]
-            });
+            assertQueryFail(`${testCase.keyword} ${testCase.query}`);
           });
         }
       });
@@ -985,45 +920,26 @@ suite('<test-search>', () => {
       suite('keyword after root queries', () => {
         for (const testCase of rootQueryTests) {
           test(`${testCase.name} followed by keyword`, () => {
-            assertQueryParse(`${testCase.query} ${testCase.keyword}`, {
-              and: [
-                testCase.result,
-                {exists: [{pattern: testCase.keyword}]}
-              ]
-            });
+            assertQueryFail(`${testCase.query} ${testCase.keyword}`);
           });
         }
       });
 
       suite('keyword in complex nested expressions', () => {
         test('(keyword in nested and)', () => {
-          assertQueryParse('(foo and (bar and status))', {
-            exists: [{and: [
-              {pattern: 'foo'},
-              {and: [{pattern: 'bar'}, {pattern: 'status'}]}
-            ]}]
-          });
+          assertQueryFail('(foo and (bar and status))');
         });
 
         test('(keyword in nested or)', () => {
-          assertQueryParse('(foo or (bar or path))', {
-            exists: [{or: [
-              {pattern: 'foo'},
-              {or: [{pattern: 'bar'}, {pattern: 'path'}]}
-            ]}]
-          });
+          assertQueryFail('(foo or (bar or path))');
         });
 
         test('! operator on keyword', () => {
-          assertQueryParse('!status', {
-            exists: [{not: {pattern: 'status'}}]
-          });
+          assertQueryFail('!status');
         });
 
         test('not operator on keyword', () => {
-          assertQueryParse('not status', {
-            exists: [{not: {pattern: 'status'}}]
-          });
+          assertQueryFail('not status');
         });
       });
 
