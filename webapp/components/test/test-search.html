@@ -34,151 +34,155 @@ suite('<test-search>', () => {
       assert.isFalse(p.succeeded(), p.message);
     };
 
-    test('empty pattern', () => {
+    test('empty query', () => {
       assertQueryParse('', {exists: [{pattern: ''}]});
     });
 
-    test('simple pattern', () => {
-      assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
-      assertQueryParse(
-        '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm',
-        {exists: [{pattern: '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm'}]}
-      );
-    });
+    suite('pattern queries', () => {
+      suite('unquoted', () => {
+        test('simple', () => {
+          assertQueryParse('2dcontext', {exists: [{pattern: '2dcontext'}]});
+        });
 
-    suite('quoted pattern', () => {
-      test('basic', () => {
-        assertQueryParse('"foo"', {exists: [{pattern: 'foo'}]});
-        assertQueryParse('"/foo.html"', {exists: [{pattern: '/foo.html'}]});
-      });
-      test('complex', () => {
-        assertQueryParse('"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{pattern: '/foo.html?exclude=(Document|window|HTML.*)'}]});
-      });
-    });
-
-    test('subtest', () => {
-      assertQueryParse('subtest:idl_test', {exists: [{subtest: 'idl_test'}]});
-    });
-
-    test('subtest_quoted', () => {
-      assertQueryParse('subtest:"idl_test setup"', {exists: [{subtest: 'idl_test setup'}]});
-    });
-
-    test('path', () => {
-      assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
-    });
-
-    test('path quoted', () => {
-      assertQueryParse('path:"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{path: '/foo.html?exclude=(Document|window|HTML.*)'}]});
-    });
-
-    test('versioned browser', () => {
-      assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
-    });
-
-    test('test status', () => {
-      assertQueryParse('status:missing', {exists: [{status: 'UNKNOWN'}]});
-      assertQueryParse('status:!missing', {exists: [{status: {not: 'UNKNOWN'}}]});
-      assertQueryParse('sTaTuS:UnKnOwN', {exists: [{status: 'UNKNOWN'}]});
-    });
-
-    test('test status eq', () => {
-      assertQueryParse('sTaTuS:oK', {exists: [{status: 'OK'}]});
-    });
-
-    test('test status neq', () => {
-      assertQueryParse('StAtUs:!FaIl', {exists: [{status: {not: 'FAIL'}}]});
-    });
-
-    test('browser test status eq', () => {
-      // All known browsers.
-      for (const browser of AllBrowserNames) {
-        assertQueryParse(browser + ':ok', {exists: [{product: browser, status: 'OK'}]});
-      }
-
-      // Make sure unknown ones don't parse.
-      assertQueryFail('darkmatter:ok');
-
-      // Comparisons are case-insensitive.
-      assertQueryParse('cHrOmE:oK', {exists: [{product: 'chrome', status: 'OK'}]});
-    });
-
-    test('browser test status neq', () => {
-      assertQueryParse('sAfArI:!FaIl', {exists: [{product: 'safari', status: {not: 'FAIL'}}]});
-    });
-
-    test('pattern + test status', () => {
-      assertQueryParse('cssom firefox:timeout', {
-        exists: [
-          {pattern: 'cssom'},
-          {product: 'firefox', status: 'TIMEOUT'},
-        ],
+        test('simple test name', () => {
+          assertQueryParse(
+            '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm',
+            {exists: [{pattern: '/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm'}]}
+          );
+        });
       });
 
-      assertQueryParse('cssom AND firefox:timeout', {
-        exists: [{
-          and: [
-            {pattern: 'cssom'},
-            {product: 'firefox', status: 'TIMEOUT'},
-          ]
-        }],
-      });
+      suite('quoted', () => {
+        test('simple', () => {
+          assertQueryParse('"foo"', {exists: [{pattern: 'foo'}]});
+        });
 
-      assertQueryParse('cssom & firefox:timeout', {
-        exists: [{
-          and: [
-            {pattern: 'cssom'},
-            {product: 'firefox', status: 'TIMEOUT'},
-          ]
-        }],
+        test('simple test name', () => {
+          assertQueryParse('"/foo.html"', {exists: [{pattern: '/foo.html'}]});
+        });
+
+        test('complex test name', () => {
+          assertQueryParse('"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{pattern: '/foo.html?exclude=(Document|window|HTML.*)'}]});
+        });
       });
     });
 
-    test('pattern | test status', () => {
-      assertQueryParse('cssom or firefox:timeout', {
-        exists: [{
-          or: [
-            {pattern: 'cssom'},
-            {product: 'firefox', status: 'TIMEOUT'},
-          ]
-        }],
+    suite('subtest queries', () => {
+      test('unquoted', () => {
+        assertQueryParse('subtest:idl_test', {exists: [{subtest: 'idl_test'}]});
+      });
+
+      test('quoted', () => {
+        assertQueryParse('subtest:"idl_test setup"', {exists: [{subtest: 'idl_test setup'}]});
       });
     });
 
-    test('implicit and, or', () => {
-      assertQueryParse('a b or c', {
-        exists: [
-          {pattern: 'a'},
-          {
-            or: [
-              {pattern: 'b'},
-              {pattern: 'c'},
+    suite('path queries', () => {
+      test('simple path', () => {
+        assertQueryParse('path:/dom/', {exists: [{path: '/dom/'}]});
+      });
+
+      test('quoted path', () => {
+        assertQueryParse('path:"/foo.html?exclude=(Document|window|HTML.*)"', {exists: [{path: '/foo.html?exclude=(Document|window|HTML.*)'}]});
+      });
+    });
+
+    suite('status queries', () => {
+      suite('generic status', () => {
+        test('status:missing', () => {
+          assertQueryParse('status:missing', {exists: [{status: 'UNKNOWN'}]});
+        });
+
+        test('status negation', () => {
+          assertQueryParse('status:!missing', {exists: [{status: {not: 'UNKNOWN'}}]});
+        });
+
+        test('case-insensitive status', () => {
+          assertQueryParse('sTaTuS:UnKnOwN', {exists: [{status: 'UNKNOWN'}]});
+        });
+
+        test('status equality', () => {
+          assertQueryParse('sTaTuS:oK', {exists: [{status: 'OK'}]});
+        });
+
+        test('status inequality', () => {
+          assertQueryParse('StAtUs:!FaIl', {exists: [{status: {not: 'FAIL'}}]});
+        });
+      });
+
+      suite('browser-specific status', () => {
+        test('all known browsers parse correctly', () => {
+          for (const browser of AllBrowserNames) {
+            assertQueryParse(browser + ':ok', {exists: [{product: browser, status: 'OK'}]});
+          }
+        });
+
+        test('unknown browsers fail to parse', () => {
+          assertQueryFail('darkmatter:ok');
+        });
+
+        test('browser status is case-insensitive', () => {
+          assertQueryParse('cHrOmE:oK', {exists: [{product: 'chrome', status: 'OK'}]});
+        });
+
+        test('versioned browser', () => {
+          assertQueryParse('chrome-64:fail', {exists: [{product: 'chrome-64', status: 'FAIL'}]});
+        });
+
+        test('status inequality', () => {
+          assertQueryParse('sAfArI:!FaIl', {exists: [{product: 'safari', status: {not: 'FAIL'}}]});
+        });
+      });
+
+      suite('status with patterns and combinations', () => {
+        test('pattern and status (implicit and)', () => {
+          assertQueryParse('cssom firefox:timeout', {
+            exists: [
+              {pattern: 'cssom'},
+              {product: 'firefox', status: 'TIMEOUT'},
             ],
-          },
-        ],
-      });
-    });
+          });
+        });
 
-    test('explicit and, or', () => {
-      assertQueryParse('a and b or c', {
-        exists: [{
-          or: [
-            {
+        test('pattern and status with AND operator', () => {
+          assertQueryParse('cssom AND firefox:timeout', {
+            exists: [{
               and: [
-                {pattern: 'a'},
-                {pattern: 'b'},
-              ],
-            },
-            {pattern: 'c'},
-          ],
-        }]
+                {pattern: 'cssom'},
+                {product: 'firefox', status: 'TIMEOUT'},
+              ]
+            }],
+          });
+        });
+
+        test('pattern and status with & operator', () => {
+          assertQueryParse('cssom & firefox:timeout', {
+            exists: [{
+              and: [
+                {pattern: 'cssom'},
+                {product: 'firefox', status: 'TIMEOUT'},
+              ]
+            }],
+          });
+        });
       });
     });
 
-    test('parens', () => {
-      assertQueryParse('a and ( b or c )', {
-        exists: [{
-          and: [
+    suite('operators & precedence', () => {
+      test('OR operator with pattern and status', () => {
+        assertQueryParse('cssom or firefox:timeout', {
+          exists: [{
+            or: [
+              {pattern: 'cssom'},
+              {product: 'firefox', status: 'TIMEOUT'},
+            ]
+          }],
+        });
+      });
+
+      test('implicit and, or', () => {
+        assertQueryParse('a b or c', {
+          exists: [
             {pattern: 'a'},
             {
               or: [
@@ -187,276 +191,382 @@ suite('<test-search>', () => {
               ],
             },
           ],
-        }]
+        });
       });
 
-      assertQueryParse('a or ( b and c )', {
-        exists: [{
-          or: [
-            {pattern: 'a'},
+      test('nested or/and with status neq', () => {
+        assertQueryParse('(chrome:pass or edge:pass) (firefox:!pass and firefox:!ok)', {
+          exists: [
+            {
+              or: [
+                {product: 'chrome', status: 'PASS'},
+                {product: 'edge', status: 'PASS'},
+              ]
+            },
             {
               and: [
-                {pattern: 'b'},
-                {pattern: 'c'},
+                {product: 'firefox', status: { not: 'PASS'} },
+                {product: 'firefox', status: { not: 'OK'} },
               ],
             },
-          ],
-        }],
-      });
-    });
-
-    test('nested or/and/not', () => {
-      assertQueryParse('(chrome:pass or edge:pass) (firefox:!pass and firefox:!ok)', {
-        exists: [
-          {
-            or: [
-              {product: 'chrome', status: 'PASS'},
-              {product: 'edge', status: 'PASS'},
-            ]
-          },
-          {
-            and: [
-              {product: 'firefox', status: { not: 'PASS'} },
-              {product: 'firefox', status: { not: 'OK'} },
-            ],
-          },
-        ]
-      });
-      assertQueryParse(
-        'chrome:pass (!(firefox:pass or firefox:ok) and !(safari:pass or safari:ok) and !(edge:pass or edge:ok))',
-        {
-          exists: [
-            {product: 'chrome', status: 'PASS'},
-            {
-              and: ['firefox','safari','edge'].map(b => {
-                return {
-                  not: {
-                    or: [
-                      {product: b, status: 'PASS'},
-                      {product: b, status: 'OK'},
-                    ]
-                  }
-                };
-              })
-            },
           ]
-        }
-      );
-    });
+        });
+      });
 
-    test('or of and of and', () => {
-      assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
-        exists: [
-          {product: 'firefox', status: 'PASS'},
-          {
+      test('explicit and, or (and > or precedence)', () => {
+        assertQueryParse('a and b or c', {
+          exists: [{
             or: [
-              {pattern: 'a'},
               {
                 and: [
-                  {product: 'chrome', status: 'FAIL'},
-                  {
-                    and: [
-                      {pattern: 'b'},
-                      {pattern: 'c'},
-                    ],
-                  },
+                  {pattern: 'a'},
+                  {pattern: 'b'},
                 ],
               },
+              {pattern: 'c'},
             ],
-          },
-        ]
-      });
-    });
-
-    test('exists', () => {
-      assertQueryParse('exists(status:PASS)', {
-        exists: [{status: 'PASS'}],
-      });
-    });
-
-    test('all', () => {
-      assertQueryParse('all(status:!PASS status:!OK)', {
-        all: [
-          {status: {not: 'PASS'} },
-          {status: {not: 'OK'} },
-        ],
-      });
-    });
-
-    test('none', () => {
-      assertQueryParse('none(status:PASS or status:OK)', {
-        none: [{
-          or: [
-            {status: 'PASS'},
-            {status: 'OK'},
-          ]
-        }],
-      });
-    });
-
-    test('sequential', () => {
-      // Canon: flip-flopping, which is usually flakiness:
-      // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
-      assertQueryParse('seq(status:PASS status:!PASS)', {
-        sequential: [
-          {status: 'PASS'},
-          {status: {not: 'PASS'} },
-        ]
-      });
-      // Canon: flip-flopping, which is usually flakiness:
-      // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
-      assertQueryParse('seq((status:!PASS and status:!OK) (status:PASS or status:OK)) seq((status:PASS or status:OK) (status:!PASS and status:!OK))', {
-        and: [
-          { sequential: [
-            {
-              and: [
-                {status: {not: 'PASS'}},
-                {status: {not: 'OK'}},
-              ],
-            },
-            { or: [{status: 'PASS'}, {status: 'OK'}] },
-          ]},
-          { sequential: [
-            { or: [{status: 'PASS'}, {status: 'OK'}] },
-            {
-              and: [
-                {status: {not: 'PASS'}},
-                {status: {not: 'OK'}},
-              ],
-            },
-          ]},
-        ],
-      });
-    });
-
-    test('is', () => {
-      assertQueryParse('is:different', {
-        exists: [{ is: 'different' }]
-      });
-      assertQueryParse('is:tentative', {
-        exists: [{ is: 'tentative' }]
-      });
-      assertQueryParse('is:optional', {
-        exists: [{ is: 'optional' }]
-      });
-    });
-
-    test('count', () => {
-      assertQueryParse('count:5(status:PASS or status:OK)', {
-        count: 5,
-        where: {
-          or: [{status: 'PASS'}, {status: 'OK'}],
-        },
-      });
-      for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
-        assertQueryParse(`${atom}(status:!PASS and status:!OK)`, {
-          count,
-          where: {
-            and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
-          },
+          }]
         });
-      }
-      assertQueryParse('count=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
-      assertQueryParse('count>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
-      assertQueryParse('count>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
-      assertQueryParse('count<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
-      assertQueryParse('count<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
-
-      assertQueryParse('count:=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
-      assertQueryParse('count:>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
-      assertQueryParse('count:>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
-      assertQueryParse('count:<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
-      assertQueryParse('count:<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
-    });
-
-    test('simple link search', () => {
-      assertQueryParse('link:2dcontext', {exists: [{link: '2dcontext'}]});
-      assertQueryParse(
-        'link:issues.chromium.org/issues/',
-        {exists: [{link: 'issues.chromium.org/issues/'}]}
-      );
-    });
-
-    test('test status | link', () => {
-      assertQueryParse('firefox:timeout link:chromium.bug', {
-        exists: [
-          {product: 'firefox', status: 'TIMEOUT'},
-          {link: 'chromium.bug'},
-        ],
       });
 
-      assertQueryParse('link:chromium.bug firefox:timeout', {
-        exists: [
-          {link: 'chromium.bug'},
-          {product: 'firefox', status: 'TIMEOUT'},
-        ],
+      suite('parentheses for precedence override', () => {
+        test('parens: a and (b or c)', () => {
+          assertQueryParse('a and ( b or c )', {
+            exists: [{
+              and: [
+                {pattern: 'a'},
+                {
+                  or: [
+                    {pattern: 'b'},
+                    {pattern: 'c'},
+                  ],
+                },
+              ],
+            }]
+          });
+        });
+
+        test('parens: a or (b and c)', () => {
+          assertQueryParse('a or ( b and c )', {
+            exists: [{
+              or: [
+                {pattern: 'a'},
+                {
+                  and: [
+                    {pattern: 'b'},
+                    {pattern: 'c'},
+                  ],
+                },
+              ],
+            }],
+          });
+        });
+      });
+
+      test('complex: or of and of and', () => {
+        assertQueryParse('firefox:pass a | chrome:fail and ( b & c )', {
+          exists: [
+            {product: 'firefox', status: 'PASS'},
+            {
+              or: [
+                {pattern: 'a'},
+                {
+                  and: [
+                    {product: 'chrome', status: 'FAIL'},
+                    {
+                      and: [
+                        {pattern: 'b'},
+                        {pattern: 'c'},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ]
+        });
       });
     });
 
-    test('test status and not link', () => {
-      assertQueryParse('firefox:timeout & not link:chromium.bug', {
-        exists: [
-          {
-            and: [
-              { product: 'firefox', status: 'TIMEOUT' },
-              {
-                not:
-                  { link: 'chromium.bug' },
-              },
-            ],
+    suite('negation', () => {
+      suite('expression-level negation', () => {
+        test('complex and with negated parenthesized or', () => {
+          assertQueryParse(
+            'chrome:pass (!(firefox:pass or firefox:ok) and !(safari:pass or safari:ok) and !(edge:pass or edge:ok))',
+            {
+              exists: [
+                {product: 'chrome', status: 'PASS'},
+                {
+                  and: ['firefox','safari','edge'].map(b => {
+                    return {
+                      not: {
+                        or: [
+                          {product: b, status: 'PASS'},
+                          {product: b, status: 'OK'},
+                        ]
+                      }
+                    };
+                  })
+                },
+              ]
+            }
+          );
+        });
+
+        test('test status and not link', () => {
+          assertQueryParse('firefox:timeout & not link:chromium.bug', {
+            exists: [{
+              and: [
+                {product: 'firefox', status: 'TIMEOUT'},
+                {not: {link: 'chromium.bug'}},
+              ]
+            }],
+          });
+        });
+      });
+    });
+
+    suite('root queries (Q-level)', () => {
+      test('exists', () => {
+        assertQueryParse('exists(status:PASS)', {
+          exists: [{status: 'PASS'}],
+        });
+      });
+
+      test('all', () => {
+        assertQueryParse('all(status:!PASS status:!OK)', {
+          all: [
+            {status: {not: 'PASS'} },
+            {status: {not: 'OK'} },
+          ],
+        });
+      });
+
+      test('none', () => {
+        assertQueryParse('none(status:PASS or status:OK)', {
+          none: [{
+            or: [
+              {status: 'PASS'},
+              {status: 'OK'},
+            ]
           }],
+        });
+      });
+
+      suite('sequential', () => {
+        test('simple flip-flopping', () => {
+          // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
+          assertQueryParse('seq(status:PASS status:!PASS)', {
+            sequential: [
+              {status: 'PASS'},
+              {status: {not: 'PASS'} },
+            ]
+          });
+        });
+
+        test('complex flip-flopping', () => {
+          // A pass turning into a fail on the next run, and a non-pass turning to a pass on the next run.
+          assertQueryParse('seq((status:!PASS and status:!OK) (status:PASS or status:OK)) seq((status:PASS or status:OK) (status:!PASS and status:!OK))', {
+            and: [
+              { sequential: [
+                {
+                  and: [
+                    {status: {not: 'PASS'}},
+                    {status: {not: 'OK'}},
+                  ],
+                },
+                { or: [{status: 'PASS'}, {status: 'OK'}] },
+              ]},
+              { sequential: [
+                { or: [{status: 'PASS'}, {status: 'OK'}] },
+                {
+                  and: [
+                    {status: {not: 'PASS'}},
+                    {status: {not: 'OK'}},
+                  ],
+                },
+              ]},
+            ],
+          });
+        });
+      });
+
+      suite('count', () => {
+        test('count:5 with or', () => {
+          assertQueryParse('count:5(status:PASS or status:OK)', {
+            count: 5,
+            where: {
+              or: [{status: 'PASS'}, {status: 'OK'}],
+            },
+          });
+        });
+        for (const [atom, count] of [['three', 3], ['two', 2], ['one', 1]]) {
+          const query = `${atom}(status:!PASS and status:!OK)`;
+          test(query, () => {
+            assertQueryParse(query, {
+              count,
+              where: {
+                and: [{status: {not: 'PASS'}}, {status: {not: 'OK'}}],
+              },
+            });
+          });
+        }
+
+        test('count=5(status:PASS)', () => {
+          assertQueryParse('count=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+        });
+
+        test('count>1(status:PASS)', () => {
+          assertQueryParse('count>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+        });
+
+        test('count>=2(status:PASS)', () => {
+          assertQueryParse('count>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+        });
+
+        test('count<3(status:PASS)', () => {
+          assertQueryParse('count<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+        });
+
+        test('count<=2(status:PASS)', () => {
+          assertQueryParse('count<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+        });
+
+        test('count:=5(status:PASS)', () => {
+          assertQueryParse('count:=5(status:PASS)', { count: 5, where: {status: 'PASS' }});
+        });
+
+        test('count:>1(status:PASS)', () => {
+          assertQueryParse('count:>1(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+        });
+
+        test('count:>=2(status:PASS)', () => {
+          assertQueryParse('count:>=2(status:PASS)', { moreThan: 1, where: {status: 'PASS' }});
+        });
+
+        test('count:<3(status:PASS)', () => {
+          assertQueryParse('count:<3(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+        });
+
+        test('count:<=2(status:PASS)', () => {
+          assertQueryParse('count:<=2(status:PASS)', { lessThan: 3, where: {status: 'PASS' }});
+        });
+      });
+
+      suite('multi-root queries', () => {
+        test('none and count', () => {
+          assertQueryParse('none(status:missing) count>0(status:!pass)', {
+            and: [
+              { none: [{ status: 'UNKNOWN' }] },
+              { moreThan: 0, where: { status: { not: 'PASS' } } },
+            ]
+          });
+        });
+
+        test('all or none', () => {
+          assertQueryParse('all(status:pass) or none(status:pass)', {
+            or: [
+              { all: [{ status: 'PASS' }] },
+              { none: [{ status: 'PASS' }] },
+            ]
+          });
+        });
+
+        test('pattern and all', () => {
+          assertQueryParse('idlharness all(status:fail)', {
+            and: [
+              { exists: [{ pattern: 'idlharness' }] },
+              { all: [{ status: 'FAIL' }] },
+            ]
+          });
+        });
+
+        test('pattern with and all', () => {
+          assertQueryParse('2dcontext and all(status:fail)', {
+            and: [
+              { exists: [{ pattern: '2dcontext' }] },
+              { all: [{ status: 'FAIL' }] },
+            ]
+          });
+        });
       });
     });
 
-    test('simple triaged search', () => {
-      assertQueryParse('triaged:chrome', { exists: [{ triaged: 'chrome' }] });
-    });
+    suite('metadata queries', () => {
+      suite('is queries', () => {
+        test('is:different', () => {
+          assertQueryParse('is:different', {
+            exists: [{ is: 'different' }]
+          });
+        });
 
-    test('test status and triaged', () => {
-      assertQueryParse('firefox:timeout triaged:firefox', {
-        exists: [
-          { product: 'firefox', status: 'TIMEOUT' },
-          { triaged: 'firefox' },
-        ],
+        test('is:tentative', () => {
+          assertQueryParse('is:tentative', {
+            exists: [{ is: 'tentative' }]
+          });
+        });
+
+        test('is:optional', () => {
+          assertQueryParse('is:optional', {
+            exists: [{ is: 'optional' }]
+          });
+        });
       });
-    });
 
-    test('test-level triaged search', () => {
-      assertQueryParse('triaged:test-issue', { exists: [{ triaged: '' }] });
-    });
+      suite('link searches', () => {
+        test('simple link:2dcontext', () => {
+          assertQueryParse('link:2dcontext', {exists: [{link: '2dcontext'}]});
+        });
 
-    test('metadata label search', () => {
-      assertQueryParse('label:interop123', { exists: [{ label: 'interop123' }] });
-    });
+        test('link:issues.chromium.org/issues/', () => {
+          assertQueryParse(
+            'link:issues.chromium.org/issues/',
+            {exists: [{link: 'issues.chromium.org/issues/'}]}
+          );
+        });
 
-    test('web feature search', () => {
-      assertQueryParse('feature:grid', { exists: [{ feature: 'grid' }] });
-    });
+        test('test status link: firefox first', () => {
+          assertQueryParse('firefox:timeout link:chromium.bug', {
+            exists: [
+              {product: 'firefox', status: 'TIMEOUT'},
+              {link: 'chromium.bug'},
+            ],
+          });
+        });
 
-    test('multi-root', () => {
-      assertQueryParse('none(status:missing) count>0(status:!pass)', {
-        and: [
-          { none: [{ status: 'UNKNOWN' }] },
-          { moreThan: 0, where: { status: { not: 'PASS' } } },
-        ]
+        test('test status link: link first', () => {
+          assertQueryParse('link:chromium.bug firefox:timeout', {
+            exists: [
+              {link: 'chromium.bug'},
+              {product: 'firefox', status: 'TIMEOUT'},
+            ],
+          });
+        });
       });
-      assertQueryParse('all(status:pass) or none(status:pass)', {
-        or: [
-          { all: [{ status: 'PASS' }] },
-          { none: [{ status: 'PASS' }] },
-        ]
+
+      test('simple triaged search', () => {
+        assertQueryParse('triaged:chrome', { exists: [{ triaged: 'chrome' }] });
       });
-      assertQueryParse('idlharness all(status:fail)', {
-        and: [
-          { exists: [{ pattern: 'idlharness' }] },
-          { all: [{ status: 'FAIL' }] },
-        ]
+
+      test('test status and triaged', () => {
+        assertQueryParse('firefox:timeout triaged:firefox', {
+          exists: [
+            { product: 'firefox', status: 'TIMEOUT' },
+            { triaged: 'firefox' },
+          ],
+        });
       });
-      assertQueryParse('2dcontext and all(status:fail)', {
-        and: [
-          { exists: [{ pattern: '2dcontext' }] },
-          { all: [{ status: 'FAIL' }] },
-        ]
+
+      test('test-level triaged search', () => {
+        assertQueryParse('triaged:test-issue', { exists: [{ triaged: '' }] });
+      });
+
+      test('metadata label search', () => {
+        assertQueryParse('label:interop123', { exists: [{ label: 'interop123' }] });
+      });
+
+      test('web feature search', () => {
+        assertQueryParse('feature:grid', { exists: [{ feature: 'grid' }] });
       });
     });
   });
