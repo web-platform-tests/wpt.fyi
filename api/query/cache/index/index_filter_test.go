@@ -1042,6 +1042,61 @@ func TestBindExecute_TestWebFeature(t *testing.T) {
 	assert.Equal(t, expectedResult, srs[0])
 }
 
+func TestBindExecute_TestWebFeature_PreservesCase(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	matchingTestName := "/custom-elements/Document-createElement-customized-builtins.html"
+	runs := mockTestRuns(loader, idx, []testRunData{
+		{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   matchingTestName,
+						Status: "PASS",
+					},
+					{
+						Test:   "/custom-elements/other-test.html",
+						Status: "FAIL",
+					},
+				},
+			},
+		},
+	})
+
+	data := shared.WebFeaturesData{
+		matchingTestName: {"customized-built-in-elements": nil},
+		"/custom-elements/other-test.html": {"autonomous-custom-elements": nil},
+	}
+
+	testlabel := query.TestWebFeature{WebFeature: "customized-built-in-elements", WebFeaturesData: data}
+	plan, err := idx.Bind(runs, testlabel)
+	assert.Nil(t, err)
+
+	res := plan.Execute(runs, query.AggregationOpts{})
+	srs, ok := res.([]shared.SearchResult)
+	assert.True(t, ok)
+
+	assert.Equal(t, 1, len(srs))
+	expectedResult := shared.SearchResult{
+		Test: matchingTestName,
+		LegacyStatus: []shared.LegacySearchRunResult{
+			{
+				Passes:        1,
+				Total:         1,
+				Status:        "",
+				NewAggProcess: true,
+			},
+		},
+	}
+
+	assert.Equal(t, expectedResult, srs[0])
+}
+
 func TestBindExecute_IsDifferent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
