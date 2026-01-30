@@ -1908,7 +1908,7 @@ export const interopData = {
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2026/README.md',
     'focus_areas': {
       'interop-2026-anchor-positioning': {
-        'description': 'CSS anchor positioning',
+        'description': 'CSS Anchor Positioning',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
         'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning',
