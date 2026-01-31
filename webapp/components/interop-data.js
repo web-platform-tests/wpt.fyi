@@ -1822,7 +1822,7 @@ export const interopData = {
       },
       {
         'name': 'JPEG XL',
-        'url': '',
+        'url': 'https://github.com/web-platform-tests/interop-jpegxl',
         'scores_over_time': []
       },
       {
