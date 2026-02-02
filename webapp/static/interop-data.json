@@ -1741,5 +1741,357 @@
         ]
       }
     }
+  },
+  "2026": {
+    "browsers": ["chrome_canary", "edge", "firefox", "safari"],
+    "mobile_browsers": ["chrome_android", "firefox_android"],
+    "table_sections": [
+      {
+        "name": "Active Focus Areas",
+        "rows": [
+          "interop-2026-anchor-positioning",
+          "interop-2026-attr",
+          "interop-2026-contrast-color",
+          "interop-2026-container-style-queries",
+          "interop-2026-custom-highlights",
+          "interop-2026-dialogs-and-popovers",
+          "interop-2026-fetch",
+          "interop-2026-indexeddb",
+          "interop-2026-jspi-for-wasm",
+          "interop-2026-media-pseudo-classes",
+          "interop-2026-navigation",
+          "interop-2026-scoped-custom-element-registries",
+          "interop-2026-scroll-driven-animations",
+          "interop-2026-scroll-snap",
+          "interop-2026-shape",
+          "interop-2026-view-transitions",
+          "interop-2026-webcompat",
+          "interop-2026-webrtc",
+          "interop-2026-webtransport",
+          "interop-2026-zoom"
+        ],
+        "score_as_group": false
+      },
+      {
+        "name": "Active Investigations",
+        "rows": [
+          "Accessibility testing",
+          "JPEG XL",
+          "Mobile testing",
+          "WebVTT"
+        ],
+        "score_as_group": true
+      }
+    ],
+    "investigation_scores": [
+      {
+        "name": "Accessibility testing",
+        "url": "https://github.com/web-platform-tests/interop-accessibility",
+        "scores_over_time": []
+      },
+      {
+        "name": "JPEG XL",
+        "url": "https://github.com/web-platform-tests/interop-jpegxl",
+        "scores_over_time": []
+      },
+      {
+        "name": "Mobile testing",
+        "url": "https://github.com/web-platform-tests/interop-mobile-testing",
+        "scores_over_time": []
+      },
+      {
+        "name": "WebVTT",
+        "url": "https://github.com/web-platform-tests/interop-webvtt",
+        "scores_over_time": []
+      }
+    ],
+    "investigation_weight": 0.0,
+    "mobile_table_sections": [
+      {
+        "name": "Active Focus Areas",
+        "rows": [
+          "interop-2026-anchor-positioning",
+          "interop-2026-attr",
+          "interop-2026-contrast-color",
+          "interop-2026-container-style-queries",
+          "interop-2026-custom-highlights",
+          "interop-2026-dialogs-and-popovers",
+          "interop-2026-fetch",
+          "interop-2026-indexeddb",
+          "interop-2026-jspi-for-wasm",
+          "interop-2026-media-pseudo-classes",
+          "interop-2026-navigation",
+          "interop-2026-scoped-custom-element-registries",
+          "interop-2026-scroll-driven-animations",
+          "interop-2026-scroll-snap",
+          "interop-2026-shape",
+          "interop-2026-view-transitions",
+          "interop-2026-webcompat",
+          "interop-2026-webrtc",
+          "interop-2026-webtransport",
+          "interop-2026-zoom"
+        ],
+        "score_as_group": false
+      },
+      {
+        "name": "Active Investigations",
+        "rows": [
+          "Accessibility testing",
+          "JPEG XL",
+          "Mobile testing",
+          "WebVTT"
+        ],
+        "score_as_group": true
+      }
+    ],
+    "mobile_focus_areas": [
+      "interop-2026-anchor-positioning",
+      "interop-2026-attr",
+      "interop-2026-contrast-color",
+      "interop-2026-container-style-queries",
+      "interop-2026-custom-highlights",
+      "interop-2026-dialogs-and-popovers",
+      "interop-2026-fetch",
+      "interop-2026-indexeddb",
+      "interop-2026-jspi-for-wasm",
+      "interop-2026-media-pseudo-classes",
+      "interop-2026-navigation",
+      "interop-2026-scoped-custom-element-registries",
+      "interop-2026-scroll-driven-animations",
+      "interop-2026-scroll-snap",
+      "interop-2026-shape",
+      "interop-2026-view-transitions",
+      "interop-2026-webcompat",
+      "interop-2026-webrtc",
+      "interop-2026-webtransport",
+      "interop-2026-zoom"
+    ],
+    "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2026/interop-2026-{stable|experimental}-v2.csv",
+    "mobile_csv_url": "https://api.github.com/repos/jgraham/interop-results/contents/2026/latest/aligned/mobile-{stable|experimental}-current.csv?ref=main",
+    "summary_feature_name": "summary",
+    "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
+    "focus_areas_description": "https://github.com/web-platform-tests/interop/blob/main/2026/README.md",
+    "focus_areas": {
+      "interop-2026-anchor-positioning": {
+        "description": "CSS Anchor Positioning",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning",
+        "spec": "https://drafts.csswg.org/css-anchor-position-1/",
+        "tests": "/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning",
+        "mobile_tests": "/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-anchor-positioning"
+        ]
+      },
+      "interop-2026-attr": {
+        "description": "CSS attr()",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/css-values?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-attr",
+        "mobile_tests": "/results/css/css-values?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-attr",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-attr"
+        ]
+      },
+      "interop-2026-contrast-color": {
+        "description": "CSS contrast-color()",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/css-color?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-contrast-color",
+        "mobile_tests": "/results/css/css-color?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-contrast-color",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-contrast-color"
+        ]
+      },
+      "interop-2026-container-style-queries": {
+        "description": "Container style queries",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/css-conditional/container-queries?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-container-style-queries",
+        "mobile_tests": "/results/css/css-conditional/container-queries?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-container-style-queries",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-container-style-queries"
+        ]
+      },
+      "interop-2026-custom-highlights": {
+        "description": "Custom highlights",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/css-highlight-api?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-custom-highlights",
+        "mobile_tests": "/results/css/css-highlight-api?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-custom-highlights",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-custom-highlights"
+        ]
+      },
+      "interop-2026-dialogs-and-popovers": {
+        "description": "Dialogs and Popovers",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-dialogs-and-popovers",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-dialogs-and-popovers",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-dialogs-and-popovers"
+        ]
+      },
+      "interop-2026-fetch": {
+        "description": "Fetch uploads and ranges",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/fetch?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-fetch",
+        "mobile_tests": "/results/fetch?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-fetch",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-fetch"
+        ]
+      },
+      "interop-2026-indexeddb": {
+        "description": "IndexedDB",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB",
+        "spec": "",
+        "tests": "/results/IndexedDB?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-indexeddb",
+        "mobile_tests": "/results/IndexedDB?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-indexeddb",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-indexeddb"
+        ]
+      },
+      "interop-2026-jspi-for-wasm": {
+        "description": "JSPI for WASM",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/wasm/jsapi/jspi?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-jspi-for-wasm",
+        "mobile_tests": "/results/wasm/jsapi/jspi?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-jspi-for-wasm",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-jspi-for-wasm"
+        ]
+      },
+      "interop-2026-media-pseudo-classes": {
+        "description": "Media pseudo-classes",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/selectors/media?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-media-pseudo-classes",
+        "mobile_tests": "/results/css/selectors/media?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-media-pseudo-classes",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-media-pseudo-classes"
+        ]
+      },
+      "interop-2026-navigation": {
+        "description": "Navigation API",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API",
+        "spec": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#navigation-api",
+        "tests": "/results/navigation-api?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-navigation",
+        "mobile_tests": "/results/navigation-api?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-navigation",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-navigation"
+        ]
+      },
+      "interop-2026-scoped-custom-element-registries": {
+        "description": "Scoped custom element registries",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/custom-elements/registries?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-scoped-custom-element-registries",
+        "mobile_tests": "/results/custom-elements/registries?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-scoped-custom-element-registries",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-scoped-custom-element-registries"
+        ]
+      },
+      "interop-2026-scroll-driven-animations": {
+        "description": "Scroll Driven Animations",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/scroll-animations?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-scroll-driven-animations",
+        "mobile_tests": "/results/scroll-animations?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-scroll-driven-animations",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-scroll-driven-animations"
+        ]
+      },
+      "interop-2026-scroll-snap": {
+        "description": "Scroll snap",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/css/css-scroll-snap?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-scroll-snap",
+        "mobile_tests": "/results/css/css-scroll-snap?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-scroll-snap",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-scroll-snap"
+        ]
+      },
+      "interop-2026-shape": {
+        "description": "CSS shape()",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-shape",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-shape",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-shape"
+        ]
+      },
+      "interop-2026-view-transitions": {
+        "description": "View Transitions",
+        "mdn": "",
+        "spec": "https://drafts.csswg.org/css-view-transitions/",
+        "tests": "/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-view-transitions",
+        "mobile_tests": "/results/css/css-view-transitions?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-view-transitions",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-view-transitions"
+        ]
+      },
+      "interop-2026-webcompat": {
+        "description": "Web compat",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-webcompat",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-webcompat",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-webcompat"
+        ]
+      },
+      "interop-2026-webrtc": {
+        "description": "WebRTC",
+        "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API",
+        "spec": "https://w3c.github.io/webrtc-pc/",
+        "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-webrtc",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-webrtc",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-webrtc"
+        ]
+      },
+      "interop-2026-webtransport": {
+        "description": "WebTransport",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/webtransport?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-webtransport",
+        "mobile_tests": "/results/webtransport?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-webtransport",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-webtransport"
+        ]
+      },
+      "interop-2026-zoom": {
+        "description": "CSS zoom",
+        "mdn": "",
+        "spec": "",
+        "tests": "/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-zoom",
+        "mobile_tests": "/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-zoom",
+        "countsTowardScore": true,
+        "labels": [
+          "interop-2026-zoom"
+        ]
+      }
+    }
   }
 }
