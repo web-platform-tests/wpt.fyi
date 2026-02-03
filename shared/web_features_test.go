@@ -46,6 +46,39 @@ func TestWebFeaturesData_TestMatchesWithWebFeature(t *testing.T) {
 			webFeature: "feature1",
 			expected:   false,
 		},
+		{
+			name: "test name with uppercase characters matches exact case",
+			data: WebFeaturesData{
+				"/custom-elements/Document-createElement-customized-builtins.html": map[string]interface{}{
+					"customized-built-in-elements": nil,
+				},
+			},
+			test:       "/custom-elements/Document-createElement-customized-builtins.html",
+			webFeature: "customized-built-in-elements",
+			expected:   true,
+		},
+		{
+			name: "test name case must match exactly",
+			data: WebFeaturesData{
+				"/custom-elements/Document-createElement-customized-builtins.html": map[string]interface{}{
+					"customized-built-in-elements": nil,
+				},
+			},
+			test:       "/custom-elements/document-createelement-customized-builtins.html",
+			webFeature: "customized-built-in-elements",
+			expected:   false,
+		},
+		{
+			name: "web feature name remains case-insensitive",
+			data: WebFeaturesData{
+				"/custom-elements/Document-createElement-customized-builtins.html": map[string]interface{}{
+					"customized-built-in-elements": nil,
+				},
+			},
+			test:       "/custom-elements/Document-createElement-customized-builtins.html",
+			webFeature: "Customized-Built-In-Elements",
+			expected:   true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -123,10 +156,14 @@ func TestWebFeaturesManifestV1Data_prepareTestWebFeatureFilter(t *testing.T) {
 		},
 		"feature2": []string{
 			"/test2",
+		},
+		"Feature3": []string{
+			"/Test3",
 		}}
 	expectedResult := WebFeaturesData{
 		"/test1": {"feature1": nil},
 		"/test2": {"feature1": nil, "feature2": nil},
+		"/Test3": {"feature3": nil},
 	}
 	result := data.prepareTestWebFeatureFilter()
 	assert.Equal(t, expectedResult, result)
