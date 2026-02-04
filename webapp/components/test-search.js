@@ -47,6 +47,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
       | Count
       | Sequential
       | Exists
+      | "(" Root ")"   -- parenRoot
 
     All = "all(" ListOf<Exp, space*> ")"
 
@@ -139,7 +140,7 @@ const QUERY_GRAMMAR = ohm.grammar(`
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
 
-    patternExp = nameFragment
+    patternExp = ~reserved nameFragment
 
     productSpec = browserName ("-" browserVersion)?
 
@@ -155,6 +156,28 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = caseInsensitive<"different">
       | caseInsensitive<"tentative">
       | caseInsensitive<"optional">
+
+    reserved
+      = browserName
+        | caseInsensitive<"not">
+        | caseInsensitive<"and">
+        | caseInsensitive<"or">
+        | caseInsensitive<"all">
+        | caseInsensitive<"none">
+        | caseInsensitive<"exists">
+        | caseInsensitive<"seq">
+        | caseInsensitive<"count">
+        | caseInsensitive<"one">
+        | caseInsensitive<"two">
+        | caseInsensitive<"three">
+        | caseInsensitive<"status">
+        | caseInsensitive<"subtest">
+        | caseInsensitive<"path">
+        | caseInsensitive<"link">
+        | caseInsensitive<"triaged">
+        | caseInsensitive<"label">
+        | caseInsensitive<"feature">
+        | caseInsensitive<"is">
 
     nameFragment
       = basicNameFragment                       -- basic
@@ -225,6 +248,7 @@ const QUERY_SEMANTICS = QUERY_GRAMMAR.createSemantics().addOperation('eval', {
   },
   OrQ: orConjunction,
   AndQ: andConjunction,
+  Q_parenRoot: (_, r, __) => r.eval(),
   EmptyListOf: function() {
     return [];
   },
