@@ -1908,7 +1908,7 @@ export const interopData = {
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2026/README.md',
     'focus_areas': {
       'interop-2026-anchor-positioning': {
-        'description': 'CSS Anchor Positioning',
+        'description': 'CSS anchor positioning',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
         'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning',
@@ -1963,7 +1963,7 @@ export const interopData = {
         ]
       },
       'interop-2026-dialogs-and-popovers': {
-        'description': 'Dialogs and Popovers',
+        'description': 'Dialogs and popovers',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-dialogs-and-popovers',
@@ -2040,7 +2040,7 @@ export const interopData = {
         ]
       },
       'interop-2026-scroll-driven-animations': {
-        'description': 'Scroll Driven Animations',
+        'description': 'Scroll-driven animations',
         'mdn': '',
         'spec': '',
         'tests': '/results/scroll-animations?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-scroll-driven-animations',
@@ -2073,7 +2073,7 @@ export const interopData = {
         ]
       },
       'interop-2026-view-transitions': {
-        'description': 'View Transitions',
+        'description': 'View transitions',
         'mdn': '',
         'spec': 'https://drafts.csswg.org/css-view-transitions/',
         'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
