@@ -1452,7 +1452,8 @@ export const interopData = {
         'scores_over_time': [
           { 'date': '2025-08-05', 'score': 300 },
           { 'date': '2025-10-07', 'score': 450 },
-          { 'date': '2025-11-05', 'score': 510 }
+          { 'date': '2025-11-05', 'score': 510 },
+          { 'date': '2025-12-31', 'score': 610 }
         ]
       },
       {
@@ -1908,14 +1909,14 @@ export const interopData = {
     'focus_areas_description': 'https://github.com/web-platform-tests/interop/blob/main/2026/README.md',
     'focus_areas': {
       'interop-2026-anchor-positioning': {
-        'description': 'CSS Anchor Positioning',
+        'description': 'CSS anchor positioning',
         'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
-        'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning',
-        'mobile_tests': '/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-anchor-positioning',
+        'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
+        'mobile_tests': '/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
         'countsTowardScore': true,
         'labels': [
-          'interop-2026-anchor-positioning'
+          'interop-2025-anchor-positioning'
         ]
       },
       'interop-2026-attr': {
@@ -1963,7 +1964,7 @@ export const interopData = {
         ]
       },
       'interop-2026-dialogs-and-popovers': {
-        'description': 'Dialogs and Popovers',
+        'description': 'Dialogs and popovers',
         'mdn': '',
         'spec': '',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-dialogs-and-popovers',
@@ -2040,7 +2041,7 @@ export const interopData = {
         ]
       },
       'interop-2026-scroll-driven-animations': {
-        'description': 'Scroll Driven Animations',
+        'description': 'Scroll-driven animations',
         'mdn': 'https://developer.mozilla.org/docs/Web/CSS/Guides/Scroll-driven_animations',
         'spec': 'https://drafts.csswg.org/scroll-animations-1/',
         'tests': '/results/scroll-animations?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-scroll-driven-animations',
@@ -2073,7 +2074,7 @@ export const interopData = {
         ]
       },
       'interop-2026-view-transitions': {
-        'description': 'View Transitions',
+        'description': 'View transitions',
         'mdn': '',
         'spec': 'https://drafts.csswg.org/css-view-transitions/',
         'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
