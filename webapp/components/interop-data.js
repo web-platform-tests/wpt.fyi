@@ -636,7 +636,7 @@ export const interopData = {
       },
       'interop-2023-modules': {
         'description': 'Modules',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules',
+        'mdn': 'https://developer.mozilla.org/docs/Web/JavaScript/Guide/Modules',
         'spec': 'https://tc39.es/proposal-import-assertions/',
         'tests': '/results/?label=master&product=chrome&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules',
         'countsTowardScore': true,
@@ -989,7 +989,7 @@ export const interopData = {
       },
       'interop-2024-accessibility': {
         'description': 'Accessibility',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Glossary/Accessible_name',
+        'mdn': 'https://developer.mozilla.org/docs/Glossary/Accessible_name',
         'spec': '',
         'tests': '/results/?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-accessibility',
         'mobile_tests': '/results/?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-accessibility',
@@ -1000,7 +1000,7 @@ export const interopData = {
       },
       'interop-2024-starting-style-transition-behavior': {
         'description': '@starting-style & transition-behavior',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/@starting-style',
         'spec': '',
         'tests': '/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior',
         'mobile_tests': '/results/css?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-starting-style%20or%20label%3Ainterop-2024-transition-behavior',
@@ -1023,7 +1023,7 @@ export const interopData = {
       },
       'interop-2024-dir': {
         'description': 'Text Directionality',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/:dir',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/:dir',
         'spec': '',
         'tests': '/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-dir',
         'mobile_tests': '/results/html/dom/elements/global-attributes?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-dir',
@@ -1034,7 +1034,7 @@ export const interopData = {
       },
       'interop-2024-font-size-adjust': {
         'description': 'font-size-adjust',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/font-size-adjust',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/font-size-adjust',
         'spec': '',
         'tests': '/results/css/css-fonts?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust',
         'mobile_tests': '/results/css/css-fonts?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-font-size-adjust',
@@ -1056,7 +1056,7 @@ export const interopData = {
       },
       'interop-2024-indexeddb': {
         'description': 'IndexedDB',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/IndexedDB_API/Using_IndexedDB',
         'spec': '',
         'tests': '/results/IndexedDB?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-indexeddb',
         'mobile_tests': '/results/IndexedDB?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-indexeddb',
@@ -1082,7 +1082,7 @@ export const interopData = {
       },
       'interop-2024-nesting': {
         'description': 'CSS Nesting',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/CSS_nesting',
         'spec': '',
         'tests': '/results/css?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-nesting',
         'mobile_tests': '/results/css?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-nesting',
@@ -1093,7 +1093,7 @@ export const interopData = {
       },
       'interop-2024-popover': {
         'description': 'Popover',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Popover_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Popover_API',
         'spec': '',
         'tests': '/results/html/semantics/popovers?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-popover',
         'mobile_tests': '/results/html/semantics/popovers?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-popover',
@@ -1115,7 +1115,7 @@ export const interopData = {
       },
       'interop-2024-video-rvfc': {
         'description': 'requestVideoFrameCallback',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback',
         'spec': '',
         'tests': '/results/video-rvfc?label=experimental&label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-video-rvfc',
         'mobile_tests': '/results/video-rvfc?label=experimental&label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-video-rvfc',
@@ -1126,7 +1126,7 @@ export const interopData = {
       },
       'interop-2024-scrollbar': {
         'description': 'Scrollbar Styling',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-width',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/scrollbar-width',
         'spec': '',
         'tests': '/results/css?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-scrollbar',
         'mobile_tests': '/results/css?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-scrollbar',
@@ -1137,7 +1137,7 @@ export const interopData = {
       },
       'interop-2024-text-wrap': {
         'description': 'text-wrap: balance',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/text-wrap',
         'spec': '',
         'tests': '/results/css/css-text?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2024-text-wrap',
         'mobile_tests': '/results/css/css-text?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2024-text-wrap',
@@ -1294,7 +1294,7 @@ export const interopData = {
       },
       'interop-2023-modules': {
         'description': 'Modules',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules',
+        'mdn': 'https://developer.mozilla.org/docs/Web/JavaScript/Guide/Modules',
         'spec': 'https://tc39.es/proposal-import-assertions/',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2023-modules',
         'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2023-modules',
@@ -1561,7 +1561,7 @@ export const interopData = {
     'focus_areas': {
       'interop-2025-anchor-positioning': {
         'description': 'CSS anchor positioning',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
         'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
         'mobile_tests': '/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
@@ -1583,7 +1583,7 @@ export const interopData = {
       },
       'interop-2025-scope': {
         'description': '@scope',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/@scope',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/@scope',
         'spec': 'https://drafts.csswg.org/css-cascade-6/#scoped-styles',
         'tests': '/results/css/css-cascade?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-scope',
         'mobile_tests': '/results/css/css-cascade?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-scope',
@@ -1594,7 +1594,7 @@ export const interopData = {
       },
       'interop-2025-writingmodes': {
         'description': 'Writing modes',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/writing-mode',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/writing-mode',
         'spec': 'https://drafts.csswg.org/css-writing-modes/',
         'tests': '/results/css?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-writingmodes',
         'mobile_tests': '/results/css?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-writingmodes',
@@ -1620,7 +1620,7 @@ export const interopData = {
       },
       'interop-2025-modules': {
         'description': 'Modules',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import/with',
+        'mdn': 'https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/import/with',
         'spec': 'https://tc39.es/proposal-import-attributes/',
         'tests': '/results/html/semantics/scripting-1/the-script-element?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-modules',
         'mobile_tests': '/results/html/semantics/scripting-1/the-script-element?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-modules',
@@ -1631,7 +1631,7 @@ export const interopData = {
       },
       'interop-2025-navigation': {
         'description': 'Navigation API',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Navigation_API',
         'spec': 'https://html.spec.whatwg.org/multipage/nav-history-apis.html#navigation-api',
         'tests': '/results/navigation-api?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-navigation',
         'mobile_tests': '/results/navigation-api?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-navigation',
@@ -1642,7 +1642,7 @@ export const interopData = {
       },
       'interop-2025-backdrop-filter': {
         'description': 'backdrop-filter',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/backdrop-filter',
         'spec': 'https://drafts.fxtf.org/filter-effects-2/#BackdropFilterProperty',
         'tests': '/results/css/filter-effects?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-backdrop-filter',
         'mobile_tests': '/results/css/filter-effects?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-backdrop-filter',
@@ -1653,7 +1653,7 @@ export const interopData = {
       },
       'interop-2025-remove-mutation-events': {
         'description': 'Remove mutation events',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/MutationEvent',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/MutationEvent',
         'spec': '',
         'tests': '/results/dom?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-remove-mutation-events',
         'mobile_tests': '/results/dom?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-remove-mutation-events',
@@ -1675,7 +1675,7 @@ export const interopData = {
       },
       'interop-2025-scrollend': {
         'description': 'scrollend event',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Document/scrollend_event',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Document/scrollend_event',
         'spec': 'https://drafts.csswg.org/cssom-view/#eventdef-document-scrollend',
         'tests': '/results/dom/events/scrolling?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-scrollend',
         'mobile_tests': '/results/dom/events/scrolling?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-scrollend',
@@ -1686,7 +1686,7 @@ export const interopData = {
       },
       'interop-2025-storageaccess': {
         'description': 'Storage Access API',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Storage_Access_API',
         'spec': 'https://privacycg.github.io/storage-access/',
         'tests': '/results/storage-access-api?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-storageaccess',
         'mobile_tests': '/results/storage-access-api?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-storageaccess',
@@ -1697,7 +1697,7 @@ export const interopData = {
       },
       'interop-2025-details': {
         'description': '<details> element',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details',
+        'mdn': 'https://developer.mozilla.org/docs/Web/HTML/Element/details',
         'spec': 'https://html.spec.whatwg.org/multipage/interactive-elements.html#the-details-element',
         'tests': '/results/html?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-details',
         'mobile_tests': '/results/html?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-details',
@@ -1708,7 +1708,7 @@ export const interopData = {
       },
       'interop-2025-textdecoration': {
         'description': 'text-decoration',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/text-decoration',
         'spec': 'https://drafts.csswg.org/css-text-decor/#text-decoration-property',
         'tests': '/results/css/css-text-decor/parsing?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-textdecoration',
         'mobile_tests': '/results/css/css-text-decor/parsing?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-textdecoration',
@@ -1719,7 +1719,7 @@ export const interopData = {
       },
       'interop-2025-view-transitions': {
         'description': 'View Transition API',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/View_Transition_API',
         'spec': 'https://drafts.csswg.org/css-view-transitions/',
         'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-view-transitions',
         'mobile_tests': '/results/css/css-view-transitions?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-view-transitions',
@@ -1730,7 +1730,7 @@ export const interopData = {
       },
       'interop-2025-webassembly': {
         'description': 'WebAssembly',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/WebAssembly',
+        'mdn': 'https://developer.mozilla.org/docs/WebAssembly',
         'spec': 'https://webassembly.github.io/spec/',
         'tests': '/results/wasm/jsapi?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-webassembly',
         'mobile_tests': '/results/wasm/jsapi?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-webassembly',
@@ -1741,7 +1741,7 @@ export const interopData = {
       },
       'interop-2025-urlpattern': {
         'description': 'URLPattern',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/URL_Pattern_API',
         'spec': 'https://urlpattern.spec.whatwg.org/',
         'tests': '/results/urlpattern?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-urlpattern',
         'mobile_tests': '/results/urlpattern?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-urlpattern',
@@ -1763,7 +1763,7 @@ export const interopData = {
       },
       'interop-2025-webrtc': {
         'description': 'WebRTC',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/WebRTC_API',
         'spec': 'https://w3c.github.io/webrtc-pc/',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-webrtc',
         'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-webrtc',
@@ -1910,7 +1910,7 @@ export const interopData = {
     'focus_areas': {
       'interop-2026-anchor-positioning': {
         'description': 'CSS anchor positioning',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/CSS_anchor_positioning',
         'spec': 'https://drafts.csswg.org/css-anchor-position-1/',
         'tests': '/results/css/css-anchor-position?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
         'mobile_tests': '/results/css/css-anchor-position?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2025-anchor-positioning',
@@ -1921,7 +1921,7 @@ export const interopData = {
       },
       'interop-2026-attr': {
         'description': 'CSS attr()',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/Reference/Values/attr',
         'spec': 'https://drafts.csswg.org/css-values-5/#attr-notation',
         'tests': '/results/css/css-values?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-attr',
         'mobile_tests': '/results/css/css-values?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-attr',
@@ -1943,7 +1943,7 @@ export const interopData = {
       },
       'interop-2026-container-style-queries': {
         'description': 'Container style queries',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@container#container_style_queries',
+        'mdn': 'https://developer.mozilla.org/docs/Web/CSS/Reference/At-rules/@container#container_style_queries',
         'spec': 'https://drafts.csswg.org/css-conditional-5/#style-container',
         'tests': '/results/css/css-conditional/container-queries?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-container-style-queries',
         'mobile_tests': '/results/css/css-conditional/container-queries?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-container-style-queries',
@@ -1987,7 +1987,7 @@ export const interopData = {
       },
       'interop-2026-indexeddb': {
         'description': 'IndexedDB',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/IndexedDB_API/Using_IndexedDB',
         'spec': '',
         'tests': '/results/IndexedDB?label=master&label=experimental&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-indexeddb',
         'mobile_tests': '/results/IndexedDB?label=master&label=experimental&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-indexeddb',
@@ -2020,7 +2020,7 @@ export const interopData = {
       },
       'interop-2026-navigation': {
         'description': 'Navigation API',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/Navigation_API',
         'spec': 'https://html.spec.whatwg.org/multipage/nav-history-apis.html#navigation-api',
         'tests': '/results/navigation-api?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-navigation',
         'mobile_tests': '/results/navigation-api?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-navigation',
@@ -2097,7 +2097,7 @@ export const interopData = {
       },
       'interop-2026-webrtc': {
         'description': 'WebRTC',
-        'mdn': 'https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API',
+        'mdn': 'https://developer.mozilla.org/docs/Web/API/WebRTC_API',
         'spec': 'https://w3c.github.io/webrtc-pc/',
         'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-webrtc',
         'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-webrtc',
