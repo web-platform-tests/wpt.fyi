@@ -1522,8 +1522,8 @@
       "interop-2025-webcompat",
       "interop-2025-webrtc"
     ],
-    "csv_url": "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/interop-2025/interop-2025-{stable|experimental}-v2.csv",
-    "mobile_csv_url": "https://api.github.com/repos/jgraham/interop-results/contents/2025/latest/aligned/mobile-{stable|experimental}-current.csv?ref=main",
+    "csv_url": "/static/interop-2025-{stable|experimental}.csv",
+    "mobile_csv_url": "/static/interop-2025-mobile-experimental.csv",
     "summary_feature_name": "summary",
     "issue_url": "https://github.com/web-platform-tests/interop/issues/new",
     "focus_areas_description": "https://github.com/web-platform-tests/interop/blob/main/2025/README.md",
