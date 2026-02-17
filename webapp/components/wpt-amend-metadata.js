@@ -169,7 +169,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
         }
       </style>
       <paper-dialog id="dialog">
-        <h3>Triage Failing Tests (<a href="https://github.com/web-platform-tests/wpt-metadata/blob/master/README.md" target="_blank">See metadata documentation</a>)</h3>
+        <h3>Triage Failing Tests (URL verification test) (<a href="https://github.com/web-platform-tests/wpt-metadata/blob/master/README.md" target="_blank">See metadata documentation</a>)</h3>
         <paper-dialog-scrollable>
           <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
             <div class="metadata-entry">
@@ -443,7 +443,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
             isInvalidUrl = true;
           }
-        } catch (e) {
+        } catch {
           isInvalidUrl = true;
         }
       }
