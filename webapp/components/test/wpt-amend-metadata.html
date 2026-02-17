@@ -153,6 +153,86 @@ suite('wpt-amend-metadata', () => {
       appFixture.populateDisplayData();
       assert.deepEqual(appFixture.displayedMetadata, expected);
     });
+    test('handleFieldInput updates invalidUrl and triageSubmitDisabled', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'firefox', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
+
+      // Initially disabled as field is empty
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Simulate input event for invalid URL
+      const event = {
+        model: {
+          __data: { index: 0 }
+        },
+        target: {
+          label: 'Bug URL',
+          value: 'not-a-url'
+        }
+      };
+      appFixture.handleFieldInput(event);
+
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Correct URL
+      event.target.value = 'https://bugzilla.mozilla.org/123';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+      expect(appFixture.triageSubmitDisabled).to.be.false;
+
+      // Empty URL again
+      event.target.value = '';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+    });
+    test('handleFieldInput with label instead of URL', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: '', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
+
+      // Initially disabled
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Simulate input event for Label
+      const event = {
+        model: {
+          __data: { index: 0 }
+        },
+        target: {
+          label: 'Label',
+          value: 'interop'
+        }
+      };
+      appFixture.handleFieldInput(event);
+
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.falsy;
+      expect(appFixture.triageSubmitDisabled).to.be.false;
+    });
+    test('handleFieldInput with http vs https', () => {
+       appFixture.path = '/abc';
+       appFixture.selectedMetadata = [
+         { product: 'chrome', test: 'testA.html' }
+       ];
+       appFixture.populateDisplayData();
+
+       const event = {
+         model: { __data: { index: 0 } },
+         target: { label: 'Bug URL', value: 'http://example.com' }
+       };
+       appFixture.handleFieldInput(event);
+       expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+
+       event.target.value = 'ftp://example.com';
+       appFixture.handleFieldInput(event);
+       expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
+    });
     test('getSearchURL', () => {
       expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');

@@ -175,7 +175,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
-              <paper-input label="Bug URL" on-input="handleFieldInput" value="[[node.url]]" autofocus></paper-input>
+              <paper-input label="Bug URL" on-input="handleFieldInput" value="[[node.url]]" autofocus
+                error-message="Must be a valid URL (e.g. https://bug.com/123)"
+                invalid="[[node.invalidUrl]]">
+              </paper-input>
               <template is="dom-if" if="[[!node.product]]">
                 <paper-input label="Label" on-input="handleFieldInput" value="[[node.label]]"></paper-input>
               </template>
@@ -431,6 +434,22 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     const url = this.get(path);
     const label = this.get(labelPath);
 
+    if (!isLabel) {
+      const invalidUrlPath = `displayedMetadata.${index}.invalidUrl`;
+      let isInvalidUrl = false;
+      if (url !== '') {
+        try {
+          const parsedUrl = new URL(url);
+          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+            isInvalidUrl = true;
+          }
+        } catch (e) {
+          isInvalidUrl = true;
+        }
+      }
+      this.set(invalidUrlPath, isInvalidUrl);
+    }
+
     // Check if the input is empty.
     if (url === '' && (label === '' || label === undefined)) {
       // If the field was previously considered filled, it's now empty.
@@ -445,7 +464,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     }
 
     // If all triage items have input, triage can be submitted.
-    this.triageSubmitDisabled = this.fieldsFilled.numEmpty > 0;
+    const anyInvalidUrl = this.displayedMetadata.some(node => node.invalidUrl);
+    this.triageSubmitDisabled = this.fieldsFilled.numEmpty > 0 || anyInvalidUrl;
   }
 
   handleTriage() {
