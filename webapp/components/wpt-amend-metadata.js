@@ -271,7 +271,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     if (this.computePathIsATestFile(this.path)) {
       link[this.path] = [];
       for (const entry of displayedMetadata) {
-        if (entry.url === '') {
+        if (entry.url === '' || entry.invalidUrl) {
           continue;
         }
 
@@ -285,7 +285,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       for (const entry of displayedMetadata) {
         // entry.url always exists while entry.label only exists when product is empty;
         // in other words, a test-level triage.
-        if (entry.url === '' && !entry.label) {
+        if ((entry.url === '' || entry.invalidUrl) && !entry.label) {
           continue;
         }
 
@@ -294,7 +294,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             link[test] = [];
           }
           const metadata = {};
-          if (entry.url !== '') {
+          if (entry.url !== '' && !entry.invalidUrl) {
             metadata['url'] = entry.url;
           }
           if (entry.product !== '') {
@@ -469,6 +469,10 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
   }
 
   handleTriage() {
+    const anyInvalidUrl = this.displayedMetadata.some(node => node.invalidUrl);
+    if (anyInvalidUrl) {
+      return;
+    }
     const url = new URL('/api/metadata/triage', window.location);
     const toast = this.shadowRoot.querySelector('#show-pr');
 
