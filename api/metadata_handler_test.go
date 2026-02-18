@@ -32,7 +32,7 @@ func TestHandleMetadataTriage_Success(t *testing.T) {
         "/bar/foo.html": [
             {
                 "product":"chrome",
-                "url":"bugs.bar",
+                "url":"https://bugs.bar",
                 "results":[{"status":6}]
             }
         ]}`
@@ -68,7 +68,7 @@ func TestHandleMetadataTriage_FailToCachePr(t *testing.T) {
         "/bar/foo.html": [
             {
                 "product":"chrome",
-                "url":"bugs.bar",
+                "url":"https://bugs.bar",
                 "results":[{"status":6}]
             }
         ]}`
@@ -101,7 +101,7 @@ func TestHandleMetadataTriage_FailToCacheMetadata(t *testing.T) {
         "/bar/foo.html": [
             {
                 "product":"chrome",
-                "url":"bugs.bar",
+                "url":"https://bugs.bar",
                 "results":[{"status":6}]
             }
         ]}`
@@ -126,6 +126,35 @@ func TestHandleMetadataTriage_FailToCacheMetadata(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestHandleMetadataTriage_InvalidURL(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := sharedtest.NewTestContext()
+	w := httptest.NewRecorder()
+
+	body :=
+		`{
+        "/bar/foo.html": [
+            {
+                "product":"chrome",
+                "url":"not-a-url",
+                "results":[{"status":6}]
+            }
+        ]}`
+	bodyReader := strings.NewReader(body)
+	req := httptest.NewRequest("PATCH", "https://foo/metadata", bodyReader)
+	req.Header.Set("Content-Type", "application/json")
+
+	mockgac := sharedtest.NewMockGitHubAccessControl(mockCtrl)
+	mockgac.EXPECT().IsValidWPTMember().Return(true, nil)
+
+	mocktm := sharedtest.NewMockTriageMetadata(mockCtrl)
+
+	handleMetadataTriage(ctx, mockgac, mocktm, nil, nil, w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
 func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
 	w := httptest.NewRecorder()
 	body :=
@@ -133,7 +162,7 @@ func TestHandleMetadataTriage_NonSimpleRequests(t *testing.T) {
         "/bar/foo.html": [
             {
                 "product":"chrome",
-                "url":"bugs.bar",
+                "url":"https://bugs.bar",
                 "results":[{"status":6}]
             }
         ]}`
@@ -160,7 +189,7 @@ func TestHandleMetadataTriage_WrongContentType(t *testing.T) {
     "/bar/foo.html": [
         {
             "product":"chrome",
-            "url":"bugs.bar",
+            "url":"https://bugs.bar",
             "results":[{"status":6}]
         }
     ]}`
@@ -195,7 +224,7 @@ func TestHandleMetadataTriage_InvalidProduct(t *testing.T) {
         "/bar/foo.html": [
             {
                 "product":"foobar",
-                "url":"bugs.bar",
+                "url":"https://bugs.bar",
                 "results":[{"status":6, "label":labelA}]
             }
         ]}`
@@ -410,7 +439,7 @@ func TestPendingMetadataHandler_Success(t *testing.T) {
             "/foo1/bar1.html": [
                 {
                     "product": "chrome",
-                    "url": "bugs.bar",
+                    "url": "https://bugs.bar",
                     "results": [
                         {"status": 6, "subtest": "sub-bar1" },
                         {"status": 3 }
@@ -432,7 +461,7 @@ func TestPendingMetadataHandler_Success(t *testing.T) {
             "/foo1/bar1.html": [
                 {
                     "product": "chrome",
-                    "url": "bugs.bar",
+                    "url": "https://bugs.bar",
                     "results": [
                         {"status": 6, "subtest": "sub-bar1" },
                         {"status": 3 }

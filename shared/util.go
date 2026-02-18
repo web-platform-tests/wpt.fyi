@@ -7,6 +7,7 @@ package shared
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
@@ -180,4 +181,10 @@ func GetSharedPath(paths ...string) string {
 		}
 	}
 	return strings.Join(parts, "/")
+}
+
+// IsValidURL returns true if the given string is a valid http or https URL.
+func IsValidURL(s string) bool {
+	u, err := url.Parse(s)
+	return err == nil && u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }

@@ -150,6 +150,16 @@ func handleMetadataTriage(
 		return
 	}
 
+	for _, links := range metadata {
+		for _, link := range links {
+			if link.URL != "" && !shared.IsValidURL(link.URL) {
+				http.Error(w, "Invalid URL: "+link.URL, http.StatusBadRequest)
+
+				return
+			}
+		}
+	}
+
 	// nolint:godox // TODO(kyleju): Check github client permission levels for auto merge.
 	prURL, err := tm.Triage(metadata)
 	if err != nil {
