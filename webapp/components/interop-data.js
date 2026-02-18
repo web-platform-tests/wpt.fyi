@@ -2077,8 +2077,8 @@ export const interopData = {
         'description': 'View transitions',
         'mdn': '',
         'spec': 'https://drafts.csswg.org/css-view-transitions/',
-        'tests': '/results/css/css-view-transitions?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
-        'mobile_tests': '/results/css/css-view-transitions?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
+        'tests': '/results/?label=master&product=chrome&product=edge&product=firefox&product=safari&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
+        'mobile_tests': '/results/?label=master&product=chrome_android&product=firefox_android&aligned&view=interop&q=label%3Ainterop-2026-view-transitions',
         'countsTowardScore': true,
         'labels': [
           'interop-2026-view-transitions'
