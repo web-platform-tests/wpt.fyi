@@ -216,22 +216,22 @@ suite('wpt-amend-metadata', () => {
       expect(appFixture.triageSubmitDisabled).to.be.false;
     });
     test('handleFieldInput with http vs https', () => {
-       appFixture.path = '/abc';
-       appFixture.selectedMetadata = [
-         { product: 'chrome', test: 'testA.html' }
-       ];
-       appFixture.populateDisplayData();
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'chrome', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
 
-       const event = {
-         model: { __data: { index: 0 } },
-         target: { label: 'Bug URL', value: 'http://example.com' }
-       };
-       appFixture.handleFieldInput(event);
-       expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+      const event = {
+        model: { __data: { index: 0 } },
+        target: { label: 'Bug URL', value: 'http://example.com' }
+      };
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
 
-       event.target.value = 'ftp://example.com';
-       appFixture.handleFieldInput(event);
-       expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
+      event.target.value = 'ftp://example.com';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
     });
     test('getSearchURL', () => {
       expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
