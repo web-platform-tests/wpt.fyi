@@ -49,6 +49,12 @@ linters:
     gomoddirectives:
       replace-allow-list:
         - launchpad.net/gocheck
+    # TODO(DanielRyanSmith): Remove this exclusion after this PR is part of the
+    # new version: https://github.com/securego/gosec/pull/1506
+    gosec:
+      excludes:
+        - G704
+        - G705
   exclusions:
     generated: lax
     presets:
