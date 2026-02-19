@@ -20,7 +20,7 @@ func TestAppendTestName(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/bar.html": [
 			{
-				"url": "bugs.bar?id=456",
+				"url": "https://bugs.bar?id=456",
 				"product": "chrome",
 				"results": [
 					{"status": 6 }
@@ -30,7 +30,7 @@ func TestAppendTestName(t *testing.T) {
 		"/foo1/bar1.html": [
 			{
 				"product": "chrome",
-				"url": "bugs.bar",
+				"url": "https://bugs.bar",
 				"results": [
 					{"status": 6, "subtest": "sub-bar1" },
 					{"status": 3 }
@@ -41,7 +41,7 @@ func TestAppendTestName(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/bar.html": [
 			{
-				"url": "bugs.bar?id=456",
+				"url": "https://bugs.bar?id=456",
 				"product": "chrome",
 				"results": [
 					{"status": 6 }
@@ -51,7 +51,7 @@ func TestAppendTestName(t *testing.T) {
 		"/foo1/bar1.html": [
 			{
 				"product": "chrome",
-				"url": "bugs.bar",
+				"url": "https://bugs.bar",
 				"results": [
 					{"status": 6, "test": "bar1.html", "subtest": "sub-bar1" },
 					{"status": 3, "test": "bar1.html"}
@@ -71,7 +71,7 @@ func TestAppendTestName_EmptyResults(t *testing.T) {
 		"/foo1/bar1.html": [
 			{
 				"product": "chrome",
-				"url": "bugs.bar"
+				"url": "https://bugs.bar"
 			}
 		]
 	}`), &actual)
@@ -80,7 +80,7 @@ func TestAppendTestName_EmptyResults(t *testing.T) {
 		"/foo1/bar1.html": [
 			{
 				"product": "chrome",
-				"url": "bugs.bar",
+				"url": "https://bugs.bar",
 				"results": [
 					{"test": "bar1.html"}
 				]}
@@ -98,7 +98,7 @@ func TestAddToFiles_AddNewFile(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/bar.html": [
 			{
-				"url": "bugs.bar?id=456",
+				"url": "https://bugs.bar?id=456",
 				"product": "chrome",
 				"results": [
 					{"subtest": "sub-bar1"}
@@ -137,7 +137,7 @@ links:
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 1, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
-	assert.Equal(t, "bugs.bar?id=456", actual.Links[0].URL)
+	assert.Equal(t, "https://bugs.bar?id=456", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "bar.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "sub-bar1", *actual.Links[0].Results[0].SubtestName)
@@ -148,7 +148,7 @@ func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [
 			{
-				"url": "foo",
+				"url": "https://foo",
 				"product": "chrome",
 				"results": [
 					{"status": 6, "subtest": "sub-a" }
@@ -162,7 +162,7 @@ func TestAddToFiles_AddNewMetadataResult(t *testing.T) {
 	fileInBytes := []byte(`
 links:
   - product: chrome
-    url: foo
+    url: https://foo
     results:
     - test: b.html
   - product: firefox
@@ -187,7 +187,7 @@ links:
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 2, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
-	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, "https://foo", actual.Links[0].URL)
 	assert.Equal(t, 2, len(actual.Links[0].Results))
 	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "a.html", actual.Links[0].Results[1].TestPath)
@@ -202,7 +202,7 @@ func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/a.html": [
 			{
-				"url": "foo1",
+				"url": "https://foo1",
 				"product": "chrome",
 				"results": [
 					{"status": 6 }
@@ -216,7 +216,7 @@ func TestAddToFiles_AddNewMetadataLink(t *testing.T) {
 	fileInBytes := []byte(`
 links:
   - product: chrome
-    url: foo
+    url: https://foo
     results:
     - test: b.html
   - product: firefox
@@ -241,13 +241,13 @@ links:
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 3, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
-	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, "https://foo", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
 	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
 	assert.Equal(t, "chrome", actual.Links[2].Product.BrowserName)
-	assert.Equal(t, "foo1", actual.Links[2].URL)
+	assert.Equal(t, "https://foo1", actual.Links[2].URL)
 	assert.Equal(t, "a.html", actual.Links[2].Results[0].TestPath)
 }
 
@@ -266,7 +266,7 @@ func TestAddToFiles_AddNewMetadataLink_Label(t *testing.T) {
 	fileInBytes := []byte(`
 links:
   - product: chrome
-    url: foo
+    url: https://foo
     results:
     - test: b.html
   - product: firefox
@@ -291,7 +291,7 @@ links:
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 3, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
-	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, "https://foo", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
@@ -344,7 +344,7 @@ func TestAddToFiles_AddNewMetadataLink_Asterisk(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/*": [
 			{
-				"url": "foo1",
+				"url": "https://foo1",
 				"product": "chrome",
 				"results": [
 					{"status": 6 }
@@ -358,7 +358,7 @@ func TestAddToFiles_AddNewMetadataLink_Asterisk(t *testing.T) {
 	fileInBytes := []byte(`
 links:
   - product: chrome
-    url: foo
+    url: https://foo
     results:
     - test: b.html
   - product: firefox
@@ -383,13 +383,13 @@ links:
 	yaml.Unmarshal(actualInBytes, &actual)
 	assert.Equal(t, 3, len(actual.Links))
 	assert.Equal(t, "chrome", actual.Links[0].Product.BrowserName)
-	assert.Equal(t, "foo", actual.Links[0].URL)
+	assert.Equal(t, "https://foo", actual.Links[0].URL)
 	assert.Equal(t, 1, len(actual.Links[0].Results))
 	assert.Equal(t, "b.html", actual.Links[0].Results[0].TestPath)
 	assert.Equal(t, "firefox", actual.Links[1].Product.BrowserName)
 	assert.Equal(t, "https://bug.com/item", actual.Links[1].URL)
 	assert.Equal(t, "chrome", actual.Links[2].Product.BrowserName)
-	assert.Equal(t, "foo1", actual.Links[2].URL)
+	assert.Equal(t, "https://foo1", actual.Links[2].URL)
 	assert.Equal(t, "*", actual.Links[2].Results[0].TestPath)
 }
 
@@ -442,7 +442,7 @@ func TestContainsInterop_False(t *testing.T) {
 	json.Unmarshal([]byte(`{
 		"/foo/foo1/*": [
 			{
-				"url": "foo1",
+				"url": "https://foo1",
 				"product": "chrome",
 				"results": [
 					{"status": 6 }

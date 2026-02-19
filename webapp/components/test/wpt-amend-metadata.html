@@ -71,12 +71,12 @@ suite('wpt-amend-metadata', () => {
     test('getTriagedMetadataMap(displayedMetadata) with a non-testfile path', () => {
       appFixture.path = '/abc';
       const displayedMetadata = [
-        { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
-        { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+        { product: 'firefox', url: 'https://foo', tests: ['testA', 'testB'] },
+        { product: 'chrome', url: 'https://bar', tests: ['testA', 'testB'] }
       ];
       const expected = {
-        'testA': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }],
-        'testB': [{ url: 'foo', product: 'firefox' }, { url: 'bar', product: 'chrome' }]
+        'testA': [{ url: 'https://foo', product: 'firefox' }, { url: 'https://bar', product: 'chrome' }],
+        'testB': [{ url: 'https://foo', product: 'firefox' }, { url: 'https://bar', product: 'chrome' }]
       };
 
       assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
@@ -84,12 +84,12 @@ suite('wpt-amend-metadata', () => {
     test('getTriagedMetadataMap(displayedMetadata) for a test-level triage', () => {
       appFixture.path = '/abc';
       const displayedMetadata = [
-        { product: '', url: 'foo', tests: ['testA.html'], label: '' },
+        { product: '', url: 'https://foo', tests: ['testA.html'], label: '' },
       ];
       // When there is no product, we have to remove the product from the
       // metadata map for calling into /api/metadata/triage.
       const expected = {
-        'testA.html': [{ url: 'foo' }],
+        'testA.html': [{ url: 'https://foo' }],
       };
 
       assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
@@ -110,13 +110,13 @@ suite('wpt-amend-metadata', () => {
     test('getTriagedMetadataMap(displayedMetadata) with a testfile path', () => {
       appFixture.path = '/abc/foo.html';
       const displayedMetadata = [
-        { product: 'firefox', url: 'foo', tests: ['testA', 'testB'] },
-        { product: 'chrome', url: 'bar', tests: ['testA', 'testB'] }
+        { product: 'firefox', url: 'https://foo', tests: ['testA', 'testB'] },
+        { product: 'chrome', url: 'https://bar', tests: ['testA', 'testB'] }
       ];
       const resultsFirefox = [{ subtest: 'testA' }, { subtest: 'testB' }];
       const resultsChrome = [{ subtest: 'testA' }, { subtest: 'testB' }];
       const expected = {
-        '/abc/foo.html': [{ url: 'foo', product: 'firefox', results: resultsFirefox }, { url: 'bar', product: 'chrome', results: resultsChrome }],
+        '/abc/foo.html': [{ url: 'https://foo', product: 'firefox', results: resultsFirefox }, { url: 'https://bar', product: 'chrome', results: resultsChrome }],
       };
 
       assert.deepEqual(appFixture.getTriagedMetadataMap(displayedMetadata), expected);
@@ -152,6 +152,86 @@ suite('wpt-amend-metadata', () => {
 
       appFixture.populateDisplayData();
       assert.deepEqual(appFixture.displayedMetadata, expected);
+    });
+    test('handleFieldInput updates invalidUrl and triageSubmitDisabled', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'firefox', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
+
+      // Initially disabled as field is empty
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Simulate input event for invalid URL
+      const event = {
+        model: {
+          __data: { index: 0 }
+        },
+        target: {
+          label: 'Bug URL',
+          value: 'not-a-url'
+        }
+      };
+      appFixture.handleFieldInput(event);
+
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Correct URL
+      event.target.value = 'https://bugzilla.mozilla.org/123';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+      expect(appFixture.triageSubmitDisabled).to.be.false;
+
+      // Empty URL again
+      event.target.value = '';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+    });
+    test('handleFieldInput with label instead of URL', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: '', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
+
+      // Initially disabled
+      expect(appFixture.triageSubmitDisabled).to.be.true;
+
+      // Simulate input event for Label
+      const event = {
+        model: {
+          __data: { index: 0 }
+        },
+        target: {
+          label: 'Label',
+          value: 'interop'
+        }
+      };
+      appFixture.handleFieldInput(event);
+
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.falsy;
+      expect(appFixture.triageSubmitDisabled).to.be.false;
+    });
+    test('handleFieldInput with http vs https', () => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'chrome', test: 'testA.html' }
+      ];
+      appFixture.populateDisplayData();
+
+      const event = {
+        model: { __data: { index: 0 } },
+        target: { label: 'Bug URL', value: 'http://example.com' }
+      };
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.false;
+
+      event.target.value = 'ftp://example.com';
+      appFixture.handleFieldInput(event);
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
     });
     test('getSearchURL', () => {
       expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
