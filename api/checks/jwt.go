@@ -66,7 +66,7 @@ func getJWTClient(ctx context.Context, appID, installation int64) (*http.Client,
 	}
 	// tokenResponse is the JSON response body.
 	var tokenResponse struct {
-		AccessToken string    `json:"token"`
+		AccessToken string    `json:"token"` // nolint:gosec
 		ExpiresAt   time.Time `json:"expires_at"`
 	}
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
