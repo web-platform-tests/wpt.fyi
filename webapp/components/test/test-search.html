@@ -351,39 +351,54 @@ suite('<test-search>', () => {
 
       suite('root query (Q-level) negation', () => {
         test('not all', () => {
-          assertQueryFail('not all(status:PASS)');
+          assertQueryParse('not all(status:PASS)', {not: {all: [{status: 'PASS'}]}});
         });
 
         test('! shorthand', () => {
-          assertQueryFail('!all(status:PASS)');
+          assertQueryParse('!all(status:PASS)', {not: {all: [{status: 'PASS'}]}});
         });
 
         test('not count', () => {
-          assertQueryFail('not count:2(status:PASS)');
+          assertQueryParse('not count:2(status:PASS)', {not: {count: 2, where: {status: 'PASS'}}});
         });
 
         test('! on sequential', () => {
-          assertQueryFail('!seq(status:PASS status:FAIL)');
+          assertQueryParse('!seq(status:PASS status:FAIL)', {not: {sequential: [{status: 'PASS'}, {status: 'FAIL'}]}});
         });
 
         test('not exists', () => {
-          assertQueryFail('not exists(status:PASS)');
+          assertQueryParse('not exists(status:PASS)', {not: {exists: [{status: 'PASS'}]}});
         });
 
         test('combining negated queries with or', () => {
-          assertQueryFail('not all(status:PASS) or not all(status:OK)');
+          assertQueryParse('not all(status:PASS) or not all(status:OK)', {
+            or: [
+              {not: {all: [{status: 'PASS'}]}},
+              {not: {all: [{status: 'OK'}]}}
+            ]
+          });
         });
 
         test('not none query', () => {
-          assertQueryFail('not none(status:fail)');
+          assertQueryParse('not none(status:fail)', {not: {none: [{status: 'FAIL'}]}});
         });
 
         test('not query in and expression', () => {
-          assertQueryFail('not all(status:pass) and status:fail');
+          assertQueryParse('not all(status:pass) and status:fail', {
+            and: [
+              {not: {all: [{status: 'PASS'}]}},
+              {exists: [{status: 'FAIL'}]}
+            ]
+          });
         });
 
         test('multiple negations with and/or', () => {
-          assertQueryFail('!all(status:pass) and !none(status:fail)');
+          assertQueryParse('!all(status:pass) and !none(status:fail)', {
+            and: [
+              {not: {all: [{status: 'PASS'}]}},
+              {not: {none: [{status: 'FAIL'}]}}
+            ]
+          });
         });
       });
     });
@@ -661,43 +676,69 @@ suite('<test-search>', () => {
 
       suite('parenthesized roots', () => {
         test('all', () => {
-          assertQueryFail('(all(status:PASS))');
+          assertQueryParse('(all(status:PASS))', {all: [{status: 'PASS'}]});
         });
 
         test('exists', () => {
-          assertQueryFail('(exists(status:PASS))');
+          assertQueryParse('(exists(status:PASS))', {exists: [{status: 'PASS'}]});
         });
 
         test('implicit-exists and explicit-exists', () => {
-          assertQueryFail('(path:/css and exists(display contents))');
+          assertQueryParse('(path:/css and exists(display contents))', {
+            and: [
+              {exists: [{path: '/css'}]},
+              {exists: [{pattern: 'display'}, {pattern: 'contents'}]},
+            ],
+          });
         });
 
         test('(all) or (none)', () => {
-          assertQueryFail('(all(status:PASS)) or (none(status:FAIL))');
+          assertQueryParse('(all(status:PASS)) or (none(status:FAIL))', {
+            or: [
+              {all: [{status: 'PASS'}]},
+              {none: [{status: 'FAIL'}]},
+            ],
+          });
         });
 
         test('implicit-exists with implicit-and', () => {
-          assertQueryFail('(foo bar)');
+          assertQueryParse('(foo bar)', {
+            exists: [{pattern: 'foo'}, {pattern: 'bar'}],
+          });
         });
 
         test('count and none with implicit-and', () => {
-          assertQueryFail('(count:2(status:PASS) none(status:FAIL))');
+          assertQueryParse('(count:2(status:PASS) none(status:FAIL))', {
+            and: [
+              {count: 2, where: {status: 'PASS'}},
+              {none: [{status: 'FAIL'}]},
+            ],
+          });
         });
 
         test('count', () => {
-          assertQueryFail('(count:2(status:pass))');
+          assertQueryParse('(count:2(status:pass))', {
+            count: 2,
+            where: {status: 'PASS'},
+          });
         });
 
         test('none', () => {
-          assertQueryFail('(none(status:fail))');
+          assertQueryParse('(none(status:fail))', {
+            none: [{status: 'FAIL'}],
+          });
         });
 
         test('seq', () => {
-          assertQueryFail('(seq(status:pass status:fail))');
+          assertQueryParse('(seq(status:pass status:fail))', {
+            sequential: [{status: 'PASS'}, {status: 'FAIL'}],
+          });
         });
 
         test('double parentheses', () => {
-          assertQueryFail('((all(status:pass)))');
+          assertQueryParse('((all(status:pass)))', {
+            all: [{status: 'PASS'}],
+          });
         });
       });
     });
