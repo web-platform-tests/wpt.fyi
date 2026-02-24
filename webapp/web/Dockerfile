@@ -1,6 +1,6 @@
 # Production deployment spec for the webapp.
 
-FROM golang:1.25.7-bookworm as builder
+FROM golang:1.26.0-bookworm as builder
 
 RUN apt-get update
 RUN apt-get install -qy --no-install-suggests git sudo
