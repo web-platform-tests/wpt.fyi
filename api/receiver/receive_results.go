@@ -69,11 +69,11 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		// result_file[] payload
 		files := f.File["result_file"]
 		sFiles := f.File["screenshot_file"]
-		log.Debugf("Found %d result files, %d screenshot files", results, screenshots)
+		log.Debugf("Found %d result files, %d screenshot files", len(results), len(screenshots))
 		var err error
 		results, screenshots, err = saveToGCS(a, uploader, files, sFiles)
 		if err != nil {
-			log.Errorf("Failed to save files to GCS: %v", err)
+			log.Errorf("Failed to save files to GCS: %s", err.Error())
 			http.Error(w, "Failed to save files to GCS", http.StatusInternalServerError)
 
 			return
@@ -87,11 +87,11 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 		// General result_url[] payload
 		results = r.PostForm["result_url"]
 		screenshots = r.PostForm["screenshot_url"]
-		log.Debugf("Found %d result URLs, %d screenshot URLs", results, screenshots)
+		log.Debugf("Found %d result URLs, %d screenshot URLs", len(results), len(screenshots))
 	} else if len(r.PostForm["archive_url"]) > 0 {
 		// General archive_url[] payload
 		archives = r.PostForm["archive_url"]
-		log.Debugf("Found %d archive URLs", archives)
+		log.Debugf("Found %d archive URLs", len(archives))
 	} else {
 		log.Errorf("No results found")
 		http.Error(w, "No results found", http.StatusBadRequest)
@@ -155,14 +155,14 @@ func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart
 	mErr := shared.NewMultiErrorFromChan(errors1, fmt.Sprintf("storing results from %s to GCS", uploader))
 	if mErr != nil {
 		// Result errors are fatal.
-		shared.GetLogger(a.Context()).Errorf(mErr.Error())
+		shared.GetLogger(a.Context()).Errorf("%s", mErr.Error())
 
 		return nil, nil, mErr
 	}
 	mErr = shared.NewMultiErrorFromChan(errors2, fmt.Sprintf("storing screenshots from %s to GCS", uploader))
 	if mErr != nil {
 		// Screenshot errors are not fatal.
-		shared.GetLogger(a.Context()).Warningf(mErr.Error())
+		shared.GetLogger(a.Context()).Warningf("%s", mErr.Error())
 		screenshotGCS = nil
 	}
 

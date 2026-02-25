@@ -80,7 +80,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	err := searchHandlerImpl(w, r)
 	if err != nil {
 		log := shared.GetLogger(r.Context())
-		log.Errorf(err.Error())
+		log.Errorf("%s", err.Error())
 		http.Error(w, err.Message, err.Code)
 	}
 }

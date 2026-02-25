@@ -100,7 +100,7 @@ func handleOauth(g shared.GitHubOAuth, w http.ResponseWriter, r *http.Request) {
 	}
 	stateFromCookie, err := decodeState(ctx, ds, encryptedState)
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Errorf("%s", err.Error())
 		http.Error(w, "Failed to decode state from cookies", http.StatusBadRequest)
 		return
 	}
