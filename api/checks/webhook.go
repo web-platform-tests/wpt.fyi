@@ -361,7 +361,7 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 		if resp != nil {
 			msg = fmt.Sprintf("%s: %s", msg, resp.Status)
 		}
-		log.Warningf(msg)
+		log.Warningf("%s", msg)
 
 		return false, err
 	} else if checkRun != nil {

@@ -52,7 +52,7 @@ func searchHandlerImpl(w http.ResponseWriter, r *http.Request) *searchError {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	log.Debugf(string(reqData))
+	log.Debugf("%s", string(reqData))
 	if err := r.Body.Close(); err != nil {
 		return &searchError{
 			Detail:  err,

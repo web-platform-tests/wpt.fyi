@@ -279,7 +279,7 @@ func tcStatusWebhookHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if checkSuite.GetCheckSuite().GetApp().GetID() != AppID {
-			log.Debugf("Ignoring non-Taskcluster app: %s (%s)",
+			log.Debugf("Ignoring non-Taskcluster app: %s (%d)",
 				checkSuite.GetCheckSuite().GetApp().GetName(),
 				checkSuite.GetCheckSuite().GetApp().GetID())
 			w.WriteHeader(http.StatusNoContent)

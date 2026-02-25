@@ -35,7 +35,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sha, err := shared.ParseSHA(vars["commit"])
 	if err != nil {
-		log.Warningf(err.Error())
+		log.Warningf("Failed to parse commit: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 		return
@@ -58,7 +58,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(filter.Products) != 1 {
 		msg := "product param is missing"
-		log.Warningf(msg)
+		log.Warningf("%s", msg)
 		http.Error(w, msg, http.StatusBadRequest)
 
 		return
@@ -67,7 +67,7 @@ func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
 	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
 	if err != nil {
 		msg := "Could not find runs to compare: " + err.Error()
-		log.Warningf(msg)
+		log.Warningf("%s", msg)
 		http.Error(w, msg, http.StatusNotFound)
 
 		return

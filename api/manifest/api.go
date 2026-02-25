@@ -93,7 +93,7 @@ func getGitHubReleaseAssetForSHA(aeAPI shared.AppEngineAPI, sha string) (
 			// nolint: godox // TODO: golangci-lint discovered that this error was being shadowed.
 			// Review if we should actually return the error. In the meantime, ignore it.
 			log := shared.GetLogger(aeAPI.Context())
-			log.Warningf("GetReleaseByTag failed with error %w. Will ignore", err)
+			log.Warningf("GetReleaseByTag failed with error %s. Will ignore", err.Error())
 			err = nil
 		}
 	}

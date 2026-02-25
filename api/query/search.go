@@ -197,9 +197,9 @@ func (sh structuredSearchHandler) useSearchcache(_ http.ResponseWriter, r *http.
 			resp.Body = io.NopCloser(bytes.NewBuffer(errBody))
 		}
 		if resp.StatusCode == http.StatusUnprocessableEntity {
-			logger.Warningf(msg)
+			logger.Warningf("%s", msg)
 		} else {
-			logger.Errorf(msg)
+			logger.Errorf("%s", msg)
 		}
 	}
 
@@ -276,7 +276,7 @@ var cacheKey = func(r *http.Request) interface{} {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to read non-GET request body for generating cache key: %v", err)
-		shared.GetLogger(r.Context()).Errorf(msg)
+		shared.GetLogger(r.Context()).Errorf("%s", msg)
 		panic(msg)
 	}
 	defer body.Close()
