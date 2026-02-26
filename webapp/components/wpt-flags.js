@@ -40,7 +40,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'diffFromAPI',
       'displayMetadata',
-      'githubCommitLinks',
       'githubLogin',
       'permalinks',
       'processorTab',
@@ -202,11 +201,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="githubCommitLinks" checked="[[githubCommitLinks]]" on-change="handleChange">
-        Show links to the commit on GitHub in the header row.
       </paper-checkbox>
     </paper-item>
     <paper-item>
