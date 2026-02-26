@@ -54,7 +54,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'failChecksOnRegression',
       'githubLogin',
       'ignoreHarnessInTotal',
-      'onlyChangesAsRegressions',
       'pendingChecks',
     ];
   }
@@ -249,12 +248,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
       </paper-checkbox>
     </paper-item>
     <h4>GitHub Status Checks</h4>
-    <paper-item sub-item>
-      <paper-checkbox id="onlyChangesAsRegressions" checked="[[onlyChangesAsRegressions]]" on-change="handleChange">
-        Only treat C (changed) differences as possible regressions.
-        (<a href="https://github.com/web-platform-tests/wpt.fyi/blob/main/api/README.md#apidiff">See docs for definition</a>)
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="failChecksOnRegression" checked="[[failChecksOnRegression]]" on-change="handleChange">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
