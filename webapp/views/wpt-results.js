@@ -960,7 +960,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // It is always possible in triage mode to amend metadata for a problem
     // with a test file itself.
     if (index === undefined) {
-      return !node.isDir && this.triageMetadataUI && this.isTriageMode;
+      return !node.isDir && this.isTriageMode;
     }
 
     // Triage can occur if a status doesn't pass.
@@ -968,7 +968,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const failStatus = status && !PASSING_STATUSES.includes(status);
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return ((totalTests - passedTests) > 0 || failStatus) && this.triageMetadataUI && this.isTriageMode;
+    return ((totalTests - passedTests) > 0 || failStatus) && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {
