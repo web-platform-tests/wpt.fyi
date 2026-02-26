@@ -274,13 +274,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[queryBuilder]]">
-      <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder query="[[query]]"
-                                 on-submit="[[submitQuery]]">
-        </test-runs-query-builder>
-      </iron-collapse>
-    </template>
+    <iron-collapse opened="[[editingQuery]]">
+      <test-runs-query-builder query="[[query]]"
+                               on-submit="[[submitQuery]]">
+      </test-runs-query-builder>
+    </iron-collapse>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">

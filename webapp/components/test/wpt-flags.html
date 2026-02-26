@@ -28,30 +28,30 @@ suite('wpt-flags', () => {
       flags = document.createElement('wpt-flags');
     });
 
-    test('queryBuilder', () => {
-      const before = flags.queryBuilder;
-      flags.queryBuilder = !flags.queryBuilder;
-      expect(flags.queryBuilder).to.equal(before);
+    test('colorHomepage', () => {
+      const before = flags.colorHomepage;
+      flags.colorHomepage = !flags.colorHomepage;
+      expect(flags.colorHomepage).to.equal(before);
     });
   });
 
   suite('WPTFlagsEditor', () => {
-    let editor, queryBuilderStateBefore;
+    let editor, colorHomepageStateBefore;
 
     setup(() => {
       editor = fixture('wpt-flags-editor-fixture');
-      queryBuilderStateBefore = editor.queryBuilder;
+      colorHomepageStateBefore = editor.colorHomepage;
     });
 
-    test('queryBuilder', () => {
-      editor.queryBuilder = true;
-      expect(editor.queryBuilder).to.equal(true);
-      editor.queryBuilder = false;
-      expect(editor.queryBuilder).to.equal(false);
+    test('colorHomepage', () => {
+      editor.colorHomepage = true;
+      expect(editor.colorHomepage).to.equal(true);
+      editor.colorHomepage = false;
+      expect(editor.colorHomepage).to.equal(false);
     });
 
     teardown(() => {
-      editor.queryBuilder = queryBuilderStateBefore;
+      editor.colorHomepage = colorHomepageStateBefore;
     });
   });
 
@@ -59,35 +59,43 @@ suite('wpt-flags', () => {
     let editor, sandbox;
 
     setup(() => {
+      // Clear localStorage to ensure tests start with a clean state
+      window.localStorage.removeItem('features.colorHomepage');
       editor = fixture('wpt-flags-editor-fixture');
       sandbox = sinon.sandbox.create();
     });
 
     teardown(() => {
       sandbox.restore();
+      // Clean up localStorage after tests
+      window.localStorage.removeItem('features.colorHomepage');
     });
 
     test('toggling checkboxes updates localStorage', () => {
       assert.isTrue(editor instanceof WPTFlagsEditor);
-      editor.queryBuilder = true;
-      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('true');
-      editor.queryBuilder = false;
-      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('false');
+      // Ensure we're starting from a different value to trigger the setter
+      editor.colorHomepage = false;
+      editor.colorHomepage = true;
+      expect(window.localStorage.getItem('features.colorHomepage')).to.equal('true');
+      editor.colorHomepage = false;
+      expect(window.localStorage.getItem('features.colorHomepage')).to.equal('false');
     });
 
     test('click updates localStorage', () => {
       assert.isTrue(editor instanceof WPTFlagsEditor);
-      editor.queryBuilder = true;
-      expect(window.localStorage.getItem('features.queryBuilder')).to.equal('true');
-      const queryBuilder = editor.shadowRoot.querySelector('#queryBuilder');
+      // Ensure we're starting from a different value to trigger the setter
+      editor.colorHomepage = false;
+      editor.colorHomepage = true;
+      expect(window.localStorage.getItem('features.colorHomepage')).to.equal('true');
+      const colorHomepage = editor.shadowRoot.querySelector('#colorHomepage');
 
       const flagUpdated = new Promise(resolve => {
         window.document.addEventListener('flagUpdated', () => resolve(), { once: true });
       });
 
-      queryBuilder.dispatchEvent(new MouseEvent('click'));
+      colorHomepage.dispatchEvent(new MouseEvent('click'));
       return flagUpdated.then(() => {
-        expect(window.localStorage.getItem('features.queryBuilder')).to.equal('false');
+        expect(window.localStorage.getItem('features.colorHomepage')).to.equal('false');
       });
     });
   });

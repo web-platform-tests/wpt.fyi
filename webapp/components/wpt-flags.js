@@ -44,7 +44,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'githubLogin',
       'permalinks',
       'processorTab',
-      'queryBuilder',
       'queryBuilderSHA',
       'showBSF',
       'showMobileScoresView',
@@ -200,11 +199,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         margin-left: 32px;
       }
     </style>
-    <paper-item>
-      <paper-checkbox id="queryBuilder" checked="[[queryBuilder]]" on-change="handleChange">
-        Query Builder component
-      </paper-checkbox>
-    </paper-item>
     <paper-item sub-item>
       <paper-checkbox id="queryBuilderSHA" checked="[[queryBuilderSHA]]" on-change="handleChange">
         SHA input

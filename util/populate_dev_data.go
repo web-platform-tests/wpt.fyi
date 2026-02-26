@@ -162,7 +162,6 @@ func main() {
 	})
 
 	log.Print("Adding flag defaults...")
-	addFlag(store, "queryBuilder", enabledFlag)
 	addFlag(store, "diffFilter", enabledFlag)
 	addFlag(store, "diffFromAPI", enabledFlag)
 	addFlag(store, "structuredQueries", enabledFlag)
