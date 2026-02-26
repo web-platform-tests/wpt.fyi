@@ -46,7 +46,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'processorTab',
       'showBSF',
       'showMobileScoresView',
-      'structuredQueries',
       'triageMetadataUI',
       'webPlatformTestsLive',
     ];
@@ -206,12 +205,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="structuredQueries" checked="[[structuredQueries]]" on-change="handleChange">
-        Interpret query strings as structured queries over test names and test
-        status/result values
       </paper-checkbox>
     </paper-item>
     <paper-item>

@@ -614,8 +614,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.load(
       this.loadRuns().then(async runs => {
         // Pass current (un)structured query is passed to fetchResults().
-        this.fetchResults(
-          this.structuredQueries && this.structuredSearch || this.search);
+        this.fetchResults(this.structuredSearch || this.search);
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {
@@ -662,29 +661,20 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     let url = new URL('/api/search', window.location);
     let fetchOpts;
 
-    if (this.structuredQueries) {
-      const body = {
-        run_ids: this.testRuns.map(r => r.id),
-      };
-      if (q) {
-        body.query = q;
-      }
-      if (this.diff && this.diffFromAPI) {
-        url.searchParams.set('diff', true);
-        url.searchParams.set('filter', this.diffFilter);
-      }
-      fetchOpts = {
-        method: 'POST',
-        body: JSON.stringify(body),
-      };
-    } else {
-      url.searchParams.set(
-        'run_ids',
-        this.testRuns.map(r => r.id.toString()).join(','));
-      if (q) {
-        url.searchParams.set('q', q);
-      }
+    const body = {
+      run_ids: this.testRuns.map(r => r.id),
+    };
+    if (q) {
+      body.query = q;
     }
+    if (this.diff && this.diffFromAPI) {
+      url.searchParams.set('diff', true);
+      url.searchParams.set('filter', this.diffFilter);
+    }
+    fetchOpts = {
+      method: 'POST',
+      body: JSON.stringify(body),
+    };
     this.sortCol = new Array(this.testRuns.length).fill(false);
 
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
