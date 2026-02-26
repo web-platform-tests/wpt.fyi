@@ -24,8 +24,7 @@ const (
 	wptRepoInstallationID        = int64(577173)
 	wptRepoStagingInstallationID = int64(449270)
 
-	wptRepoID                = int64(3618133)
-	checksForAllUsersFeature = "checksAllUsers"
+	wptRepoID = int64(3618133)
 )
 
 // API abstracts all the API calls used externally.

@@ -52,24 +52,6 @@ func TestHandleCheckRunEvent_Created_Completed(t *testing.T) {
 
 	api := mock_checks.NewMockAPI(mockCtrl)
 	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-
-	processed, err := handleCheckRunEvent(api, payload)
-	assert.Nil(t, err)
-	assert.False(t, processed)
-}
-
-func TestHandleCheckRunEvent_Created_Pending_ChecksNotEnabledForUser(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	sha := strings.Repeat("0123456789", 4)
-	event := getCheckRunCreatedEvent("pending", "user-without-checks", sha)
-	payload, _ := json.Marshal(event)
-
-	api := mock_checks.NewMockAPI(mockCtrl)
-	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 
 	processed, err := handleCheckRunEvent(api, payload)
 	assert.Nil(t, err)
@@ -86,7 +68,6 @@ func TestHandleCheckRunEvent_Created_Pending(t *testing.T) {
 
 	api := mock_checks.NewMockAPI(mockCtrl)
 	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	api.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome")).Return(nil)
 
 	processed, err := handleCheckRunEvent(api, payload)
@@ -129,7 +110,6 @@ func TestHandleCheckRunEvent_ActionRequested_Ignore(t *testing.T) {
 
 			api := mock_checks.NewMockAPI(mockCtrl)
 			api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-			api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 			api.EXPECT().IgnoreFailure(username, owner, repo, event.GetCheckRun(), event.GetInstallation())
 
 			processed, err := handleCheckRunEvent(api, payload)
@@ -174,7 +154,6 @@ func TestHandleCheckRunEvent_ActionRequested_Recompute(t *testing.T) {
 
 			api := mock_checks.NewMockAPI(mockCtrl)
 			api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-			api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 			api.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("chrome[experimental]")).Return(nil)
 
 			processed, err := handleCheckRunEvent(api, payload)
@@ -198,7 +177,6 @@ func TestHandleCheckRunEvent_ActionRequested_Cancel(t *testing.T) {
 
 	api := mock_checks.NewMockAPI(mockCtrl)
 	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	api.EXPECT().CancelRun(username, shared.WPTRepoOwner, shared.WPTRepoName, event.GetCheckRun(), event.GetInstallation())
 
 	processed, err := handleCheckRunEvent(api, payload)
@@ -228,23 +206,6 @@ func getCheckRunCreatedEvent(status, sender, sha string) github.CheckRunEvent {
 	}
 }
 
-func TestHandlePullRequestEvent_ChecksNotEnabledForUser(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	sha := strings.Repeat("1234567890", 4)
-	event := getOpenedPREvent("user-without-checks", sha)
-	payload, _ := json.Marshal(event)
-
-	api := mock_checks.NewMockAPI(mockCtrl)
-	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
-
-	processed, err := handlePullRequestEvent(api, payload)
-	assert.Nil(t, err)
-	assert.False(t, processed)
-}
-
 func TestHandlePullRequestEvent_ChecksEnabledForUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -255,7 +216,6 @@ func TestHandlePullRequestEvent_ChecksEnabledForUser(t *testing.T) {
 
 	api := mock_checks.NewMockAPI(mockCtrl)
 	api.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
-	api.EXPECT().IsFeatureEnabled(checksForAllUsersFeature).Return(false)
 	api.EXPECT().GetWPTRepoAppInstallationIDs().Return(wptfyiStagingCheckAppID, wptRepoStagingInstallationID)
 	api.EXPECT().CreateWPTCheckSuite(wptfyiStagingCheckAppID, wptRepoStagingInstallationID, sha, 123).Return(true, nil)
 
