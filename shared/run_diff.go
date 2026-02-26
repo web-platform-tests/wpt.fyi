@@ -347,37 +347,6 @@ func FetchRunResultsJSON(ctx context.Context, run TestRun) (results ResultsSumma
 
 // GetRunsDiff returns a RunDiff for the given runs.
 func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
-	store := NewAppEngineDatastore(d.ctx, false)
-	if IsFeatureEnabled(store, "searchcacheDiffs") {
-		return d.getRunsDiffFromSearchCache(before, after, filter, paths)
-	}
-	beforeJSON, err := FetchRunResultsJSON(d.ctx, before)
-	if err != nil {
-		return diff, fmt.Errorf("failed to fetch 'before' results: %s", err.Error())
-	}
-	afterJSON, err := FetchRunResultsJSON(d.ctx, after)
-	if err != nil {
-		return diff, fmt.Errorf("failed to fetch 'after' results: %s", err.Error())
-	}
-
-	var renames map[string]string
-	beforeSHA := before.FullRevisionHash
-	// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
-	if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
-		beforeSHA = "HEAD"
-	}
-	renames = getDiffRenames(d.aeAPI, beforeSHA, after.FullRevisionHash)
-	return RunDiff{
-		Before:        before,
-		BeforeSummary: beforeJSON,
-		After:         after,
-		AfterSummary:  afterJSON,
-		Differences:   GetResultsDiff(beforeJSON, afterJSON, filter, paths, renames),
-		Renames:       renames,
-	}, nil
-}
-
-func (d diffAPIImpl) getRunsDiffFromSearchCache(before, after TestRun, filter DiffFilterParam, paths mapset.Set) (diff RunDiff, err error) {
 	diffURL, _ := url.Parse(fmt.Sprintf("https://%s/api/search", d.aeAPI.GetVersionedHostname()))
 	query := diffURL.Query()
 	query.Set("diff", "")

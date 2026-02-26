@@ -56,7 +56,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'ignoreHarnessInTotal',
       'onlyChangesAsRegressions',
       'pendingChecks',
-      'searchcacheDiffs',
     ];
   }
 });
@@ -250,11 +249,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
       </paper-checkbox>
     </paper-item>
     <h4>GitHub Status Checks</h4>
-    <paper-item>
-      <paper-checkbox id="searchcacheDiffs" checked="[[searchcacheDiffs]]" on-change="handleChange">
-        Use searchcache (not summaries) to compute diffs when processing check run events.
-      </paper-checkbox>
-    </paper-item>
     <paper-item sub-item>
       <paper-checkbox id="onlyChangesAsRegressions" checked="[[onlyChangesAsRegressions]]" on-change="handleChange">
         Only treat C (changed) differences as possible regressions.
