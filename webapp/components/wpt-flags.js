@@ -40,7 +40,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'displayMetadata',
       'githubLogin',
-      'permalinks',
       'processorTab',
       'showBSF',
       'showMobileScoresView',
@@ -194,11 +193,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="permalinks" checked="[[permalinks]]" on-change="handleChange">
-        Show dialog for copying a permalink (on /results page).
       </paper-checkbox>
     </paper-item>
     <paper-item>
