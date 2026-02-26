@@ -41,7 +41,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'displayMetadata',
       'showBSF',
       'showMobileScoresView',
-      'triageMetadataUI',
     ];
   }
 });
@@ -192,11 +191,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="displayMetadata" checked="[[displayMetadata]]" on-change="handleChange">
         Show metadata Information on the wpt.fyi result page.
-      </paper-checkbox>
-    </paper-item>
-      <paper-item>
-      <paper-checkbox id="triageMetadataUI" checked="[[triageMetadataUI]]" on-change="handleChange">
-        Show Triage Metadata UI on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
     <paper-item>
