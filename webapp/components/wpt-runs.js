@@ -142,21 +142,19 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[queryBuilder]]">
-      <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder product-specs="[[productSpecs]]"
-                                 labels="[[labels]]"
-                                 master="[[master]]"
-                                 shas="[[shas]]"
-                                 aligned="[[aligned]]"
-                                 on-submit="[[submitQuery]]"
-                                 from="[[from]]"
-                                 to="[[to]]"
-                                 diff="[[diff]]"
-                                 show-time-range>
-        </test-runs-query-builder>
-      </iron-collapse>
-    </template>
+    <iron-collapse opened="[[editingQuery]]">
+      <test-runs-query-builder product-specs="[[productSpecs]]"
+                               labels="[[labels]]"
+                               master="[[master]]"
+                               shas="[[shas]]"
+                               aligned="[[aligned]]"
+                               on-submit="[[submitQuery]]"
+                               from="[[from]]"
+                               to="[[to]]"
+                               diff="[[diff]]"
+                               show-time-range>
+      </test-runs-query-builder>
+    </iron-collapse>
 
     <template is="dom-if" if="[[loadingFailed]]">
       <info-banner type="error">
