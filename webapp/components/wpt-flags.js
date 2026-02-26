@@ -49,7 +49,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
     return [
       'failChecksOnRegression',
       'ignoreHarnessInTotal',
-      'pendingChecks',
     ];
   }
 });
@@ -231,11 +230,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox id="failChecksOnRegression" checked="[[failChecksOnRegression]]" on-change="handleChange">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="pendingChecks" checked="[[pendingChecks]]" on-change="handleChange">
-        Create pending GitHub status check when results first arrive, and are being processed.
       </paper-checkbox>
     </paper-item>
 `;
