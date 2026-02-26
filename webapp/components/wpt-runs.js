@@ -455,9 +455,6 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
   }
 
   commitType(runsByBrowser) {
-    if (!this.githubCommitLinks) {
-      return;
-    }
     const types = CommitTypes;
     for (const runs of Object.values(runsByBrowser)) {
       for (const r of runs) {
