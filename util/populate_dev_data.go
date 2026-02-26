@@ -164,7 +164,6 @@ func main() {
 	log.Print("Adding flag defaults...")
 	addFlag(store, "diffFilter", enabledFlag)
 	addFlag(store, "diffFromAPI", enabledFlag)
-	addFlag(store, "paginationTokens", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(store, "Uploader", []interface{}{

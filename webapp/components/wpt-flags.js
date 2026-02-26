@@ -59,7 +59,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'githubLogin',
       'ignoreHarnessInTotal',
       'onlyChangesAsRegressions',
-      'paginationTokens',
       'pendingChecks',
       'runsByPRNumber',
       'searchcacheDiffs',
@@ -270,11 +269,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     ${WPTFlagsEditor.template}
 
     <h3>Server-side only features</h3>
-    <paper-item>
-      <paper-checkbox id="paginationTokens" checked="[[paginationTokens]]" on-change="handleChange">
-        Return "wpt-next-page" pagination token HTTP header in /api/runs
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="runsByPRNumber" checked="[[runsByPRNumber]]" on-change="handleChange">
         Allow /api/runs?pr=[GitHub PR number]
