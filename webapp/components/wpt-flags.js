@@ -45,7 +45,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'showBSF',
       'showMobileScoresView',
       'triageMetadataUI',
-      'webPlatformTestsLive',
     ];
   }
 });
@@ -200,11 +199,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="permalinks" checked="[[permalinks]]" on-change="handleChange">
         Show dialog for copying a permalink (on /results page).
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="webPlatformTestsLive" checked="[[webPlatformTestsLive]]" on-change="handleChange">
-        Use wpt.live.
       </paper-checkbox>
     </paper-item>
     <paper-item>

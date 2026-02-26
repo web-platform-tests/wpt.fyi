@@ -455,10 +455,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         type: Boolean,
         computed: 'computePathIsASubfolderOrFile(pathIsASubfolder, pathIsATestFile)'
       },
-      liveTestDomain: {
-        type: String,
-        computed: 'computeLiveTestDomain()',
-      },
       structuredSearch: Object,
       searchResults: {
         type: Array,
@@ -545,13 +541,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   computePathIsASubfolderOrFile(isSubfolder, isFile) {
     return isSubfolder || isFile;
-  }
-
-  computeLiveTestDomain() {
-    if (this.webPlatformTestsLive) {
-      return 'wpt.live';
-    }
-    return 'w3c-test.org';
   }
 
   computeTestPaths(searchResults) {
