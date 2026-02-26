@@ -361,14 +361,12 @@ func (d diffAPIImpl) GetRunsDiff(before, after TestRun, filter DiffFilterParam, 
 	}
 
 	var renames map[string]string
-	if d.aeAPI.IsFeatureEnabled("diffRenames") {
-		beforeSHA := before.FullRevisionHash
-		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
-		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
-			beforeSHA = "HEAD"
-		}
-		renames = getDiffRenames(d.aeAPI, beforeSHA, after.FullRevisionHash)
+	beforeSHA := before.FullRevisionHash
+	// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+	if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+		beforeSHA = "HEAD"
 	}
+	renames = getDiffRenames(d.aeAPI, beforeSHA, after.FullRevisionHash)
 	return RunDiff{
 		Before:        before,
 		BeforeSummary: beforeJSON,
@@ -427,14 +425,12 @@ func RunDiffFromSearchResponse(aeAPI AppEngineAPI, before, after TestRun, scDiff
 	}
 
 	var renames map[string]string
-	if aeAPI.IsFeatureEnabled("diffRenames") {
-		beforeSHA := before.FullRevisionHash
-		// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
-		if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
-			beforeSHA = "HEAD"
-		}
-		renames = getDiffRenames(aeAPI, beforeSHA, after.FullRevisionHash)
+	beforeSHA := before.FullRevisionHash
+	// Use HEAD...[sha] for PR results, since PR run results always override the value of 'revision' to the PRs HEAD revision.
+	if before.FullRevisionHash == after.FullRevisionHash && before.IsPRBase() {
+		beforeSHA = "HEAD"
 	}
+	renames = getDiffRenames(aeAPI, beforeSHA, after.FullRevisionHash)
 
 	return RunDiff{
 		Before:        before,
