@@ -188,11 +188,9 @@ class WPTHeader extends WPTFlags(PolymerElement) {
           <a class="mobile-title" href="/">WPT dashboard</a>
         <h1>
       </div>
-      <template is="dom-if" if="[[githubLogin]]">
-        <div id="desktop-login">
+      <div id="desktop-login">
           <github-login user="[[user]]" is-triage-mode="[[isTriageMode]]"></github-login>
         </div>
-      </template>
       <button
           class$="[[_computeMenuButtonClass(_isMenuOpen)]]"
           on-click="_toggleMenu"
@@ -222,9 +220,7 @@ class WPTHeader extends WPTFlags(PolymerElement) {
         <a href="/insights">Insights</a>
         <a href="/status">Processor</a>
         <a href="/about">About</a>
-        <template is="dom-if" if="[[githubLogin]]">
-          <github-login user="[[user]]" is-triage-mode="[[isTriageMode]]"></github-login>
-        </template>
+        <github-login user="[[user]]" is-triage-mode="[[isTriageMode]]"></github-login>
       </div>
     </header>
 `;
