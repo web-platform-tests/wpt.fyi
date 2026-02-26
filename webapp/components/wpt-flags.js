@@ -39,7 +39,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     return [
       'colorHomepage',
       'displayMetadata',
-      'githubLogin',
       'showBSF',
       'showMobileScoresView',
       'triageMetadataUI',
@@ -50,7 +49,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
       'failChecksOnRegression',
-      'githubLogin',
       'ignoreHarnessInTotal',
       'pendingChecks',
     ];
@@ -199,11 +197,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       <paper-item>
       <paper-checkbox id="triageMetadataUI" checked="[[triageMetadataUI]]" on-change="handleChange">
         Show Triage Metadata UI on the wpt.fyi result page.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="githubLogin" checked="[[githubLogin]]" on-change="handleChange">
-        Enable GitHub OAuth login
       </paper-checkbox>
     </paper-item>
     <paper-item>

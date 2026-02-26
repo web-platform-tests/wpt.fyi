@@ -21,13 +21,6 @@ type loginFailureResponse struct {
 
 func apiUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	aeAPI := shared.NewAppEngineAPI(ctx)
-	if !aeAPI.IsFeatureEnabled("githubLogin") {
-		http.Error(w, "Feature not enabled", http.StatusNotImplemented)
-
-		return
-	}
-
 	ds := shared.NewAppEngineDatastore(ctx, false)
 	user, _ := shared.GetUserFromCookie(ctx, ds, r)
 	if user == nil {
