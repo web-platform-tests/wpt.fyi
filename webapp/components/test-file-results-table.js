@@ -504,7 +504,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
       return false;
     }
 
-    return this.displayMetadata && this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
+    return this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
   }
 
   shouldShowTotals(totals) {
