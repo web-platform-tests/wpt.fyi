@@ -428,14 +428,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </div>
     </template>
 
-    <template is="dom-if" if="[[displayMetadata]]">
-      <wpt-metadata products="[[displayedProducts]]"
-                    path="[[path]]"
-                    search-results="[[searchResults]]"
-                    metadata-map="[[metadataMap]]"
-                    label-map="[[labelMap}]]"
-                    triage-notifier="[[triageNotifier]]"></wpt-metadata>
-    </template>
+    <wpt-metadata products="[[displayedProducts]]"
+                  path="[[path]]"
+                  search-results="[[searchResults]]"
+                  metadata-map="[[metadataMap]]"
+                  label-map="[[labelMap}]]"
+                  triage-notifier="[[triageNotifier]]"></wpt-metadata>
     <wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
   }
@@ -1538,7 +1536,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   shouldDisplayTestLabel(testname, labelMap) {
-    return this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+    return this.getTestLabel(testname, labelMap) !== '';
   }
 
   shouldDisplayTotals(displayedTotals, diffRun) {
@@ -1570,7 +1568,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   shouldDisplayMetadata(index, testname, metadataMap) {
-    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname, metadataMap) !== '';
+    return !this.pathIsRootDir && this.getMetadataUrl(index, testname, metadataMap) !== '';
   }
 
   getMetadataUrl(index, testname, metadataMap) {

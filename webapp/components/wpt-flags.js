@@ -38,7 +38,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
   get: function() {
     return [
       'colorHomepage',
-      'displayMetadata',
       'showMobileScoresView',
     ];
   }
@@ -184,11 +183,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="displayMetadata" checked="[[displayMetadata]]" on-change="handleChange">
-        Show metadata Information on the wpt.fyi result page.
       </paper-checkbox>
     </paper-item>
     <paper-item>
