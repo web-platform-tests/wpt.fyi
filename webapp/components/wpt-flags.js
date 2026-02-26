@@ -39,7 +39,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
     return [
       'colorHomepage',
       'displayMetadata',
-      'showBSF',
       'showMobileScoresView',
     ];
   }
@@ -190,11 +189,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
     <paper-item>
       <paper-checkbox id="displayMetadata" checked="[[displayMetadata]]" on-change="handleChange">
         Show metadata Information on the wpt.fyi result page.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="showBSF" checked="[[showBSF]]" on-change="handleChange">
-        Enable Browser Specific Failures graph
       </paper-checkbox>
     </paper-item>
     <paper-item>
