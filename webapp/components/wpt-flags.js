@@ -49,7 +49,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
 Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
-      'checksAllUsers',
       'failChecksOnRegression',
       'githubLogin',
       'ignoreHarnessInTotal',
@@ -245,11 +244,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     <paper-item>
       <paper-checkbox id="failChecksOnRegression" checked="[[failChecksOnRegression]]" on-change="handleChange">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="checksAllUsers" checked="[[checksAllUsers]]" on-change="handleChange">
-        Run the wpt.fyi GitHub status check for all users.
       </paper-checkbox>
     </paper-item>
     <paper-item>
