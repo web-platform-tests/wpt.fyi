@@ -25,7 +25,6 @@ import (
 const CheckProcessingQueue = "check-processing"
 
 const failChecksOnRegressionFeature = "failChecksOnRegression"
-const onlyChangesAsRegressionsFeature = "onlyChangesAsRegressions"
 
 // updateCheckHandler handles /api/checks/[commit] POST requests.
 func updateCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -251,17 +250,13 @@ func getDiffSummary(
 	}
 
 	var regressions mapset.Set
-	if aeAPI.IsFeatureEnabled(onlyChangesAsRegressionsFeature) {
-		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
-		regressionFilter := shared.DiffFilterParam{Changed: true} // Only changed items
-		changeOnlyDiff, err := diffAPI.GetRunsDiff(baseRun, headRun, regressionFilter, nil)
-		if err != nil {
-			return nil, err
-		}
-		regressions = changeOnlyDiff.Differences.Regressions()
-	} else {
-		regressions = diff.Differences.Regressions()
+	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
+	regressionFilter := shared.DiffFilterParam{Changed: true} // Only changed items
+	changeOnlyDiff, err := diffAPI.GetRunsDiff(baseRun, headRun, regressionFilter, nil)
+	if err != nil {
+		return nil, err
 	}
+	regressions = changeOnlyDiff.Differences.Regressions()
 	hasRegressions := regressions.Cardinality() > 0
 	neutral := "neutral"
 	checkState.Conclusion = &neutral
