@@ -44,7 +44,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'githubLogin',
       'permalinks',
       'processorTab',
-      'queryBuilderSHA',
       'showBSF',
       'showMobileScoresView',
       'structuredQueries',
@@ -199,11 +198,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         margin-left: 32px;
       }
     </style>
-    <paper-item sub-item>
-      <paper-checkbox id="queryBuilderSHA" checked="[[queryBuilderSHA]]" on-change="handleChange">
-        SHA input
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="diffFromAPI" checked="[[diffFromAPI]]" on-change="handleChange">
         Compute diffs using /api/diff
