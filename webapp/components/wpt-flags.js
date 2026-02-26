@@ -60,7 +60,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
       'ignoreHarnessInTotal',
       'onlyChangesAsRegressions',
       'pendingChecks',
-      'runsByPRNumber',
       'searchcacheDiffs',
     ];
   }
@@ -269,11 +268,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     ${WPTFlagsEditor.template}
 
     <h3>Server-side only features</h3>
-    <paper-item>
-      <paper-checkbox id="runsByPRNumber" checked="[[runsByPRNumber]]" on-change="handleChange">
-        Allow /api/runs?pr=[GitHub PR number]
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="ignoreHarnessInTotal" checked="[[ignoreHarnessInTotal]]" on-change="handleChange">
         Ignore "OK" harness status in test summary numbers.
