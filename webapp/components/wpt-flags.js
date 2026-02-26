@@ -38,7 +38,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
   get: function() {
     return [
       'colorHomepage',
-      'diffFromAPI',
       'displayMetadata',
       'githubLogin',
       'permalinks',
@@ -193,11 +192,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
         margin-left: 32px;
       }
     </style>
-    <paper-item>
-      <paper-checkbox id="diffFromAPI" checked="[[diffFromAPI]]" on-change="handleChange">
-        Compute diffs using /api/diff
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage

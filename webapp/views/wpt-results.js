@@ -667,7 +667,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     if (q) {
       body.query = q;
     }
-    if (this.diff && this.diffFromAPI) {
+    if (this.diff) {
       url.searchParams.set('diff', true);
       url.searchParams.set('filter', this.diffFilter);
     }
@@ -713,9 +713,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   fetchDiff() {
-    if (!this.diffFromAPI) {
-      return;
-    }
     this.load(
       window.fetch(this.diffURL)
         .then(r => {
