@@ -55,7 +55,6 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   get: function() {
     return [
       'checksAllUsers',
-      'diffRenames',
       'failChecksOnRegression',
       'githubLogin',
       'ignoreHarnessInTotal',
@@ -271,11 +270,6 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     ${WPTFlagsEditor.template}
 
     <h3>Server-side only features</h3>
-    <paper-item>
-      <paper-checkbox id="diffRenames" checked="[[diffRenames]]" on-change="handleChange">
-        Compute renames in diffs with the GitHub API
-      </paper-checkbox>
-    </paper-item>
     <paper-item>
       <paper-checkbox id="paginationTokens" checked="[[paginationTokens]]" on-change="handleChange">
         Return "wpt-next-page" pagination token HTTP header in /api/runs
