@@ -40,7 +40,6 @@ Object.defineProperty(wpt, 'ClientSideFeatures', {
       'colorHomepage',
       'displayMetadata',
       'githubLogin',
-      'processorTab',
       'showBSF',
       'showMobileScoresView',
       'triageMetadataUI',
@@ -201,11 +200,6 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
       <paper-item>
       <paper-checkbox id="triageMetadataUI" checked="[[triageMetadataUI]]" on-change="handleChange">
         Show Triage Metadata UI on the wpt.fyi result page.
-      </paper-checkbox>
-    </paper-item>
-    <paper-item>
-      <paper-checkbox id="processorTab" checked="[[processorTab]]" on-change="handleChange">
-        Show the "Processor" (status) tab.
       </paper-checkbox>
     </paper-item>
     <paper-item>
