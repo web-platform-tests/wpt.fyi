@@ -163,6 +163,10 @@ func (gaci githubAccessControlImpl) IsValidAdmin() (bool, error) {
 	if !valid {
 		return false, errors.New("invalid access token")
 	}
+	membership, _, err := gaci.oauthGHClient.Organizations.GetOrgMembership(gaci.ctx, "", "web-platform-tests")
+	if err == nil && *membership.Role == "admin" {
+		return true, nil
+	}
 	key := gaci.ds.NewNameKey("Admin", gaci.user.GitHubHandle)
 	var dst struct{}
 	if err := gaci.ds.Get(key, &dst); err == ErrNoSuchEntity {
