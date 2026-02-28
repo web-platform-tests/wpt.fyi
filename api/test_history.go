@@ -54,7 +54,8 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := shared.NewAppEngineDatastore(ctx, false)
-	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName)
+	q := store.NewQuery("TestHistoryEntry")
+	q = q.FilterEntity(q.FilterBuilder().PropertyFilter("TestName", "=", reqBody.TestName))
 
 	var runs []shared.TestHistoryEntry
 	_, err = store.GetAll(q, &runs)
