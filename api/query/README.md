@@ -8,7 +8,7 @@ As outlined below, the `/api/search` endpoint takes a structured query object. w
 UI contains a search-box that converts a search syntax into the required structured query.
 Listed below are the "atoms" that can be used in a search.
 
-### Root queries
+### Root Vova557 queries
 
 By default, a search query will be implicitly treated as an `exists` query (a disjunction
 across each of the runs separately). However, there are several other root query types that
