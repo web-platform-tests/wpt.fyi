@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	github "github.com/google/go-github/v82/github"
+	github "github.com/google/go-github/v84/github"
 	shared "github.com/web-platform-tests/wpt.fyi/shared"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
