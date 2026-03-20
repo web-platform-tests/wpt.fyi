@@ -238,9 +238,11 @@ class MockProcessorTest(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "Some unexpected error"):
             process_report('12345', params)
 
-        # Should have updated status to WPTFYI_PROCESSING, then INVALID on error.
-        # Note: the second update_status call uses a NEW Processor instance in the implementation.
-        # Since we patched the class, it should still be tracked.
+        # Should have updated status to WPTFYI_PROCESSING, then INVALID on
+        # error.
+        # Note: the second update_status call uses a NEW Processor instance in
+        # the implementation. Since we patched the class, it should still be
+        # tracked.
         mock.update_status.assert_has_calls([
             call('654321', 'WPTFYI_PROCESSING', None, None),
             call('654321', 'INVALID', "Some unexpected error", None),

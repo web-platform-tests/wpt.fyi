@@ -7,7 +7,6 @@ import logging
 import os
 import posixpath
 import shutil
-import sys
 import tempfile
 import time
 import traceback
@@ -389,7 +388,8 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
                 return ''
             try:
                 p.load_report()
-                # To be deprecated once all reports have all the required metadata.
+                # To be deprecated once all reports have all the required
+                # metadata.
                 p.report.update_metadata(
                     revision=params.get('revision'),
                     browser_name=params.get('browser_name'),
@@ -401,15 +401,18 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
             except wptreport.WPTReportError as e:
                 # This will register an error in Stackdriver.
                 _log.exception("Invalid report data: %s", str(e))
+                # Add the input source to the error message.
+                if e.path is None:
+                    e.path = archives or results
                 p.update_status(run_id, 'INVALID', str(e), callback_url)
-                # The input is invalid and there is no point to retry, so we return
-                # an empty (but successful) response to drop the task.
+                # The input is invalid and there is no point to retry, so we
+                # return an empty (but successful) response to drop the task.
                 return ''
 
             if p.check_existing_run():
                 _log.warning(
-                    'Skipping the task because RawResultsURL already exists: %s',
-                    p.raw_results_url)
+                    'Skipping the task because RawResultsURL already exists: '
+                    '%s', p.raw_results_url)
                 p.update_status(run_id, 'DUPLICATE', None, callback_url)
                 return ''
             response.append("{} results loaded from task {}".format(
@@ -426,8 +429,8 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
             # Check again because the upload takes a long time.
             if p.check_existing_run():
                 _log.warning(
-                    'Skipping the task because RawResultsURL already exists: %s',
-                    p.raw_results_url)
+                    'Skipping the task because RawResultsURL already exists: '
+                    '%s', p.raw_results_url)
                 p.update_status(run_id, 'DUPLICATE', None, callback_url)
                 return ''
 
@@ -436,9 +439,10 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
 
             p.run_hooks([_upload_screenshots])
     except Exception as e:
-        # For any unhandled exception, attempt to update the run status to INVALID
-        # before re-raising the exception to allow Cloud Tasks to retry if appropriate.
-        # We use a separate Processor instance if the original one failed or was closed.
+        # For any unhandled exception, attempt to update the run status to
+        # INVALID before re-raising the exception to allow Cloud Tasks to retry
+        # if appropriate. We use a separate Processor instance if the original
+        # one failed or was closed.
         _log.exception("Unhandled exception in process_report: %s", str(e))
         try:
             with Processor() as p:
