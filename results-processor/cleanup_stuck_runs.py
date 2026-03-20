@@ -6,7 +6,7 @@ from processor import Processor
 _log = logging.getLogger(__name__)
 
 
-def cleanup_stuck_runs(days_threshold=14):
+def cleanup_stuck_runs(days_threshold: int = 14) -> None:
     """
     Identifies PendingTestRun entities that have been in a non-terminal state
     for longer than the given threshold and marks them as INVALID.
