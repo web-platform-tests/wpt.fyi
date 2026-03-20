@@ -38,7 +38,15 @@ if [[ ${SKIP_ISSUE_CREATION} != "true" ]];
 then
   # Find changes to deploy.
   LAST_DEPLOYED_SHA=$(gcloud app --project=wptdashboard versions list --hide-no-traffic --filter='service=default' --format=yaml | grep id | head -1 | cut -d' ' -f2 | sed 's/rev-//')
-  CHANGELIST=$(git log $LAST_DEPLOYED_SHA..HEAD --oneline)
+  CHANGELIST_BASE_SHA=$LAST_DEPLOYED_SHA
+  if ! CHANGELIST=$(git log $CHANGELIST_BASE_SHA..HEAD --oneline 2>/dev/null); then
+    if confirm "Could not fetch a list of changes from the previous commit ($LAST_DEPLOYED_SHA) to HEAD. Create a deployment issue that includes a default amount of changes (HEAD~40..HEAD)?"; then
+      CHANGELIST_BASE_SHA=$(git rev-parse HEAD~40)
+      CHANGELIST=$(git log $CHANGELIST_BASE_SHA..HEAD --oneline)
+    else
+      exit 1
+    fi
+  fi
   if [[ "${CHANGELIST}" == ""  ]];
   then
       echo "No new changes to deploy."
@@ -69,7 +77,7 @@ then
   BUG_BODY=$(cat << EOF
 Previous deployment was #$LAST_DEPLOYMENT_ISSUE ($LAST_DEPLOYED_SHA)
 
-Changelist $LAST_DEPLOYED_SHA...$NEW_SHA
+Changelist $CHANGELIST_BASE_SHA...$NEW_SHA
 
 Changes:
 $CHANGELIST
