@@ -7,7 +7,6 @@ import logging
 import os
 import posixpath
 import shutil
-import sys
 import tempfile
 import time
 import traceback
@@ -374,68 +373,82 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
     labels = params.get('labels', '')
 
     response = []
-    with Processor() as p:
-        p.update_status(run_id, 'WPTFYI_PROCESSING', None, callback_url)
-        if archives:
-            _log.info("Downloading %d archives", len(archives))
-        else:
-            _log.info("Downloading %d results & %d screenshots",
-                      len(results), len(screenshots))
-        p.download(results, screenshots, archives)
-        if len(p.results) == 0:
-            _log.error("No results successfully downloaded")
-            p.update_status(run_id, 'EMPTY', None, callback_url)
-            return ''
+    try:
+        with Processor() as p:
+            p.update_status(run_id, 'WPTFYI_PROCESSING', None, callback_url)
+            if archives:
+                _log.info("Downloading %d archives", len(archives))
+            else:
+                _log.info("Downloading %d results & %d screenshots",
+                          len(results), len(screenshots))
+            p.download(results, screenshots, archives)
+            if len(p.results) == 0:
+                _log.error("No results successfully downloaded")
+                p.update_status(run_id, 'EMPTY', None, callback_url)
+                return ''
+            try:
+                p.load_report()
+                # To be deprecated once all reports have all the required
+                # metadata.
+                p.report.update_metadata(
+                    revision=params.get('revision'),
+                    browser_name=params.get('browser_name'),
+                    browser_version=params.get('browser_version'),
+                    os_name=params.get('os_name'),
+                    os_version=params.get('os_version'),
+                )
+                p.report.finalize()
+            except wptreport.WPTReportError as e:
+                # This will register an error in Stackdriver.
+                _log.exception("Invalid report data: %s", str(e))
+                # Add the input source to the error message.
+                if e.path is None:
+                    e.path = archives or results
+                p.update_status(run_id, 'INVALID', str(e), callback_url)
+                # The input is invalid and there is no point to retry, so we
+                # return an empty (but successful) response to drop the task.
+                return ''
+
+            if p.check_existing_run():
+                _log.warning(
+                    'Skipping the task because RawResultsURL already exists: '
+                    '%s', p.raw_results_url)
+                p.update_status(run_id, 'DUPLICATE', None, callback_url)
+                return ''
+            response.append("{} results loaded from task {}".format(
+                len(p.report.results), task_id))
+
+            _log.info("Uploading merged raw report")
+            p.upload_raw()
+            response.append("raw_results_url: " + p.raw_results_url)
+
+            _log.info("Uploading split results")
+            p.upload_split()
+            response.append("results_url: " + p.results_url)
+
+            # Check again because the upload takes a long time.
+            if p.check_existing_run():
+                _log.warning(
+                    'Skipping the task because RawResultsURL already exists: '
+                    '%s', p.raw_results_url)
+                p.update_status(run_id, 'DUPLICATE', None, callback_url)
+                return ''
+
+            p.create_run(run_id, labels, uploader, callback_url)
+            response.append("run ID: {}".format(p.test_run_id))
+
+            p.run_hooks([_upload_screenshots])
+    except Exception as e:
+        # For any unhandled exception, attempt to update the run status to
+        # INVALID before re-raising the exception to allow Cloud Tasks to retry
+        # if appropriate. We use a separate Processor instance if the original
+        # one failed or was closed.
+        _log.exception("Unhandled exception in process_report: %s", str(e))
         try:
-            p.load_report()
-            # To be deprecated once all reports have all the required metadata.
-            p.report.update_metadata(
-                revision=params.get('revision'),
-                browser_name=params.get('browser_name'),
-                browser_version=params.get('browser_version'),
-                os_name=params.get('os_name'),
-                os_version=params.get('os_version'),
-            )
-            p.report.finalize()
-        except wptreport.WPTReportError as e:
-            etype, e_, tb = sys.exc_info()
-            assert e is e_
-            e.path = results
-            # This will register an error in Stackdriver.
-            traceback.print_exception(etype, e, tb)
-            p.update_status(run_id, 'INVALID', str(e), callback_url)
-            # The input is invalid and there is no point to retry, so we return
-            # an empty (but successful) response to drop the task.
-            return ''
-
-        if p.check_existing_run():
-            _log.warning(
-                'Skipping the task because RawResultsURL already exists: %s',
-                p.raw_results_url)
-            p.update_status(run_id, 'DUPLICATE', None, callback_url)
-            return ''
-        response.append("{} results loaded from task {}".format(
-            len(p.report.results), task_id))
-
-        _log.info("Uploading merged raw report")
-        p.upload_raw()
-        response.append("raw_results_url: " + p.raw_results_url)
-
-        _log.info("Uploading split results")
-        p.upload_split()
-        response.append("results_url: " + p.results_url)
-
-        # Check again because the upload takes a long time.
-        if p.check_existing_run():
-            _log.warning(
-                'Skipping the task because RawResultsURL already exists: %s',
-                p.raw_results_url)
-            p.update_status(run_id, 'DUPLICATE', None, callback_url)
-            return ''
-
-        p.create_run(run_id, labels, uploader, callback_url)
-        response.append("run ID: {}".format(p.test_run_id))
-
-        p.run_hooks([_upload_screenshots])
+            with Processor() as p:
+                p.update_status(run_id, 'INVALID', str(e), callback_url)
+        except Exception:
+            _log.exception("Failed to update status after unhandled exception")
+        raise e
 
     return '\n'.join(response)

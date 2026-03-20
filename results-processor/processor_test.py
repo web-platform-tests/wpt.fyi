@@ -223,6 +223,32 @@ class MockProcessorTest(unittest.TestCase):
         ])
         mock.create_run.assert_not_called()
 
+    @patch('processor.Processor')
+    def test_params_plumbing_unhandled_error(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.download.side_effect = Exception("Some unexpected error")
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        with self.assertRaisesRegex(Exception, "Some unexpected error"):
+            process_report('12345', params)
+
+        # Should have updated status to WPTFYI_PROCESSING, then INVALID on
+        # error.
+        # Note: the second update_status call uses a NEW Processor instance in
+        # the implementation. Since we patched the class, it should still be
+        # tracked.
+        mock.update_status.assert_has_calls([
+            call('654321', 'WPTFYI_PROCESSING', None, None),
+            call('654321', 'INVALID', "Some unexpected error", None),
+        ])
+        mock.create_run.assert_not_called()
+
 
 class ProcessorDownloadServerTest(unittest.TestCase):
     """This class tests behaviours of Processor related to downloading
