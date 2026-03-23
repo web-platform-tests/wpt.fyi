@@ -258,7 +258,7 @@ type PendingTestRun struct {
 	ProductAtRevision
 	CheckRunID int64               `json:"check_run_id" datastore:",omitempty"`
 	Uploader   string              `json:"uploader"`
-	Error      string              `json:"error" datastore:",omitempty"`
+	Error      string              `json:"error" datastore:",noindex,omitempty"`
 	Stage      PendingTestRunStage `json:"stage"`
 
 	Created time.Time `json:"created"`
