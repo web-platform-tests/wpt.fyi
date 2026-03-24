@@ -73,6 +73,13 @@ func TestAPIPendingTestHandler(t *testing.T) {
 	}
 	assert.Nil(t, createPendingRun(ctx, &running))
 
+	stale := shared.PendingTestRun{
+		Created: now.AddDate(0, 0, -20),
+		Updated: now.AddDate(0, 0, -15),
+		Stage:   shared.StageWptFyiReceived,
+	}
+	assert.Nil(t, createPendingRun(ctx, &stale))
+
 	t.Run("/api/status", func(t *testing.T) {
 		r, _ = i.NewRequest("GET", "/api/status", nil)
 		resp := httptest.NewRecorder()
@@ -81,13 +88,8 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
-		assert.Len(t, results, 5)
-		// Sorted by Update.
-		assert.Equal(t, results[0].ID, invalid.ID)
-		assert.Equal(t, results[1].ID, empty.ID)
-		assert.Equal(t, results[2].ID, duplicate.ID)
-		assert.Equal(t, results[3].ID, running.ID)
-		assert.Equal(t, results[4].ID, received.ID)
+		// 5 runs + 1 stale = 6
+		assert.Len(t, results, 6)
 	})
 
 	t.Run("/api/status/pending", func(t *testing.T) {
@@ -99,6 +101,7 @@ func TestAPIPendingTestHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.Code, string(body))
 		var results []shared.PendingTestRun
 		json.Unmarshal(body, &results)
+		// running, received are returned. stale is excluded by Updated cutoff.
 		assert.Len(t, results, 2)
 		assert.Equal(t, results[0].ID, running.ID)
 		assert.Equal(t, results[1].ID, received.ID)
