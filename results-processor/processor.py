@@ -330,7 +330,10 @@ class Processor(object):
             response.raise_for_status()
             _log.debug('Updated run %s to %s', run_id, stage)
         except requests.RequestException as e:
-            _log.error('Cannot update status for run %s: %s', run_id, str(e))
+            err_msg = str(e)
+            if e.response is not None:
+                err_msg += "\nResponse body: " + e.response.text
+            _log.error('Cannot update status for run %s: %s', run_id, err_msg)
 
     def run_hooks(self, tasks: List[Callable[[Self], None]]) -> None:
         """Runs post-new-run tasks.

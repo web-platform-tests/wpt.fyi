@@ -152,7 +152,11 @@ func (a apiImpl) UpdatePendingTestRun(newRun shared.PendingTestRun) error {
 		}
 		// nolint:staticcheck // TODO: Fix staticcheck lint error (SA1019).
 		if newRun.FullRevisionHash != "" {
-			run.Revision = newRun.FullRevisionHash[:10]
+			if len(newRun.FullRevisionHash) > 10 {
+				run.Revision = newRun.FullRevisionHash[:10]
+			} else {
+				run.Revision = newRun.FullRevisionHash
+			}
 			run.FullRevisionHash = newRun.FullRevisionHash
 		}
 
