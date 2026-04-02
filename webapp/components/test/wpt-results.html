@@ -20,8 +20,12 @@ import { TEST_RUNS_DATA } from './util/helpers.js';
 
 suiteSetup(() => {
   window.fetch = (url) => {
-    const href = url instanceof URL ? url.href : 'unknown';
-    assert.fail('actual', 'expected', `uncaptured fetch: ${href}`);
+    const uCurrent = new URL(location.href);
+    const u = url instanceof URL ? url : new URL(url, uCurrent);
+    if (uCurrent.origin === u.origin && (u.pathname === '/api/shas' || u.pathname === '/api/versions' || u.pathname === '/api/metadata/pending' || u.pathname === '/api/metadata')) {
+      return Promise.resolve(new Response(JSON.stringify([])));
+    }
+    assert.fail('actual', 'expected', `uncaptured fetch: ${u.href}`);
   };
 });
 

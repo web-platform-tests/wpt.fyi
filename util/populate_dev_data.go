@@ -162,12 +162,7 @@ func main() {
 	})
 
 	log.Print("Adding flag defaults...")
-	addFlag(store, "queryBuilder", enabledFlag)
 	addFlag(store, "diffFilter", enabledFlag)
-	addFlag(store, "diffFromAPI", enabledFlag)
-	addFlag(store, "structuredQueries", enabledFlag)
-	addFlag(store, "diffRenames", enabledFlag)
-	addFlag(store, "paginationTokens", enabledFlag)
 
 	log.Print("Adding uploader \"test\"...")
 	addData(store, "Uploader", []interface{}{

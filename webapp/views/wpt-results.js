@@ -274,13 +274,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[queryBuilder]]">
-      <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder query="[[query]]"
-                                 on-submit="[[submitQuery]]">
-        </test-runs-query-builder>
-      </iron-collapse>
-    </template>
+    <iron-collapse opened="[[editingQuery]]">
+      <test-runs-query-builder query="[[query]]"
+                               on-submit="[[submitQuery]]">
+      </test-runs-query-builder>
+    </iron-collapse>
 
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
@@ -430,14 +428,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </div>
     </template>
 
-    <template is="dom-if" if="[[displayMetadata]]">
-      <wpt-metadata products="[[displayedProducts]]"
-                    path="[[path]]"
-                    search-results="[[searchResults]]"
-                    metadata-map="[[metadataMap]]"
-                    label-map="[[labelMap}]]"
-                    triage-notifier="[[triageNotifier]]"></wpt-metadata>
-    </template>
+    <wpt-metadata products="[[displayedProducts]]"
+                  path="[[path]]"
+                  search-results="[[searchResults]]"
+                  metadata-map="[[metadataMap]]"
+                  label-map="[[labelMap}]]"
+                  triage-notifier="[[triageNotifier]]"></wpt-metadata>
     <wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
   }
@@ -456,10 +452,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       pathIsASubfolderOrFile: {
         type: Boolean,
         computed: 'computePathIsASubfolderOrFile(pathIsASubfolder, pathIsATestFile)'
-      },
-      liveTestDomain: {
-        type: String,
-        computed: 'computeLiveTestDomain()',
       },
       structuredSearch: Object,
       searchResults: {
@@ -549,13 +541,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return isSubfolder || isFile;
   }
 
-  computeLiveTestDomain() {
-    if (this.webPlatformTestsLive) {
-      return 'wpt.live';
-    }
-    return 'w3c-test.org';
-  }
-
   computeTestPaths(searchResults) {
     const paths = searchResults && searchResults.map(r => r.test) || [];
     return new Set(paths);
@@ -616,8 +601,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.load(
       this.loadRuns().then(async runs => {
         // Pass current (un)structured query is passed to fetchResults().
-        this.fetchResults(
-          this.structuredQueries && this.structuredSearch || this.search);
+        this.fetchResults(this.structuredSearch || this.search);
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {
@@ -664,29 +648,20 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     let url = new URL('/api/search', window.location);
     let fetchOpts;
 
-    if (this.structuredQueries) {
-      const body = {
-        run_ids: this.testRuns.map(r => r.id),
-      };
-      if (q) {
-        body.query = q;
-      }
-      if (this.diff && this.diffFromAPI) {
-        url.searchParams.set('diff', true);
-        url.searchParams.set('filter', this.diffFilter);
-      }
-      fetchOpts = {
-        method: 'POST',
-        body: JSON.stringify(body),
-      };
-    } else {
-      url.searchParams.set(
-        'run_ids',
-        this.testRuns.map(r => r.id.toString()).join(','));
-      if (q) {
-        url.searchParams.set('q', q);
-      }
+    const body = {
+      run_ids: this.testRuns.map(r => r.id),
+    };
+    if (q) {
+      body.query = q;
     }
+    if (this.diff) {
+      url.searchParams.set('diff', true);
+      url.searchParams.set('filter', this.diffFilter);
+    }
+    fetchOpts = {
+      method: 'POST',
+      body: JSON.stringify(body),
+    };
     this.sortCol = new Array(this.testRuns.length).fill(false);
 
     // Fetch search results and refresh display nodes. If fetch error is HTTP'
@@ -725,9 +700,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   fetchDiff() {
-    if (!this.diffFromAPI) {
-      return;
-    }
     this.load(
       window.fetch(this.diffURL)
         .then(r => {
@@ -986,7 +958,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // It is always possible in triage mode to amend metadata for a problem
     // with a test file itself.
     if (index === undefined) {
-      return !node.isDir && this.triageMetadataUI && this.isTriageMode;
+      return !node.isDir && this.isTriageMode;
     }
 
     // Triage can occur if a status doesn't pass.
@@ -994,7 +966,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const failStatus = status && !PASSING_STATUSES.includes(status);
     const totalTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'total');
     const passedTests = this.getNodeResultDataByPropertyName(node, index, testRun, 'passes');
-    return ((totalTests - passedTests) > 0 || failStatus) && this.triageMetadataUI && this.isTriageMode;
+    return ((totalTests - passedTests) > 0 || failStatus) && this.isTriageMode;
   }
 
   testResultClass(node, index, testRun, prop) {
@@ -1564,7 +1536,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   shouldDisplayTestLabel(testname, labelMap) {
-    return this.displayMetadata && this.getTestLabel(testname, labelMap) !== '';
+    return this.getTestLabel(testname, labelMap) !== '';
   }
 
   shouldDisplayTotals(displayedTotals, diffRun) {
@@ -1596,7 +1568,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   shouldDisplayMetadata(index, testname, metadataMap) {
-    return !this.pathIsRootDir && this.displayMetadata && this.getMetadataUrl(index, testname, metadataMap) !== '';
+    return !this.pathIsRootDir && this.getMetadataUrl(index, testname, metadataMap) !== '';
   }
 
   getMetadataUrl(index, testname, metadataMap) {

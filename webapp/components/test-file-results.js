@@ -115,7 +115,7 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
   }
 
   async fetchSearchResults(path, testRuns, structuredSearch) {
-    if (!testRuns || !testRuns.length || !this.structuredQueries || !structuredSearch) {
+    if (!testRuns || !testRuns.length || !structuredSearch) {
       return;
     }
 

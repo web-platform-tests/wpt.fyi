@@ -100,15 +100,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                 (<a href\$="https://github.com/web-platform-tests/wpt/blob/master[[path]]" target="_blank">master branch</a>)
               </li>
 
-              <template is="dom-if" if="[[ !webPlatformTestsLive ]]">
-                <li><a href\$="[[scheme]]://w3c-test.org[[path]]" target="_blank">Run in your
-                browser on w3c-test.org</a></li>
-              </template>
-
-              <template is="dom-if" if="[[ webPlatformTestsLive ]]">
-                <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
-                  browser on wpt.live</a></li>
-              </template>
+              <li><a href\$="[[scheme]]://wpt.live[[path]]" target="_blank">Run in your
+                browser on wpt.live</a></li>
             </ul>
           </div>
         </template>
@@ -207,7 +200,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       },
       showBSFGraph: {
         type: Boolean,
-        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF)',
+        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir)',
       },
       isBSFCollapsed: {
         type: Boolean,
@@ -445,7 +438,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
   // confusing the user, we only display the graph when they are looking at top-level
   // test results and hide it when in a subdirectory.
-  computeShowBSFGraph(page, queryParams, pathIsRootDir, showBSF) {
+  computeShowBSFGraph(page, queryParams, pathIsRootDir) {
     // Only show on the results page.
     if (page !== 'results') {
       return false;
@@ -456,7 +449,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       return false;
     }
 
-    return pathIsRootDir && showBSF;
+    return pathIsRootDir;
   }
 
   computeIsBSFCollapsed() {

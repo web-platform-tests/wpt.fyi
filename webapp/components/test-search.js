@@ -474,16 +474,14 @@ class TestSearch extends WPTFlags(PolymerElement) {
 
   queryUpdated(query) {
     this.queryInput = query;
-    if (this.structuredQueries) {
-      if (!query) {
-        this.structuredQuery = null;
-      } else {
-        try {
-          this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
-        // eslint-disable-next-line no-unused-vars
-        } catch (err) {
-          // TODO: Handle query parse/interpret error.
-        }
+    if (!query) {
+      this.structuredQuery = null;
+    } else {
+      try {
+        this.structuredQuery = Object.freeze(this.parseAndInterpretQuery(query));
+      // eslint-disable-next-line no-unused-vars
+      } catch (err) {
+        // TODO: Handle query parse/interpret error.
       }
     }
   }

@@ -450,7 +450,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 
   canAmendMetadata(status) {
-    return this.hasFailed(status) && this.triageMetadataUI && this.isTriageMode;
+    return this.hasFailed(status) && this.isTriageMode;
   }
 
   hasFailed(status) {
@@ -504,7 +504,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
       return false;
     }
 
-    return this.displayMetadata && this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
+    return this.getMetadataUrlForSubtest(index, subtestname, metadataMap) !== '';
   }
 
   shouldShowTotals(totals) {

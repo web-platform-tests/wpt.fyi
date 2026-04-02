@@ -233,17 +233,8 @@ func TestGetTestRuns_Pagination(t *testing.T) {
 
 	r, _ = i.NewRequest("GET", "/api/runs?product=chrome&max-count=2", nil)
 	resp := httptest.NewRecorder()
-
-	// Feature disabled
 	apiTestRunsHandler(resp, r)
 	next := resp.Header().Get(nextPageTokenHeaderName)
-	assert.Equal(t, "", next)
-
-	// Feature enabled
-	shared.SetFeature(store, shared.Flag{Name: paginationTokenFeatureFlagName, Enabled: true})
-	resp = httptest.NewRecorder()
-	apiTestRunsHandler(resp, r)
-	next = resp.Header().Get(nextPageTokenHeaderName)
 	assert.NotEqual(t, "", next)
 
 	body, _ := io.ReadAll(resp.Result().Body)

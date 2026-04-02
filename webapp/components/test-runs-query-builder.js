@@ -96,15 +96,13 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       <paper-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
       </paper-input>
     </paper-item>
-    <template is="dom-if" if="[[queryBuilderSHA]]">
-      <paper-item>
-        <paper-input-container always-float-label>
-          <label slot="label">SHA</label>
-          <input name="os_version" placeholder="(Latest)" list="shas-datalist" value="{{ _sha::input }}" slot="input">
-          <datalist id="shas-datalist"></datalist>
-        </paper-input-container>
-      </paper-item>
-    </template>
+    <paper-item>
+      <paper-input-container always-float-label>
+        <label slot="label">SHA</label>
+        <input name="os_version" placeholder="(Latest)" list="shas-datalist" value="{{ _sha::input }}" slot="input">
+        <datalist id="shas-datalist"></datalist>
+      </paper-input-container>
+    </paper-item>
     <br>
     <paper-button raised id="add-button" onclick="[[addProduct]]">
       <iron-icon icon="add"></iron-icon> Add product
@@ -239,7 +237,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
 
   // Respond to newly fetched shas, or user input, by filtering the autocomplete list.
   shasUpdated(sha, matchingSHAs) {
-    if (!matchingSHAs || !matchingSHAs.length || !this.queryBuilderSHA) {
+    if (!matchingSHAs || !matchingSHAs.length) {
       return;
     }
     if (sha) {
