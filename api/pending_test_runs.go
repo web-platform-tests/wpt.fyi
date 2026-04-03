@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/web-platform-tests/wpt.fyi/shared"
@@ -52,11 +53,20 @@ func apiPendingTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 	for i, key := range keys {
 		runs[i].ID = key.IntID()
 	}
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 
-		return
+	// Only show runs updated within the last 14 days to avoid stuck runs
+	// that have been dropped from the task queue.
+	if filter == "pending" {
+		cutoff := time.Now().Add(-14 * 24 * time.Hour)
+		filteredRuns := make([]shared.PendingTestRun, 0)
+		for _, run := range runs {
+			if run.Updated.After(cutoff) {
+				filteredRuns = append(filteredRuns, run)
+			}
+		}
+		runs = filteredRuns
 	}
+
 	// When we filter by status (pending) we need to re-sort.
 	sort.Sort(sort.Reverse(shared.PendingTestRunByUpdated(runs)))
 	emit(r.Context(), w, runs)
