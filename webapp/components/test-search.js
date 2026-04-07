@@ -23,6 +23,7 @@ const statuses = [
   'assert',
   'unknown',
   'missing', // UI calls unknown missing.
+  'precondition_failed',
 ];
 
 const atoms = {

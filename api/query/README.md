@@ -122,6 +122,7 @@ Valid statuses are:
  - `crash`
  - `skip`
  - `assert`
+ - `precondition_failed`
 
 > NOTE: `ok` is the status of the test harness setup. Individual subtests will have
 > a status of `pass` - it may be necessary to search for both.

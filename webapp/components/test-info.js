@@ -23,6 +23,7 @@ const TestStatuses = Object.freeze({
   CRASH: new TestStatus('CRASH'),
   SKIP: new TestStatus('SKIP'),
   ASSERT: new TestStatus('ASSERT'),
+  PRECONDITION_FAILED: new TestStatus('PRECONDITION_FAILED'),
 });
 
 export { TestStatuses };
