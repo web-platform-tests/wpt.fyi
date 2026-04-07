@@ -1818,7 +1818,9 @@ export const interopData = {
       {
         'name': 'Accessibility testing',
         'url': 'https://github.com/web-platform-tests/interop-accessibility',
-        'scores_over_time': []
+        'scores_over_time': [
+          { 'date': '2026-04-07', 'score': 300 }
+        ]
       },
       {
         'name': 'JPEG XL',
