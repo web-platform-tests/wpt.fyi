@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.26.1
 
 require (
-	cloud.google.com/go/cloudtasks v1.14.0
+	cloud.google.com/go/cloudtasks v1.15.0
 	cloud.google.com/go/datastore v1.22.0
 	cloud.google.com/go/logging v1.13.2
 	cloud.google.com/go/secretmanager v1.18.0
