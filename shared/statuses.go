@@ -47,6 +47,10 @@ const (
 	// status is supported by, at least, Mozilla.
 	TestStatusAssert TestStatus = 9
 
+	// TestStatusPreconditionFailed indicates the test or subtest is optional
+	// or is not relevant to the current test set up.
+        TestStatusPreconditionFailed TestStatus = 10
+
 	// TestStatusNameUnknown is the string representation for an uninitialized
 	// TestStatus and should not be used.
 	TestStatusNameUnknown string = "UNKNOWN"
@@ -89,6 +93,11 @@ const (
 	// Mozilla.
 	TestStatusNameAssert string = "ASSERT"
 
+	// TestStatusNamePreconditionFailed is the string representation of a test
+        // result that indicates the test or subtest is optional or is not relevant
+        // to the current test set up.
+	TestStatusNamePreconditionFailed string = "PRECONDITION_FAILED"
+
 	// TestStatusDefault is the default value used when a status string cannot be
 	// interpreted.
 	TestStatusDefault TestStatus = TestStatusUnknown
@@ -99,30 +108,32 @@ const (
 )
 
 var testStatusValues = map[string]TestStatus{
-	"MISSING":             TestStatusUnknown,
-	TestStatusNameUnknown: TestStatusUnknown,
-	TestStatusNamePass:    TestStatusPass,
-	TestStatusNameOK:      TestStatusOK,
-	TestStatusNameError:   TestStatusError,
-	TestStatusNameTimeout: TestStatusTimeout,
-	TestStatusNameNotRun:  TestStatusNotRun,
-	TestStatusNameFail:    TestStatusFail,
-	TestStatusNameCrash:   TestStatusCrash,
-	TestStatusNameSkip:    TestStatusSkip,
-	TestStatusNameAssert:  TestStatusAssert,
+	"MISSING":                           TestStatusUnknown,
+	TestStatusNameUnknown:               TestStatusUnknown,
+	TestStatusNamePass:                  TestStatusPass,
+	TestStatusNameOK:                    TestStatusOK,
+	TestStatusNameError:                 TestStatusError,
+	TestStatusNameTimeout:               TestStatusTimeout,
+	TestStatusNameNotRun:                TestStatusNotRun,
+	TestStatusNameFail:                  TestStatusFail,
+	TestStatusNameCrash:                 TestStatusCrash,
+	TestStatusNameSkip:                  TestStatusSkip,
+	TestStatusNameAssert:                TestStatusAssert,
+	TestStatusNamePreconditionFailed:    TestStatusPreconditionFailed,
 }
 
 var testStatusNames = map[TestStatus]string{
-	TestStatusUnknown: TestStatusNameUnknown,
-	TestStatusPass:    TestStatusNamePass,
-	TestStatusOK:      TestStatusNameOK,
-	TestStatusError:   TestStatusNameError,
-	TestStatusTimeout: TestStatusNameTimeout,
-	TestStatusNotRun:  TestStatusNameNotRun,
-	TestStatusFail:    TestStatusNameFail,
-	TestStatusCrash:   TestStatusNameCrash,
-	TestStatusSkip:    TestStatusNameSkip,
-	TestStatusAssert:  TestStatusNameAssert,
+	TestStatusUnknown:              TestStatusNameUnknown,
+	TestStatusPass:                 TestStatusNamePass,
+	TestStatusOK:                   TestStatusNameOK,
+	TestStatusError:                TestStatusNameError,
+	TestStatusTimeout:              TestStatusNameTimeout,
+	TestStatusNotRun:               TestStatusNameNotRun,
+	TestStatusFail:                 TestStatusNameFail,
+	TestStatusCrash:                TestStatusNameCrash,
+	TestStatusSkip:                 TestStatusNameSkip,
+	TestStatusAssert:               TestStatusNameAssert,
+	TestStatusPreconditionFailed:   TestStatusNamePreconditionFailed,
 }
 
 // IsPassOrOK is true if the value is TestStatusPass or TestStatusOK

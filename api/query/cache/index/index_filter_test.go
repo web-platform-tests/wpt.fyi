@@ -519,6 +519,143 @@ func TestBindExecute_TestStatus(t *testing.T) {
 	}), resultSet(t, srs))
 }
 
+func TestBindExecute_TestStatus_PreconditionFailed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	loader := NewMockReportLoader(ctrl)
+	idx, err := NewShardedWPTIndex(loader, testNumShards)
+	assert.Nil(t, err)
+
+	// Two matching (sub)tests Chrome(Status=FAIL):
+	// <"/a/b/c", nil> and </"d/e/f", "sub">.
+	match1Name := "/a/b/c"
+	match2Name := "/d/e/f"
+	match2Sub := "sub"
+	data := []testRunData{
+		//
+		// [0]: Chrome test run.
+		//
+		{
+			shared.TestRun{ID: 1},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   match1Name,
+						Status: "FAIL",
+					},
+					{
+						Test:   match2Name,
+						Status: "OK",
+						Subtests: []metrics.SubTest{
+							{
+								Name:   match2Sub,
+								Status: "PASS",
+							},
+							{
+								Name:   "other sub",
+								Status: "PRECONDITION_FAILED",
+							},
+						},
+					},
+					{
+						Test:   "m/n/o",
+						Status: "PRECONDITION_FAILED",
+					},
+				},
+			},
+		},
+		//
+		// [1] Safari test run: Several result values differ or are missing. One
+		//     test does not appear in Chrome, but does appear here.
+		//
+		{
+			shared.TestRun{ID: 2},
+			&metrics.TestResultsReport{
+				Results: []*metrics.TestResults{
+					{
+						Test:   match1Name,
+						Status: "PASS",
+					},
+					{
+						Test:   match2Name,
+						Status: "OK",
+						Subtests: []metrics.SubTest{
+							{
+								Name:   match2Sub,
+								Status: "FAIL",
+							},
+							{
+								Name:   "other sub",
+								Status: "PRECONDITION_FAILED",
+							},
+						},
+					},
+					{
+						Test:   "m/n/o",
+						Status: "PRECONDITION_FAILED",
+					},
+
+				},
+			},
+		},
+	}
+
+	// Set BrowserName imperatively to avoid multi-layer type embedding.
+	data[0].run.BrowserName = "chrome"
+	data[1].run.BrowserName = "safari"
+
+	runs := mockTestRuns(loader, idx, data)
+
+	p := shared.ParseProductSpecUnsafe("Chrome")
+	q := query.TestStatusNeq{
+		Product: &p,
+		Status:  shared.TestStatusPreconditionFailed,
+	}
+	srs := planAndExecute(t, runs, idx, q)
+
+	assert.Equal(t, 2, len(srs))
+	assert.Equal(t, resultSet(t, []shared.SearchResult{
+		{
+			Test: match1Name,
+			LegacyStatus: []shared.LegacySearchRunResult{
+				// Run [0]: Chrome: match1Name status is FAIL: 0 / 1.
+				{
+					Passes:        0,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
+				},
+				// Run [1]: Safari: match1Name status is PASS: 1 / 1.
+				{
+					Passes:        1,
+					Total:         1,
+					Status:        "",
+					NewAggProcess: true,
+				},
+			},
+		},
+		{
+			Test: match2Name,
+			LegacyStatus: []shared.LegacySearchRunResult{
+				// Run [0]: Chrome: harness status OK + subtest "sub" has PASS: 1 / 1.
+				{
+					Passes:        1,
+					Total:         1,
+					Status:        "O",
+					NewAggProcess: true,
+				},
+				// Run [1]: Safari: harness status OK + subtest "sub" has FAIL: 0 / 1.
+				{
+					Passes:        0,
+					Total:         1,
+					Status:        "O",
+					NewAggProcess: true,
+				},
+			},
+		},
+	}), resultSet(t, srs))
+}
+
 func TestBindExecute_Link(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

@@ -109,6 +109,10 @@ suite('<test-search>', () => {
         test('status inequality', () => {
           assertQueryParse('StAtUs:!FaIl', {exists: [{status: {not: 'FAIL'}}]});
         });
+
+        test('status precondition_failed', () => {
+          assertQueryParse('StAtUs:!precondition_FAILED', {exists: [{status: {not: 'PRECONDITION_FAILED'}}]});
+        });
       });
 
       suite('browser-specific status', () => {

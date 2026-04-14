@@ -39,3 +39,8 @@ func TestDefaultsFromAPI(t *testing.T) {
 	assert.Equal(t, TestStatusDefault, TestStatusValueFromString("NOT_A_TEST_VALUE_STRING"))
 	assert.Equal(t, TestStatusNameDefault, TestStatus(7919).String())
 }
+
+func TestPreconditionFailed(t *testing.T) {
+	assert.Equal(t, TestStatusPreconditionFailed, TestStatusValueFromString("PRECONDITION_FAILED"))
+	assert.Equal(t, "PRECONDITION_FAILED", TestStatusPreconditionFailed.String())
+}
