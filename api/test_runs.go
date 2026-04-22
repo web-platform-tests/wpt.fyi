@@ -15,7 +15,6 @@ import (
 
 // nolint:gosec // TODO: Fix gosec lint error (G101)
 const nextPageTokenHeaderName = "wpt-next-page"
-const paginationTokenFeatureFlagName = "paginationTokens"
 
 // apiTestRunsHandler is responsible for emitting test-run JSON for all the runs at a given SHA.
 //
@@ -56,7 +55,7 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-		if pr != nil && aeAPI.IsFeatureEnabled("runsByPRNumber") {
+		if pr != nil {
 			filters.SHAs = getPRCommits(aeAPI, *pr)
 			if len(filters.SHAs) < 1 {
 				log.Warningf("PR %v returned no commits from GitHub", *pr)
@@ -69,11 +68,9 @@ func apiTestRunsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err == nil {
 			testRuns = runsByProduct.AllRuns()
-			if aeAPI.IsFeatureEnabled(paginationTokenFeatureFlagName) {
-				nextPage := filters.NextPage(runsByProduct)
-				if nextPage != nil {
-					nextPageToken, _ = nextPage.Token()
-				}
+			nextPage := filters.NextPage(runsByProduct)
+			if nextPage != nil {
+				nextPageToken, _ = nextPage.Token()
 			}
 		}
 	}

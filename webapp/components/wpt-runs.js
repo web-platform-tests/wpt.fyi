@@ -142,21 +142,19 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       </info-banner>
     </template>
 
-    <template is="dom-if" if="[[queryBuilder]]">
-      <iron-collapse opened="[[editingQuery]]">
-        <test-runs-query-builder product-specs="[[productSpecs]]"
-                                 labels="[[labels]]"
-                                 master="[[master]]"
-                                 shas="[[shas]]"
-                                 aligned="[[aligned]]"
-                                 on-submit="[[submitQuery]]"
-                                 from="[[from]]"
-                                 to="[[to]]"
-                                 diff="[[diff]]"
-                                 show-time-range>
-        </test-runs-query-builder>
-      </iron-collapse>
-    </template>
+    <iron-collapse opened="[[editingQuery]]">
+      <test-runs-query-builder product-specs="[[productSpecs]]"
+                               labels="[[labels]]"
+                               master="[[master]]"
+                               shas="[[shas]]"
+                               aligned="[[aligned]]"
+                               on-submit="[[submitQuery]]"
+                               from="[[from]]"
+                               to="[[to]]"
+                               diff="[[diff]]"
+                               show-time-range>
+      </test-runs-query-builder>
+    </iron-collapse>
 
     <template is="dom-if" if="[[loadingFailed]]">
       <info-banner type="error">
@@ -457,9 +455,6 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
   }
 
   commitType(runsByBrowser) {
-    if (!this.githubCommitLinks) {
-      return;
-    }
     const types = CommitTypes;
     for (const runs of Object.values(runsByBrowser)) {
       for (const r of runs) {

@@ -238,7 +238,6 @@ func TestRunDiffFromSearchResponse(t *testing.T) {
 	defer mockCtrl.Finish()
 	aeAPI := sharedtest.NewMockAppEngineAPI(mockCtrl)
 	aeAPI.EXPECT().Context().AnyTimes().Return(context.Background())
-	aeAPI.EXPECT().IsFeatureEnabled("diffRenames").Return(false)
 
 	diff, err := shared.RunDiffFromSearchResponse(aeAPI, shared.TestRun{}, shared.TestRun{}, scDiff)
 	assert.Nil(t, err)

@@ -137,13 +137,6 @@ func handleCheckSuiteEvent(api API, payload []byte) (bool, error) {
 		return false, nil
 	}
 
-	login := checkSuite.GetSender().GetLogin()
-	if !checksEnabledForUser(api, login) {
-		log.Infof("Checks not enabled for sender %s", login)
-
-		return false, nil
-	}
-
 	// nolint:nestif // TODO: Fix nestif lint error
 	if action == requestedAction || action == rerequestedAction {
 		pullRequests := checkSuite.GetCheckSuite().PullRequests
@@ -206,11 +199,6 @@ func handleCheckRunEvent(
 	}
 
 	login := checkRun.GetSender().GetLogin()
-	if !checksEnabledForUser(api, login) {
-		log.Infof("Checks not enabled for sender %s", login)
-
-		return false, nil
-	}
 
 	// Determine whether or not we need to schedule processing the results
 	// of a CheckRun. The 'requested_action' event occurs when a user
@@ -284,13 +272,6 @@ func handlePullRequestEvent(api API, payload []byte) (bool, error) {
 	var pullRequest github.PullRequestEvent
 	if err := json.Unmarshal(payload, &pullRequest); err != nil {
 		return false, err
-	}
-
-	login := pullRequest.GetPullRequest().GetUser().GetLogin()
-	if !checksEnabledForUser(api, login) {
-		log.Infof("Checks not enabled for sender %s", login)
-
-		return false, nil
 	}
 
 	switch pullRequest.GetAction() {
@@ -369,24 +350,4 @@ func createCheckRun(ctx context.Context, suite shared.CheckSuite, opts github.Cr
 	}
 
 	return true, nil
-}
-
-// checksEnabledForUser returns if a commit from a given GitHub username should
-// cause wpt.fyi or staging.wpt.fyi summary results to show up in the GitHub
-// UI. Currently this is enabled for all users on prod, but only for some users
-// on staging to avoid having a confusing double-set of checks appear.
-func checksEnabledForUser(api API, login string) bool {
-	if api.IsFeatureEnabled(checksForAllUsersFeature) {
-		return true
-	}
-	enabledLogins := []string{
-		"chromium-wpt-export-bot",
-		"gsnedders",
-		"jgraham",
-		"jugglinmike",
-		"lukebjerring",
-		"Ms2ger",
-	}
-
-	return shared.StringSliceContains(enabledLogins, login)
 }

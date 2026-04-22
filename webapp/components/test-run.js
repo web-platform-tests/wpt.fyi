@@ -66,15 +66,10 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
         <div>{{displayName(testRun.browser_name)}} {{shortVersion(testRun.browser_name, testRun.browser_version)}}</div>
         <template is="dom-if" if="{{ !isDiff(testRun.browser_name) }}">
           <div>{{displayName(testRun.os_name)}} {{testRun.os_version}}</div>
-          <template is="dom-if" if="[[githubCommitLinks]]">
-            <a class="github" href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">
-              <img src="/static/github.svg" alt="GitHub logo">
-              [[sevenCharSHA(testRun.revision)]]
-            </a>
-          </template>
-          <template is="dom-if" if="[[!githubCommitLinks]]">
-            <div class="revision">@<a href="?sha={{testRun.revision}}">{{testRun.revision}}</a></div>
-          </template>
+          <a class="github" href="https://github.com/web-platform-tests/wpt/commit/[[testRun.revision]]">
+            <img src="/static/github.svg" alt="GitHub logo">
+            [[sevenCharSHA(testRun.revision)]]
+          </a>
           <div>{{dateFormat(testRun.time_start)}}</div>
         </template>
       </template>
