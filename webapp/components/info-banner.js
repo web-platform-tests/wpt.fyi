@@ -9,12 +9,11 @@
 of type info, warning, or error.
 */
 import '../node_modules/@polymer/paper-styles/color.js';
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LitElement, html, css } from '../node_modules/lit/index.js';
 
-class InfoBanner extends PolymerElement {
-  static get template() {
-    return html`
-    <style>
+class InfoBanner extends LitElement {
+  static get styles() {
+    return css`
       :host {
         display: block;
         margin-bottom: 1em;
@@ -38,9 +37,12 @@ class InfoBanner extends PolymerElement {
         background-color: var(--paper-red-100);
         border-left: solid 4px var(--paper-red-300);
       }
-    </style>
+    `;
+  }
 
-    <section class\$="banner [[type]]">
+  render() {
+    return html`
+    <section class="banner ${this.type}">
       <span class="main">
         <slot></slot>
       </span>
@@ -59,10 +61,14 @@ class InfoBanner extends PolymerElement {
     return {
       type: {
         type: String,
-        value: 'info',
-        reflectToAttribute: true,
+        reflect: true,
       },
     };
+  }
+
+  constructor() {
+    super();
+    this.type = 'info';
   }
 }
 

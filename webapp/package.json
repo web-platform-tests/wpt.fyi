@@ -92,6 +92,7 @@
     "@vaadin/vaadin-grid": "5.7.13",
     "@webcomponents/webcomponentsjs": "2.8.0",
     "countup.js": "2.10.0",
+    "lit": "^3.3.2",
     "pluralize": "8.0.0"
   }
 }
