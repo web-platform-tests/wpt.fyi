@@ -9,7 +9,7 @@
 of type info, warning, or error.
 */
 import '../node_modules/@polymer/paper-styles/color.js';
-import { LitElement, html, css } from '../node_modules/lit/index.js';
+import { LitElement, html, css } from 'lit';
 
 class InfoBanner extends LitElement {
   static get styles() {
