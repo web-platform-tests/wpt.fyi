@@ -32,5 +32,6 @@ func apiScreenshotRedirectHandler(w http.ResponseWriter, r *http.Request) {
 		bucket = "wptd-screenshots"
 	}
 	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s.png", bucket, shot)
+	// #nosec G601 - URL is always on within our storage bucket.
 	http.Redirect(w, r, url, http.StatusPermanentRedirect)
 }
