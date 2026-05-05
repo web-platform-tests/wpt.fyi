@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
@@ -57,7 +58,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := shared.NewAppEngineDatastore(ctx, false)
-	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName).Order("Date")
+	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName)
 
 	var runs []shared.TestHistoryEntry
 	_, err = store.GetAll(q, &runs)
@@ -65,6 +66,11 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	// Sort runs in chronological order
+	sort.Slice(runs, func(i, j int) bool {
+		return runs[i].Date < runs[j].Date
+	})
 
 	// Convert datastore data to correct JSON format
 	resultMap := map[string]map[string]Browser{}
