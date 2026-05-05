@@ -14,8 +14,8 @@ cloud.google.com/go/cloudtasks v1.17.0 h1:3+U2YGq0fvEqQxdgknsjD5m+QNwah0QZYJOylN
 cloud.google.com/go/cloudtasks v1.17.0/go.mod h1:3KeCxwtGEyaySL7CR3lMmEa2I4mq1ynXdgmfNiO4RYE=
 cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdBtwLoEkH9Zs=
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
-cloud.google.com/go/datastore v1.22.0 h1:FOyx2Ag6ibD2wFkz9S8EiNrmBugia8pQOfpyJxi2yqA=
-cloud.google.com/go/datastore v1.22.0/go.mod h1:aopSX+Whx0lHspWWBj+AjWt68/zjYsPfDe3LjWtqZg8=
+cloud.google.com/go/datastore v1.23.0 h1:mAlWN3tnQe1OqVM3UtYBIbWTz9aU83RgW4hXOrfm9P8=
+cloud.google.com/go/datastore v1.23.0/go.mod h1:bOvQQekv4VACRJmH/MBy12MT6M3udfTuCyxw+tzY+8s=
 cloud.google.com/go/iam v1.7.0 h1:JD3zh0C6LHl16aCn5Akff0+GELdp1+4hmh6ndoFLl8U=
 cloud.google.com/go/iam v1.7.0/go.mod h1:tetWZW1PD/m6vcuY2Zj/aU0eCHNPuxedbnbRTyKXvdY=
 cloud.google.com/go/logging v1.16.0 h1:MMNgYRvZ/pEwiNSkcoJTKWfAbAJDqCqAMJiarZx+/CI=
