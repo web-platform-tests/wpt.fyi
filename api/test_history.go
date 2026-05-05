@@ -5,13 +5,16 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sort"
 
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
 // Subtest represents the final format for subtest data.
-type Subtest map[string]string
+type Subtest struct {
+	Date   string `json:"date"`
+	Status string `json:"status"`
+	RunID  string `json:"run_id"`
+}
 
 // Browser represents the final format for browser data.
 type Browser map[string][]Subtest
@@ -54,7 +57,7 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := shared.NewAppEngineDatastore(ctx, false)
-	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName)
+	q := store.NewQuery("TestHistoryEntry").Filter("TestName =", reqBody.TestName).Order("Date")
 
 	var runs []shared.TestHistoryEntry
 	_, err = store.GetAll(q, &runs)
@@ -62,11 +65,6 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-
-	// Sort runs in chronological order
-	sort.Slice(runs, func(i, j int) bool {
-		return runs[i].Date < runs[j].Date
-	})
 
 	// Convert datastore data to correct JSON format
 	resultMap := map[string]map[string]Browser{}
@@ -81,9 +79,9 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		subdata := Subtest{
-			"date":   run.Date,
-			"status": run.Status,
-			"run_id": run.RunID,
+			Date:   run.Date,
+			Status: run.Status,
+			RunID:  run.RunID,
 		}
 
 		testsByBrowser[run.BrowserName][run.SubtestName] =
