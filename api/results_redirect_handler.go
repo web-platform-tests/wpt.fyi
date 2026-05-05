@@ -49,5 +49,6 @@ func apiResultsRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	test := r.URL.Query().Get("test")
 	resultsURL := shared.GetResultsURL(allRuns[0], test)
 
+	// #nosec G710 - URL is always on our own site.
 	http.Redirect(w, r, resultsURL, http.StatusFound)
 }
