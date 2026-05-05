@@ -299,15 +299,7 @@ var shouldCacheSearchResponse = func(ctx context.Context, statusCode int, payloa
 		return false
 	}
 
-	var resp shared.SearchResponse
-	err := json.Unmarshal(payload, &resp)
-	if err != nil {
-		shared.GetLogger(ctx).Errorf("Malformed search response")
-
-		return false
-	}
-
-	if len(resp.Results) == 0 {
+	if bytes.Contains(payload, []byte(`"results":[]`)) || bytes.Contains(payload, []byte(`"results": []`)) {
 		shared.GetLogger(ctx).Infof("Query yielded no results; not caching")
 
 		return false
