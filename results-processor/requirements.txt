@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements.in
 #
+ast-serialize==0.3.0
+    # via mypy
 blinker==1.9.0
     # via flask
 cachetools==5.0.0
@@ -64,7 +66,7 @@ itsdangerous==2.2.0
     # via flask
 jinja2==3.1.6
     # via flask
-librt==0.8.1
+librt==0.11.0
     # via mypy
 markupsafe==2.1.2
     # via
@@ -73,7 +75,7 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-mypy==1.20.2
+mypy==2.1.0
     # via -r requirements.in
 mypy-extensions==1.0.0
     # via mypy
