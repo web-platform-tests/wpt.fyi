@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	cloud.google.com/go/cloudtasks v1.17.0
 	cloud.google.com/go/datastore v1.23.0
-	cloud.google.com/go/logging v1.17.0
+	cloud.google.com/go/logging v1.18.0
 	cloud.google.com/go/secretmanager v1.20.0
 	cloud.google.com/go/storage v1.62.1
 	github.com/deckarep/golang-set v1.8.0
