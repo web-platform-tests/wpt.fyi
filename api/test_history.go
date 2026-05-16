@@ -11,7 +11,11 @@ import (
 )
 
 // Subtest represents the final format for subtest data.
-type Subtest map[string]string
+type Subtest struct {
+	Date   string `json:"date"`
+	Status string `json:"status"`
+	RunID  string `json:"run_id"`
+}
 
 // Browser represents the final format for browser data.
 type Browser map[string][]Subtest
@@ -81,9 +85,9 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		subdata := Subtest{
-			"date":   run.Date,
-			"status": run.Status,
-			"run_id": run.RunID,
+			Date:   run.Date,
+			Status: run.Status,
+			RunID:  run.RunID,
 		}
 
 		testsByBrowser[run.BrowserName][run.SubtestName] =

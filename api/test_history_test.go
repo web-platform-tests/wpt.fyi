@@ -54,9 +54,9 @@ func TestHistoryHandler(t *testing.T) {
 			"chrome": {
 				"subtest": {
 					{
-						"date":   "2022-06-02T06:02:55.000Z",
-						"status": "PASS",
-						"run_id": "123",
+						Date:   "2022-06-02T06:02:55.000Z",
+						Status: "PASS",
+						RunID:  "123",
 					},
 				},
 			},
