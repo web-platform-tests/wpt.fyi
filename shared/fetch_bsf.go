@@ -15,11 +15,17 @@ import (
 
 const (
 	// experimentalBSFURL is the GitHub URL for fetching the experimental BSF data
-	// for Chrome, Firefox and Safari.
+	// for Chrome, Firefox and Safari. First party tests only.
 	experimentalBSFURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/experimental-browser-specific-failures.csv"
 	// stableBSFURL is the GitHub URL for fetching the stable BSF data
-	// for Chrome, Firefox and Safari.
+	// for Chrome, Firefox and Safari. First party tests only.
 	stableBSFURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/stable-browser-specific-failures.csv"
+	// experimentalBSFWithThirdPartyURL is the GitHub URL for fetching the experimental BSF data
+	// for Chrome, Firefox and Safari. All tests (first and third party) included.
+	experimentalBSFWithThirdPartyURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/experimental-browser-specific-failures-with-third-party.csv"
+	// stableBSFWithThirdPartyURL is the GitHub URL for fetching the stable BSF data
+	// for Chrome, Firefox and Safari. All tests (first and third party) included.
+	stableBSFWithThirdPartyURL = "https://raw.githubusercontent.com/web-platform-tests/results-analysis/gh-pages/data/stable-browser-specific-failures-with-third-party.csv"
 )
 
 // BSFData stores BSF data of the latest WPT revision.
@@ -90,25 +96,33 @@ func FilterandExtractBSFData(rawBSFdata [][]string, from *time.Time, to *time.Ti
 	return response
 }
 
-// FetchBSF encapsulates the Fetch(isExperimental bool) method for testing.
+// FetchBSF encapsulates the Fetch(isExperimental, includeThirdParty bool) method for testing.
 type FetchBSF interface {
-	Fetch(isExperimental bool) ([][]string, error)
+	Fetch(isExperimental, includeThirdParty bool) ([][]string, error)
 }
 
 type fetchBSF struct{}
 
 // Fetch() fetches BSF Data in CSV from GitHub given query options, in chronological order.
-func (f fetchBSF) Fetch(isExperimental bool) ([][]string, error) {
+func (f fetchBSF) Fetch(isExperimental, includeThirdParty bool) ([][]string, error) {
 	url := ""
 	if isExperimental {
-		url = experimentalBSFURL
+		if includeThirdParty {
+			url = experimentalBSFWithThirdPartyURL
+		} else {
+			url = experimentalBSFURL
+		}
 	} else {
-		url = stableBSFURL
+		if includeThirdParty {
+			url = stableBSFWithThirdPartyURL
+		} else {
+			url = stableBSFURL
+		}
 	}
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("BSF fetch from %q failed: %w", url, err)
 	}
 
 	defer resp.Body.Close()
@@ -118,7 +132,7 @@ func (f fetchBSF) Fetch(isExperimental bool) ([][]string, error) {
 
 	data, err := csv.NewReader(resp.Body).ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("BSF CSV parse from %q failed: %w", url, err)
 	}
 
 	return data, nil
