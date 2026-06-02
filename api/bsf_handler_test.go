@@ -32,7 +32,7 @@ func TestBSFHandler_Success(t *testing.T) {
 	dataRow := []string{"1", "2018-08-18", "70.0.3521.2 dev", "605.3869030161061", "63.0a1", "1521.908686731921", "12.1", "2966.686195133767"}
 	rawBSFData = append(rawBSFData, fieldsRow)
 	rawBSFData = append(rawBSFData, dataRow)
-	mockBSFFetcher.EXPECT().Fetch(false).Return(rawBSFData, nil)
+	mockBSFFetcher.EXPECT().Fetch(false, false).Return(rawBSFData, nil)
 
 	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
 
@@ -64,7 +64,7 @@ func TestBSFHandler_Success_WithParams(t *testing.T) {
 	rawBSFData = append(rawBSFData, dataRow2)
 	rawBSFData = append(rawBSFData, dataRow3)
 	rawBSFData = append(rawBSFData, dataRow4)
-	mockBSFFetcher.EXPECT().Fetch(true).Return(rawBSFData, nil)
+	mockBSFFetcher.EXPECT().Fetch(true, false).Return(rawBSFData, nil)
 
 	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
 
@@ -76,4 +76,56 @@ func TestBSFHandler_Success_WithParams(t *testing.T) {
 	assert.Equal(t, 2, len(bsfData.Data))
 	assert.Equal(t, dataRow2, bsfData.Data[0])
 	assert.Equal(t, dataRow3, bsfData.Data[1])
+}
+
+func TestBSFHandler_Success_IncludeThirdParty(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	r := httptest.NewRequest("GET", "/api/bsf?includeThirdParty=true", nil)
+	w := httptest.NewRecorder()
+	mockBSFFetcher := sharedtest.NewMockFetchBSF(mockCtrl)
+
+	var rawBSFData [][]string
+	fieldsRow := []string{"sha", "date", "chrome-version", "chrome", "firefox-version", "firefox", "safari-version", "safari"}
+	dataRow := []string{"1", "2018-08-18", "70.0.3521.2 dev", "605.3869030161061", "63.0a1", "1521.908686731921", "12.1", "2966.686195133767"}
+	rawBSFData = append(rawBSFData, fieldsRow)
+	rawBSFData = append(rawBSFData, dataRow)
+	mockBSFFetcher.EXPECT().Fetch(false, true).Return(rawBSFData, nil)
+
+	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
+
+	var bsfData shared.BSFData
+	assert.Equal(t, http.StatusOK, w.Code)
+	json.Unmarshal([]byte(w.Body.String()), &bsfData)
+	assert.Equal(t, "1", bsfData.LastUpdateRevision)
+	assert.Equal(t, fieldsRow, bsfData.Fields)
+	assert.Equal(t, 1, len(bsfData.Data))
+	assert.Equal(t, dataRow, bsfData.Data[0])
+}
+
+func TestBSFHandler_Success_ExperimentalIncludeThirdParty(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	r := httptest.NewRequest("GET", "/api/bsf?experimental=true&includeThirdParty=true", nil)
+	w := httptest.NewRecorder()
+	mockBSFFetcher := sharedtest.NewMockFetchBSF(mockCtrl)
+
+	var rawBSFData [][]string
+	fieldsRow := []string{"sha", "date", "chrome-version", "chrome", "firefox-version", "firefox", "safari-version", "safari"}
+	dataRow := []string{"1", "2018-08-18", "70.0.3521.2 dev", "605.3869030161061", "63.0a1", "1521.908686731921", "12.1", "2966.686195133767"}
+	rawBSFData = append(rawBSFData, fieldsRow)
+	rawBSFData = append(rawBSFData, dataRow)
+	mockBSFFetcher.EXPECT().Fetch(true, true).Return(rawBSFData, nil)
+
+	BSFHandler{mockBSFFetcher}.ServeHTTP(w, r)
+
+	var bsfData shared.BSFData
+	assert.Equal(t, http.StatusOK, w.Code)
+	json.Unmarshal([]byte(w.Body.String()), &bsfData)
+	assert.Equal(t, "1", bsfData.LastUpdateRevision)
+	assert.Equal(t, fieldsRow, bsfData.Fields)
+	assert.Equal(t, 1, len(bsfData.Data))
+	assert.Equal(t, dataRow, bsfData.Data[0])
 }

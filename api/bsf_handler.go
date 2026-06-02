@@ -54,7 +54,13 @@ func (b BSFHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		isExperimental = *val
 	}
 
-	lines, err := b.fetcher.Fetch(isExperimental)
+	includeThirdParty := false
+	val, _ = shared.ParseBooleanParam(q, "includeThirdParty")
+	if val != nil {
+		includeThirdParty = *val
+	}
+
+	lines, err := b.fetcher.Fetch(isExperimental, includeThirdParty)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

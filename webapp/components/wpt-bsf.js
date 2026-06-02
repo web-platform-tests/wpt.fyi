@@ -30,19 +30,13 @@ class WPTBSF extends LoadingState(PolymerElement) {
           height: 350px;
           width: 800px;
         }
-        .sha {
-          display: inline-flex;
-          height: 25px;
-          margin-top: 0px;
-        }
         h5 {
           margin-top: 20px;
           margin-left: 8px;
         }
-        .channel {
+        .toggle {
           display: inline-flex;
-          height: 35px;
-          margin-top: 0px;
+          align-items: center;
         }
         .link {
           text-decoration: none;
@@ -63,14 +57,16 @@ class WPTBSF extends LoadingState(PolymerElement) {
         <div class="left">
           <h5>Browser-specific failures are the number of WPT tests which fail in exactly one browser. This graph shows the BSF scores for Chrome, Firefox and Safari.</h5>
           <h5>Channel</h5>
-          <div class="channel">
+          <div class="toggle">
             <paper-button class\$="[[experimentalButtonClass(isExperimental)]]" onclick="[[clickExperimental]]">Experimental</paper-button>
             <paper-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</paper-button>
           </div>
-          <h5>Last updated WPT revision</h5>
-          <div class="sha">
-            <a class="link" href="[[githubHref]]" target="_blank"><paper-button>[[shortSHA]]</paper-button></a>
+          <h5>Test scope</h5>
+          <div class="toggle">
+            <paper-button class\$="[[firstPartyButtonClass(includeThirdParty)]]" onclick="[[clickFirstParty]]">WPT</paper-button>
+            <paper-button class\$="[[includeThirdPartyButtonClass(includeThirdParty)]]" onclick="[[clickIncludeThirdParty]]">WPT + Test262</paper-button>
           </div>
+          <h5>Last update: <a class="link" href="[[githubHref]]" target="_blank">[[shortSHA]]</a></h5>
           <h5>Click + drag on graph to zoom, right click to un-zoom</h5>
         </div>
         <google-chart type="line"
@@ -105,6 +101,10 @@ class WPTBSF extends LoadingState(PolymerElement) {
       isExperimental: {
         type: Boolean,
         value: true,
+      },
+      includeThirdParty: {
+        type: Boolean,
+        value: false,
       },
       chartOptions: {
         type: Object,
@@ -149,6 +149,20 @@ class WPTBSF extends LoadingState(PolymerElement) {
       this.isExperimental = true;
       this.loadBSFData();
     };
+    this.clickFirstParty = () => {
+      if (!this.includeThirdParty) {
+        return;
+      }
+      this.includeThirdParty = false;
+      this.loadBSFData();
+    };
+    this.clickIncludeThirdParty = () => {
+      if (this.includeThirdParty) {
+        return;
+      }
+      this.includeThirdParty = true;
+      this.loadBSFData();
+    };
     this.enterChart = () => {
       this.isInteracting = true;
       const event = new CustomEvent('interactingchanged', {
@@ -182,10 +196,21 @@ class WPTBSF extends LoadingState(PolymerElement) {
     return isExperimental ? 'selected' : 'unselected';
   }
 
+  firstPartyButtonClass(includeThirdParty) {
+    return includeThirdParty ? 'unselected' : 'selected';
+  }
+
+  includeThirdPartyButtonClass(includeThirdParty) {
+    return includeThirdParty ? 'selected' : 'unselected';
+  }
+
   loadBSFData() {
     const url = new URL('/api/bsf', window.location);
     if (this.isExperimental) {
       url.searchParams.set('experimental', true);
+    }
+    if (this.includeThirdParty) {
+      url.searchParams.set('includeThirdParty', true);
     }
 
     this.load(

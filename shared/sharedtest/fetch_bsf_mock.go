@@ -40,16 +40,16 @@ func (m *MockFetchBSF) EXPECT() *MockFetchBSFMockRecorder {
 }
 
 // Fetch mocks base method.
-func (m *MockFetchBSF) Fetch(isExperimental bool) ([][]string, error) {
+func (m *MockFetchBSF) Fetch(isExperimental, includeThirdParty bool) ([][]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Fetch", isExperimental)
+	ret := m.ctrl.Call(m, "Fetch", isExperimental, includeThirdParty)
 	ret0, _ := ret[0].([][]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Fetch indicates an expected call of Fetch.
-func (mr *MockFetchBSFMockRecorder) Fetch(isExperimental any) *gomock.Call {
+func (mr *MockFetchBSFMockRecorder) Fetch(isExperimental, includeThirdParty any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockFetchBSF)(nil).Fetch), isExperimental)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockFetchBSF)(nil).Fetch), isExperimental, includeThirdParty)
 }
