@@ -54,15 +54,6 @@ files above. They need to be done using the `gcloud` CLI or on the GCP
 dashboard, and are not currently version-controlled (TODO: consider using
 Terraform).
 
-### Serverless VPC Access
-
-By default, App Engine **standard** environment is separated from the "internal"
-(VPC) network (including Compute Engine and any resource with an internal IP
-such as Cloud Memorystore). To connect to these resources, follow this doc to
-enable Serverless VPC Access and configure the connector:
-https://cloud.google.com/appengine/docs/standard/go/connecting-vpc (note: we do
-not use "Shared VPC")
-
 ### Cloud Memorystore (Redis)
 
 Follow this doc to set up Cloud Memorystore (Redis):

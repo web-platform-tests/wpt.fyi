@@ -19,11 +19,6 @@ inbound_services:
 
 default_expiration: "1d"
 
-# TODO: can we remove this now that service 'default' is not App Engine
-# Standard? Same change for app.yaml and the VPC mention in app-engine.md.
-vpc_access_connector:
-  name: projects/wptdashboard-staging/locations/us-east4/connectors/appengine-connector
-
 liveness_check:
   path: "/_ah/liveness_check"
 
