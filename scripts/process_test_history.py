@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import argparse
+import hashlib
 import json
 import re
 import requests
@@ -113,13 +114,23 @@ class MetadataDict(TypedDict):
     labels: list[str]
 
 
+def _get_entry_key_name(run_id: str, test_name: str, subtest_name: str) -> str:
+    """Generate a deterministic key name for a TestHistoryEntry."""
+    # Use SHA-256 to hash test name and subtest name to ensure they fit in key name limits
+    # while keeping the key deterministic and unique per run.
+    name_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
+    return f"{run_id}_{name_hash}"
+
+
 def _build_new_test_history_entry(
         test_name: str,
         subtest_name: str,
         run_metadata: MetadataDict,
         run_date: str,
         current_status: str) -> TestHistoryEntry:
+    key_name = _get_entry_key_name(str(run_metadata['id']), test_name, subtest_name)
     return TestHistoryEntry(
+        id=key_name,
         RunID=str(run_metadata['id']),
         BrowserName=run_metadata['browser_name'],
         Date=run_date,
