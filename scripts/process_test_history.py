@@ -42,6 +42,12 @@ parser.add_argument(
     action='store_true',
     help=('generate new statuses json and entities '
           'after entities have been deleted.'))
+parser.add_argument(
+    '--force', action='store_true',
+    help='force operations (like setting start date) even if Datastore is not empty.')
+parser.add_argument(
+    '--prod', action='store_true',
+    help='Use production environment instead of staging.')
 
 parsed_args = None
 
@@ -49,6 +55,18 @@ parsed_args = None
 def verboseprint(*args, **kwargs):
     if parsed_args and parsed_args.verbose:
         print(*args, **kwargs)
+
+
+def configure_environment(prod: bool = False) -> None:
+    global BUCKET_NAME, PROJECT_NAME, RUNS_API_URL
+    if prod:
+        BUCKET_NAME = 'wpt-recent-statuses'
+        PROJECT_NAME = 'wptdashboard'
+        RUNS_API_URL = 'https://wpt.fyi/api/runs'
+    else:
+        BUCKET_NAME = 'wpt-recent-statuses-staging'
+        PROJECT_NAME = 'wptdashboard-staging'
+        RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 
 
 class TestHistoryEntry(ndb.Model):
@@ -429,11 +447,12 @@ def update_recent_processed_date(
     verboseprint('Date updated.')
 
 
-def set_history_start_date(new_date: str) -> None:
+def set_history_start_date(new_date: str, force: bool = False) -> None:
     """Update the history processing starting date based on date input."""
     # Datastore should be empty before manipulating
     # the history processing start date.
-    check_if_db_empty()
+    if not force:
+        check_if_db_empty()
     # Make sure the new date is a valid format.
     verboseprint(f'Checking if given date {new_date} is valid...')
     try:
@@ -513,8 +532,11 @@ def main(args=None, topic=None) -> str:
             verbose=False,
             delete_history_entities=False,
             set_history_start_date=None,
-            generate_new_statuses_json=False
+            generate_new_statuses_json=False,
+            force=False,
+            prod=False
         )
+    configure_environment(parsed_args.prod)
     client = ndb.Client(project=PROJECT_NAME)
     verboseprint('CLI args: ', parsed_args)
     with client.context():
@@ -527,12 +549,12 @@ def main(args=None, topic=None) -> str:
         # If the flag to set the processing date is specified,
         # handle it and exit.
         if parsed_args.set_history_start_date:
-            set_history_start_date(parsed_args.set_history_start_date)
+            set_history_start_date(parsed_args.set_history_start_date, parsed_args.force)
             exit()
 
         # If we're generating new JSON files, the database should be empty
         # of test history data.
-        if parsed_args.generate_new_statuses_json:
+        if parsed_args.generate_new_statuses_json and not parsed_args.force:
             check_if_db_empty()
 
         processing_start = time.time()
