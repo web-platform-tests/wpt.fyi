@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import gzip
 import json
 import unittest
 from unittest.mock import MagicMock, patch, call
@@ -18,6 +19,8 @@ class ProcessTestHistoryTest(unittest.TestCase):
         self.ndb_client = ndb.Client(project='test-project', credentials=AnonymousCredentials())
         self.ndb_context = self.ndb_client.context()
         self.ndb_context.__enter__()
+        if hasattr(process_test_history, '_prev_test_statuses_cache'):
+            process_test_history._prev_test_statuses_cache.clear()
 
     def tearDown(self):
         self.ndb_context.__exit__(None, None, None)
@@ -39,45 +42,39 @@ class ProcessTestHistoryTest(unittest.TestCase):
             process_test_history.get_processing_start_date()
 
     @patch('process_test_history.requests.get')
-    @patch('process_test_history.update_recent_processed_date')
-    def test_get_aligned_run_info_empty(self, mock_update_date, mock_get):
+    def test_get_aligned_run_info_empty(self, mock_get):
         mock_resp = MagicMock()
         mock_resp.json.return_value = []
         mock_get.return_value = mock_resp
-
-        mock_date_entity = MagicMock()
-        mock_date_entity.Date = '2025-10-03T00:00:00.000Z'
 
         # Mock datetime.now to ensure yesterday calculation is stable
         with patch('process_test_history.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2025, 10, 10)
             mock_datetime.strptime = datetime.strptime
 
-            res = process_test_history.get_aligned_run_info(mock_date_entity)
+            res, next_date = process_test_history.get_aligned_run_info('2025-10-03T00:00:00.000Z')
             self.assertEqual(res, [])
-            mock_update_date.assert_called_once()
+            self.assertEqual(next_date, '2025-10-04T00:00:00.000000Z')
 
     @patch('process_test_history.requests.get')
     def test_get_aligned_run_info_success(self, mock_get):
         mock_resp = MagicMock()
         mock_runs = [
-            {'id': 1, 'browser_name': 'chrome', 'revision': 'abc', 'time_start': '2025-10-03T00:00:00Z'},
-            {'id': 2, 'browser_name': 'firefox', 'revision': 'abc', 'time_start': '2025-10-03T00:00:00Z'},
-            {'id': 3, 'browser_name': 'edge', 'revision': 'abc', 'time_start': '2025-10-03T00:00:00Z'},
-            {'id': 4, 'browser_name': 'safari', 'revision': 'abc', 'time_start': '2025-10-03T00:00:00Z'},
+            {'id': 1, 'browser_name': 'chrome', 'revision': 'abc', 'time_start': '2025-10-03T01:00:00Z'},
+            {'id': 2, 'browser_name': 'firefox', 'revision': 'abc', 'time_start': '2025-10-03T01:00:00Z'},
+            {'id': 3, 'browser_name': 'edge', 'revision': 'abc', 'time_start': '2025-10-03T01:00:00Z'},
+            {'id': 4, 'browser_name': 'safari', 'revision': 'abc', 'time_start': '2025-10-03T01:00:00Z'},
         ]
         mock_resp.json.return_value = mock_runs
         mock_get.return_value = mock_resp
-
-        mock_date_entity = MagicMock()
-        mock_date_entity.Date = '2025-10-03T00:00:00.000Z'
 
         with patch('process_test_history.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2025, 10, 10)
             mock_datetime.strptime = datetime.strptime
 
-            res = process_test_history.get_aligned_run_info(mock_date_entity)
+            res, next_date = process_test_history.get_aligned_run_info('2025-10-03T00:00:00.000Z')
             self.assertEqual(len(res), 4)
+            self.assertEqual(next_date, '2025-10-03T01:00:00Z')
 
     @patch('process_test_history.TestHistoryEntry')
     def test_should_process_run_true(self, mock_entry):
@@ -99,7 +96,7 @@ class ProcessTestHistoryTest(unittest.TestCase):
         # Mock GCS
         mock_bucket = mock_storage.return_value.bucket.return_value
         mock_blob = mock_bucket.blob.return_value
-        mock_blob.download_as_string.return_value = json.dumps([])
+        mock_blob.download_as_string.return_value = json.dumps([]).encode('utf-8')
 
         # Mock Raw Results
         mock_resp = MagicMock()
@@ -133,11 +130,6 @@ class ProcessTestHistoryTest(unittest.TestCase):
         # Verify GCS download
         mock_bucket.blob.assert_called_with('chrome_recent_statuses.json')
         mock_blob.download_as_string.assert_called_once()
-
-        # Verify GCS upload
-        mock_blob.upload_from_string.assert_called_once()
-        uploaded_data = json.loads(mock_blob.upload_from_string.call_args[0][0])
-        self.assertEqual(len(uploaded_data), 2)
 
         # Verify NDB put_multi
         mock_ndb.put_multi.assert_called_once()
@@ -231,7 +223,7 @@ class ProcessTestHistoryTest(unittest.TestCase):
         # Mock GCS
         mock_bucket = mock_storage.return_value.bucket.return_value
         mock_blob = mock_bucket.blob.return_value
-        mock_blob.download_as_string.return_value = json.dumps([])
+        mock_blob.download_as_string.return_value = json.dumps([]).encode('utf-8')
 
         # Mock Raw Results with 1200 tests
         large_results = []
@@ -288,13 +280,99 @@ class ProcessTestHistoryTest(unittest.TestCase):
         with patch('process_test_history.as_completed') as mock_as_completed:
             mock_as_completed.return_value = [mock_future, mock_future]
 
-            process_test_history.process_runs(runs, MagicMock())
+            process_test_history.process_runs(runs)
 
             self.assertEqual(mock_exec_instance.submit.call_count, 2)
             self.assertEqual(mock_exec_instance.submit.call_args_list, [
                 call(mock_process_single, runs[0]),
                 call(mock_process_single, runs[1])
             ])
+
+
+    @patch('process_test_history.get_previous_statuses')
+    def test_populate_previous_statuses_cached(self, mock_get_prev):
+        process_test_history._prev_test_statuses_cache = {
+            'chrome': {('test1', 'sub1'): 'PASS'}
+        }
+        with patch('process_test_history.parsed_args') as mock_args:
+            mock_args.generate_new_statuses_json = False
+            res = process_test_history._populate_previous_statuses('chrome')
+            self.assertEqual(res, {('test1', 'sub1'): 'PASS'})
+            mock_get_prev.assert_not_called()
+
+    @patch('process_test_history.get_previous_statuses')
+    def test_populate_previous_statuses_not_cached(self, mock_get_prev):
+        process_test_history._prev_test_statuses_cache = {}
+        mock_get_prev.return_value = json.dumps([
+            {'test_name': 'test1', 'subtest_name': 'sub1', 'status': 'PASS'}
+        ])
+        with patch('process_test_history.parsed_args') as mock_args:
+            mock_args.generate_new_statuses_json = False
+            res = process_test_history._populate_previous_statuses('chrome')
+            self.assertEqual(res, {('test1', 'sub1'): 'PASS'})
+            mock_get_prev.assert_called_once_with('chrome')
+            self.assertEqual(process_test_history._prev_test_statuses_cache['chrome'], {('test1', 'sub1'): 'PASS'})
+
+    @patch('process_test_history.storage.Client')
+    def test_get_previous_statuses_gzip(self, mock_storage):
+        mock_bucket = mock_storage.return_value.bucket.return_value
+        mock_blob = mock_bucket.blob.return_value
+        raw_data = b'["raw data"]'
+        gzipped_data = gzip.compress(raw_data)
+        mock_blob.download_as_string.return_value = gzipped_data
+
+        res = process_test_history.get_previous_statuses('chrome')
+        self.assertEqual(res, raw_data)
+
+    @patch('process_test_history.storage.Client')
+    def test_get_previous_statuses_raw_fallback(self, mock_storage):
+        mock_bucket = mock_storage.return_value.bucket.return_value
+        mock_blob = mock_bucket.blob.return_value
+        raw_data = b'["raw data"]'
+        mock_blob.download_as_string.return_value = raw_data
+
+        res = process_test_history.get_previous_statuses('chrome')
+        self.assertEqual(res, raw_data)
+
+    @patch('process_test_history.storage.Client')
+    def test_flush_previous_statuses_to_gcs(self, mock_storage):
+        mock_bucket = mock_storage.return_value.bucket.return_value
+        mock_blob = mock_bucket.blob.return_value
+        process_test_history._prev_test_statuses_cache = {
+            'chrome': {('test1', 'sub1'): 'PASS'}
+        }
+
+        process_test_history.flush_previous_statuses_to_gcs('chrome')
+
+        mock_blob.upload_from_string.assert_called_once()
+        compressed_arg = mock_blob.upload_from_string.call_args[0][0]
+
+        decompressed = gzip.decompress(compressed_arg)
+        data = json.loads(decompressed)
+        self.assertEqual(data, [{'test_name': 'test1', 'subtest_name': 'sub1', 'status': 'PASS'}])
+
+
+    @patch('process_test_history.flush_previous_statuses_to_gcs')
+    def test_commit_checkpoint(self, mock_flush):
+        mock_entity = MagicMock()
+
+        process_test_history._prev_test_statuses_cache = {
+            'chrome': {},
+            'firefox': {}
+        }
+
+        process_test_history.commit_checkpoint(mock_entity, '2025-10-04T00:00:00Z')
+
+        self.assertEqual(mock_entity.Date, '2025-10-04T00:00:00Z')
+        mock_entity.put.assert_called_once()
+
+        self.assertEqual(mock_flush.call_count, 4)
+        mock_flush.assert_has_calls([
+            call('chrome'),
+            call('edge'),
+            call('firefox'),
+            call('safari')
+        ], any_order=True)
 
 
 if __name__ == '__main__':
