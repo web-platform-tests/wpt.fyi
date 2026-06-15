@@ -42,10 +42,12 @@ parser.add_argument(
     help=('generate new statuses json and entities '
           'after entities have been deleted.'))
 
-parsed_args = parser.parse_args()
-# Function set to only print if verbose arg is active.
-verboseprint = (print if parsed_args.verbose
-                else lambda *a, **k: None)
+parsed_args = None
+
+
+def verboseprint(*args, **kwargs):
+    if parsed_args and parsed_args.verbose:
+        print(*args, **kwargs)
 
 
 class TestHistoryEntry(ndb.Model):
@@ -494,6 +496,14 @@ def delete_history_entities():
 
 # default parameters used for cloud functions.
 def main(args=None, topic=None) -> str:
+    global parsed_args
+    if parsed_args is None:
+        parsed_args = argparse.Namespace(
+            verbose=False,
+            delete_history_entities=False,
+            set_history_start_date=None,
+            generate_new_statuses_json=False
+        )
     client = ndb.Client(project=PROJECT_NAME)
     verboseprint('CLI args: ', parsed_args)
     with client.context():
@@ -541,4 +551,5 @@ def main(args=None, topic=None) -> str:
 
 
 if __name__ == '__main__':
+    parsed_args = parser.parse_args()
     main()
