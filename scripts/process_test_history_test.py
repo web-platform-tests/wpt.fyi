@@ -138,5 +138,18 @@ class ProcessTestHistoryTest(unittest.TestCase):
         self.assertEqual(entities[1].Status, 'PASS')
 
 
+    def test_parse_datetime_with_microseconds(self):
+        res = process_test_history._parse_datetime('2025-10-03T00:00:00.123Z')
+        self.assertEqual(res.microsecond, 123000)
+
+    def test_parse_datetime_without_microseconds(self):
+        res = process_test_history._parse_datetime('2025-10-03T00:00:00Z')
+        self.assertEqual(res.microsecond, 0)
+
+    def test_parse_datetime_invalid(self):
+        with self.assertRaises(ValueError):
+            process_test_history._parse_datetime('invalid-date')
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -17,6 +17,7 @@ BUCKET_NAME = 'wpt-recent-statuses-staging'
 PROJECT_NAME = 'wptdashboard-staging'
 RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 TIMEOUT_SECONDS = 3600
+WHITESPACE_RE = re.compile(r'\s')
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -173,7 +174,7 @@ def process_single_run(run_metadata: MetadataDict) -> None:
     # Iterate through each test.
     for test_data in run_data['results']:
         # Format the test name.
-        test_name = re.sub(r'\s', ' ', test_data['test'])
+        test_name = WHITESPACE_RE.sub(' ', test_data['test'])
 
         # Specifying the subtest name as empty string means that we're dealing
         # with the overall test status rather than a subtest status.
@@ -195,7 +196,7 @@ def process_single_run(run_metadata: MetadataDict) -> None:
         # Do the same basic process for each subtest.
         for subtest_data in test_data['subtests']:
             # Format the subtest name.
-            subtest_name = re.sub(r'\s', ' ', subtest_data['name'])
+            subtest_name = WHITESPACE_RE.sub(' ', subtest_data['name'])
             # Truncate a subtest name if it's too long to be indexed in
             # Datastore. The subtest name stored can be at most 1500 bytes.
             # At least 1 subtest violates this size.
@@ -349,11 +350,21 @@ def process_runs(
           f'{round(time.time() - start, 0)} seconds.')
 
 
+def _parse_datetime(date_str: str) -> datetime:
+    for fmt in ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ'):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    raise ValueError(f"time data {date_str!r} does not match formats "
+                     "('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ')")
+
+
 # Get the list of metadata for the most recent aligned runs.
 def get_aligned_run_info(
         date_entity: MostRecentHistoryProcessed) -> Optional[list]:
     date_start = date_entity.Date
-    date_start_obj = datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ')
+    date_start_obj = _parse_datetime(date_start)
 
     # Since aligned runs need to all be completed runs to be fetched,
     # a time window buffer of 24 hours is kept to allow runs to finish before
@@ -426,7 +437,7 @@ def set_history_start_date(new_date: str) -> None:
     # Make sure the new date is a valid format.
     verboseprint(f'Checking if given date {new_date} is valid...')
     try:
-        datetime.strptime(new_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+        _parse_datetime(new_date)
     except ValueError as e:
         raise e
 
@@ -552,4 +563,4 @@ def main(args=None, topic=None) -> str:
 
 if __name__ == '__main__':
     parsed_args = parser.parse_args()
-    main()
+    print(main())
