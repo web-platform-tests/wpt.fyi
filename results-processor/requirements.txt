@@ -39,7 +39,7 @@ google-cloud-core==2.4.2
     #   google-cloud-storage
 google-cloud-datastore==2.25.0
     # via -r requirements.in
-google-cloud-storage==3.11.0
+google-cloud-storage==3.12.0
     # via -r requirements.in
 google-crc32c==1.8.0
     # via
