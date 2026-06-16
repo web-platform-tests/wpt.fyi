@@ -14,17 +14,13 @@ import process_test_history
 class ProcessTestHistoryTest(unittest.TestCase):
 
     def setUp(self):
-        if not isinstance(ndb, MagicMock):
-            from google.auth.credentials import AnonymousCredentials
-            self.ndb_client = ndb.Client(project='test-project', credentials=AnonymousCredentials())
-            self.ndb_context = self.ndb_client.context()
-            self.ndb_context.__enter__()
-        else:
-            self.ndb_context = None
+        from google.auth.credentials import AnonymousCredentials
+        self.ndb_client = ndb.Client(project='test-project', credentials=AnonymousCredentials())
+        self.ndb_context = self.ndb_client.context()
+        self.ndb_context.__enter__()
 
     def tearDown(self):
-        if self.ndb_context:
-            self.ndb_context.__exit__(None, None, None)
+        self.ndb_context.__exit__(None, None, None)
 
     @patch('process_test_history.MostRecentHistoryProcessed')
     def test_get_processing_start_date_success(self, mock_model):
