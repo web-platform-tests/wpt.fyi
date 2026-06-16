@@ -76,23 +76,11 @@ class ProcessTestHistoryTest(unittest.TestCase):
             self.assertEqual(len(res), 4)
             self.assertEqual(next_date, '2025-10-03T01:00:00Z')
 
-    @patch('process_test_history.TestHistoryEntry')
-    def test_should_process_run_true(self, mock_entry):
-        mock_entry.query.return_value.get.return_value = None
-        run = {'id': '1'}
-        self.assertTrue(process_test_history.should_process_run(run))
 
-    @patch('process_test_history.TestHistoryEntry')
-    def test_should_process_run_false(self, mock_entry):
-        mock_entry.query.return_value.get.return_value = MagicMock()
-        run = {'id': '1'}
-        self.assertFalse(process_test_history.should_process_run(run))
-
-    @patch('process_test_history.should_process_run', return_value=True)
     @patch('process_test_history.ndb')
     @patch('process_test_history.storage.Client')
     @patch('process_test_history.requests.get')
-    def test_process_single_run(self, mock_get, mock_storage, mock_ndb, mock_should_process):
+    def test_process_single_run(self, mock_get, mock_storage, mock_ndb):
         # Mock GCS
         mock_bucket = mock_storage.return_value.bucket.return_value
         mock_blob = mock_bucket.blob.return_value
@@ -215,11 +203,10 @@ class ProcessTestHistoryTest(unittest.TestCase):
         self.assertEqual(res.key.id(), expected_key)
 
 
-    @patch('process_test_history.should_process_run', return_value=True)
     @patch('process_test_history.ndb')
     @patch('process_test_history.storage.Client')
     @patch('process_test_history.requests.get')
-    def test_process_single_run_batching(self, mock_get, mock_storage, mock_ndb, mock_should_process):
+    def test_process_single_run_batching(self, mock_get, mock_storage, mock_ndb):
         # Mock GCS
         mock_bucket = mock_storage.return_value.bucket.return_value
         mock_blob = mock_bucket.blob.return_value
@@ -264,15 +251,13 @@ class ProcessTestHistoryTest(unittest.TestCase):
 
     @patch('process_test_history.ThreadPoolExecutor')
     @patch('process_test_history.process_single_run')
-    @patch('process_test_history.should_process_run')
-    def test_process_runs_parallel(self, mock_should_process, mock_process_single, mock_executor):
+    def test_process_runs_parallel(self, mock_process_single, mock_executor):
         mock_exec_instance = mock_executor.return_value.__enter__.return_value
 
         runs = [
             {'id': 1, 'browser_name': 'chrome', 'time_start': '2025-10-03T00:00:00Z'},
             {'id': 2, 'browser_name': 'firefox', 'time_start': '2025-10-03T00:00:00Z'},
         ]
-        mock_should_process.return_value = True
 
         mock_future = MagicMock()
         mock_exec_instance.submit.return_value = mock_future

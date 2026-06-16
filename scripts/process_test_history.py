@@ -121,8 +121,11 @@ class MetadataDict(TypedDict):
 
 
 def _get_entry_key_name(run_id: str, test_name: str, subtest_name: str) -> str:
-    # We use SHA-256 to hash the test and subtest names to ensure they fit in key name limits
-    # and are deterministic.
+    """Generate a deterministic key name for a TestHistoryEntry.
+
+    We use SHA-256 to hash the test and subtest names to ensure they fit in key
+    name limits and are deterministic.
+    """
     name_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
     key_name = f"{run_id}_{name_hash}"
     if len(key_name) > MAX_KEY_NAME_LENGTH:
@@ -192,10 +195,6 @@ def process_single_run(run_metadata: MetadataDict) -> None:
     """Process a single aligned run and save and deltas to history."""
     client = ndb.Client(project=PROJECT_NAME)
     with client.context():
-        if not should_process_run(run_metadata):
-            print('Run has already been processed! '
-                  'TestHistoryEntry values already exist for this run.')
-            return
 
         verboseprint('Obtaining the raw results JSON for the test run '
                      f'at {run_metadata["raw_results_url"]}')
@@ -368,13 +367,6 @@ def _populate_previous_statuses(browser_name: str) -> dict:
     verboseprint('Most recent previous statuses dictionary populated and cached.')
     return prev_test_statuses
 
-
-def should_process_run(run_metadata: MetadataDict) -> bool:
-    """Check if a run should be processed."""
-    # A run should be processed if no entities have been written for it.
-    test_entry = TestHistoryEntry.query(
-        TestHistoryEntry.RunID == str(run_metadata['id'])).get()
-    return test_entry is None
 
 
 def process_runs(runs_list: list[MetadataDict]) -> None:
