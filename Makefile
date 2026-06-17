@@ -48,6 +48,7 @@ prepush: go_build go_test lint
 
 python_test: python3 tox
 	tox -c results-processor/
+	tox -c scripts/
 
 # Contains setup necessary only for github actions.
 github_action_go_setup:
