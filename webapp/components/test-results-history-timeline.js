@@ -166,7 +166,12 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
     this.dataTable.addColumn({ type: 'date', id: 'End' });
 
     const dataTableRows = [];
-    const now = new Date();
+    // Use the last processed date as the end date of the timeline.
+    // We add 1 hour padding to ensure that if a status change occurred in the
+    // last processed run, it will still be visible as a segment with non-zero duration.
+    const defaultEndDate = this.lastProcessed
+      ? new Date(new Date(this.lastProcessed).getTime() + 60 * 60 * 1000)
+      : new Date();
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
@@ -180,7 +185,7 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
 
         // Use the next entry as the end date, or use present time if this
         // is the last entry
-        let endDate = now;
+        let endDate = defaultEndDate;
         if (i + 1 !== browserTestData[subtestName].length) {
           const nextDataPoint = browserTestData[subtestName][i + 1];
           endDate = new Date(nextDataPoint.date);
@@ -257,6 +262,7 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
     if(this.historicalData) {
       this.historicalData = {};
     }
+    this.lastProcessed = null;
 
     const options = {
       method: 'POST',
@@ -266,8 +272,9 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
       body: JSON.stringify({ test_name: path})
     };
 
-    this.historicalData = await fetch('/api/history', options)
-      .then(r => r.json()).then(data => data.results);
+    const data = await fetch('/api/history', options).then(r => r.json());
+    this.historicalData = data.results;
+    this.lastProcessed = data.last_processed;
   }
 }
 
