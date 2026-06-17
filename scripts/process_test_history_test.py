@@ -204,6 +204,13 @@ class ProcessTestHistoryTest(unittest.TestCase):
         res = process_test_history._get_entry_key_name(run_id, test_name, subtest_name)
         self.assertEqual(res, expected_key)
 
+    def test_get_entry_key_name_too_long(self):
+        run_id = 'a' * 436
+        test_name = '/test.html'
+        subtest_name = 'sub1'
+        with self.assertRaises(ValueError):
+            process_test_history._get_entry_key_name(run_id, test_name, subtest_name)
+
     def test_build_new_test_history_entry_uses_deterministic_key(self):
         run_metadata = {
             'id': '123',

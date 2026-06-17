@@ -21,6 +21,7 @@ RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 TIMEOUT_SECONDS = 3600
 WHITESPACE_RE = re.compile(r'\s')
 BATCH_SIZE = 500
+MAX_KEY_NAME_LENGTH = 500
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -121,7 +122,13 @@ def _get_entry_key_name(run_id: str, test_name: str, subtest_name: str) -> str:
     # Use SHA-256 to hash test name and subtest name to ensure they fit in key name limits
     # while keeping the key deterministic and unique per run.
     name_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
-    return f"{run_id}_{name_hash}"
+    key_name = f"{run_id}_{name_hash}"
+    if len(key_name) > MAX_KEY_NAME_LENGTH:
+        raise ValueError(
+            f"Key name length {len(key_name)} exceeds Datastore limit of "
+            f"{MAX_KEY_NAME_LENGTH} characters: {key_name}"
+        )
+    return key_name
 
 
 def _build_new_test_history_entry(
