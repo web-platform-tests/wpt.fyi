@@ -13,6 +13,15 @@ import process_test_history
 
 class ProcessTestHistoryTest(unittest.TestCase):
 
+    def setUp(self):
+        from google.auth.credentials import AnonymousCredentials
+        self.ndb_client = ndb.Client(project='test-project', credentials=AnonymousCredentials())
+        self.ndb_context = self.ndb_client.context()
+        self.ndb_context.__enter__()
+
+    def tearDown(self):
+        self.ndb_context.__exit__(None, None, None)
+
     @patch('process_test_history.MostRecentHistoryProcessed')
     def test_get_processing_start_date_success(self, mock_model):
         mock_entity = MagicMock()
@@ -179,6 +188,36 @@ class ProcessTestHistoryTest(unittest.TestCase):
         self.assertEqual(process_test_history.BUCKET_NAME, 'wpt-recent-statuses-staging')
         self.assertEqual(process_test_history.PROJECT_NAME, 'wptdashboard-staging')
         self.assertEqual(process_test_history.RUNS_API_URL, 'https://staging.wpt.fyi/api/runs')
+
+
+    def test_get_entry_key_name(self):
+        import hashlib
+        run_id = '123'
+        test_name = '/test.html'
+        subtest_name = 'sub1'
+        expected_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
+        expected_key = f"{run_id}_{expected_hash}"
+
+        res = process_test_history._get_entry_key_name(run_id, test_name, subtest_name)
+        self.assertEqual(res, expected_key)
+
+    def test_get_entry_key_name_too_long(self):
+        run_id = 'a' * 436
+        test_name = '/test.html'
+        subtest_name = 'sub1'
+        with self.assertRaises(ValueError):
+            process_test_history._get_entry_key_name(run_id, test_name, subtest_name)
+
+    def test_build_new_test_history_entry_uses_deterministic_key(self):
+        run_metadata = {
+            'id': '123',
+            'browser_name': 'chrome',
+        }
+        res = process_test_history._build_new_test_history_entry(
+            '/test.html', 'sub1', run_metadata, '2025-10-03T00:00:00Z', 'OK'
+        )
+        expected_key = process_test_history._get_entry_key_name('123', '/test.html', 'sub1')
+        self.assertEqual(res.key.id(), expected_key)
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import argparse
+import hashlib
 import json
 import re
 import requests
@@ -17,6 +18,7 @@ BUCKET_NAME = 'wpt-recent-statuses-staging'
 PROJECT_NAME = 'wptdashboard-staging'
 RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 TIMEOUT_SECONDS = 3600
+MAX_KEY_NAME_LENGTH = 500
 WHITESPACE_RE = re.compile(r'\s')
 
 parser = argparse.ArgumentParser()
@@ -113,13 +115,29 @@ class MetadataDict(TypedDict):
     labels: list[str]
 
 
+def _get_entry_key_name(run_id: str, test_name: str, subtest_name: str) -> str:
+    """Generate a deterministic key name for a TestHistoryEntry."""
+    # Use SHA-256 to hash test name and subtest name to ensure they fit in key name limits
+    # while keeping the key deterministic and unique per run.
+    name_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
+    key_name = f"{run_id}_{name_hash}"
+    if len(key_name) > MAX_KEY_NAME_LENGTH:
+        raise ValueError(
+            f"Key name length {len(key_name)} exceeds Datastore limit of "
+            f"{MAX_KEY_NAME_LENGTH} characters: {key_name}"
+        )
+    return key_name
+
+
 def _build_new_test_history_entry(
         test_name: str,
         subtest_name: str,
         run_metadata: MetadataDict,
         run_date: str,
         current_status: str) -> TestHistoryEntry:
+    key_name = _get_entry_key_name(str(run_metadata['id']), test_name, subtest_name)
     return TestHistoryEntry(
+        id=key_name,
         RunID=str(run_metadata['id']),
         BrowserName=run_metadata['browser_name'],
         Date=run_date,
