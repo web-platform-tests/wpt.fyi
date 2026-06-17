@@ -151,5 +151,35 @@ class ProcessTestHistoryTest(unittest.TestCase):
             process_test_history._parse_datetime('invalid-date')
 
 
+    @patch('process_test_history.MostRecentHistoryProcessed')
+    @patch('process_test_history.check_if_db_empty')
+    def test_set_history_start_date_force(self, mock_check, mock_model):
+        mock_model.query.return_value.get.return_value = MagicMock()
+        process_test_history.set_history_start_date('2025-10-03T00:00:00.000Z', force=True)
+        mock_check.assert_not_called()
+
+    @patch('process_test_history.MostRecentHistoryProcessed')
+    @patch('process_test_history.check_if_db_empty')
+    def test_set_history_start_date_no_force(self, mock_check, mock_model):
+        mock_model.query.return_value.get.return_value = MagicMock()
+        process_test_history.set_history_start_date('2025-10-03T00:00:00.000Z', force=False)
+        mock_check.assert_called_once()
+
+    def test_configure_environment_prod(self):
+        try:
+            process_test_history.configure_environment(prod=True)
+            self.assertEqual(process_test_history.BUCKET_NAME, 'wpt-recent-statuses')
+            self.assertEqual(process_test_history.PROJECT_NAME, 'wptdashboard')
+            self.assertEqual(process_test_history.RUNS_API_URL, 'https://wpt.fyi/api/runs')
+        finally:
+            process_test_history.configure_environment(prod=False)
+
+    def test_configure_environment_staging(self):
+        process_test_history.configure_environment(prod=False)
+        self.assertEqual(process_test_history.BUCKET_NAME, 'wpt-recent-statuses-staging')
+        self.assertEqual(process_test_history.PROJECT_NAME, 'wptdashboard-staging')
+        self.assertEqual(process_test_history.RUNS_API_URL, 'https://staging.wpt.fyi/api/runs')
+
+
 if __name__ == '__main__':
     unittest.main()
