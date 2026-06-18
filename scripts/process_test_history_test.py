@@ -91,10 +91,11 @@ class ProcessTestHistoryTest(unittest.TestCase):
         run = {'id': '1'}
         self.assertFalse(process_test_history.should_process_run(run))
 
+    @patch('process_test_history.should_process_run', return_value=True)
     @patch('process_test_history.ndb')
     @patch('process_test_history.storage.Client')
     @patch('process_test_history.requests.get')
-    def test_process_single_run(self, mock_get, mock_storage, mock_ndb):
+    def test_process_single_run(self, mock_get, mock_storage, mock_ndb, mock_should_process):
         # Mock GCS
         mock_bucket = mock_storage.return_value.bucket.return_value
         mock_blob = mock_bucket.blob.return_value
@@ -122,6 +123,9 @@ class ProcessTestHistoryTest(unittest.TestCase):
             'time_start': '2025-10-03T00:00:00Z'
         }
 
+        captured_entities = []
+        mock_ndb.put_multi.side_effect = lambda ents: captured_entities.extend(list(ents))
+
         with patch('process_test_history.parsed_args') as mock_args:
             mock_args.generate_new_statuses_json = False
             process_test_history.process_single_run(run_metadata)
@@ -137,14 +141,13 @@ class ProcessTestHistoryTest(unittest.TestCase):
 
         # Verify NDB put_multi
         mock_ndb.put_multi.assert_called_once()
-        entities = mock_ndb.put_multi.call_args[0][0]
-        self.assertEqual(len(entities), 2)
-        self.assertEqual(entities[0].TestName, '/test1.html')
-        self.assertEqual(entities[0].SubtestName, '')
-        self.assertEqual(entities[0].Status, 'OK')
-        self.assertEqual(entities[1].TestName, '/test1.html')
-        self.assertEqual(entities[1].SubtestName, 'sub1')
-        self.assertEqual(entities[1].Status, 'PASS')
+        self.assertEqual(len(captured_entities), 2)
+        self.assertEqual(captured_entities[0].TestName, '/test1.html')
+        self.assertEqual(captured_entities[0].SubtestName, '')
+        self.assertEqual(captured_entities[0].Status, 'OK')
+        self.assertEqual(captured_entities[1].TestName, '/test1.html')
+        self.assertEqual(captured_entities[1].SubtestName, 'sub1')
+        self.assertEqual(captured_entities[1].Status, 'PASS')
 
 
     def test_parse_datetime_with_microseconds(self):
@@ -218,6 +221,80 @@ class ProcessTestHistoryTest(unittest.TestCase):
         )
         expected_key = process_test_history._get_entry_key_name('123', '/test.html', 'sub1')
         self.assertEqual(res.key.id(), expected_key)
+
+
+    @patch('process_test_history.should_process_run', return_value=True)
+    @patch('process_test_history.ndb')
+    @patch('process_test_history.storage.Client')
+    @patch('process_test_history.requests.get')
+    def test_process_single_run_batching(self, mock_get, mock_storage, mock_ndb, mock_should_process):
+        # Mock GCS
+        mock_bucket = mock_storage.return_value.bucket.return_value
+        mock_blob = mock_bucket.blob.return_value
+        mock_blob.download_as_string.return_value = json.dumps([])
+
+        # Mock Raw Results with 1200 tests
+        large_results = []
+        for i in range(1200):
+            large_results.append({
+                'test': f'/test_{i}.html',
+                'status': 'OK',
+                'subtests': [],
+            })
+
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {'results': large_results}
+        mock_get.return_value = mock_resp
+
+        run_metadata = {
+            'id': '123',
+            'browser_name': 'chrome',
+            'raw_results_url': 'http://results.json',
+            'time_start': '2025-10-03T00:00:00Z'
+        }
+
+        captured_entities = []
+        captured_batch_sizes = []
+        def fake_put_multi(ents):
+            captured_batch_sizes.append(len(ents))
+            captured_entities.extend(list(ents))
+            return []
+        mock_ndb.put_multi.side_effect = fake_put_multi
+
+        with patch('process_test_history.parsed_args') as mock_args:
+            mock_args.generate_new_statuses_json = False
+            process_test_history.process_single_run(run_metadata)
+
+        # Verify NDB put_multi was called 3 times (500, 500, 200)
+        self.assertEqual(mock_ndb.put_multi.call_count, 3)
+        self.assertEqual(captured_batch_sizes, [500, 500, 200])
+        self.assertEqual(len(captured_entities), 1200)
+
+    @patch('process_test_history.ThreadPoolExecutor')
+    @patch('process_test_history.process_single_run')
+    @patch('process_test_history.should_process_run')
+    def test_process_runs_parallel(self, mock_should_process, mock_process_single, mock_executor):
+        mock_exec_instance = mock_executor.return_value.__enter__.return_value
+
+        runs = [
+            {'id': 1, 'browser_name': 'chrome', 'time_start': '2025-10-03T00:00:00Z'},
+            {'id': 2, 'browser_name': 'firefox', 'time_start': '2025-10-03T00:00:00Z'},
+        ]
+        mock_should_process.return_value = True
+
+        mock_future = MagicMock()
+        mock_exec_instance.submit.return_value = mock_future
+
+        with patch('process_test_history.as_completed') as mock_as_completed:
+            mock_as_completed.return_value = [mock_future, mock_future]
+
+            process_test_history.process_runs(runs, MagicMock())
+
+            self.assertEqual(mock_exec_instance.submit.call_count, 2)
+            self.assertEqual(mock_exec_instance.submit.call_args_list, [
+                call(mock_process_single, runs[0]),
+                call(mock_process_single, runs[1])
+            ])
 
 
 if __name__ == '__main__':
