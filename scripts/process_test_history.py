@@ -3,13 +3,14 @@
 # found in the LICENSE file.
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import gzip
 import hashlib
 import json
 import re
 import requests
 import time
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, TypedDict
 
 from google.cloud import ndb, storage
@@ -19,9 +20,11 @@ BUCKET_NAME = 'wpt-recent-statuses-staging'
 PROJECT_NAME = 'wptdashboard-staging'
 RUNS_API_URL = 'https://staging.wpt.fyi/api/runs'
 TIMEOUT_SECONDS = 3600
-WHITESPACE_RE = re.compile(r'\s')
 BATCH_SIZE = 500
 MAX_KEY_NAME_LENGTH = 500
+WHITESPACE_RE = re.compile(r'\s')
+_prev_test_statuses_cache = {}
+CHECKPOINT_INTERVAL = 20
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -118,9 +121,11 @@ class MetadataDict(TypedDict):
 
 
 def _get_entry_key_name(run_id: str, test_name: str, subtest_name: str) -> str:
-    """Generate a deterministic key name for a TestHistoryEntry."""
-    # Use SHA-256 to hash test name and subtest name to ensure they fit in key name limits
-    # while keeping the key deterministic and unique per run.
+    """Generate a deterministic key name for a TestHistoryEntry.
+
+    We use SHA-256 to hash the test and subtest names to ensure they fit in key
+    name limits and are deterministic.
+    """
     name_hash = hashlib.sha256(f"{test_name}\n{subtest_name}".encode('utf-8')).hexdigest()
     key_name = f"{run_id}_{name_hash}"
     if len(key_name) > MAX_KEY_NAME_LENGTH:
@@ -137,10 +142,11 @@ def _build_new_test_history_entry(
         run_metadata: MetadataDict,
         run_date: str,
         current_status: str) -> TestHistoryEntry:
-    key_name = _get_entry_key_name(str(run_metadata['id']), test_name, subtest_name)
+    run_id = str(run_metadata['id'])
+    key_name = _get_entry_key_name(run_id, test_name, subtest_name)
     return TestHistoryEntry(
         id=key_name,
-        RunID=str(run_metadata['id']),
+        RunID=run_id,
         BrowserName=run_metadata['browser_name'],
         Date=run_date,
         TestName=test_name,
@@ -158,7 +164,7 @@ def create_entity_if_needed(
         current_status: str,
         unique_entities_to_write: set[tuple[str, str]]) -> Optional[TestHistoryEntry]:
     """Check if an entity should be created for a test status delta,
-    and create one if necessary.
+    and return it if necessary.
     """
     # Test results are stored in dictionary with a tuple key
     # in the form of (testname, subtest_name).
@@ -189,10 +195,6 @@ def process_single_run(run_metadata: MetadataDict) -> None:
     """Process a single aligned run and save and deltas to history."""
     client = ndb.Client(project=PROJECT_NAME)
     with client.context():
-        if not should_process_run(run_metadata):
-            print('Run has already been processed! '
-                  'TestHistoryEntry values already exist for this run.')
-            return
 
         verboseprint('Obtaining the raw results JSON for the test run '
                      f'at {run_metadata["raw_results_url"]}')
@@ -292,8 +294,6 @@ def process_single_run(run_metadata: MetadataDict) -> None:
             total_entities_written += len(entities_to_write)
             entities_to_write.clear()
         print(f'Total entities written: {total_entities_written}')
-        update_previous_statuses(
-            prev_test_statuses, run_metadata['browser_name'])
         print(f'Finished {run_metadata["browser_name"]} run!')
 
 
@@ -303,16 +303,23 @@ def get_previous_statuses(browser_name: str) -> Any:
     storage_client = storage.Client(project=PROJECT_NAME)
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(f'{browser_name}_recent_statuses.json')
-    return blob.download_as_string()
+    data = blob.download_as_string()
+    try:
+        return gzip.decompress(data)
+    except (gzip.BadGzipFile, OSError, ValueError):
+        verboseprint('Data is not gzip compressed, using raw data.')
+        return data
 
 
-def update_previous_statuses(
-        prev_test_statuses: dict, browser_name: str) -> None:
-    """Update the JSON of most recently seen statuses
-    for use in the next invocation.
-    """
+def flush_previous_statuses_to_gcs(browser_name: str) -> None:
+    """Upload the cached in-memory statuses for browser to GCS."""
+    if browser_name not in _prev_test_statuses_cache:
+        verboseprint(f'No cached statuses to flush for {browser_name}')
+        return
+
+    prev_test_statuses = _prev_test_statuses_cache[browser_name]
     new_statuses = []
-    print('Updating recent statuses JSON...')
+    print(f'Flushing recent statuses JSON for {browser_name} to GCS...')
     for test_name, subtest_name in prev_test_statuses.keys():
         new_statuses.append({
             'test_name': test_name,
@@ -324,8 +331,10 @@ def update_previous_statuses(
 
     # Replace old revision number with new number.
     blob = bucket.blob(f'{browser_name}_recent_statuses.json')
-    blob.upload_from_string(json.dumps(new_statuses))
-    verboseprint('JSON updated.')
+    json_data = json.dumps(new_statuses).encode('utf-8')
+    compressed_data = gzip.compress(json_data)
+    blob.upload_from_string(compressed_data, content_type='application/octet-stream')
+    verboseprint(f'GCS file for {browser_name} updated (compressed).')
 
 
 def _populate_previous_statuses(browser_name: str) -> dict:
@@ -336,6 +345,11 @@ def _populate_previous_statuses(browser_name: str) -> dict:
         # initial recent statuses file and all of the first history entries.
         verboseprint('Generating new statuses, so returning empty dict.')
         return {}
+
+    if browser_name in _prev_test_statuses_cache:
+        verboseprint(f'Using cached recent statuses for {browser_name}')
+        return _prev_test_statuses_cache[browser_name]
+
     # If the JSON file is not found, then an exception should be raised
     # or the file should be generated, depending on the constant's value.
     statuses_json_str = get_previous_statuses(browser_name)
@@ -349,23 +363,14 @@ def _populate_previous_statuses(browser_name: str) -> dict:
     # Turn the list of recent statuses into a dictionary for quick referencing.
     prev_test_statuses = {(t['test_name'], t['subtest_name']): t['status']
                           for t in test_statuses}
-    verboseprint('Most recent previous statuses dictionary populated.')
+    _prev_test_statuses_cache[browser_name] = prev_test_statuses
+    verboseprint('Most recent previous statuses dictionary populated and cached.')
     return prev_test_statuses
 
 
-def should_process_run(run_metadata: MetadataDict) -> bool:
-    """Check if a run should be processed."""
-    # A run should be processed if no entities have been written for it.
-    test_entry = TestHistoryEntry.query(
-        TestHistoryEntry.RunID == str(run_metadata['id'])).get()
-    return test_entry is None
 
-
-def process_runs(
-        runs_list: list[MetadataDict],
-        process_start_entity: MostRecentHistoryProcessed) -> None:
-    """Process each aligned run in parallel and update the
-    most recent processed date afterward."""
+def process_runs(runs_list: list[MetadataDict]) -> None:
+    """Process each aligned run in parallel."""
     start = time.time()
     verboseprint('Beginning processing of each aligned runs set in parallel...')
 
@@ -385,9 +390,7 @@ def process_runs(
     if failed:
         raise Exception("One or more browser runs failed to process.")
 
-    print('All browsers have been processed. Updating date.')
-    update_recent_processed_date(
-        process_start_entity, runs_list[-1]['time_start'])
+    print('All browsers have been processed.')
     print('Set of runs processed after '
           f'{round(time.time() - start, 0)} seconds.')
 
@@ -403,9 +406,7 @@ def _parse_datetime(date_str: str) -> datetime:
 
 
 # Get the list of metadata for the most recent aligned runs.
-def get_aligned_run_info(
-        date_entity: MostRecentHistoryProcessed) -> Optional[list]:
-    date_start = date_entity.Date
+def get_aligned_run_info(date_start: str) -> tuple[Optional[list], str]:
     date_start_obj = _parse_datetime(date_start)
 
     # Since aligned runs need to all be completed runs to be fetched,
@@ -429,19 +430,18 @@ def get_aligned_run_info(
     # an empty list and attempt the fetch again.
     except requests.exceptions.ReadTimeout as e:
         verboseprint('Request timed out!', e)
-        return []
+        return [], date_start
     runs_list: list[MetadataDict] = resp.json()
 
     # If we have no runs to process in this date interval,
     # we can skip this interval for processing from now on.
     if len(runs_list) == 0:
         print('No runs found for this interval.')
-        update_recent_processed_date(date_entity, end_interval_string)
         # If we've processed up to (now - 24 hours), then return null,
         # which signals we're done processing.
         if end_interval == yesterday:
-            return None
-        return runs_list
+            return None, end_interval_string
+        return runs_list, end_interval_string
 
     # Sort by revision -> then time start, so that the aligned runs are
     # processed in groups with each other.
@@ -459,7 +459,7 @@ def get_aligned_run_info(
     for run in runs_list:
         print(f'ID: {run["id"]}, {run["browser_name"]} {run["time_start"]}')
 
-    return runs_list
+    return runs_list, runs_list[-1]['time_start']
 
 
 def update_recent_processed_date(
@@ -479,10 +479,7 @@ def set_history_start_date(new_date: str, force: bool = False) -> None:
         check_if_db_empty()
     # Make sure the new date is a valid format.
     verboseprint(f'Checking if given date {new_date} is valid...')
-    try:
-        _parse_datetime(new_date)
-    except ValueError as e:
-        raise e
+    _parse_datetime(new_date)
 
     # Query for the existing entity if it exists.
     date_entity = MostRecentHistoryProcessed.query().get()
@@ -549,6 +546,19 @@ def delete_history_entities():
 
 
 # default parameters used for cloud functions.
+def commit_checkpoint(date_entity: MostRecentHistoryProcessed, new_date: str) -> None:
+    """Commit the checkpoint: update date in Datastore and flush GCS caches."""
+    print(f"Committing checkpoint at {new_date}...")
+    # 1. Update date in Datastore
+    update_recent_processed_date(date_entity, new_date)
+
+    # 2. Flush GCS caches
+    for browser in ('chrome', 'edge', 'firefox', 'safari'):
+        flush_previous_statuses_to_gcs(browser)
+    print("Checkpoint committed.")
+
+
+# default parameters used for cloud functions.
 def main(args=None, topic=None) -> str:
     global parsed_args
     if parsed_args is None:
@@ -583,27 +593,44 @@ def main(args=None, topic=None) -> str:
 
         processing_start = time.time()
         run_sets_processed = 0
+        revisions_since_checkpoint = 0
+
+        process_start_entity = get_processing_start_date()
+        current_date = process_start_entity.Date
+
         # If we're generating new status JSON files, only 1 set of aligned runs
         # should be processed to create the baseline statuses.
         while (not parsed_args.generate_new_statuses_json
                or run_sets_processed == 0):
-            process_start_entity = get_processing_start_date()
-            runs_list = get_aligned_run_info(process_start_entity)
+            runs_list, next_date = get_aligned_run_info(current_date)
             # A return value of None means that the processing is complete
             # and up-to-date. Stop the processing.
             if runs_list is None:
+                current_date = next_date # ensure we save the final date
                 break
             # A return value of an empty list means that no aligned runs
             # were found at the given interval.
             if len(runs_list) == 0:
+                current_date = next_date
+                revisions_since_checkpoint += 1
                 continue
-            process_runs(runs_list, process_start_entity)
+            process_runs(runs_list)
+            current_date = next_date
             run_sets_processed += 1
+            revisions_since_checkpoint += 1
+
+            if revisions_since_checkpoint >= CHECKPOINT_INTERVAL:
+                commit_checkpoint(process_start_entity, current_date)
+                revisions_since_checkpoint = 0
+
             # Check if we've passed the soft timeout marker
             # and stop processing if so.
             if round(time.time() - processing_start, 0) > TIMEOUT_SECONDS:
+                commit_checkpoint(process_start_entity, current_date)
                 return ('Timed out after successfully processing '
                         f'{run_sets_processed} sets of aligned runs.')
+        # Final commit
+        commit_checkpoint(process_start_entity, current_date)
     return 'Test history processing complete.'
 
 
