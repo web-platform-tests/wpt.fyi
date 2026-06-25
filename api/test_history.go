@@ -16,6 +16,12 @@ type Subtest map[string]string
 // Browser represents the final format for browser data.
 type Browser map[string][]Subtest
 
+// TestHistoryResponse is the response format for test history.
+type TestHistoryResponse struct {
+	Results       map[string]Browser `json:"results"`
+	LastProcessed string             `json:"last_processed,omitempty"`
+}
+
 // RequestBody is the expected format of requests for specific test run data.
 type RequestBody struct {
 	TestName string `json:"test_name"`
@@ -69,8 +75,18 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Convert datastore data to correct JSON format
-	resultMap := map[string]map[string]Browser{}
 	testsByBrowser := map[string]Browser{}
+
+	qp := store.NewQuery("MostRecentHistoryProcessed")
+	var historyProcessed []shared.MostRecentHistoryProcessed
+	_, err = store.GetAll(qp, &historyProcessed)
+	if err != nil {
+		logger.Errorf("Failed to fetch MostRecentHistoryProcessed: %v", err)
+	}
+	var lastProcessed string
+	if len(historyProcessed) > 0 {
+		lastProcessed = historyProcessed[0].Date
+	}
 
 	for _, run := range runs {
 
@@ -90,9 +106,12 @@ func testHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			append(testsByBrowser[run.BrowserName][run.SubtestName], subdata)
 	}
 
-	resultMap["results"] = testsByBrowser
+	response := TestHistoryResponse{
+		Results:       testsByBrowser,
+		LastProcessed: lastProcessed,
+	}
 
-	jsonStr, jsonErr := json.Marshal(resultMap)
+	jsonStr, jsonErr := json.Marshal(response)
 
 	if jsonErr != nil {
 		logger.Errorf("Unable to get json %s", jsonErr.Error())

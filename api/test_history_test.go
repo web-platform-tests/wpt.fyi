@@ -33,6 +33,10 @@ func TestHistoryHandler(t *testing.T) {
 		Status:      "PASS",
 	}
 
+	lastProcessedRun := shared.MostRecentHistoryProcessed{
+		Date: "2022-06-03T06:02:55.000Z",
+	}
+
 	body :=
 		`{
 			"test_name": "test name"
@@ -43,14 +47,18 @@ func TestHistoryHandler(t *testing.T) {
 	_, err = store.Put(key, &sampleRun)
 	assert.Nil(t, err)
 
+	keyLP := store.NewIncompleteKey("MostRecentHistoryProcessed")
+	_, err = store.Put(keyLP, &lastProcessedRun)
+	assert.Nil(t, err)
+
 	bodyReader := strings.NewReader(body)
 	r := httptest.NewRequest("POST", "/api/history", bodyReader)
 	w := httptest.NewRecorder()
 	testHistoryHandler(w, r)
 	results := parseHistoryResponse(t, w)
 
-	want := map[string]map[string]Browser{
-		"results": {
+	want := TestHistoryResponse{
+		Results: map[string]Browser{
 			"chrome": {
 				"subtest": {
 					{
@@ -61,15 +69,16 @@ func TestHistoryHandler(t *testing.T) {
 				},
 			},
 		},
+		LastProcessed: "2022-06-03T06:02:55.000Z",
 	}
 
 	assert.Equal(t, want, results)
 }
 
-func parseHistoryResponse(t *testing.T, w *httptest.ResponseRecorder) map[string]map[string]Browser {
+func parseHistoryResponse(t *testing.T, w *httptest.ResponseRecorder) TestHistoryResponse {
 	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	out, _ := io.ReadAll(w.Body)
-	var result map[string]map[string]Browser
+	var result TestHistoryResponse
 	json.Unmarshal(out, &result)
 	return result
 }

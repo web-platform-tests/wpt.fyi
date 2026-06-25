@@ -309,6 +309,11 @@ type TestHistoryEntry struct {
 	Status      string
 }
 
+// MostRecentHistoryProcessed stores the date of the most recent history run processed.
+type MostRecentHistoryProcessed struct {
+	Date string
+}
+
 // CheckSuite entities represent a GitHub check request that has been noted by
 // wpt.fyi, and will cause creation of a completed check_run when results arrive
 // for the PR.
