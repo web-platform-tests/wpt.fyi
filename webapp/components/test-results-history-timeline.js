@@ -169,9 +169,13 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
     // Use the last processed date as the end date of the timeline.
     // We add 1 hour padding to ensure that if a status change occurred in the
     // last processed run, it will still be visible as a segment with non-zero duration.
-    const defaultEndDate = this.lastProcessed
-      ? new Date(new Date(this.lastProcessed).getTime() + 60 * 60 * 1000)
-      : new Date();
+    let defaultEndDate = new Date();
+    if (this.lastProcessed) {
+      const lastProcessedTime = new Date(this.lastProcessed).getTime();
+      if (!isNaN(lastProcessedTime)) {
+        defaultEndDate = new Date(lastProcessedTime + 60 * 60 * 1000);
+      }
+    }
     this.chartRunIDs[chartIndex] = [];
 
     // Create a row for each subtest
