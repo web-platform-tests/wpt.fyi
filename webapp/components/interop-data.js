@@ -1827,7 +1827,9 @@ export const interopData = {
       {
         'name': 'JPEG XL',
         'url': 'https://github.com/web-platform-tests/interop-jpegxl',
-        'scores_over_time': []
+        'scores_over_time': [
+          { 'date': '2026-06-01', 'score': 783 }
+        ]
       },
       {
         'name': 'Mobile testing',
