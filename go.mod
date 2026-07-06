@@ -1,6 +1,6 @@
 module github.com/web-platform-tests/wpt.fyi
 
-go 1.26.2
+go 1.26.4
 
 require (
 	cloud.google.com/go/cloudtasks v1.18.0
@@ -13,7 +13,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gomodule/redigo v1.9.3
-	github.com/google/go-github/v85 v85.0.0
+	github.com/google/go-github/v89 v89.0.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -23,7 +23,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/taskcluster/taskcluster-lib-urls v13.0.1+incompatible
-	github.com/taskcluster/taskcluster/v99 v99.2.1
+	github.com/taskcluster/taskcluster/v101 v101.0.0
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.6.0
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
@@ -84,13 +84,13 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/mod v0.36.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.45.0 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

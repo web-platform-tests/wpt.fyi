@@ -16,7 +16,7 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/web-platform-tests/wpt.fyi/shared"
 	"golang.org/x/oauth2"
 )
@@ -27,7 +27,7 @@ func getGitHubClient(ctx context.Context, appID, installationID int64) (*github.
 		return nil, err
 	}
 
-	return github.NewClient(jwtClient), nil
+	return github.NewClient(github.WithHTTPClient(jwtClient))
 }
 
 // NOTE(lukebjerring): oauth2/jwt has incorrect field-names, and doesn't allow

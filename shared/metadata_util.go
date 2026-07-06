@@ -16,7 +16,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v89/github"
 )
 
 // PendingMetadataCacheKey is the key for the set that stores a list of
