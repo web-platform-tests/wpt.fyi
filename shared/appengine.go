@@ -21,7 +21,7 @@ import (
 	gclog "cloud.google.com/go/logging"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/gomodule/redigo/redis"
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v89/github"
 	apps "google.golang.org/api/appengine/v1"
 	"google.golang.org/api/option"
 	mrpb "google.golang.org/genproto/googleapis/api/monitoredres"
@@ -287,7 +287,11 @@ func (a *appEngineAPIImpl) GetGitHubClient() (*github.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		a.githubClient = NewGitHubClientFromToken(a.ctx, secret)
+		client, err := NewGitHubClientFromToken(a.ctx, secret)
+		if err != nil {
+			return nil, err
+		}
+		a.githubClient = client
 	}
 	return a.githubClient, nil
 }

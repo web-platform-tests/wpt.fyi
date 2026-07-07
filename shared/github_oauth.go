@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	ghOAuth "golang.org/x/oauth2/github"
@@ -97,7 +97,10 @@ func (g *githubOAuthImpl) NewClient(oauthCode string) (*github.Client, error) {
 	g.accessToken = token.AccessToken
 
 	oauthClient := oauth2.NewClient(g.ctx, oauth2.StaticTokenSource(token))
-	client := github.NewClient(oauthClient)
+	client, err := github.NewClient(github.WithHTTPClient(oauthClient))
+	if err != nil {
+		return nil, err
+	}
 
 	return client, nil
 }
@@ -184,13 +187,17 @@ func NewGitHubAccessControl(ctx context.Context, ds Datastore, botClient *github
 		Username: clientID,
 		Password: secret,
 	}
+	oauthGHClient, err := github.NewClient(github.WithHTTPClient(tp.Client()))
+	if err != nil {
+		return nil, err
+	}
 	return githubAccessControlImpl{
 		ctx:           ctx,
 		ds:            ds,
 		user:          user,
 		token:         token,
 		oauthClientID: clientID,
-		oauthGHClient: github.NewClient(tp.Client()),
+		oauthGHClient: oauthGHClient,
 		botClient:     botClient,
 	}, nil
 }
@@ -256,11 +263,11 @@ func GetUserFromCookie(ctx context.Context, ds Datastore, r *http.Request) (*Use
 }
 
 // NewGitHubClientFromToken returns a new GitHub client from an access token.
-func NewGitHubClientFromToken(ctx context.Context, token string) *github.Client {
+func NewGitHubClientFromToken(ctx context.Context, token string) (*github.Client, error) {
 	oauthClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
 		AccessToken: token,
 	}))
-	return github.NewClient(oauthClient)
+	return github.NewClient(github.WithHTTPClient(oauthClient))
 }
 
 func getOAuthClientIDSecret(store Datastore) (clientID, clientSecret string, err error) {
