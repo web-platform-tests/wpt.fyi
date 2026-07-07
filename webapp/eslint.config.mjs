@@ -1,5 +1,4 @@
 import globals from "globals";
-import babelParser from "@babel/eslint-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
@@ -29,17 +28,8 @@ export default [...compat.extends("eslint:recommended"), {
             sinon: true,
         },
 
-        parser: babelParser,
-        ecmaVersion: 2023,
+        ecmaVersion: 2024,
         sourceType: "module",
-
-        parserOptions: {
-            requireConfigFile: false,
-
-            babelOptions: {
-                plugins: ["@babel/plugin-syntax-import-assertions"],
-            },
-        },
     },
 
     files: ["components/**/*.js"],
@@ -79,17 +69,8 @@ export default [...compat.extends("eslint:recommended"), {
             sinon: true,
         },
 
-        parser: babelParser,
-        ecmaVersion: 2023,
+        ecmaVersion: 2024,
         sourceType: "module",
-
-        parserOptions: {
-            requireConfigFile: false,
-
-            babelOptions: {
-                plugins: ["@babel/plugin-syntax-import-assertions"],
-            },
-        },
     },
 
     files: ["components/test/*.html"],
