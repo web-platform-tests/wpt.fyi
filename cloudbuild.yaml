@@ -1,0 +1,95 @@
+# Cloud Build Continuous Deployment configuration for wpt.fyi (wptdashboard)
+# Runs in GCP Project: interop-tooling-ops under authorized SA: sa-deploy-wptfyi-prod
+#
+# Usage:
+#   Automatic: Triggered via Developer Connect on branch/tag push.
+#   Manual / Dry-Run Testing:
+#     gcloud builds submit --config=cloudbuild.yaml --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false .
+
+substitutions:
+  _TARGET_PROJECT: "wptdashboard"
+  _FORCE_DEPLOY: "false"
+  _SKIP_ISSUE_CREATION: "false"
+
+steps:
+  # -------------------------------------------------------------------------
+  # Step 1: Pre-flight App Engine Version Auto-Pruning
+  # -------------------------------------------------------------------------
+  # Automatically lists and removes obsolete, non-serving App Engine versions
+  # across default, processor, and searchcache so deploy-production.sh never
+  # crashes with "Found more than 2 versions (exit 3)".
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'prune-stale-gae-versions'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        echo "================================================================"
+        echo "Pre-Flight Check: Pruning non-serving App Engine versions on ${_TARGET_PROJECT}"
+        echo "================================================================"
+
+        SERVICES="default processor searchcache"
+        for SERVICE in $SERVICES; do
+          echo "Inspecting GAE versions for service: ${SERVICE}..."
+          # Fetch versions sorted by deployment time (oldest first), filter for 0% traffic split
+          VERSIONS_TO_DELETE=$(gcloud app versions list \
+            --project="${_TARGET_PROJECT}" \
+            --service="${SERVICE}" \
+            --filter="traffic_split=0.0" \
+            --sort-by="last_deployed_time.datetime" \
+            --format="value(id)")
+
+          # Keep at least the most recent non-serving version as a rollback buffer if needed
+          COUNT=$(echo "${VERSIONS_TO_DELETE}" | grep -c . || true)
+          if (( COUNT > 1 )); then
+            # Delete all except the most recent non-serving version
+            STALE_VERSIONS=$(echo "${VERSIONS_TO_DELETE}" | head -n -1)
+            echo "Pruning ${COUNT} stale non-serving version(s) for ${SERVICE}:"
+            echo "${STALE_VERSIONS}"
+            gcloud app versions delete ${STALE_VERSIONS} \
+              --project="${_TARGET_PROJECT}" \
+              --service="${SERVICE}" \
+              --quiet
+          else
+            echo "Service ${SERVICE} has <= 1 non-serving candidate. Clean to proceed."
+          fi
+        done
+
+  # -------------------------------------------------------------------------
+  # Step 2: Execute Production Deployment & GitHub Tracking Issue Creation
+  # -------------------------------------------------------------------------
+  # Executes util/deploy-production.sh -q with GH_TOKEN injected from Secret Manager
+  # so that both App Engine deployment and GitHub issue creation succeed automatically.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-production'
+    entrypoint: 'bash'
+    secretEnv: ['GH_TOKEN']
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        echo "================================================================"
+        echo "Executing util/deploy-production.sh for wpt.fyi (${_TARGET_PROJECT})"
+        echo "================================================================"
+
+        FLAGS="-q"
+        if [[ "${_FORCE_DEPLOY}" == "true" ]]; then
+          FLAGS="${FLAGS} -f"
+        fi
+        if [[ "${_SKIP_ISSUE_CREATION}" == "true" ]]; then
+          FLAGS="${FLAGS} -b"
+        fi
+
+        echo "Running deploy-production.sh with flags: ${FLAGS}"
+        # Ensure docker and gh are available in the build container environment
+        ./util/deploy-production.sh ${FLAGS}
+
+availableSecrets:
+  secretManager:
+    - env: 'GH_TOKEN'
+      versionName: 'projects/804363182212/secrets/github-actions/versions/latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 3600s
