@@ -132,38 +132,44 @@ ${UTIL_DIR}/docker-dev/run.sh -s
 # Confirm that everything works as expected and redirect traffic.
 VERSION_URL=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .version.versionUrl')
 LATEST_VERSION=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .id')
-MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search, test expansion, show history). Wait 15 minutes before redirecting traffic (https://cloud.google.com/appengine/docs/flexible/known-issues). Redirect traffic now?"
-if confirm "$MESSAGE"; then
-  for SERVICE in $SERVICES
-  do
-    gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1
+
+if [[ "${QUIET}" == "true" ]]; then
+  echo "Non-interactive CI/CD mode (-q): Automatically redirecting 100% traffic to latest version ${LATEST_VERSION}..."
+  for SERVICE in $SERVICES; do
+    gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1 --quiet
   done
 else
-  echo "Don't forget to migrate traffic to the new version."
+  MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search, test expansion, show history). Wait 15 minutes before redirecting traffic (https://cloud.google.com/appengine/docs/flexible/known-issues). Redirect traffic now?"
+  if confirm "$MESSAGE"; then
+    for SERVICE in $SERVICES; do
+      gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1
+    done
+  else
+    echo "Don't forget to migrate traffic to the new version."
+  fi
 fi
 
 # Update and close deployment bug.
 LAST_DEPLOYMENT_ISSUE=$(gh issue list --state open --label "$PROD_LABEL" --label "$RELEASE_LABEL" --limit 1 --json number --jq '.[] | .number')
 gh issue close "$LAST_DEPLOYMENT_ISSUE" -c "Deployment is now complete."
 
-# Check if there are more more than two versions of the default service left
-# after we're done with this deplyment to make sure there's room for the next
-# deployment. If there are, ask to delete the oldest default service version,
-# and also delete the same version from the other services which will also exist
-# if all went well during the deployment. This check isn't fail safe, but
-# combined with the check we do before doing any deployments earlier in this
-# script, this should leave us in a good state.
-
+# Check if there are more than two versions of the default service left
+# after we're done with this deployment to make sure there's room for the next
+# deployment. If there are, delete the oldest default service version,
+# and also delete the same version from the other services.
 VERSIONS=$(gcloud app --project=wptdashboard versions list --filter="service=default" --format=list | wc -l)
 
 if (($VERSIONS == 3)); then
-  echo -e "Please ensure the deployment was successful. If so, we can go ahead and\ndelete the oldest version of all services if necessary, leaving the one just\ndeployed and the one running before this deployment. This will ensure we leave\nroom for the next deployment.\n"
-
-  read -p "Delete oldest version of all services to leave room for the next deplyment? (y/n): " DELETE
+  if [[ "${QUIET}" == "true" ]]; then
+    DELETE="y"
+    echo "Non-interactive CI/CD mode (-q): Automatically deleting oldest service versions to maintain <= 2 versions..."
+  else
+    echo -e "Please ensure the deployment was successful. If so, we can go ahead and\ndelete the oldest version of all services if necessary, leaving the one just\ndeployed and the one running before this deployment. This will ensure we leave\nroom for the next deployment.\n"
+    read -p "Delete oldest version of all services to leave room for the next deployment? (y/n): " DELETE
+  fi
 
   if [[ $DELETE == "y" ]]; then
-    echo "Found $VERSIONS for the default service, deleting the oldest version of all services."
-
+    echo "Found $VERSIONS versions for the default service, deleting the oldest version of all services."
     OLDEST_REV=$(gcloud app --project=wptdashboard versions list --sort-by=last_deployed_time --filter="service=default" --limit=1 --format=json | jq -r '.[] | .id')
     for SERVICE in $SERVICES; do
       echo "Deleting $SERVICE service version $OLDEST_REV"
