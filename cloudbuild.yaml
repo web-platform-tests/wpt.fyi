@@ -16,10 +16,9 @@ steps:
   # Execute Production Deployment & Self-Healing Version Auto-Pruning
   # -------------------------------------------------------------------------
   # Executes util/deploy-production.sh -q with GH_TOKEN injected from Secret Manager.
-  # The script natively handles pre-flight version auto-pruning, service deployment,
-  # non-interactive 100% traffic migration, post-deploy oldest version cleanup,
-  # and GitHub tracking issue creation.
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+  # Pre-installs docker.io, jq, make, and gh inside the standard Debian build container
+  # so build tools connect directly to Cloud Build's host Docker engine (/var/run/docker.sock).
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
     id: 'deploy-production'
     entrypoint: 'bash'
     secretEnv: ['GH_TOKEN']
@@ -27,6 +26,17 @@ steps:
       - '-c'
       - |
         set -euo pipefail
+        echo "================================================================"
+        echo "Installing CI/CD runtime dependencies (docker.io, jq, make, gh)"
+        echo "================================================================"
+        apt-get update -qq
+        apt-get install -y -qq docker.io jq make
+
+        # Install GitHub CLI (gh)
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        apt-get update -qq && apt-get install -y -qq gh
+
         echo "================================================================"
         echo "Executing util/deploy-production.sh for wpt.fyi (${_TARGET_PROJECT})"
         echo "================================================================"

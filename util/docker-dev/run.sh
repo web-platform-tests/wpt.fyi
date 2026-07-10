@@ -88,6 +88,9 @@ set -e
 # wptd-dev                               Identify image to use
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
+if [[ -d "${HOME}/.config/gcloud" ]]; then
+  VOLUMES="${VOLUMES} -v ${HOME}/.config/gcloud:/home/user/.config/gcloud"
+fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
