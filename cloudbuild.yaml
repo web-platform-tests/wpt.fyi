@@ -33,14 +33,14 @@ steps:
 
         FLAGS="-q"
         if [[ "${_FORCE_DEPLOY}" == "true" ]]; then
-          FLAGS="${FLAGS} -f"
+          FLAGS="$${FLAGS} -f"
         fi
         if [[ "${_SKIP_ISSUE_CREATION}" == "true" ]]; then
-          FLAGS="${FLAGS} -b"
+          FLAGS="$${FLAGS} -b"
         fi
 
-        echo "Running deploy-production.sh with flags: ${FLAGS}"
-        ./util/deploy-production.sh ${FLAGS}
+        echo "Running deploy-production.sh with flags: $${FLAGS}"
+        ./util/deploy-production.sh $${FLAGS}
 
 availableSecrets:
   secretManager:
