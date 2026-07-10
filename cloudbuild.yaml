@@ -49,6 +49,9 @@ steps:
           FLAGS="$${FLAGS} -b"
         fi
 
+        echo "Ensuring git history is available for changelist diff calculation..."
+        git fetch --unshallow 2>/dev/null || git fetch --depth=100 origin main 2>/dev/null || true
+
         echo "Running deploy-production.sh with flags: $${FLAGS}"
         ./util/deploy-production.sh $${FLAGS}
 

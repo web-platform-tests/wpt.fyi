@@ -40,7 +40,11 @@ then
   LAST_DEPLOYED_SHA=$(gcloud app --project=wptdashboard versions list --hide-no-traffic --filter='service=default' --format=yaml | grep id | head -1 | cut -d' ' -f2 | sed 's/rev-//')
   CHANGELIST_BASE_SHA=$LAST_DEPLOYED_SHA
   if ! CHANGELIST=$(git log $CHANGELIST_BASE_SHA..HEAD --oneline 2>/dev/null); then
-    if confirm "Could not fetch a list of changes from the previous commit ($LAST_DEPLOYED_SHA) to HEAD. Create a deployment issue that includes a default amount of changes (HEAD~40..HEAD)?"; then
+    if [[ "${QUIET}" == "true" ]]; then
+      echo "Non-interactive CI/CD mode (-q): Previous commit ($LAST_DEPLOYED_SHA) not found in shallow git tree. Generating recent commit list for deployment issue..."
+      CHANGELIST=$(git log -n 20 --oneline)
+      CHANGELIST_BASE_SHA=$(git rev-parse HEAD~20 2>/dev/null || git rev-parse HEAD)
+    elif confirm "Could not fetch a list of changes from the previous commit ($LAST_DEPLOYED_SHA) to HEAD. Create a deployment issue that includes a default amount of changes (HEAD~40..HEAD)?"; then
       CHANGELIST_BASE_SHA=$(git rev-parse HEAD~40)
       CHANGELIST=$(git log $CHANGELIST_BASE_SHA..HEAD --oneline)
     else
