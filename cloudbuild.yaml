@@ -13,54 +13,12 @@ substitutions:
 
 steps:
   # -------------------------------------------------------------------------
-  # Step 1: Pre-flight App Engine Version Auto-Pruning
+  # Execute Production Deployment & Self-Healing Version Auto-Pruning
   # -------------------------------------------------------------------------
-  # Automatically lists and removes obsolete, non-serving App Engine versions
-  # across default, processor, and searchcache so deploy-production.sh never
-  # crashes with "Found more than 2 versions (exit 3)".
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: 'prune-stale-gae-versions'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -e
-        echo "================================================================"
-        echo "Pre-Flight Check: Pruning non-serving App Engine versions on ${_TARGET_PROJECT}"
-        echo "================================================================"
-
-        SERVICES="default processor searchcache"
-        for SERVICE in $SERVICES; do
-          echo "Inspecting GAE versions for service: ${SERVICE}..."
-          # Fetch versions sorted by deployment time (oldest first), filter for 0% traffic split
-          VERSIONS_TO_DELETE=$(gcloud app versions list \
-            --project="${_TARGET_PROJECT}" \
-            --service="${SERVICE}" \
-            --filter="traffic_split=0.0" \
-            --sort-by="last_deployed_time.datetime" \
-            --format="value(id)")
-
-          # Keep at least the most recent non-serving version as a rollback buffer if needed
-          COUNT=$(echo "${VERSIONS_TO_DELETE}" | grep -c . || true)
-          if (( COUNT > 1 )); then
-            # Delete all except the most recent non-serving version
-            STALE_VERSIONS=$(echo "${VERSIONS_TO_DELETE}" | head -n -1)
-            echo "Pruning ${COUNT} stale non-serving version(s) for ${SERVICE}:"
-            echo "${STALE_VERSIONS}"
-            gcloud app versions delete ${STALE_VERSIONS} \
-              --project="${_TARGET_PROJECT}" \
-              --service="${SERVICE}" \
-              --quiet
-          else
-            echo "Service ${SERVICE} has <= 1 non-serving candidate. Clean to proceed."
-          fi
-        done
-
-  # -------------------------------------------------------------------------
-  # Step 2: Execute Production Deployment & GitHub Tracking Issue Creation
-  # -------------------------------------------------------------------------
-  # Executes util/deploy-production.sh -q with GH_TOKEN injected from Secret Manager
-  # so that both App Engine deployment and GitHub issue creation succeed automatically.
+  # Executes util/deploy-production.sh -q with GH_TOKEN injected from Secret Manager.
+  # The script natively handles pre-flight version auto-pruning, service deployment,
+  # non-interactive 100% traffic migration, post-deploy oldest version cleanup,
+  # and GitHub tracking issue creation.
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'deploy-production'
     entrypoint: 'bash'
@@ -82,7 +40,6 @@ steps:
         fi
 
         echo "Running deploy-production.sh with flags: ${FLAGS}"
-        # Ensure docker and gh are available in the build container environment
         ./util/deploy-production.sh ${FLAGS}
 
 availableSecrets:

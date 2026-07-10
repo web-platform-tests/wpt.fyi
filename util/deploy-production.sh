@@ -97,18 +97,34 @@ EOF
 fi
 
 # Confirm there are no more than two versions for each service to make sure
-# there's room for the ones we're about to push. If there are more than two
-# versions available, something didn't go as planned in the previous
-# deployment. If so, delete old versions manually in the cloud console.
+# there's room for the ones we're about to push. If more than two versions exist,
+# automatically prune stale non-serving (traffic_split=0.0) versions while preserving
+# the most recent non-serving version as a rollback buffer.
 SERVICES="default processor searchcache"
 for SERVICE in $SERVICES
 do
   VERSIONS=$(gcloud app --project=wptdashboard versions list --filter="service=$SERVICE" --format=list | wc -l)
-  if ((${VERSIONS} > 2));
-  then
-    echo -e "Found more than 2 versions ($VERSIONS) for service $SERVICE.\nPlease make sure there are no more than 2 versions of each service and try\nagain."
+  if ((${VERSIONS} > 2)); then
+    echo "Found ${VERSIONS} versions for service ${SERVICE}. Auto-pruning stale non-serving versions..."
+    VERSIONS_TO_DELETE=$(gcloud app --project=wptdashboard versions list \
+      --service="${SERVICE}" \
+      --filter="traffic_split=0.0" \
+      --sort-by="last_deployed_time.datetime" \
+      --format="value(id)")
 
-    exit 3
+    COUNT=$(echo "${VERSIONS_TO_DELETE}" | grep -c . || true)
+    if (( COUNT > 1 )); then
+      STALE_VERSIONS=$(echo "${VERSIONS_TO_DELETE}" | head -n -1)
+      echo "Pruning stale non-serving version(s) for ${SERVICE}: ${STALE_VERSIONS}"
+      # shellcheck disable=SC2086
+      gcloud app --project=wptdashboard versions delete ${STALE_VERSIONS} --service="${SERVICE}" --quiet
+    fi
+
+    VERSIONS=$(gcloud app --project=wptdashboard versions list --filter="service=$SERVICE" --format=list | wc -l)
+    if ((${VERSIONS} > 2)); then
+      echo -e "Found more than 2 active serving versions ($VERSIONS) for service $SERVICE.\nPlease make sure there are no more than 2 versions of each service and try\nagain."
+      exit 3
+    fi
   fi
 
   echo "Found $VERSIONS versions for service $SERVICE. Good to proceed."
