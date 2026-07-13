@@ -1,10 +1,30 @@
 # Cloud Build Continuous Deployment configuration for wpt.fyi (wptdashboard)
 # Runs in GCP Project: interop-tooling-ops under authorized SA: sa-deploy-wptfyi-prod
 #
-# Usage:
-#   Automatic: Triggered via Developer Connect on branch/tag push.
-#   Manual / Dry-Run Testing:
-#     gcloud builds submit --config=cloudbuild.yaml --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false .
+# Usage & Triggering Scenarios:
+#   1. Automatic Production Deploys (main branch):
+#      Triggered via Developer Connect on push/merge to main. Uses default flags:
+#        _FORCE_DEPLOY=false, _SKIP_ISSUE_CREATION=false
+#
+#   2. Manual / Off-Main Branch Testing (via Trigger):
+#      gcloud builds triggers run trigger-wpt-fyi-prod \
+#        --project=interop-tooling-ops --region=us-central1 \
+#        --branch=cd-automation-cloudbuild \
+#        --substitutions=_FORCE_DEPLOY=true,_SKIP_ISSUE_CREATION=true
+#
+#   3. Local / Ad-Hoc Submission (via gcloud builds submit):
+#      gcloud builds submit --config=cloudbuild.yaml \
+#        --project=interop-tooling-ops \
+#        --substitutions=_FORCE_DEPLOY=true,_SKIP_ISSUE_CREATION=true .
+#
+# Substitution Flags Reference:
+#   _FORCE_DEPLOY: "true" (-f flag)
+#     - Required when deploying off-main branches where GitHub Action CI check-runs
+#       did not run or failed on the branch HEAD commit.
+#     - Also used during emergency production rollbacks/hotfixes over failing presubmits.
+#   _SKIP_ISSUE_CREATION: "true" (-b flag)
+#     - Recommended during off-main testing or dry runs to prevent opening and
+#       immediately closing spurious production tracking bugs on web-platform-tests/wpt.fyi.
 
 substitutions:
   _TARGET_PROJECT: "wptdashboard"
