@@ -14,8 +14,16 @@
 #
 #   3. Local / Ad-Hoc Submission (via gcloud builds submit):
 #      gcloud builds submit --config=cloudbuild.yaml \
-#        --project=interop-tooling-ops \
+#        --project=interop-tooling-ops --region=us-central1 \
 #        --substitutions=_FORCE_DEPLOY=true,_SKIP_ISSUE_CREATION=true .
+#
+#   4. Sheriff Operational Commands (Always include --project & --region):
+#      - Approve a pending build run:
+#          gcloud builds approve <BUILD_ID> --project=interop-tooling-ops --region=us-central1
+#      - Stream logs for a running build:
+#          gcloud builds log <BUILD_ID> --project=interop-tooling-ops --region=us-central1 --stream
+#      - List recent builds:
+#          gcloud builds list --project=interop-tooling-ops --region=us-central1 --limit=10
 #
 # Substitution Flags Reference:
 #   _FORCE_DEPLOY: "true" (-f flag)
