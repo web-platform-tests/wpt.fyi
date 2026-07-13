@@ -10,11 +10,11 @@ function wptd_chown() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" chown -R $(id -u $USER):$(id -g $USER) $1
 }
 function wptd_useradd() {
-  # Allow the exit code of groupadd to be 4 (GID not unique).
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g $(id -g $USER) user || [ $? == 4 ]
-  # Add user to audio & video groups to ensure Chrome can use sandbox.
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u $(id -u $USER) -g $(id -g $USER) -G audio,video user
-  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers'
+  # Allow the exit code of groupadd to be 4 (GID not unique) or 9 (group name not unique).
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" groupadd -g $(id -g $USER) user 2>/dev/null || true
+  # Add user to audio & video groups to ensure Chrome can use sandbox. Allow 4 (UID not unique) or 9.
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" useradd -u $(id -u $USER) -g $(id -g $USER) -G audio,video user 2>/dev/null || true
+  docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers' 2>/dev/null || true
 }
 function wptd_exec() {
   docker exec -u $(id -u $USER) "${DOCKER_INSTANCE}" sh -c "$*"
