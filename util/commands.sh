@@ -17,10 +17,10 @@ function wptd_useradd() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers' 2>/dev/null || true
 }
 function wptd_exec() {
-  docker exec -u $(id -u $USER) "${DOCKER_INSTANCE}" sh -c "$*"
+  docker exec -u $(id -u $USER) -e CLOUDSDK_AUTH_ACCESS_TOKEN="${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" "${DOCKER_INSTANCE}" sh -c "$*"
 }
 function wptd_exec_it() {
-  docker exec -it -u $(id -u $USER) "${DOCKER_INSTANCE}" sh -c "$*"
+  docker exec -it -u $(id -u $USER) -e CLOUDSDK_AUTH_ACCESS_TOKEN="${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" "${DOCKER_INSTANCE}" sh -c "$*"
 }
 # function wptd_run() {}
 function wptd_stop() {

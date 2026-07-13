@@ -95,13 +95,16 @@ fi
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   NET_ARGS="-p ${WPTD_HOST_WEB_PORT}:8080 -p ${WPTD_HOST_GCD_PORT}:8001 -p 12345:12345"
+  AUTH_ARGS=""
   if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
     NET_ARGS="--network=host"
+    AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN=${CLOUDSDK_AUTH_ACCESS_TOKEN:-$(gcloud auth print-access-token 2>/dev/null || true)}"
   fi
   # shellcheck disable=SC2086
   docker run -t -d --entrypoint /bin/bash \
       ${VOLUMES} \
       ${NET_ARGS} \
+      ${AUTH_ARGS} \
       -u $(id -u $USER) \
       --cap-add=SYS_ADMIN \
       --workdir "/home/user/wpt.fyi" \
