@@ -49,6 +49,10 @@ steps:
           FLAGS="$${FLAGS} -b"
         fi
 
+        # Ensure git history is un-shallowed or fetched up to 100 commits so
+        # deploy-production.sh can compute exact commit deltas ($LAST_DEPLOYED_SHA..HEAD).
+        # If $LAST_DEPLOYED_SHA is from a squashed/unmerged off-main branch, the script
+        # gracefully falls back to generating the recent 20 commits ($HEAD~20..HEAD).
         echo "Ensuring git history is available for changelist diff calculation..."
         git fetch --unshallow 2>/dev/null || git fetch --depth=100 origin main 2>/dev/null || true
 

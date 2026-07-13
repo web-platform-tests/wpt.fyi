@@ -36,12 +36,27 @@ source "${UTIL_DIR}/commands.sh"
 
 if [[ ${SKIP_ISSUE_CREATION} != "true" ]];
 then
-  # Find changes to deploy.
+  # ---------------------------------------------------------------------------
+  # Stateful Changelist & Release Note Calculation ($LAST_DEPLOYED_SHA..HEAD)
+  # ---------------------------------------------------------------------------
+  # Derives the previous baseline commit ($LAST_DEPLOYED_SHA) directly from the
+  # currently serving 100%-traffic App Engine default service version (rev-<SHA>).
+  #
+  # Stateful Scenarios & Sub-cases:
+  # 1. Main -> Main Deployments: Clean incremental delta ($M_1..$M_2).
+  # 2. Main -> Off-Main Deployments: Lists all branch commits since forking from main.
+  # 3. Off-Main -> Main Deployments (Returning to main after test deploys):
+  #    - Sub-case A (Merged As-Is): $LAST_DEPLOYED_SHA is in main's ancestry; shows post-merge delta.
+  #    - Sub-case B (Squashed/Modified Merge) & Sub-case C (Unmerged/Experimental):
+  #      The old serving SHA ($LAST_DEPLOYED_SHA) does not exist in main's git DAG.
+  #      git log throws 'fatal: bad object'. When QUIET=true (-q in CI/CD), the
+  #      script gracefully falls back to generating the recent 20 commits ($HEAD~20..HEAD)
+  #      for the deployment issue so automated builds never halt on squashed/unmerged history.
   LAST_DEPLOYED_SHA=$(gcloud app --project=wptdashboard versions list --hide-no-traffic --filter='service=default' --format=yaml | grep id | head -1 | cut -d' ' -f2 | sed 's/rev-//')
   CHANGELIST_BASE_SHA=$LAST_DEPLOYED_SHA
   if ! CHANGELIST=$(git log $CHANGELIST_BASE_SHA..HEAD --oneline 2>/dev/null); then
     if [[ "${QUIET}" == "true" ]]; then
-      echo "Non-interactive CI/CD mode (-q): Previous commit ($LAST_DEPLOYED_SHA) not found in shallow git tree. Generating recent commit list for deployment issue..."
+      echo "Non-interactive CI/CD mode (-q): Previous commit ($LAST_DEPLOYED_SHA) not found in shallow/squashed git tree. Generating recent commit list for deployment issue..."
       CHANGELIST=$(git log -n 20 --oneline)
       CHANGELIST_BASE_SHA=$(git rev-parse HEAD~20 2>/dev/null || git rev-parse HEAD)
     elif confirm "Could not fetch a list of changes from the previous commit ($LAST_DEPLOYED_SHA) to HEAD. Create a deployment issue that includes a default amount of changes (HEAD~40..HEAD)?"; then
@@ -59,7 +74,14 @@ then
   CHANGE_COUNT=$(echo "$CHANGELIST"|wc -l)
   echo -e "There are $CHANGE_COUNT changes to deploy:\n$CHANGELIST"
 
-  # Verify that all commit checks passed.
+  # ---------------------------------------------------------------------------
+  # Commit Check Verification ($MAIN_SHA)
+  # ---------------------------------------------------------------------------
+  # Resolves the commit to check against GitHub API check-runs.
+  # In detached/shallow Cloud Build checkouts, local branch 'main' does not exist.
+  # We fall back: main -> origin/main -> HEAD.
+  # Note: When deploying off-main branches where CI presubmits did not run or
+  # failed, FAILED_CHECKS will block deployment unless -f (FORCE_DEPLOY=true) is passed.
   MAIN_SHA=$(git rev-parse main 2>/dev/null || git rev-parse origin/main 2>/dev/null || git rev-parse HEAD)
   FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/$MAIN_SHA/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure" and .name != "Dependabot"))')
   FAILURES=$(echo "$FAILED_CHECKS" | jq -r 'length')
