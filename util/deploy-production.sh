@@ -59,8 +59,8 @@ then
   CHANGE_COUNT=$(echo "$CHANGELIST"|wc -l)
   echo -e "There are $CHANGE_COUNT changes to deploy:\n$CHANGELIST"
 
-  # Verfiy that all commit checks passed.
-  MAIN_SHA=$(git rev-parse main)
+  # Verify that all commit checks passed.
+  MAIN_SHA=$(git rev-parse main 2>/dev/null || git rev-parse origin/main 2>/dev/null || git rev-parse HEAD)
   FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/$MAIN_SHA/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure" and .name != "Dependabot"))')
   FAILURES=$(echo "$FAILED_CHECKS" | jq -r 'length')
   if [[ "${FAILURES}" != "0"  ]];
