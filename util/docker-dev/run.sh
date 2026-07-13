@@ -90,7 +90,9 @@ set -e
 # wptd-dev                               Identify image to use
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
-if [[ -d "${HOME}/.config/gcloud" ]]; then
+if [[ -n "${CLOUDSDK_CONFIG:-}" && -d "${CLOUDSDK_CONFIG}" ]]; then
+  VOLUMES="${VOLUMES} -v ${CLOUDSDK_CONFIG}:/home/user/.config/gcloud -v ${CLOUDSDK_CONFIG}:/root/.config/gcloud"
+elif [[ -d "${HOME}/.config/gcloud" ]]; then
   VOLUMES="${VOLUMES} -v ${HOME}/.config/gcloud:/home/user/.config/gcloud -v ${HOME}/.config/gcloud:/root/.config/gcloud"
 fi
 
@@ -100,7 +102,10 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   AUTH_ARGS=""
   if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
     NET_ARGS="--network=host"
-    AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN=${CLOUDSDK_AUTH_ACCESS_TOKEN:-$(gcloud auth print-access-token 2>/dev/null || true)}"
+    INIT_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
+    if [[ -n "${INIT_TOKEN}" ]]; then
+      AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN=${INIT_TOKEN}"
+    fi
   fi
   # shellcheck disable=SC2086
   docker run -t -d --entrypoint /bin/bash \

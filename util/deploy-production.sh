@@ -159,8 +159,7 @@ done
 # Start a docker instance.
 ${UTIL_DIR}/docker-dev/run.sh -d
 if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
-  echo "CI/CD environment detected (CI=true): Exporting active Cloud Build runner token into dev container environment..."
-  export CLOUDSDK_AUTH_ACCESS_TOKEN=$(gcloud auth print-access-token 2>/dev/null || true)
+  echo "CI/CD environment detected (CI=true): Compiling services non-interactively inside dev container..."
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web QUIET=true
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=results-processor QUIET=true
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service QUIET=true
