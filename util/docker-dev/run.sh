@@ -94,13 +94,16 @@ fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
+  NET_ARGS="-p ${WPTD_HOST_WEB_PORT}:8080 -p ${WPTD_HOST_GCD_PORT}:8001 -p 12345:12345"
+  if [[ "${QUIET}" == "true" ]]; then
+    NET_ARGS="--network=host"
+  fi
+  # shellcheck disable=SC2086
   docker run -t -d --entrypoint /bin/bash \
       ${VOLUMES} \
+      ${NET_ARGS} \
       -u $(id -u $USER) \
       --cap-add=SYS_ADMIN \
-      -p "${WPTD_HOST_WEB_PORT}:8080" \
-      -p "${WPTD_HOST_GCD_PORT}:8001" \
-      -p "12345:12345" \
       --workdir "/home/user/wpt.fyi" \
       --name "${DOCKER_INSTANCE}" \
       ${DOCKER_IMAGE}
