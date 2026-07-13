@@ -59,6 +59,7 @@ steps:
     id: 'deploy-production'
     entrypoint: 'bash'
     secretEnv: ['GH_TOKEN']
+    env: ['CI=true', 'CLOUD_BUILD=true']
     args:
       - '-c'
       - |

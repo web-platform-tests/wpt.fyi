@@ -158,8 +158,8 @@ done
 
 # Start a docker instance.
 ${UTIL_DIR}/docker-dev/run.sh -d
-if [[ "${QUIET}" == "true" ]]; then
-  echo "Non-interactive CI/CD mode (-q): Using pre-authenticated gcloud config and compiling services non-interactively..."
+if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
+  echo "CI/CD environment detected (CI=true): Using pre-authenticated gcloud config and compiling services non-interactively..."
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web QUIET=true
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=results-processor QUIET=true
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service QUIET=true
@@ -167,9 +167,9 @@ else
   # Login to gcloud if not already logged in.
   wptd_exec_it gcloud auth login
   # Deploy the services.
-  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web
-  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor
-  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service
+  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web ${QUIET:+QUIET=true}
+  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=results-processor ${QUIET:+QUIET=true}
+  wptd_exec_it make deploy_production PROJECT=wptdashboard APP_PATH=api/query/cache/service ${QUIET:+QUIET=true}
 fi
 
 cd webapp/web
