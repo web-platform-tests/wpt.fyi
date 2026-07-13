@@ -293,7 +293,11 @@ dev_data: git
 
 gcloud_login: gcloud
 	if [[ -z "$$(gcloud config list account --format "value(core.account)")" ]]; then \
-		gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
+		if [[ -f $(WPTD_PATH)client-secret.json ]]; then \
+			gcloud auth activate-service-account --key-file $(WPTD_PATH)client-secret.json; \
+		else \
+			echo "No local client-secret.json found. Relying on mounted CI/CD gcloud credentials or GCP metadata service..."; \
+		fi; \
 	fi
 
 deployment_state: go_build gcloud_login package_service var-APP_PATH

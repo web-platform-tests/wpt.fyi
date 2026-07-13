@@ -89,7 +89,7 @@ set -e
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
 if [[ -d "${HOME}/.config/gcloud" ]]; then
-  VOLUMES="${VOLUMES} -v ${HOME}/.config/gcloud:/home/user/.config/gcloud"
+  VOLUMES="${VOLUMES} -v ${HOME}/.config/gcloud:/home/user/.config/gcloud -v ${HOME}/.config/gcloud:/root/.config/gcloud"
 fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
