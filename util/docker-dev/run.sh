@@ -31,7 +31,9 @@ function stop() {
 
 PR=""
 function confirm_preserve_remove() {
-  if confirm "${1}. Remove?"; then
+  if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" || "${QUIET}" == "true" ]]; then
+    PR="r"
+  elif confirm "${1}. Remove?"; then
     PR="r"
   else
     PR="p"
