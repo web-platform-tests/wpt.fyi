@@ -21,10 +21,14 @@ if [ "$USE_FRAME_BUFFER" == "true" ]; then
 fi
 
 cd webapp
-# Patch wct-browser-legacy to avoid cross-origin error in ChildRunner.get
+# Patch browser test harness to avoid cross-origin error in ChildRunner.get.
 # See https://github.com/web-platform-tests/wpt.fyi/issues/4754
 # This workaround can be phased out if/when wct-browser-legacy is updated or replaced.
-sed -i 's/return window.parent.WCT._ChildRunner.get(target, true);/try { return window.parent.WCT._ChildRunner.get(target, true); } catch (e) { return null; }/' node_modules/wct-browser-legacy/browser.js
+for file in node_modules/wct-browser-legacy/browser.js node_modules/web-component-tester/browser.js; do
+  if [ -f "$file" ]; then
+    sed -i 's/return window.parent.WCT._ChildRunner.get(target, true);/try { return window.parent.WCT._ChildRunner.get(target, true); } catch (e) { return null; }/' "$file"
+  fi
+done
 if [ "$UID" == "0" ]; then
   # Used in .github/actions/make-in-docker/Dockerfile
   sudo -u browser npm test
