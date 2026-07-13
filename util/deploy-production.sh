@@ -200,9 +200,11 @@ else
   fi
 fi
 
-# Update and close deployment bug.
-LAST_DEPLOYMENT_ISSUE=$(gh issue list --state open --label "$PROD_LABEL" --label "$RELEASE_LABEL" --limit 1 --json number --jq '.[] | .number')
-gh issue close "$LAST_DEPLOYMENT_ISSUE" -c "Deployment is now complete."
+if [[ "${SKIP_ISSUE_CREATION}" != "true" ]]; then
+  # Update and close deployment bug.
+  LAST_DEPLOYMENT_ISSUE=$(gh issue list --state open --label "$PROD_LABEL" --label "$RELEASE_LABEL" --limit 1 --json number --jq '.[] | .number')
+  gh issue close "$LAST_DEPLOYMENT_ISSUE" -c "Deployment is now complete."
+fi
 
 # Check if there are more than two versions of the default service left
 # after we're done with this deployment to make sure there's room for the next
