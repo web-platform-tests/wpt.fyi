@@ -100,7 +100,7 @@ steps:
 availableSecrets:
   secretManager:
     - env: 'GH_TOKEN'
-      versionName: 'projects/804363182212/secrets/github-actions/versions/latest'
+      versionName: 'projects/$PROJECT_ID/secrets/interop-bot-gh-token/versions/latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
