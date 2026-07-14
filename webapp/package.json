@@ -28,7 +28,7 @@
     "@browser-logos/servo": "2.0.1",
     "@browser-logos/uc": "1.1.0",
     "@browser-logos/webkit-nightly": "2.0.2",
-    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^9.33.0",
     "@polymer/test-fixture": "4.0.2",
     "cpy-cli": "7.0.0",
