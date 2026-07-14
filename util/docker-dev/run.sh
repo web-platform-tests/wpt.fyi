@@ -7,6 +7,10 @@ DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
 
+CI="${CI:-false}"
+CLOUD_BUILD="${CLOUD_BUILD:-false}"
+QUIET="${QUIET:-false}"
+
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q] [-d] [-s]
     -d  daemon mode: Run in the background rather than blocking then cleaning up
@@ -31,7 +35,7 @@ function stop() {
 
 PR=""
 function confirm_preserve_remove() {
-  if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" || "${QUIET}" == "true" ]]; then
+  if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" || "${QUIET}" == "true" ]]; then
     PR="r"
   elif confirm "${1}. Remove?"; then
     PR="r"
@@ -100,7 +104,7 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
   NET_ARGS="-p ${WPTD_HOST_WEB_PORT}:8080 -p ${WPTD_HOST_GCD_PORT}:8001 -p 12345:12345"
   AUTH_ARGS=""
-  if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
+  if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" ]]; then
     NET_ARGS="--network=host"
     INIT_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
     if [[ -n "${INIT_TOKEN}" ]]; then

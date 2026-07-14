@@ -17,6 +17,10 @@ usage() {
   echo "${USAGE}"
 }
 
+CI="${CI:-false}"
+CLOUD_BUILD="${CLOUD_BUILD:-false}"
+QUIET="${QUIET:-false}"
+
 while getopts ':bfqh' flag; do
   case "${flag}" in
     b) SKIP_ISSUE_CREATION='true' ;;
@@ -158,7 +162,7 @@ done
 
 # Start a docker instance.
 ${UTIL_DIR}/docker-dev/run.sh -d
-if [[ "${CI:-false}" == "true" || "${CLOUD_BUILD:-false}" == "true" ]]; then
+if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" ]]; then
   echo "CI/CD environment detected (CI=true): Compiling services non-interactively inside dev container..."
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=webapp/web QUIET=true
   wptd_exec make deploy_production PROJECT=wptdashboard APP_PATH=results-processor QUIET=true
