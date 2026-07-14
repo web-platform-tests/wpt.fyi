@@ -28,11 +28,16 @@
 #          gcloud builds log <BUILD_ID> --project=interop-tooling-ops --region=us-central1 --stream
 #      - List recent builds:
 #          gcloud builds list --project=interop-tooling-ops --region=us-central1 --limit=10
-#      - Retrigger/rollback an exact specific commit SHA:
+#      - Retrigger/rollback an exact specific commit SHA via Cloud Build:
 #          gcloud builds triggers run trigger-wpt-fyi-prod \
 #            --project=interop-tooling-ops --region=us-central1 \
 #            --sha=<COMMIT_SHA> \
 #            --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false
+#      - Instant emergency traffic rollback (without waiting for a rebuild):
+#          gcloud app services set-traffic default --project=wptdashboard \
+#            --splits=<OLD_VERSION_ID>=1
+#          gcloud app services set-traffic results-processor --project=wptdashboard \
+#            --splits=<OLD_VERSION_ID>=1
 #
 # Substitution Flags Reference:
 #   _FORCE_DEPLOY: "true" (-f flag)
