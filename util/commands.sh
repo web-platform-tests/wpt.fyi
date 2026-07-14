@@ -21,27 +21,31 @@ function wptd_useradd() {
   docker exec -u 0:0 "${DOCKER_INSTANCE}" sh -c 'echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers' 2>/dev/null || true
 }
 
-function _get_auth_args() {
-  local AUTH_ARGS=()
-  local TOKEN=""
+function _setup_auth_env() {
   if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" ]]; then
-    TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
-  elif [[ -n "${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" ]]; then
-    TOKEN="${CLOUDSDK_AUTH_ACCESS_TOKEN}"
+    export CLOUDSDK_AUTH_ACCESS_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
   fi
-  if [[ -n "${TOKEN}" ]]; then
-    AUTH_ARGS=("-e" "CLOUDSDK_AUTH_ACCESS_TOKEN=${TOKEN}")
-  fi
-  echo "${AUTH_ARGS[@]}"
 }
 
 function wptd_exec() {
-  local AUTH_ARGS=($(_get_auth_args))
-  docker exec -u $(id -u $USER) "${AUTH_ARGS[@]}" "${DOCKER_INSTANCE}" sh -c "$*"
+  (
+    _setup_auth_env
+    local AUTH_ARGS=()
+    if [[ -n "${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" ]]; then
+      AUTH_ARGS=("-e" "CLOUDSDK_AUTH_ACCESS_TOKEN")
+    fi
+    docker exec -u $(id -u $USER) "${AUTH_ARGS[@]}" "${DOCKER_INSTANCE}" sh -c "$*"
+  )
 }
 function wptd_exec_it() {
-  local AUTH_ARGS=($(_get_auth_args))
-  docker exec -it -u $(id -u $USER) "${AUTH_ARGS[@]}" "${DOCKER_INSTANCE}" sh -c "$*"
+  (
+    _setup_auth_env
+    local AUTH_ARGS=()
+    if [[ -n "${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" ]]; then
+      AUTH_ARGS=("-e" "CLOUDSDK_AUTH_ACCESS_TOKEN")
+    fi
+    docker exec -it -u $(id -u $USER) "${AUTH_ARGS[@]}" "${DOCKER_INSTANCE}" sh -c "$*"
+  )
 }
 # function wptd_run() {}
 function wptd_stop() {
