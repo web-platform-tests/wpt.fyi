@@ -7,6 +7,10 @@ DOCKER_DIR=$(dirname $0)
 source "${DOCKER_DIR}/../commands.sh"
 source "${DOCKER_DIR}/../logging.sh"
 
+CI="${CI:-false}"
+CLOUD_BUILD="${CLOUD_BUILD:-false}"
+QUIET="${QUIET:-false}"
+
 function usage() {
   USAGE="USAGE: $(basename ${0}) [-q] [-d] [-s]
     -d  daemon mode: Run in the background rather than blocking then cleaning up
@@ -31,7 +35,9 @@ function stop() {
 
 PR=""
 function confirm_preserve_remove() {
-  if confirm "${1}. Remove?"; then
+  if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" || "${QUIET}" == "true" ]]; then
+    PR="r"
+  elif confirm "${1}. Remove?"; then
     PR="r"
   else
     PR="p"
@@ -88,16 +94,30 @@ set -e
 # wptd-dev                               Identify image to use
 
 VOLUMES="-v ${WPTD_PATH}:/home/user/wpt.fyi"
+if [[ -n "${CLOUDSDK_CONFIG:-}" && -d "${CLOUDSDK_CONFIG}" ]]; then
+  VOLUMES="${VOLUMES} -v ${CLOUDSDK_CONFIG}:/home/user/.config/gcloud -v ${CLOUDSDK_CONFIG}:/root/.config/gcloud"
+elif [[ -d "${HOME}/.config/gcloud" ]]; then
+  VOLUMES="${VOLUMES} -v ${HOME}/.config/gcloud:/home/user/.config/gcloud -v ${HOME}/.config/gcloud:/root/.config/gcloud"
+fi
 
 if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   info "Starting docker instance ${DOCKER_INSTANCE}..."
+  NET_ARGS="-p ${WPTD_HOST_WEB_PORT}:8080 -p ${WPTD_HOST_GCD_PORT}:8001 -p 12345:12345"
+  AUTH_ARGS=""
+  if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" ]]; then
+    NET_ARGS="--network=host"
+    export CLOUDSDK_AUTH_ACCESS_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
+    if [[ -n "${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" ]]; then
+      AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN"
+    fi
+  fi
+  # shellcheck disable=SC2086
   docker run -t -d --entrypoint /bin/bash \
       ${VOLUMES} \
+      ${NET_ARGS} \
+      ${AUTH_ARGS} \
       -u $(id -u $USER) \
       --cap-add=SYS_ADMIN \
-      -p "${WPTD_HOST_WEB_PORT}:8080" \
-      -p "${WPTD_HOST_GCD_PORT}:8001" \
-      -p "12345:12345" \
       --workdir "/home/user/wpt.fyi" \
       --name "${DOCKER_INSTANCE}" \
       ${DOCKER_IMAGE}

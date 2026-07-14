@@ -1,0 +1,112 @@
+# Cloud Build Continuous Deployment configuration for wpt.fyi (wptdashboard)
+# Runs in GCP Project: interop-tooling-ops under authorized SA: sa-deploy-wptfyi-prod
+#
+# Usage & Triggering Scenarios:
+#   1. Automatic & Manual Production Deploys (main branch):
+#      - Automatic: Triggered via Developer Connect on push/merge to main.
+#      - Manual Retrigger (e.g., after transient Artifact Registry/network outages):
+#          gcloud builds triggers run trigger-wpt-fyi-prod \
+#            --project=interop-tooling-ops --region=us-central1 \
+#            --branch=main \
+#            --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false
+#
+#   2. Manual / Off-Main Branch Testing (via Trigger):
+#      gcloud builds triggers run trigger-wpt-fyi-prod \
+#        --project=interop-tooling-ops --region=us-central1 \
+#        --branch=cd-automation-cloudbuild \
+#        --substitutions=_FORCE_DEPLOY=true,_SKIP_ISSUE_CREATION=true
+#
+#   3. Local / Ad-Hoc Submission (via gcloud builds submit):
+#      gcloud builds submit --config=cloudbuild.yaml \
+#        --project=interop-tooling-ops --region=us-central1 \
+#        --substitutions=_FORCE_DEPLOY=true,_SKIP_ISSUE_CREATION=true .
+#
+#   4. Sheriff Operational Commands (Always include --project & --region):
+#      - Approve a pending build run:
+#          gcloud builds approve <BUILD_ID> --project=interop-tooling-ops --region=us-central1
+#      - Stream logs for a running build:
+#          gcloud builds log <BUILD_ID> --project=interop-tooling-ops --region=us-central1 --stream
+#      - List recent builds:
+#          gcloud builds list --project=interop-tooling-ops --region=us-central1 --limit=10
+#      - Retrigger/rollback an exact specific commit SHA via Cloud Build:
+#          gcloud builds triggers run trigger-wpt-fyi-prod \
+#            --project=interop-tooling-ops --region=us-central1 \
+#            --sha=<COMMIT_SHA> \
+#            --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false
+#      - Instant emergency traffic rollback (without waiting for a rebuild):
+#          gcloud app services set-traffic default --project=wptdashboard \
+#            --splits=<OLD_VERSION_ID>=1
+#          gcloud app services set-traffic results-processor --project=wptdashboard \
+#            --splits=<OLD_VERSION_ID>=1
+#
+# Substitution Flags Reference:
+#   _FORCE_DEPLOY: "true" (-f flag)
+#     - Required when deploying off-main branches where GitHub Action CI check-runs
+#       did not run or failed on the branch HEAD commit.
+#     - Also used during emergency production rollbacks/hotfixes over failing presubmits.
+#   _SKIP_ISSUE_CREATION: "true" (-b flag)
+#     - Recommended during off-main testing or dry runs to prevent opening and
+#       immediately closing spurious production tracking bugs on web-platform-tests/wpt.fyi.
+
+substitutions:
+  _TARGET_PROJECT: "wptdashboard"
+  _FORCE_DEPLOY: "false"
+  _SKIP_ISSUE_CREATION: "false"
+
+steps:
+  # -------------------------------------------------------------------------
+  # Execute Production Deployment & Self-Healing Version Auto-Pruning
+  # -------------------------------------------------------------------------
+  # Executes util/deploy-production.sh -q with GH_TOKEN injected from Secret Manager.
+  # Pre-installs docker.io, jq, make, and gh inside the standard Debian build container
+  # so build tools connect directly to Cloud Build's host Docker engine (/var/run/docker.sock).
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
+    id: 'deploy-production'
+    entrypoint: 'bash'
+    secretEnv: ['GH_TOKEN']
+    env: ['CI=true', 'CLOUD_BUILD=true']
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        echo "================================================================"
+        echo "Installing CI/CD runtime dependencies (docker.io, jq, make, gh)"
+        echo "================================================================"
+        apt-get update -qq
+        apt-get install -y -qq docker.io jq make
+
+        # Install GitHub CLI (gh)
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        apt-get update -qq && apt-get install -y -qq gh
+
+        echo "================================================================"
+        echo "Executing util/deploy-production.sh for wpt.fyi (${_TARGET_PROJECT})"
+        echo "================================================================"
+
+        FLAGS="-q"
+        if [[ "${_FORCE_DEPLOY}" == "true" ]]; then
+          FLAGS="$${FLAGS} -f"
+        fi
+        if [[ "${_SKIP_ISSUE_CREATION}" == "true" ]]; then
+          FLAGS="$${FLAGS} -b"
+        fi
+
+        # Ensure git history is un-shallowed or fetched up to 100 commits so
+        # deploy-production.sh can compute exact commit deltas ($$LAST_DEPLOYED_SHA..HEAD).
+        # If $$LAST_DEPLOYED_SHA is from a squashed/unmerged off-main branch, the script
+        # gracefully falls back to generating the recent 20 commits ($$HEAD~20..HEAD).
+        echo "Ensuring git history is available for changelist diff calculation..."
+        git fetch --unshallow 2>/dev/null || git fetch --depth=100 origin main 2>/dev/null || true
+
+        echo "Running deploy-production.sh with flags: $${FLAGS}"
+        ./util/deploy-production.sh $${FLAGS}
+
+availableSecrets:
+  secretManager:
+    - env: 'GH_TOKEN'
+      versionName: 'projects/$PROJECT_ID/secrets/interop-bot-gh-token/versions/latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 7200s
