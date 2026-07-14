@@ -106,9 +106,9 @@ if [[ "${INSPECT_STATUS}" != 0 ]] || [[ "${PR}" == "r" ]]; then
   AUTH_ARGS=""
   if [[ "${CI}" == "true" || "${CLOUD_BUILD}" == "true" ]]; then
     NET_ARGS="--network=host"
-    INIT_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
-    if [[ -n "${INIT_TOKEN}" ]]; then
-      AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN=${INIT_TOKEN}"
+    export CLOUDSDK_AUTH_ACCESS_TOKEN="$(gcloud auth print-access-token 2>/dev/null || true)"
+    if [[ -n "${CLOUDSDK_AUTH_ACCESS_TOKEN:-}" ]]; then
+      AUTH_ARGS="-e CLOUDSDK_AUTH_ACCESS_TOKEN"
     fi
   fi
   # shellcheck disable=SC2086
