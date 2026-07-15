@@ -117,7 +117,6 @@ then
 
   # 5. Check failure count using integer comparison
   if (( FAILURES > 0 )); then
-  then
       echo -e "\n$FAILURES checks failed for the latest commit:"
       echo "$FAILED_CHECKS" | jq -r '.[] | .name + ": " + .html_url'
       if [[ "${FORCE_DEPLOY}" != "true" ]];
