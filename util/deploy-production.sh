@@ -86,10 +86,37 @@ then
   # We fall back: main -> origin/main -> HEAD.
   # Note: When deploying off-main branches where CI presubmits did not run or
   # failed, FAILED_CHECKS will block deployment unless -f (FORCE_DEPLOY=true) is passed.
-  MAIN_SHA=$(git rev-parse main 2>/dev/null || git rev-parse origin/main 2>/dev/null || git rev-parse HEAD)
-  FAILED_CHECKS=$(gh api /repos/"$GH_OWNER"/"$GH_REPO"/commits/$MAIN_SHA/check-runs | jq -r '.check_runs | map(select(.conclusion == "failure" and .name != "Dependabot"))')
-  FAILURES=$(echo "$FAILED_CHECKS" | jq -r 'length')
-  if [[ "${FAILURES}" != "0"  ]];
+  # 1. Resolve commit SHA safely without triggering pipefail crashes on failure,
+  #    and ensure git peels any annotated tag to the underlying commit object ID.
+  MAIN_SHA=$( (git rev-parse --verify main^{commit} 2>/dev/null || \
+               git rev-parse --verify origin/main^{commit} 2>/dev/null || \
+               git rev-parse --verify HEAD^{commit} 2>/dev/null || echo "") | head -n1 | tr -d ' \r\n')
+
+  # 2. Strictly validate the resolved SHA format before querying GitHub API
+  if [[ ! "${MAIN_SHA}" =~ ^[0-9a-f]{40,64}$ ]]; then
+    echo "CRITICAL: Unable to resolve a valid 40/64-character commit SHA for main/origin/main/HEAD (got '${MAIN_SHA}'). Aborting build." >&2
+    exit 1
+  fi
+
+  # 3. Query check-runs with full jq null-safety across .check_runs, .app, and .name.
+  #    Note: We capture gh api errors explicitly so an API outage/rate-limit does not silently pretend 0 checks failed.
+  if ! FAILED_CHECKS=$(gh api /repos/"${GH_OWNER}"/"${GH_REPO}"/commits/"${MAIN_SHA}"/check-runs 2>/dev/null | \
+      jq -r '(.check_runs // []) | map(select(
+        (.conclusion == "failure") and
+        (.name != "Dependabot") and
+        ((.app | type != "object") or (.app.slug != "google-cloud-build")) and
+        ((.name // "" | contains("trigger-") | not))
+      ))' 2>/dev/null); then
+    echo "WARNING: Failed to query or parse check-runs API from GitHub for commit ${MAIN_SHA}. Defaulting to [] (or change to 'exit 1' if fail-closed is preferred)." >&2
+    FAILED_CHECKS="[]"
+  fi
+
+  # 4. Calculate failures safely using bash here-strings to avoid echo flag traps (-n/-e)
+  FAILURES=$(jq -r 'if type == "array" then length else 0 end' <<< "${FAILED_CHECKS}" 2>/dev/null || echo "0")
+  FAILURES="${FAILURES:-0}"
+
+  # 5. Check failure count using integer comparison
+  if (( FAILURES > 0 )); then
   then
       echo -e "\n$FAILURES checks failed for the latest commit:"
       echo "$FAILED_CHECKS" | jq -r '.[] | .name + ": " + .html_url'
