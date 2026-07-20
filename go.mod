@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	cloud.google.com/go/cloudtasks v1.18.0
-	cloud.google.com/go/datastore v1.24.0
+	cloud.google.com/go/datastore v1.25.0
 	cloud.google.com/go/logging v1.19.0
 	cloud.google.com/go/secretmanager v1.20.0
 	cloud.google.com/go/storage v1.63.1
