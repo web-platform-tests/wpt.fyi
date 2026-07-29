@@ -7,13 +7,14 @@ import logging
 import os
 import posixpath
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
 import traceback
 import zipfile
 from types import TracebackType
-from typing import Callable, List, Optional, Tuple, Type
+from typing import Callable, List, Optional, Tuple, Type, TypeVar
 from urllib.parse import urlparse, urlsplit
 
 import requests
@@ -27,6 +28,36 @@ import wptreport
 from wptscreenshot import WPTScreenshot
 
 _log = logging.getLogger(__name__)
+
+DownloadResult = TypeVar('DownloadResult')
+
+
+class ArtifactDownloadError(Exception):
+    """An individual artifact could not be downloaded."""
+
+    def __init__(self, uri: str, cause: Exception) -> None:
+        self.uri = uri
+        self.cause = cause
+        super().__init__('Failed to download {}: {}'.format(uri, cause))
+
+
+class RequiredDownloadError(Exception):
+    """One or more required artifacts could not be downloaded."""
+
+    def __init__(
+        self,
+        artifact_kind: str,
+        expected: int,
+        downloaded: int,
+        failed_uris: List[str],
+    ) -> None:
+        self.artifact_kind = artifact_kind
+        self.expected = expected
+        self.downloaded = downloaded
+        self.failed_uris = failed_uris
+        super().__init__(
+            'Downloaded {} of {} {}; failed URLs: {}'.format(
+                downloaded, expected, artifact_kind, ', '.join(failed_uris)))
 
 
 class Processor(object):
@@ -142,10 +173,13 @@ class Processor(object):
         fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
         os.close(fd)
         # gsutil will log itself.
-        gsutil.copy(gcs, path)
+        try:
+            gsutil.copy(gcs, path)
+        except (OSError, subprocess.SubprocessError) as error:
+            raise ArtifactDownloadError(gcs, error) from error
         return path
 
-    def _download_http(self, url: str) -> Optional[str]:
+    def _download_http(self, url: str) -> str:
         assert url.startswith('http://') or url.startswith('https://')
         _log.debug('Downloading %s', url)
         extra_headers = None
@@ -173,30 +207,27 @@ class Processor(object):
                     timeout=self.TIMEOUT_WAIT,
                 )
                 r.raise_for_status()
-            except requests.Timeout:
-                _log.error("Timed out fetching: %s", url)
-                return None
-            except requests.HTTPError:
-                _log.error("Failed to fetch (%d): %s", r.status_code, url)
-                return None
+            except requests.RequestException as error:
+                raise ArtifactDownloadError(url, error) from error
         ext = (self.known_extension(r.headers.get('Content-Disposition', ''))
                or self.known_extension(url))
         fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
-        with os.fdopen(fd, mode='wb') as f:
-            for chunk in r.iter_content(chunk_size=512*1024):
-                f.write(chunk)
+        try:
+            with os.fdopen(fd, mode='wb') as f:
+                for chunk in r.iter_content(chunk_size=512*1024):
+                    f.write(chunk)
+        except requests.RequestException as error:
+            raise ArtifactDownloadError(url, error) from error
         # Closing f will automatically close the underlying fd.
         return path
 
-    def _download_single(self, uri: str) -> Optional[str]:
+    def _download_single(self, uri: str) -> str:
         if uri.startswith('gs://'):
             return self._download_gcs(uri)
         return self._download_http(uri)
 
     def _download_archive(self, archive_url: str) -> None:
         artifact = self._download_http(archive_url)
-        if artifact is None:
-            return
         with zipfile.ZipFile(artifact, mode='r') as z:
             for f in z.infolist():
                 if f.is_dir():
@@ -209,6 +240,48 @@ class Processor(object):
                     path = z.extract(f, path=self._temp_dir)
                     self.screenshots.append(path)
 
+    def _download_many(
+        self,
+        uris: List[str],
+        artifact_kind: str,
+        required: bool,
+        download_one: Callable[[str], DownloadResult],
+    ) -> List[DownloadResult]:
+        downloaded = []
+        failed_uris = []
+        for uri in uris:
+            try:
+                downloaded.append(download_one(uri))
+            except ArtifactDownloadError as error:
+                failed_uris.append(error.uri)
+                _log.warning('%s', error)
+
+        if failed_uris:
+            log = _log.error if required else _log.warning
+            log(
+                'Downloaded %d of %d %s; failed URLs: %s',
+                len(downloaded),
+                len(uris),
+                artifact_kind,
+                ', '.join(failed_uris),
+            )
+        else:
+            _log.info(
+                'Downloaded %d of %d %s',
+                len(downloaded),
+                len(uris),
+                artifact_kind,
+            )
+
+        if required and failed_uris:
+            raise RequiredDownloadError(
+                artifact_kind,
+                len(uris),
+                len(downloaded),
+                failed_uris,
+            )
+        return downloaded
+
     def download(
         self, results: List[str], screenshots: List[str], archives: List[str]
     ) -> None:
@@ -218,19 +291,33 @@ class Processor(object):
             results: A list of results URIs (gs:// or https?://).
             screenshots: A list of screenshots URIs (gs:// or https?://).
             archives: A list of archive URIs (https?://).
+
+        Raises:
+            RequiredDownloadError: If any result or archive cannot be
+                downloaded.
         """
         if archives:
             assert not results
             assert not screenshots
-            for archive_url in archives:
-                self._download_archive(archive_url)
+            self._download_many(
+                archives,
+                'archives',
+                required=True,
+                download_one=self._download_archive,
+            )
             return
-        self.results = [
-            p for p in (self._download_single(i) for i in results)
-            if p is not None]
-        self.screenshots = [
-            p for p in (self._download_single(i) for i in screenshots)
-            if p is not None]
+        self.results = self._download_many(
+            results,
+            'result files',
+            required=True,
+            download_one=self._download_single,
+        )
+        self.screenshots = self._download_many(
+            screenshots,
+            'screenshot files',
+            required=False,
+            download_one=self._download_single,
+        )
 
     def load_report(self) -> None:
         """Loads and merges all downloaded results."""
