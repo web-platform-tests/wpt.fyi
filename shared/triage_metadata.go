@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -142,10 +142,10 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 // master branch of the repository.
 // Based on: https://godoc.org/github.com/google/go-github/github#example-PullRequestsService-Create
 func (tm triageMetadata) createPR() (*github.PullRequest, error) {
-	newPR := &github.NewPullRequest{
+	newPR := github.CreatePullRequest{
 		Title:               &tm.prSubject,
-		Head:                &tm.commitBranch,
-		Base:                &tm.prBranch,
+		Head:                tm.commitBranch,
+		Base:                tm.prBranch,
 		Body:                &tm.prDescription,
 		MaintainerCanModify: github.Bool(true),
 	}
