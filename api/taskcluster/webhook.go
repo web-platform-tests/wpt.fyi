@@ -34,6 +34,12 @@ var (
 	// TaskNameRegex is based on task names in
 	// https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml.
 	TaskNameRegex = regexp.MustCompile(`^wpt-([a-z_]+-[a-z]+)-([a-z]+(?:-[a-z]+)*|test262)(?:-\d+)?$`)
+	// infraTaskNameRegex matches the wptrunner infrastructure smoketest tasks,
+	// also defined in test.yml, e.g. "infrastructure/ tests (chrome)". Unlike
+	// TaskNameRegex there is no channel/suite segment: each browser currently
+	// only runs infra tests on a single channel, so the browser name alone is
+	// a sufficiently unique product key.
+	infraTaskNameRegex = regexp.MustCompile(`^infrastructure/ tests \(([a-z_]+)\)$`)
 	// Taskcluster has used different forms of URLs in their Check & Status
 	// updates in history. We accept all of them.
 	// See TestExtractTaskGroupID for examples.
@@ -531,21 +537,26 @@ func ExtractArtifactURLs(rootURL string, log shared.Logger, group *TaskGroupInfo
 			continue
 		}
 
-		matches := TaskNameRegex.FindStringSubmatch(task.Name)
-		if len(matches) != 3 { // full match, browser-channel, test type
+		var product string
+		if matches := TaskNameRegex.FindStringSubmatch(task.Name); len(matches) == 3 {
+			// full match, browser-channel, test type
+			product = matches[1]
+			switch matches[2] {
+			case "stability":
+				// Skip stability checks.
+				continue
+			case "results":
+				product += "-" + shared.PRHeadLabel
+			case "results-without-changes":
+				product += "-" + shared.PRBaseLabel
+			}
+		} else if matches := infraTaskNameRegex.FindStringSubmatch(task.Name); len(matches) == 2 {
+			// full match, browser
+			product = matches[1]
+		} else {
 			log.Infof("Ignoring unrecognized task: %s", task.Name)
 
 			continue
-		}
-		product := matches[1]
-		switch matches[2] {
-		case "stability":
-			// Skip stability checks.
-			continue
-		case "results":
-			product += "-" + shared.PRHeadLabel
-		case "results-without-changes":
-			product += "-" + shared.PRBaseLabel
 		}
 
 		if task.State != completedState {
