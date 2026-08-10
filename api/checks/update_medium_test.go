@@ -128,3 +128,62 @@ func TestLoadRunsToCompare_pr_head_first(t *testing.T) {
 	assert.Equal(t, []string{"pr_base"}, baseRun.Labels)
 	assert.Equal(t, []string{"pr_head"}, headRun.Labels)
 }
+
+func TestRaceCondition_PRHeadFinishesBeforePRBase(t *testing.T) {
+	ctx, done, err := sharedtest.NewAEContext(true)
+	assert.Nil(t, err)
+	defer done()
+
+	store := shared.NewAppEngineDatastore(ctx, false)
+	sha := "b4f981e4b3012345678901234567890123456789"
+	safari, _ := shared.ParseProductSpec("safari[preview]")
+	filter := shared.TestRunFilter{
+		SHAs:     shared.SHAs{sha[:10]},
+		Products: shared.ProductSpecs{safari},
+	}
+
+	// STEP 1: pr_head arrives first on Runner 1
+	headRunEntity := shared.TestRun{
+		ProductAtRevision: shared.ProductAtRevision{
+			Product: shared.Product{
+				BrowserName:    "safari",
+				BrowserVersion: "249 preview",
+				OSName:         "mac",
+				OSVersion:      "26.6",
+			},
+			Revision:         sha[:10],
+			FullRevisionHash: sha,
+		},
+		TimeStart: time.Now().Add(-10 * time.Minute),
+		TimeEnd:   time.Now().Add(-9 * time.Minute),
+		Labels:    []string{shared.PRHeadLabel, "preview", "safari", "experimental"},
+	}
+	key := store.NewIncompleteKey("TestRun")
+	_, err = store.Put(key, &headRunEntity)
+	assert.Nil(t, err)
+
+	// STEP 2: updateCheckHandler runs for pr_head -> Must return error (404) because pr_base is missing
+	headRun, baseRun, err := loadRunsToCompare(ctx, filter)
+	assert.NotNil(t, err, "Must fail when pr_base is not yet in Datastore")
+	assert.Nil(t, baseRun)
+
+	// STEP 3: 10 minutes later, pr_base arrives on Runner 2
+	baseRunEntity := shared.TestRun{
+		ProductAtRevision: headRunEntity.ProductAtRevision,
+		TimeStart:         time.Now().Add(-2 * time.Minute),
+		TimeEnd:           time.Now().Add(-1 * time.Minute),
+		Labels:            []string{shared.PRBaseLabel, "preview", "safari", "experimental"},
+	}
+	key = store.NewIncompleteKey("TestRun")
+	_, err = store.Put(key, &baseRunEntity)
+	assert.Nil(t, err)
+
+	// STEP 4: updateCheckHandler runs for pr_base -> Must now succeed and find both runs!
+	headRun, baseRun, err = loadRunsToCompare(ctx, filter)
+	assert.Nil(t, err, "Must succeed now that both runs are in Datastore")
+	assert.NotNil(t, headRun)
+	assert.NotNil(t, baseRun)
+	assert.Equal(t, []string{shared.PRBaseLabel, "preview", "safari", "experimental"}, baseRun.Labels)
+	assert.Equal(t, []string{shared.PRHeadLabel, "preview", "safari", "experimental"}, headRun.Labels)
+}
+
