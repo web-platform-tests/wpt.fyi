@@ -81,15 +81,12 @@ func HandleResultsCreate(a API, s checks.API, w http.ResponseWriter, r *http.Req
 	// inspect/use key value.
 	testRun.ID = key.IntID()
 
-	// Do not schedule on pr_base to avoid redundancy with pr_head.
-	if !testRun.LabelsSet().Contains(shared.PRBaseLabel) {
-		spec := shared.ProductSpec{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
-		spec.BrowserName = testRun.BrowserName
-		spec.Labels = mapset.NewSet(testRun.Channel())
-		err = s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
-		if err != nil {
-			logger.Warningf("Failed to schedule results: %s", err.Error())
-		}
+	spec := shared.ProductSpec{} // nolint:exhaustruct // TODO: Fix exhaustruct lint error
+	spec.BrowserName = testRun.BrowserName
+	spec.Labels = mapset.NewSet(testRun.Channel())
+	err = s.ScheduleResultsProcessing(testRun.FullRevisionHash, spec)
+	if err != nil {
+		logger.Warningf("Failed to schedule results: %s", err.Error())
 	}
 
 	// nolint:exhaustruct // TODO: Fix exhaustruct lint error.

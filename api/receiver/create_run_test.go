@@ -95,6 +95,67 @@ func TestHandleResultsCreate(t *testing.T) {
 	assert.Equal(t, testRunIn.TimeEnd, testRunOut.TimeEnd)
 }
 
+func TestHandleResultsCreate_PRBase(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	sha := "0123456789012345678901234567890123456789"
+	payload := map[string]interface{}{
+		"id":                 12346,
+		"browser_name":       "safari",
+		"browser_version":    "249 preview",
+		"os_name":            "mac",
+		"os_version":         "26.6",
+		"revision":           sha[:10],
+		"full_revision_hash": sha,
+		"labels":             []string{shared.PRBaseLabel, shared.ExperimentalLabel, "preview", "safari"},
+		"time_start":         "2026-08-10T15:52:06.530Z",
+		"time_end":           "2026-08-10T15:52:10.979Z",
+	}
+	body, err := json.Marshal(payload)
+	assert.Nil(t, err)
+	req := httptest.NewRequest("POST", "/api/results/create", strings.NewReader(string(body)))
+	req.SetBasicAuth("_processor", "secret-token")
+	pAtR := shared.ProductAtRevision{
+		Product: shared.Product{
+			BrowserName:    "safari",
+			BrowserVersion: "249 preview",
+			OSName:         "mac",
+			OSVersion:      "26.6",
+		},
+		Revision:         sha[:10],
+		FullRevisionHash: sha,
+	}
+	testRunIn := &shared.TestRun{
+		ID:                12346,
+		TimeStart:         time.Date(2026, time.August, 10, 15, 52, 6, 530000000, time.UTC),
+		TimeEnd:           time.Date(2026, time.August, 10, 15, 52, 10, 979000000, time.UTC),
+		Labels:            []string{shared.PRBaseLabel, shared.ExperimentalLabel, "preview", "safari"},
+		ProductAtRevision: pAtR,
+	}
+	testKey := &sharedtest.MockKey{TypeName: "TestRun", ID: 12346}
+	pendingRun := shared.PendingTestRun{
+		ID:                12346,
+		Stage:             shared.StageValid,
+		ProductAtRevision: pAtR,
+	}
+
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
+	mockAE.EXPECT().Context().AnyTimes().Return(sharedtest.NewTestContext())
+	mockS := mock_checks.NewMockAPI(mockCtrl)
+	gomock.InOrder(
+		mockAE.EXPECT().GetUploader("_processor").Return(shared.Uploader{"_processor", "secret-token"}, nil),
+		mockAE.EXPECT().AddTestRun(sharedtest.SameProductSpec(testRunIn.String())).Return(testKey, nil),
+		mockS.EXPECT().ScheduleResultsProcessing(sha, sharedtest.SameProductSpec("safari[experimental]")).Return(nil),
+		mockAE.EXPECT().UpdatePendingTestRun(pendingRun).Return(nil),
+	)
+
+	w := httptest.NewRecorder()
+	HandleResultsCreate(mockAE, mockS, w, req)
+	resp := w.Result()
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
 func TestHandleResultsCreate_NoTimestamps(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
