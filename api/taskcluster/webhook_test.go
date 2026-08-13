@@ -249,6 +249,61 @@ func TestExtractArtifactURLs_with_failures(t *testing.T) {
 	assert.Contains(t, urls, "chrome-dev")
 }
 
+func TestExtractArtifactURLs_infrastructure(t *testing.T) {
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 3)}
+	group.Tasks[0].Name = "infrastructure/ tests (chrome)"
+	group.Tasks[1].Name = "infrastructure/ tests (firefox)"
+	group.Tasks[2].Name = "infrastructure/ tests (firefox_android)"
+	for i := 0; i < len(group.Tasks); i++ {
+		group.Tasks[i].State = "completed"
+		group.Tasks[i].TaskID = fmt.Sprint(i)
+	}
+
+	urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
+	assert.Nil(t, err)
+	assert.Equal(t, map[string]tc.ArtifactURLs{
+		"chrome": {
+			Results: []string{
+				"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_report.json.gz",
+			},
+			Screenshots: []string{
+				"https://tc.example.com/api/queue/v1/task/0/artifacts/public/results/wpt_screenshot.txt.gz",
+			},
+		},
+		"firefox": {
+			Results: []string{
+				"https://tc.example.com/api/queue/v1/task/1/artifacts/public/results/wpt_report.json.gz",
+			},
+			Screenshots: []string{
+				"https://tc.example.com/api/queue/v1/task/1/artifacts/public/results/wpt_screenshot.txt.gz",
+			},
+		},
+		"firefox_android": {
+			Results: []string{
+				"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_report.json.gz",
+			},
+			Screenshots: []string{
+				"https://tc.example.com/api/queue/v1/task/2/artifacts/public/results/wpt_screenshot.txt.gz",
+			},
+		},
+	}, urls)
+}
+
+func TestExtractArtifactURLs_infrastructure_with_failure(t *testing.T) {
+	group := &tc.TaskGroupInfo{Tasks: make([]tc.TaskInfo, 2)}
+	group.Tasks[0].Name = "infrastructure/ tests (chrome)"
+	group.Tasks[0].State = "failed"
+	group.Tasks[0].TaskID = "foo"
+	group.Tasks[1].Name = "infrastructure/ tests (firefox)"
+	group.Tasks[1].State = "completed"
+	group.Tasks[1].TaskID = "bar"
+
+	urls, err := tc.ExtractArtifactURLs("https://tc.example.com", shared.NewNilLogger(), group, "")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(urls))
+	assert.Contains(t, urls, "firefox")
+}
+
 func TestCreateAllRuns_success(t *testing.T) {
 	var requested uint32
 	requested = 0
