@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	cloud.google.com/go/cloudtasks v1.19.0
 	cloud.google.com/go/datastore v1.26.0
-	cloud.google.com/go/logging v1.19.0
+	cloud.google.com/go/logging v1.19.1
 	cloud.google.com/go/secretmanager v1.21.0
 	cloud.google.com/go/storage v1.64.0
 	github.com/deckarep/golang-set v1.8.0
