@@ -115,7 +115,12 @@ def task_handler() -> ResponseReturnValue:
 
     task_id = flask.request.headers.get('X-AppEngine-TaskName')
     app.logger.info('Processing task %s', task_id)
-    resp = processor.process_report(task_id, flask.request.form)
+    try:
+        resp = processor.process_report(task_id, flask.request.form)
+    except processor.RequiredDownloadError as error:
+        app.logger.error('Required artifact download failed: %s', error)
+        # Cloud Tasks retries requests that return a non-success response.
+        return (str(error), HTTPStatus.SERVICE_UNAVAILABLE)
     status = HTTPStatus.CREATED if resp else HTTPStatus.NO_CONTENT
     if resp:
         app.logger.info(resp)
