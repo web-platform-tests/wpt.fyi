@@ -119,13 +119,14 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 	log := GetLogger(t.store.Context())
 	result = make(KeysByProduct, len(products))
 	baseQuery := t.store.NewQuery("TestRun")
+	filterBuilder := baseQuery.FilterBuilder()
 	if offset != nil {
 		baseQuery = baseQuery.Offset(*offset)
 	}
 	if labels != nil {
 		labels.Remove("") // Ensure the empty string isn't present.
 		for i := range labels.Iter() {
-			baseQuery = baseQuery.Filter("Labels =", i.(string))
+			baseQuery = baseQuery.FilterEntity(filterBuilder.PropertyFilter("Labels", "=", i.(string)))
 		}
 	}
 	var globalIDFilter mapset.Set
@@ -143,10 +144,10 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 
 	for i, product := range products {
 		var productIDFilter = merge(globalIDFilter, nil)
-		query := baseQuery.Filter("BrowserName =", product.BrowserName)
+		query := baseQuery.FilterEntity(filterBuilder.PropertyFilter("BrowserName", "=", product.BrowserName))
 		if product.Labels != nil {
 			for i := range product.Labels.Iter() {
-				query = query.Filter("Labels =", i.(string))
+				query = query.FilterEntity(filterBuilder.PropertyFilter("Labels", "=", i.(string)))
 			}
 		}
 		if !IsLatest(product.Revision) {
@@ -180,10 +181,10 @@ func (t testRunQueryImpl) LoadTestRunKeys(
 			// TODO(lukebjerring): Indexes + filtering for OS + version.
 			query = query.Order("-TimeStart")
 			if from != nil {
-				query = query.Filter("TimeStart >=", *from)
+				query = query.FilterEntity(filterBuilder.PropertyFilter("TimeStart", ">=", *from))
 			}
 			if to != nil {
-				query = query.Filter("TimeStart <", *to)
+				query = query.FilterEntity(filterBuilder.PropertyFilter("TimeStart", "<", *to))
 			}
 			max := MaxCountMaxValue
 			if limit != nil && *limit < MaxCountMaxValue {
@@ -267,17 +268,18 @@ func (t testRunQueryImpl) GetAlignedRunSHAs(
 	query := t.store.
 		NewQuery("TestRun").
 		Order("-TimeStart")
+	filterBuilder := query.FilterBuilder()
 
 	if labels != nil {
 		for i := range labels.Iter() {
-			query = query.Filter("Labels =", i.(string))
+			query = query.FilterEntity(filterBuilder.PropertyFilter("Labels", "=", i.(string)))
 		}
 	}
 	if from != nil {
-		query = query.Filter("TimeStart >=", *from)
+		query = query.FilterEntity(filterBuilder.PropertyFilter("TimeStart", ">=", *from))
 	}
 	if to != nil {
-		query = query.Filter("TimeStart <", *to)
+		query = query.FilterEntity(filterBuilder.PropertyFilter("TimeStart", "<", *to))
 	}
 
 	productsBySHA := make(map[string]mapset.Set)
@@ -356,16 +358,17 @@ func contains(s []string, x string) bool {
 func loadIDsForRevision(store Datastore, query Query, sha string) (result mapset.Set, err error) {
 	log := GetLogger(store.Context())
 	var revQuery Query
+	filterBuilder := query.FilterBuilder()
 	if len(sha) < 40 {
 		log.Debugf("Finding revisions %s <= SHA < %s", sha, sha+"g")
 		revQuery = query.
 			Order("FullRevisionHash").
 			Limit(MaxCountMaxValue).
-			Filter("FullRevisionHash >=", sha).
-			Filter("FullRevisionHash <", sha+"g") // g > f
+			FilterEntity(filterBuilder.PropertyFilter("FullRevisionHash", ">=", sha)).
+			FilterEntity(filterBuilder.PropertyFilter("FullRevisionHash", "<", sha+"g")) // g > f
 	} else {
 		log.Debugf("Finding exact revision %s", sha)
-		revQuery = query.Filter("FullRevisionHash =", sha[:40])
+		revQuery = query.FilterEntity(filterBuilder.PropertyFilter("FullRevisionHash", "=", sha[:40]))
 	}
 
 	var keys []Key
@@ -393,7 +396,8 @@ func loadIDsForBrowserVersion(store Datastore, query Query, version string) (res
 		result.Add(id)
 	}
 	// By exact match
-	if keys, err = store.GetAll(query.Filter("BrowserVersion =", version).KeysOnly(), nil); err != nil {
+	if keys, err = store.GetAll(query.FilterEntity(
+		query.FilterBuilder().PropertyFilter("BrowserVersion", "=", version)).KeysOnly(), nil); err != nil {
 		return nil, err
 	}
 	for _, id := range GetTestRunIDs(keys) {
@@ -409,11 +413,14 @@ func VersionPrefix(query Query, fieldName, versionPrefix string, desc bool) Quer
 	if desc {
 		order = "-" + order
 	}
+	filterBuilder := query.FilterBuilder()
 	return query.
 		Limit(MaxCountMaxValue).
 		Order(order).
-		Filter(fieldName+" >=", fmt.Sprintf("%s.", versionPrefix)).
-		Filter(fieldName+" <=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1))
+		FilterEntity(
+			filterBuilder.PropertyFilter(fieldName, ">=", fmt.Sprintf("%s.", versionPrefix))).
+		FilterEntity(
+			filterBuilder.PropertyFilter(fieldName, "<=", fmt.Sprintf("%s.%c", versionPrefix, '9'+1)))
 }
 
 func getTestRunRedisKey(id int64) string {
