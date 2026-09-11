@@ -17,7 +17,7 @@ import (
 	"sync"
 
 	mapset "github.com/deckarep/golang-set"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	tcurls "github.com/taskcluster/taskcluster-lib-urls"
 	"github.com/taskcluster/taskcluster/v103/clients/client-go/tcqueue"
 	uc "github.com/web-platform-tests/wpt.fyi/api/receiver/client"
