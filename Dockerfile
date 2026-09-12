@@ -44,13 +44,16 @@ RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 # runs with WCT/Selenium, it only runs with java 11 and not 17 or 21.
 ENV CLOUD_SDK_VERSION=527.0.0
 # Google Cloud SDK configuration
-# Based on https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/Dockerfile
-RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
-        google-cloud-cli=${CLOUD_SDK_VERSION}-0 \
-        google-cloud-cli-app-engine-python=${CLOUD_SDK_VERSION}-0 \
-        google-cloud-cli-app-engine-python-extras=${CLOUD_SDK_VERSION}-0 \
-        google-cloud-cli-app-engine-go=${CLOUD_SDK_VERSION}-0 \
-        google-cloud-cli-datastore-emulator=${CLOUD_SDK_VERSION}-0 && \
-    gcloud config set core/disable_usage_reporting true && \
-    gcloud config set component_manager/disable_update_check true && \
+# Installed from archive tarball because Debian apt repo pruned version 527.0.0.
+RUN curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz | tar -xz -C /usr/local && \
+    /usr/local/google-cloud-sdk/bin/gcloud components install --quiet \
+        app-engine-python \
+        app-engine-python-extras \
+        app-engine-go \
+        cloud-datastore-emulator \
+        beta && \
+    /usr/local/google-cloud-sdk/bin/gcloud config set core/disable_usage_reporting true && \
+    /usr/local/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
+    chmod -R a+rwX /usr/local/google-cloud-sdk && \
+    ln -s /usr/local/google-cloud-sdk/bin/* /usr/bin/ && \
     gcloud --version
