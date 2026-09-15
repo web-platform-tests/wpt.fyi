@@ -10,7 +10,12 @@ from werkzeug.datastructures import MultiDict
 
 import test_util
 import wptreport
-from processor import Processor, process_report
+from processor import (
+    ArtifactDownloadError,
+    Processor,
+    RequiredDownloadError,
+    process_report,
+)
 from test_server import AUTH_CREDENTIALS
 
 
@@ -20,6 +25,8 @@ class ProcessorTest(unittest.TestCase):
             if expected_path is None:
                 self.fail('Unexpected download:' + path)
             self.assertEqual(expected_path, path)
+            if isinstance(response, Exception):
+                raise response
             return response
         return _download
 
@@ -81,8 +88,14 @@ class ProcessorTest(unittest.TestCase):
                            [],
                            ['https://wpt.fyi/artifact.zip'])
 
-            # Download failure: no exceptions should be raised.
-            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+            # Archive download failures are fatal because archives contain
+            # result reports.
+            error = ArtifactDownloadError(
+                'https://wpt.fyi/artifact.zip', RuntimeError('failed'))
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip', error)
+            with self.assertRaises(RequiredDownloadError):
+                p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 0)
 
     def test_download_github(self):
@@ -202,6 +215,34 @@ class MockProcessorTest(unittest.TestCase):
         mock.create_run.assert_not_called()
 
     @patch('processor.Processor')
+    def test_params_plumbing_download_error(self, MockProcessor):
+        # Set up mock context manager to return self.
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.download.side_effect = RequiredDownloadError(
+            'result files',
+            expected=2,
+            downloaded=1,
+            failed_uris=['https://wpt.fyi/wpt_report_2.json.gz'],
+        )
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': [
+                'https://wpt.fyi/wpt_report_1.json.gz',
+                'https://wpt.fyi/wpt_report_2.json.gz',
+            ],
+        })
+        with self.assertRaises(RequiredDownloadError):
+            process_report('12345', params)
+
+        mock.load_report.assert_not_called()
+        mock.upload_raw.assert_not_called()
+        mock.upload_split.assert_not_called()
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
     def test_params_plumbing_duplicate(self, MockProcessor):
         # Set up mock context manager to return self.
         mock = MockProcessor.return_value
@@ -244,23 +285,40 @@ class ProcessorDownloadServerTest(unittest.TestCase):
             with open(path, 'rb') as f:
                 self.assertEqual(f.read(), b'Hello, world!')
 
-    def test_download(self):
+    def test_result_download_failure(self):
         with Processor() as p:
             p.TIMEOUT_WAIT = 0.1  # to speed up tests
-            url_404 = self.url + '/404'
             url_timeout = self.url + '/slow'
-            with self.assertLogs() as lm:
+            with self.assertLogs() as logs:
+                with self.assertRaises(RequiredDownloadError) as cm:
+                    p.download(
+                        [self.url + '/download/test.txt', url_timeout],
+                        [],
+                        [])
+            self.assertEqual(cm.exception.expected, 2)
+            self.assertEqual(cm.exception.downloaded, 1)
+            self.assertListEqual(cm.exception.failed_uris, [url_timeout])
+            self.assertEqual(len(p.results), 0)
+            self.assertIn(
+                'Downloaded 1 of 2 result files; failed URLs: ' + url_timeout,
+                logs.output[-1],
+            )
+
+    def test_screenshot_download_failure(self):
+        with Processor() as p:
+            url_404 = self.url + '/404'
+            with self.assertLogs() as logs:
                 p.download(
-                    [self.url + '/download/test.txt', url_timeout],
+                    [self.url + '/download/test.txt'],
                     [url_404],
                     [])
             self.assertEqual(len(p.results), 1)
             self.assertTrue(p.results[0].endswith('.txt'))
             self.assertEqual(len(p.screenshots), 0)
-            self.assertListEqual(
-                lm.output,
-                ['ERROR:processor:Timed out fetching: ' + url_timeout,
-                 'ERROR:processor:Failed to fetch (404): ' + url_404])
+            self.assertIn(
+                'Downloaded 0 of 1 screenshot files; failed URLs: ' + url_404,
+                logs.output[-1],
+            )
 
     def test_download_content_disposition(self):
         with Processor() as p:
