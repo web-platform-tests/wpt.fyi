@@ -99,6 +99,13 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiBSFHandler)),
 	)
 
+	// API endpoint for fetching per-web-feature interoperability scores.
+	shared.AddRoute(
+		"/api/interop-features",
+		"api-interop-features",
+		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiFeatureInteropHandler)),
+	)
+
 	// API endpoint for fetching historical data of a specific test for each of the four major browsers.
 	shared.AddRoute("/api/history", "api-history",
 		shared.WrapApplicationJSON(
