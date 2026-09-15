@@ -164,6 +164,11 @@ func TestApiBSFBound(t *testing.T) {
 	assertHSTS(t, "/api/bsf")
 }
 
+func TestApiInteropFeaturesBound(t *testing.T) {
+	assertHandlerIs(t, "/api/interop-features", "api-interop-features")
+	assertHSTS(t, "/api/interop-features")
+}
+
 func TestApiPendingMetadataBound(t *testing.T) {
 	assertHandlerIs(t, "/api/metadata/pending", "api-pending-metadata")
 	assertHSTS(t, "/api/metadata/pending")
