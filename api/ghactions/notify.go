@@ -99,7 +99,7 @@ func processBuild(
 	owner string,
 	repo string,
 	runID int64,
-	artifactNameGlob glob.Glob,
+	artifactNameGlob *glob.Pattern,
 ) (bool, error) {
 	log := shared.GetLogger(ctx)
 
