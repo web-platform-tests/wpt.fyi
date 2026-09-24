@@ -43,17 +43,29 @@ func TestQueryBuilder_MasterCheckedForMasterLabelQuery(t *testing.T) {
 		}
 
 		// Expand the builder
-		_, err = wd.ExecuteScript("arguments[0].editingQuery = true", []interface{}{e})
+		_, err = wd.ExecuteScript("document.querySelector('wpt-app').editingQuery = true", nil)
 		if err != nil {
 			assert.FailNow(t, fmt.Sprintf("Failed to expand builder: %s", err.Error()))
 		}
 		var cb selenium.WebElement
 		expanded := func(wd selenium.WebDriver) (bool, error) {
-			cb, err = FindShadowElement(wd, e, "test-runs-query-builder", "#master-checkbox")
+			result, err := wd.ExecuteScriptRaw(`
+				var app = document.querySelector('wpt-app');
+				if (!app || !app.shadowRoot) return null;
+				var builder = app.shadowRoot.querySelector('test-runs-query-builder');
+				if (!builder || !builder.shadowRoot) return null;
+				var cb = builder.shadowRoot.querySelector('#master-checkbox');
+				return cb ? [cb] : [];
+			`, nil)
 			if err != nil {
 				return false, err
 			}
-			return cb != nil, nil
+			elements, err := wd.DecodeElements(result)
+			if err != nil || len(elements) == 0 {
+				return false, nil
+			}
+			cb = elements[0]
+			return true, nil
 		}
 		if err := wd.WaitWithTimeout(expanded, LongTimeout); err != nil {
 			assert.FailNow(t, fmt.Sprintf("Error waiting for builder to expand: %s", err.Error()))
