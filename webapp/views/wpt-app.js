@@ -7,6 +7,7 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-bsf.js';
+import '../components/wpt-interop-graph.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
@@ -68,6 +69,20 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           padding: 0px;
           height: 28px;
         }
+        .graph-toggle {
+          display: inline-flex;
+          margin: 8px 0 0 10px;
+        }
+        .graph-toggle paper-button {
+          color: black;
+          text-transform: none;
+        }
+        .graph-toggle .unselected {
+          background-color: white;
+        }
+        .graph-toggle .selected {
+          background-color: var(--paper-blue-100);
+        }
       </style>
 
       <app-location route="{{route}}" url-space-regex="^/(results)/"></app-location>
@@ -109,15 +124,26 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <div class="separator"></div>
 
-      <template is="dom-if" if="[[showBSFGraph]]">
-        <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+      <template is="dom-if" if="[[showGraph]]">
+        <div>
           <info-banner>
-            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></paper-icon-button>
-            [[bsfBannerMessage]]
+            <paper-icon-button src="[[getCollapseIcon(isGraphCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide graph"></paper-icon-button>
+            [[graphBannerMessage]]
           </info-banner>
-          <template is="dom-if" if="[[!isBSFCollapsed]]">
-            <iron-collapse opened="[[!isBSFCollapsed]]">
-              <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
+          <template is="dom-if" if="[[!isGraphCollapsed]]">
+            <iron-collapse opened="[[!isGraphCollapsed]]">
+              <div class="graph-toggle">
+                <paper-button class\$="[[interopButtonClass(showInteropGraph)]]" onclick="[[clickInterop]]">Feature Level Support</paper-button>
+                <paper-button class\$="[[bsfButtonClass(showInteropGraph)]]" onclick="[[clickBSF]]">Browser Specific Failures</paper-button>
+              </div>
+              <template is="dom-if" if="[[showInteropGraph]]">
+                <wpt-interop-graph></wpt-interop-graph>
+              </template>
+              <template is="dom-if" if="[[!showInteropGraph]]">
+                <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+                  <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
+                </div>
+              </template>
             </iron-collapse>
           </template>
         </div>
@@ -194,17 +220,21 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRowCount)',
       },
       subtestRowCount: Number,
-      bsfBannerMessage: {
+      graphBannerMessage: {
         type: String,
-        computed: 'computeBSFBannerMessage(isBSFCollapsed)',
+        computed: 'computeGraphBannerMessage(isGraphCollapsed, showInteropGraph)',
       },
-      showBSFGraph: {
+      showGraph: {
         type: Boolean,
-        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir)',
+        computed: 'computeShowGraph(page, queryParams, pathIsRootDir)',
       },
-      isBSFCollapsed: {
+      isGraphCollapsed: {
         type: Boolean,
-        computed: 'computeIsBSFCollapsed()',
+        computed: 'computeIsGraphCollapsed()',
+      },
+      showInteropGraph: {
+        type: Boolean,
+        computed: 'computeShowInteropGraph()',
       },
       isTriageMode: {
         type: Boolean,
@@ -232,17 +262,31 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       this.editingQuery = !this.editingQuery;
     };
     this.handleCollapse = () => {
-      this.isBSFCollapsed = !this.isBSFCollapsed;
-      // Record hide/open actions on the BSF graph. Currently, we only
+      this.isGraphCollapsed = !this.isGraphCollapsed;
+      // Record hide/open actions on the graph. Currently, we only
       // show it on the homepage.
       if ('gtag' in window) {
         window.gtag('event', 'visibility change', {
           'event_category': 'bsf',
           'event_label': this.path,
-          'value': this.isBSFCollapsed ? 1 : 0
+          'value': this.isGraphCollapsed ? 1 : 0
         });
       }
-      this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
+      this.setLocalStorageFlag(this.isGraphCollapsed, 'isGraphCollapsed');
+    };
+    this.clickInterop = () => {
+      if (this.showInteropGraph) {
+        return;
+      }
+      this.showInteropGraph = true;
+      this.setLocalStorageFlag(true, 'showInteropGraph');
+    };
+    this.clickBSF = () => {
+      if (!this.showInteropGraph) {
+        return;
+      }
+      this.showInteropGraph = false;
+      this.setLocalStorageFlag(false, 'showInteropGraph');
     };
     this.enterBSF = () => {
       // The use of isInteracting is a workaround for a known issue,
@@ -430,15 +474,18 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return msg;
   }
 
-  computeBSFBannerMessage(isBSFCollapsed) {
-    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
-    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
+  computeGraphBannerMessage(isGraphCollapsed, showInteropGraph) {
+    const actionText = isGraphCollapsed ? 'expand' : 'collapse';
+    const graphName = showInteropGraph
+      ? 'Feature Level Support' : 'Browser Specific Failures';
+    return `${graphName} graph (click the arrow to ${actionText})`;
   }
 
-  // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
-  // confusing the user, we only display the graph when they are looking at top-level
-  // test results and hide it when in a subdirectory.
-  computeShowBSFGraph(page, queryParams, pathIsRootDir) {
+  // Neither graph is scoped to the subtree being viewed: browser specific
+  // failures covers all of WPT, and the interop graph covers every web feature
+  // wpt annotates. To avoid confusing the user, we only display them when they
+  // are looking at top-level test results and hide them when in a subdirectory.
+  computeShowGraph(page, queryParams, pathIsRootDir) {
     // Only show on the results page.
     if (page !== 'results') {
       return false;
@@ -452,16 +499,34 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     return pathIsRootDir;
   }
 
-  computeIsBSFCollapsed() {
-    const stored = this.getLocalStorageFlag('isBSFCollapsed');
+  computeIsGraphCollapsed() {
+    const stored = this.getLocalStorageFlag('isGraphCollapsed');
     if (stored === null) {
       return false;
     }
     return stored;
   }
 
-  getCollapseIcon(isBSFCollapsed) {
-    if (isBSFCollapsed) {
+  // Which of the two graphs the banner shows. Interoperability is the default;
+  // the toggle is what a reader uses to get back to browser specific failures.
+  computeShowInteropGraph() {
+    const stored = this.getLocalStorageFlag('showInteropGraph');
+    if (stored === null) {
+      return true;
+    }
+    return stored;
+  }
+
+  interopButtonClass(showInteropGraph) {
+    return showInteropGraph ? 'selected' : 'unselected';
+  }
+
+  bsfButtonClass(showInteropGraph) {
+    return showInteropGraph ? 'unselected' : 'selected';
+  }
+
+  getCollapseIcon(isGraphCollapsed) {
+    if (isGraphCollapsed) {
       return '/static/expand_more.svg';
     }
     return '/static/expand_less.svg';
