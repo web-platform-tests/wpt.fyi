@@ -20,6 +20,7 @@ the endpoints can be found in `routes.go`.
  - [/api/metadata/pending](#apimetadatapending)
  - [/api/metadata/triage](#apimetadatatriage)
  - [/api/bsf](#apibsf)
+ - [/api/interop-features](#apiinterop-features)
  - [/api/history](#apihistory)
 
 Also see [results creation](#results-creation) for endpoints to add new data.
@@ -711,6 +712,119 @@ The response has three top-level fields:
          "1521.908686731921",
          "12.1",
          "2966.686195133767"
+      ]
+   ]
+}
+```
+</details>
+
+## Feature Interoperability
+
+### /api/interop-features
+Gets the per-web-feature interoperability score of Chrome, Firefox and Safari: the score of every date scored, plus the breakdown by web feature of the newest of them.
+
+A feature's score is, for each of its tests, the lowest pass rate among the browsers, averaged over the feature's tests. The interop score averages those over every feature scored, weighting each feature equally.
+
+The endpoint accepts GET requests.
+
+__Parameters__
+
+__`experimental`__ : A boolean to return interop data for experimental or stable runs. Defaults to false.
+
+__JSON Response__
+
+The response has seven top-level fields:
+
+`lastUpdateRevision` indicates the WPT revision the newest scored date ran at.
+
+`manifest` indicates the WPT release whose web features manifest the newest date was scored against.
+
+`date` indicates the newest date scored, which `features` breaks down.
+
+`fields` corresponds to the fields (columns) in the `data` table and has the format of an array of:
+
+- sha, date, manifest, [product-version, product-score]+, interop, features
+
+`data` returns the score of every date scored, in chronological order, one row per date. Its `features` column is how many web features that date averaged over, which moves as WPT gains and loses feature annotations.
+
+`featureFields` corresponds to the fields (columns) in the `features` table and has the format of an array of:
+
+- feature, product+, interop, tests
+
+`features` returns the breakdown of `date`, one row per web feature, with the number of tests that feature was scored over. It is empty if the breakdown could not be fetched, in which case the rest of the response still stands.
+
+<details><summary><b>Example JSON</b></summary>
+
+```json
+{
+   "lastUpdateRevision":"e0bcfcb6ec1d0348db4d95cf9f2e3a2d68c6cf6a",
+   "manifest":"merge_pr_62883",
+   "date":"2026-09-23",
+   "fields":[
+      "sha",
+      "date",
+      "manifest",
+      "chrome-version",
+      "chrome",
+      "firefox-version",
+      "firefox",
+      "safari-version",
+      "safari",
+      "interop",
+      "features"
+   ],
+   "data":[
+      [
+         "984156521a45b97285c47ff4039bb00a045bdbeb",
+         "2026-01-28",
+         "merge_pr_57359",
+         "144.0.7559.109",
+         "84.7",
+         "147.0.2",
+         "78.6",
+         "26.2 (21623.1.14.11.9)",
+         "75.9",
+         "67.8",
+         "793"
+      ],
+      [
+         "e0bcfcb6ec1d0348db4d95cf9f2e3a2d68c6cf6a",
+         "2026-09-23",
+         "merge_pr_62883",
+         "154.0.8037.57",
+         "88.3",
+         "156.0.1",
+         "82.0",
+         "27.0 (22625.1.29.11.27)",
+         "77.6",
+         "70.8",
+         "834"
+      ]
+   ],
+   "featureFields":[
+      "feature",
+      "chrome",
+      "firefox",
+      "safari",
+      "interop",
+      "tests"
+   ],
+   "features":[
+      [
+         "aborting",
+         "100.0",
+         "100.0",
+         "100.0",
+         "100.0",
+         "13"
+      ],
+      [
+         "abortsignal-any",
+         "100.0",
+         "100.0",
+         "100.0",
+         "100.0",
+         "2"
       ]
    ]
 }
