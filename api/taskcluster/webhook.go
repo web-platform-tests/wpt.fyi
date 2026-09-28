@@ -32,7 +32,7 @@ const completedState = "completed"
 
 const (
 	checkRunsPerPage = 25
-	maxCheckRunPages = 100
+	maxCheckRunPages = 40
 )
 
 var (
