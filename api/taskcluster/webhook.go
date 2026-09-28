@@ -30,11 +30,6 @@ const AppID = int64(40788)
 const uploaderName = "taskcluster"
 const completedState = "completed"
 
-const (
-	checkRunsPerPage = 25
-	maxCheckRunPages = 40
-)
-
 var (
 	// TaskNameRegex is based on task names in
 	// https://github.com/web-platform-tests/wpt/blob/master/tools/ci/tc/tasks/test.yml.
@@ -491,12 +486,13 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 			// request only 25 at a time.
 			//
 			// [0]: https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
-			PerPage: checkRunsPerPage,
+			PerPage: 25,
 		},
 	}
 
-	// As a safety-check, we will not do more than maxCheckRunPages iterations.
-	for i := 0; i < maxCheckRunPages; i++ {
+	// As a safety-check, we will not do more than 40 iterations (at 25
+	// check runs per page, this gives us a 1000 run upper limit).
+	for i := 0; i < 40; i++ {
 		result, response, err := api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
 		if err != nil {
 			return runs, err
@@ -515,7 +511,7 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 		options.Page = response.NextPage
 	}
 
-	return runs, fmt.Errorf("more than %d CheckRuns returned for CheckSuite", checkRunsPerPage*maxCheckRunPages)
+	return runs, errors.New("more than 1000 CheckRuns returned for CheckSuite")
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
