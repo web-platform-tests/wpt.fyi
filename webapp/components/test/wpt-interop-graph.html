@@ -1,0 +1,337 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  <script type="module" src="../wpt-interop-graph.js"></script>
+</head>
+
+<body>
+  <test-fixture id="wpt-interop-graph-fixture">
+    <template>
+      <wpt-interop-graph></wpt-interop-graph>
+    </template>
+  </test-fixture>
+
+  <script type="module">
+import { WPTInteropGraph } from '../wpt-interop-graph.js';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+const FIELDS = [
+  'sha', 'date', 'manifest',
+  'chrome-version', 'chrome',
+  'firefox-version', 'firefox',
+  'safari-version', 'safari',
+  'interop', 'features',
+];
+const OLDER = [
+  'aaa', '2026-03-06', 'merge_pr_1',
+  '144.0.7559.109', '84.7', '147.0.2', '78.6', '26.2 (21623.1)', '75.9',
+  '67.8', '793',
+];
+const NEWER = [
+  'bbb', '2026-05-25', 'merge_pr_2',
+  '146.0.7680.31', '88.1', '148.0', '79.0', '26.3 (21623.9)', '76.5',
+  '68.5', '800',
+];
+
+suite('WPTInteropGraph', () => {
+  let graph;
+  let sandbox;
+
+  setup(() => {
+    sandbox = sinon.sandbox.create();
+    // Creating the fixture runs ready(), which fetches the scores. The methods
+    // are exercised directly here, so the request is stubbed out and the chart
+    // is never drawn.
+    sandbox.stub(window, 'fetch', () => Promise.resolve(new Response('{}')));
+    graph = fixture('wpt-interop-graph-fixture');
+    graph.drawChart = () => {};
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  test('instanceof Polymer.Element', () => {
+    assert.isTrue(new WPTInteropGraph() instanceof PolymerElement);
+    assert.isTrue(document.createElement('wpt-interop-graph') instanceof PolymerElement);
+  });
+
+  suite('static get is()', () => {
+    test('wpt-interop-graph', () => {
+      assert.equal(WPTInteropGraph.is, 'wpt-interop-graph');
+    });
+  });
+
+  suite('scoreColumns', () => {
+    test('picks the columns that have a version sibling, plus interop', () => {
+      assert.deepEqual(graph.scoreColumns(FIELDS).map(c => c.name),
+        ['chrome', 'firefox', 'safari', 'interop']);
+    });
+
+    test('reports the index each column was found at', () => {
+      assert.deepEqual(graph.scoreColumns(FIELDS).map(c => c.idx), [4, 6, 8, 9]);
+    });
+
+    test('leaves out sha, date, manifest and features', () => {
+      const names = graph.scoreColumns(FIELDS).map(c => c.name);
+      assert.notInclude(names, 'sha');
+      assert.notInclude(names, 'date');
+      assert.notInclude(names, 'manifest');
+      assert.notInclude(names, 'features');
+    });
+
+    test('takes a product it has never heard of', () => {
+      const fields = ['sha', 'date', 'ladybird-version', 'ladybird', 'interop'];
+      assert.deepEqual(graph.scoreColumns(fields).map(c => c.name),
+        ['ladybird', 'interop']);
+    });
+  });
+
+  suite('processTrendline', () => {
+    test('labels the chart columns by product', () => {
+      graph.processTrendline(FIELDS, [OLDER, NEWER]);
+      assert.deepEqual(graph.data[0],
+        ['Date', 'Chrome', 'Firefox', 'Safari', 'Interop']);
+    });
+
+    test('keeps a row per date, in the order published', () => {
+      graph.processTrendline(FIELDS, [OLDER, NEWER]);
+      assert.equal(graph.trendPoints.length, 2);
+      assert.equal(graph.trendPoints[0].scores.interop, 67.8);
+      assert.equal(graph.trendPoints[1].scores.interop, 68.5);
+    });
+
+    test('takes the headline from the newest date', () => {
+      graph.processTrendline(FIELDS, [OLDER, NEWER]);
+      assert.equal(graph.currentScore, '68.5');
+      assert.deepEqual(graph.currentBrowserScores.map(s => s.score),
+        ['88.1', '79.0', '76.5']);
+    });
+
+    test('names how many features each date averaged over', () => {
+      graph.processTrendline(FIELDS, [OLDER, NEWER]);
+      assert.equal(graph.data[1][0].f, 'March 6, 2026 (793 features)');
+    });
+
+    test('leaves a date out of the measurable set if interop did not parse', () => {
+      const broken = NEWER.slice();
+      broken[9] = '';
+      graph.processTrendline(FIELDS, [OLDER, broken]);
+      assert.equal(graph.trendPoints.length, 1);
+    });
+
+    test('says so when the published table holds no dates', () => {
+      graph.processTrendline(FIELDS, []);
+      assert.equal(graph.errorMessage, 'Interop score data is empty.');
+    });
+
+    test('says so when the payload has no table at all', () => {
+      graph.processTrendline(undefined, undefined);
+      assert.equal(graph.errorMessage, 'Interop score data is empty.');
+    });
+  });
+
+  suite('columnLabel', () => {
+    test('capitalises a product name', () => {
+      assert.equal(graph.columnLabel('chrome'), 'Chrome');
+      assert.equal(graph.columnLabel('interop'), 'Interop');
+    });
+  });
+
+  suite('browserScoreList', () => {
+    test('carries the column name beside the label and score', () => {
+      graph.scoreColumnNames = ['chrome', 'firefox', 'interop'];
+      const point = { scores: { chrome: 92.14, firefox: 84.6, interop: 74.6 } };
+      assert.deepEqual(graph.browserScoreList(point), [
+        { name: 'chrome', label: 'Chrome', score: '92.1' },
+        { name: 'firefox', label: 'Firefox', score: '84.6' },
+      ]);
+    });
+
+    test('leaves interop out, as the headline shows it', () => {
+      graph.scoreColumnNames = ['chrome', 'interop'];
+      const point = { scores: { chrome: 92.1, interop: 74.6 } };
+      assert.deepEqual(graph.browserScoreList(point).map(s => s.name), ['chrome']);
+    });
+
+    test('drops a product whose score did not parse', () => {
+      graph.scoreColumnNames = ['chrome', 'firefox'];
+      const point = { scores: { chrome: 92.1, firefox: NaN } };
+      assert.deepEqual(graph.browserScoreList(point).map(s => s.name), ['chrome']);
+    });
+  });
+
+  suite('computeBrowserRows', () => {
+    const scores = [
+      { name: 'chrome', label: 'Chrome', score: '92.1' },
+      { name: 'firefox', label: 'Firefox', score: '84.6' },
+    ];
+
+    test('reads a gain across from the score it moved', () => {
+      assert.deepEqual(graph.computeBrowserRows(scores, { chrome: '+0.2', firefox: '-0.1' }), [
+        { label: 'Chrome', score: '92.1', gain: '+0.2' },
+        { label: 'Firefox', score: '84.6', gain: '-0.1' },
+      ]);
+    });
+
+    test('leaves the gain empty when no range is selected', () => {
+      assert.deepEqual(graph.computeBrowserRows(scores, {}).map(r => r.gain), ['', '']);
+    });
+
+    test('leaves the gain empty for a product the range did not measure', () => {
+      assert.deepEqual(graph.computeBrowserRows(scores, { chrome: '+0.2' }).map(r => r.gain),
+        ['+0.2', '']);
+    });
+
+    test('returns nothing before any score has loaded', () => {
+      assert.deepEqual(graph.computeBrowserRows(undefined, {}), []);
+    });
+  });
+
+  suite('computeInteropGain', () => {
+    test('takes interop out of the measured gains', () => {
+      assert.equal(graph.computeInteropGain({ chrome: '+0.2', interop: '+0.3' }), '+0.3');
+    });
+
+    test('is empty when no range is selected', () => {
+      assert.equal(graph.computeInteropGain({}), '');
+      assert.equal(graph.computeInteropGain(undefined), '');
+    });
+  });
+
+  suite('gainClass', () => {
+    test('marks the direction a score moved', () => {
+      assert.equal(graph.gainClass('+0.2'), 'gain up');
+      assert.equal(graph.gainClass('-0.1'), 'gain down');
+    });
+
+    test('is unmarked when there is no gain to show', () => {
+      assert.equal(graph.gainClass(''), 'gain');
+    });
+  });
+
+  suite('parseDate', () => {
+    test('reads the month as 1-indexed, as the CSV writes it', () => {
+      const date = graph.parseDate('2026-03-06');
+      assert.equal(date.getFullYear(), 2026);
+      assert.equal(date.getMonth(), 2);
+      assert.equal(date.getDate(), 6);
+    });
+
+    test('stays on the published day in a negative timezone', () => {
+      assert.equal(graph.parseDate('2026-01-01').getDate(), 1);
+    });
+  });
+
+  suite('formatDate', () => {
+    test('writes a date the way the tooltips read it', () => {
+      assert.equal(graph.formatDate(graph.parseDate('2026-03-06')), 'March 6, 2026');
+    });
+  });
+
+  suite('dateCell', () => {
+    test('keeps the chart formatting when the count is missing', () => {
+      const date = graph.parseDate('2026-03-06');
+      assert.equal(graph.dateCell(date, ''), date);
+    });
+
+    test('names how many features the date averaged over', () => {
+      const date = graph.parseDate('2026-03-06');
+      assert.deepEqual(graph.dateCell(date, '812'),
+        { v: date, f: 'March 6, 2026 (812 features)' });
+    });
+  });
+
+  suite('applyRange', () => {
+    const ends = () => ({
+      from: { date: graph.parseDate('2026-03-06'), scores: { chrome: 92.1, interop: 74.3 } },
+      to: { date: graph.parseDate('2026-05-25'), scores: { chrome: 92.3, interop: 74.6 } },
+    });
+
+    setup(() => {
+      graph.scoreColumnNames = ['chrome', 'interop'];
+    });
+
+    test('names the dates the range covers', () => {
+      graph.applyRange(ends());
+      assert.equal(graph.rangeLabel, 'March 6, 2026 to May 25, 2026');
+    });
+
+    test('signs a gain, and leaves a loss to carry its own', () => {
+      const measured = ends();
+      measured.to.scores.chrome = 91.9;
+      graph.applyRange(measured);
+      assert.equal(graph.rangeGains.chrome, '-0.2');
+      assert.equal(graph.rangeGains.interop, '+0.3');
+    });
+
+    test('skips a product with no score at one end of the range', () => {
+      const measured = ends();
+      measured.to.scores.chrome = NaN;
+      graph.applyRange(measured);
+      assert.notProperty(graph.rangeGains, 'chrome');
+      assert.property(graph.rangeGains, 'interop');
+    });
+
+    test('clears what was measured when the range goes away', () => {
+      graph.applyRange(ends());
+      graph.applyRange(null);
+      assert.equal(graph.rangeLabel, '');
+      assert.deepEqual(graph.rangeGains, {});
+    });
+  });
+
+  suite('clearRange', () => {
+    test('drops the measurement and hides the highlight', () => {
+      graph.scoreColumnNames = ['interop'];
+      graph.applyRange({
+        from: { date: graph.parseDate('2026-03-06'), scores: { interop: 74.3 } },
+        to: { date: graph.parseDate('2026-05-25'), scores: { interop: 74.6 } },
+      });
+      graph.clearRange();
+      assert.equal(graph.rangeLabel, '');
+      assert.deepEqual(graph.rangeGains, {});
+      assert.isNull(graph.dragStartX);
+      assert.isTrue(graph.$.highlight.hidden);
+    });
+  });
+
+  suite('nearestPoint', () => {
+    setup(() => {
+      graph.trendPoints = [
+        { date: graph.parseDate('2026-03-06'), scores: { interop: 74.3 } },
+        { date: graph.parseDate('2026-05-25'), scores: { interop: 74.6 } },
+      ];
+    });
+
+    test('snaps to the date actually scored', () => {
+      assert.equal(graph.nearestPoint(graph.parseDate('2026-05-20')).scores.interop, 74.6);
+    });
+
+    test('is nothing before any date has been scored', () => {
+      graph.trendPoints = [];
+      assert.isNull(graph.nearestPoint(graph.parseDate('2026-05-20')));
+    });
+
+    test('is nothing for a position off the chart', () => {
+      assert.isNull(graph.nearestPoint(NaN));
+    });
+  });
+
+  suite('button classes', () => {
+    test('selects the channel being shown', () => {
+      assert.equal(graph.experimentalButtonClass(true), 'selected');
+      assert.equal(graph.stableButtonClass(true), 'unselected');
+      assert.equal(graph.experimentalButtonClass(false), 'unselected');
+      assert.equal(graph.stableButtonClass(false), 'selected');
+    });
+  });
+});
+  </script>
+</body>
+
+</html>
