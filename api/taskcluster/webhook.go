@@ -481,17 +481,15 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 	options := github.ListCheckRunsOptions{
 		// nolint:exhaustruct // TODO: Fix exhaustruct lint error.
 		ListOptions: github.ListOptions{
-			// 100 is the maximum allowed items per page[0], but due to
-			// https://github.com/web-platform-tests/wpt/issues/27243 we
-			// request only 25 at a time.
+			// 100 is the maximum allowed items per page[0].
 			//
 			// [0]: https://developer.github.com/v3/guides/traversing-with-pagination/#changing-the-number-of-items-received
-			PerPage: 25,
+			PerPage: 100,
 		},
 	}
 
-	// As a safety-check, we will not do more than 20 iterations (at 25
-	// check runs per page, this gives us a 500 run upper limit).
+	// As a safety-check, we will not do more than 20 iterations (at 100
+	// check runs per page, this gives us a 2000 run upper limit).
 	for i := 0; i < 20; i++ {
 		result, response, err := api.ghClient.Checks.ListCheckRunsCheckSuite(api.ctx, owner, repo, checkSuiteID, &options)
 		if err != nil {
@@ -511,7 +509,7 @@ func (api apiImpl) ListCheckRuns(owner string, repo string, checkSuiteID int64) 
 		options.Page = response.NextPage
 	}
 
-	return runs, errors.New("more than 500 CheckRuns returned for CheckSuite")
+	return runs, errors.New("more than 2000 CheckRuns returned for CheckSuite")
 }
 
 // ArtifactURLs holds the results and screenshot URLs for a Taskcluster run.
