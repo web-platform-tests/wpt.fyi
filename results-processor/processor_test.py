@@ -3,7 +3,10 @@
 # found in the LICENSE file.
 
 import json
+import os
+import tempfile
 import unittest
+import zipfile
 from unittest.mock import call, patch
 
 from werkzeug.datastructures import MultiDict
@@ -15,13 +18,49 @@ from test_server import AUTH_CREDENTIALS
 
 
 class ProcessorTest(unittest.TestCase):
-    def fake_download(self, expected_path, response):
+    def fake_downloads(self, mapping):
         def _download(path):
-            if expected_path is None:
-                self.fail('Unexpected download:' + path)
-            self.assertEqual(expected_path, path)
-            return response
+            if path not in mapping:
+                self.fail('Unexpected download: ' + path)
+            return mapping[path]
         return _download
+
+    def fake_download(self, expected_path, response):
+        if expected_path is None:
+            return self.fake_downloads({})
+        return self.fake_downloads({expected_path: response})
+
+    def make_zip(self, members):
+        fd, path = tempfile.mkstemp(suffix='.zip')
+        os.close(fd)
+        self.addCleanup(os.remove, path)
+        with zipfile.ZipFile(path, mode='w') as z:
+            for name, data in members.items():
+                z.writestr(name, data)
+        return path
+
+    def test_make_temp_file(self):
+        cases = [
+            # name, ext, expected prefix
+            ('wpt_report.json.gz', '.json.gz', 'wpt_report-'),
+            ('safari-preview-results-testharness-15.zip', '.zip',
+             'safari-preview-results-testharness-15-'),
+            ('wpt_report_1', None, 'wpt_report_1-'),
+            ('', None, 'tmp'),
+        ]
+        with Processor() as p:
+            for name, ext, expected in cases:
+                fd, path = p._make_temp_file(name, ext)
+                os.close(fd)
+                self.assertEqual(os.path.dirname(path), p._temp_dir)
+                basename = os.path.basename(path)
+                self.assertTrue(basename.startswith(expected),
+                                f'{basename!r} should start with {expected!r}')
+                if ext is not None:
+                    self.assertTrue(basename.endswith(ext))
+
+            with self.assertRaises(OSError):
+                p._make_temp_file('x' * 500 + '.json', '.json')
 
     def test_known_extension(self):
         self.assertEqual(
@@ -114,6 +153,80 @@ class ProcessorTest(unittest.TestCase):
             self.assertEqual(len(p.screenshots), 1)
             self.assertTrue(p.screenshots[0].endswith(
                 '/wpt_screenshot.txt'))
+
+    def test_download_archives_colliding_names(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_downloads({
+                'https://wpt.fyi/a.zip': self.make_zip({
+                    'wpt_report_1.json': b'report-a',
+                    'wpt_screenshot_1.txt': b'shot-a',
+                }),
+                'https://wpt.fyi/b.zip': self.make_zip({
+                    'wpt_report_1.json': b'report-b',
+                    'wpt_screenshot_1.txt': b'shot-b',
+                }),
+            })
+
+            p.download(
+                [], [], ['https://wpt.fyi/a.zip', 'https://wpt.fyi/b.zip'])
+
+            reports = []
+            for path in p.results:
+                with open(path, 'rb') as f:
+                    reports.append(f.read())
+            self.assertEqual(reports, [b'report-a', b'report-b'])
+
+            screenshots = []
+            for path in p.screenshots:
+                with open(path, 'rb') as f:
+                    screenshots.append(f.read())
+            self.assertEqual(screenshots, [b'shot-a', b'shot-b'])
+
+    def test_download_archive_duplicate_basenames(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip', self.make_zip({
+                    'a/wpt_report_1.json': b'report-a',
+                    'a/wpt_screenshot_1.txt': b'shot-a',
+                    'b/wpt_report_1.json': b'report-b',
+                    'b/wpt_screenshot_1.txt': b'shot-b',
+                }))
+
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+
+            reports = []
+            for path in p.results:
+                with open(path, 'rb') as f:
+                    reports.append(f.read())
+            self.assertEqual(reports, [b'report-a', b'report-b'])
+
+            screenshots = []
+            for path in p.screenshots:
+                with open(path, 'rb') as f:
+                    screenshots.append(f.read())
+            self.assertEqual(screenshots, [b'shot-a', b'shot-b'])
+
+    def test_download_archive_path_traversal(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download(None, None)
+            p._download_http = self.fake_download(
+                'https://wpt.fyi/artifact.zip', self.make_zip({
+                    '../../wpt_report_1.json': b'traversal-1',
+                    '/etc/wpt_report_2.json': b'traversal-2',
+                }))
+
+            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+
+            self.assertEqual(len(p.results), 2)
+            temp_dir = os.path.realpath(p._temp_dir)
+            for path in p.results:
+                self.assertEqual(
+                    os.path.commonpath([temp_dir, os.path.realpath(path)]),
+                    temp_dir)
+            self.assertTrue(p.results[0].endswith('/wpt_report_1.json'))
+            self.assertTrue(p.results[1].endswith('/etc/wpt_report_2.json'))
 
 
 class MockProcessorTest(unittest.TestCase):
@@ -249,7 +362,7 @@ class ProcessorDownloadServerTest(unittest.TestCase):
             p.TIMEOUT_WAIT = 0.1  # to speed up tests
             url_404 = self.url + '/404'
             url_timeout = self.url + '/slow'
-            with self.assertLogs() as lm:
+            with self.assertLogs(level='ERROR') as lm:
                 p.download(
                     [self.url + '/download/test.txt', url_timeout],
                     [url_404],
