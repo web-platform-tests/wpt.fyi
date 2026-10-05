@@ -142,9 +142,9 @@ _go_webdriver_test: var-BROWSER java go_build xvfb geckodriver chromedriver dev_
 		-browser=$(BROWSER) $(FLAGS)"; \
 	if [ "$$UID" == "0" ]; then sudo -u browser $$COMMAND; else $$COMMAND; fi
 
-# NOTE: psmisc includes killall, needed by wct.sh
-web_components_test: xvfb firefox chrome webapp_node_modules_all psmisc
-	util/wct.sh $(USE_FRAME_BUFFER)
+web_components_test: firefox chrome webapp_node_modules_all
+	@ # CI runs make as root; run the tests as the unprivileged browser user.
+	cd webapp; if [ "$$UID" == "0" ]; then sudo -u browser npm test; else npm test; fi
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
@@ -245,7 +245,6 @@ curl: apt-get-curl
 gcc: apt-get-gcc
 git: apt-get-git
 jq: apt-get-jq
-psmisc: apt-get-psmisc
 python3: apt-get-python3.11
 tox: apt-get-tox
 unzip: apt-get-unzip

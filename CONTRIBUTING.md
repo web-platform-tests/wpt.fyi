@@ -21,18 +21,13 @@ source util/commands.sh
 wptd_exec_it make lint
 ```
 
-To run outside docker, you'll need to install `golint` and `eslint`.
+To run outside docker, you'll need to install `golint` and Node.js. ESLint is a
+dev dependency of `webapp/`, so lint the JavaScript from there:
 
-Globally (in `wpt.fyi` root):
 ```sh
-npm install -g eslint babel-eslint eslint-plugin-html
-make test
-```
-
-Locally (in `webapp/` dir):
-```sh
+cd webapp
 npm install
-npm test
+npm run lint
 ```
 
 ## Testing your code
