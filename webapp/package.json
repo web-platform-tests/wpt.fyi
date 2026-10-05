@@ -31,29 +31,12 @@
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.33.0",
     "@open-wc/testing": "4.0.0",
-    "@polymer/test-fixture": "4.0.2",
     "@web/test-runner": "0.20.2",
     "@web/test-runner-chrome": "0.18.1",
     "cpy-cli": "7.0.0",
     "eslint": "10.11.0",
-    "eslint-plugin-html": "8.2.1",
     "globals": "^17.13.0",
-    "sinon": "22.1.0",
-    "wct-browser-legacy": "1.0.2",
-    "wct-local": "2.1.7",
-    "web-component-tester": "6.9.2"
-  },
-  "overridesComments": {
-    "diff@<3.5.0": "Remove once web-component-tester & wct-browser-legacy is removed.",
-    "growl@<1.10.0": "Remove once wct-browser-legacy is removed.",
-    "launchpad": "wct-local pins a GitHub fork of launchpad that no longer exists. Remove once wct-local is removed.",
-    "multer@<1.4.5": "Remove once web-component-tester is removed."
-  },
-  "overrides": {
-    "diff@<3.5.0": "3.5.0",
-    "growl@<1.10.0": "1.10.0",
-    "launchpad": "0.8.1",
-    "multer@<1.4.5": "1.4.5-lts.1"
+    "sinon": "22.1.0"
   },
   "scripts": {
     "test": "web-test-runner",
