@@ -61,19 +61,6 @@ suite('<wpt-results>', () => {
   });
 
   suite('WPTResults.prototype.*', () => {
-    suite('urlToPath()', () => {
-      test('urlToPath(location Location)', () => {
-        test('Path regex', () => {
-          const url = s => new URL(`https://wpt.fyi${s}`);
-          assert.equal(trf.urlToPath(url('/results/')), '/');
-          assert.equal(trf.urlToPath(url('/results/abc')), '/abc');
-          assert.equal(trf.urlToPath(url('/results/abc/')), '/abc');
-          assert.equal(trf.urlToPath(url('/results/abc/def/')), '/abc/def');
-          assert.equal(trf.urlToPath(url('/results/abc/def.html')), '/abc/def.html');
-        });
-      });
-    });
-
     suite('computeDifferences(before, after)', () => {
       test('added', () => {
         const before = { passes: 0, total: 0 };

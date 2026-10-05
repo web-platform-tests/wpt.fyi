@@ -25,7 +25,7 @@ suite('<wpt-app>', () => {
   setup(() => {
     sandbox = sinon.sandbox.create();
     // Spoof an empty result for APIs used in this suite.
-    const captured = new RegExp('/api/(shas|versions|interop)');
+    const captured = new RegExp('/api/(shas|versions|interop|metadata/pending|bsf)');
     sandbox.stub(window, 'fetch', url => {
       if (url === undefined) {
         throw 'url is undefined';

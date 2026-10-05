@@ -155,7 +155,7 @@ suite('TestRunsQuery', () => {
         testRunsQuery.shas = ['1234567890'];
         testRunsQuery.aligned = true;
         expect(testRunsQuery.queryParams.sha).to.equal(testRunsQuery.shas);
-        expect(testRunsQuery.queryParams.aligned).to.not.be.defined;
+        expect(testRunsQuery.queryParams.aligned).to.be.undefined;
 
         testRunsQuery.shas = [];
         expect(testRunsQuery.sha).to.equal('latest');
