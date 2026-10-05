@@ -15,21 +15,25 @@ npm install
 
 ### Test commands
 
-webapp/ has both lint tests and tests based on
-[web-component-test](https://www.npmjs.com/package/web-component-tester). There
-are `npm` aliases for many of the common tasks, listed below.
+webapp/ has lint checks and component tests. The component tests are the
+`components/test/*.test.js` files, and they run in Chrome and Firefox with
+[Web Test Runner](https://modern-web.dev/docs/test-runner/overview/). There are
+`npm` aliases for the common tasks, listed below.
 
-- `npm test`: This will run the linting task followed by the web-component-tester task.
+- `npm test`: This will run the component tests.
 - `npm run lint`: This will run _only_ the linting task.
 - `npm run lint-fix`: This will run the linting task with automatic lint fixing.
-- `npm run wct`: This will run _only_ the web-component-tester task.
-- `npm run wctp`: This will run the web-component-tester task with the `-p` flag
-  to leave the browser open after the tests have completed.
 
-When using `npm run`, any additional flags or options will be passed to the
-underlying command. For example, to run a specific test only on chrome:
+When using `npm test`, any additional flags or options after `--` will be
+passed to `web-test-runner`. The `WTR_BROWSERS` environment variable selects
+the browsers (default: `chrome,firefox`), and `FIREFOX_PATH` can point to a
+Firefox binary that is not at `/usr/bin/firefox`. For example:
 
-- `npm run wct -l chrome path/to/test/test-file.html`
+- `WTR_BROWSERS=chrome npm test -- --files components/test/path.test.js` runs a
+  single test file, only in Chrome.
+- `npm test -- --watch` reruns the tests when files change.
+- `npm test -- --manual --open` serves the tests for debugging in your own
+  browser.
 
 ### Running web_components_test
 To run `web_components_test` in any platform, first start a Docker instance.

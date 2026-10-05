@@ -1,40 +1,10 @@
-<!doctype html>
-<html>
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
 
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+class ConcreteType extends AmendMetadataMixin(PolymerElement) {}
+window.customElements.define('amend-metadata-util-concrete', ConcreteType);
 
-  <script type="module" src="../wpt-amend-metadata.js"></script>
-</head>
-
-<body>
-  <dom-module id="amend-metadata-util-concrete">
-    <script type="module">
-      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-      import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
-
-      class ConcreteType extends AmendMetadataMixin(PolymerElement) {}
-      window.customElements.define('amend-metadata-util-concrete', ConcreteType);
-    </script>
-  </dom-module>
-
-  <test-fixture id="amend-metadata-util-fixture">
-    <template>
-      <amend-metadata-util-concrete></amend-metadata-util-concrete>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="wpt-amend-metadata-fixture">
-    <template>
-      <wpt-amend-metadata></wpt-amend-metadata>
-    </template>
-  </test-fixture>
-
-  <script type="module">
-
-import '../wpt-amend-metadata.js';
 suite('wpt-amend-metadata', () => {
   suite('AmendMetadataMixin', () => {
     let appFixture = null;
@@ -42,7 +12,7 @@ suite('wpt-amend-metadata', () => {
     let toast = null;
 
     setup(() => {
-      appFixture = fixture('amend-metadata-util-fixture');
+      appFixture = fixtureSync(html`<amend-metadata-util-concrete></amend-metadata-util-concrete>`);
       td = document.createElement('td');
       toast = document.createElement('paper-toast');
     });
@@ -65,7 +35,7 @@ suite('wpt-amend-metadata', () => {
   suite('<wpt-amend-metadata>', () => {
     let appFixture = null;
     setup(() => {
-      appFixture = fixture('wpt-amend-metadata-fixture');
+      appFixture = fixtureSync(html`<wpt-amend-metadata></wpt-amend-metadata>`);
     });
 
     test('getTriagedMetadataMap(displayedMetadata) with a non-testfile path', () => {
@@ -264,7 +234,3 @@ suite('wpt-amend-metadata', () => {
     });
   });
 });
-</script>
-</body>
-
-</html>

@@ -5,7 +5,7 @@
  */
 
 // Configuration for Web Test Runner (https://modern-web.dev/docs/test-runner/).
-// Run from webapp/ with `npm run wtr`. By default the tests run in Chrome and
+// Run from webapp/ with `npm test`. By default the tests run in Chrome and
 // Firefox; set e.g. WTR_BROWSERS=chrome to run a subset, and FIREFOX_PATH if
 // Firefox is not installed at /usr/bin/firefox.
 

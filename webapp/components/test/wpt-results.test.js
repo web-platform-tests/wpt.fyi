@@ -1,20 +1,5 @@
-<!doctype html>
-<html>
-
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-
-<body>
-  <test-fixture id="wpt-results-fixture">
-    <template>
-      <wpt-results></wpt-results>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { aTimeout, assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { WPTResults, VIEW_ENUM } from '../../views/wpt-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
@@ -33,31 +18,27 @@ suite('<wpt-results>', () => {
   let sandbox, trf = null;
 
   setup(() => {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(WPTResults.prototype, 'loadData', function() {
+    sandbox = sinon.createSandbox();
+    sandbox.stub(WPTResults.prototype, 'loadData').callsFake(function() {
       this.testRuns = Array.from(TEST_RUNS_DATA);
     });
-    trf = fixture('wpt-results-fixture');
+    trf = fixtureSync(html`<wpt-results></wpt-results>`);
     trf.path = '/'; // Override the path computed from the current page.
   });
 
-  test('show banner on noResults', (done) => {
+  test('show banner on noResults', async() => {
     trf.loadData();
     trf.noResults = true;
-    flush(() => {
-      const banner = trf.root.querySelector('info-banner[type="info"]');
-      expect(banner).to.not.be.null;
-      done();
-    });
+    await aTimeout(0);
+    const banner = trf.shadowRoot.querySelector('info-banner[type="info"]');
+    expect(banner).to.not.be.null;
   });
 
-  test('show banner on failedToLoad', (done) => {
+  test('show banner on failedToLoad', async() => {
     trf.resultsLoadFailed = true;
-    flush(() => {
-      const banner = trf.root.querySelector('info-banner[type="error"]');
-      expect(banner).to.not.be.null;
-      done();
-    });
+    await aTimeout(0);
+    const banner = trf.shadowRoot.querySelector('info-banner[type="error"]');
+    expect(banner).to.not.be.null;
   });
 
   suite('WPTResults.prototype.*', () => {
@@ -391,7 +372,3 @@ suite('<wpt-results>', () => {
     sandbox.restore();
   });
 });
-</script>
-</body>
-
-</html>
