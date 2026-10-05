@@ -1,20 +1,4 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../test-search.js"></script>
-</head>
-<body>
-  <test-fixture id="test-search-fixture">
-    <template>
-      <test-search></test-search>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { assert, fixtureSync, html } from '@open-wc/testing';
 import { AllBrowserNames } from '../product-info.js';
 import { TestSearch } from '../test-search.js';
 import { waitingOn } from './util/helpers.js';
@@ -1016,7 +1000,7 @@ suite('<test-search>', () => {
       let search_fixture;
 
       setup(() => {
-        search_fixture = fixture('test-search-fixture');
+        search_fixture = fixtureSync(html`<test-search></test-search>`);
       });
 
       test('does not lowerCase', () => {
@@ -1032,6 +1016,3 @@ suite('<test-search>', () => {
     });
   });
 });
-</script>
-</body>
-</html>

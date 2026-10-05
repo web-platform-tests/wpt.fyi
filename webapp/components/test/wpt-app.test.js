@@ -1,21 +1,5 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../../views/wpt-app.js"></script>
-</head>
-
-<body>
-  <test-fixture id="wpt-app-fixture">
-    <template>
-      <wpt-app></wpt-app>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import '../../views/wpt-app.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
@@ -23,10 +7,10 @@ suite('<wpt-app>', () => {
   let sandbox;
 
   setup(() => {
-    sandbox = sinon.sandbox.create();
+    sandbox = sinon.createSandbox();
     // Spoof an empty result for APIs used in this suite.
     const captured = new RegExp('/api/(shas|versions|interop|metadata/pending|bsf)');
-    sandbox.stub(window, 'fetch', url => {
+    sandbox.stub(window, 'fetch').callsFake(url => {
       if (url === undefined) {
         throw 'url is undefined';
       }
@@ -45,7 +29,7 @@ suite('<wpt-app>', () => {
     let appFixture;
 
     setup(() => {
-      appFixture = fixture('wpt-app-fixture');
+      appFixture = fixtureSync(html`<wpt-app></wpt-app>`);
       appFixture.path = '/';
       appFixture.testRuns = Array.from(TEST_RUNS_DATA);
     });
@@ -111,7 +95,3 @@ suite('<wpt-app>', () => {
     });
   });
 });
-</script>
-</body>
-
-</html>

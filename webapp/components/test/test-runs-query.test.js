@@ -1,51 +1,25 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-
-<body>
-<dom-module id="test-runs-query-concrete">
-  <script type="module">
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsQuery, TestRunsUIQuery } from '../test-runs-query.js';
+import { DefaultProducts, Channels } from '../product-info.js';
 
 class ConcreteType extends TestRunsQuery(PolymerElement) {}
 window.customElements.define('test-runs-query-concrete', ConcreteType);
 
 class ConcreteUIType extends TestRunsUIQuery(PolymerElement) {}
 window.customElements.define('test-runs-ui-query-concrete', ConcreteUIType);
-</script>
-</dom-module>
 
-<test-fixture id="test-runs-query-fixture">
-  <template>
-    <test-runs-query-concrete></test-runs-query-concrete>
-  </template>
-</test-fixture>
-
-<test-fixture id="test-runs-ui-query-fixture">
-  <template>
-    <test-runs-ui-query-concrete></test-runs-ui-query-concrete>
-  </template>
-</test-fixture>
-
-  <script type="module">
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import '../test-runs-query.js';
-import { DefaultProducts, Channels } from '../product-info.js';
 suite('TestRunsQuery', () => {
   let testRunsQuery, testRunsUIQuery;
 
   setup(() => {
-    testRunsQuery = fixture('test-runs-query-fixture');
-    testRunsUIQuery = fixture('test-runs-ui-query-fixture');
+    testRunsQuery = fixtureSync(html`<test-runs-query-concrete></test-runs-query-concrete>`);
+    testRunsUIQuery = fixtureSync(html`<test-runs-ui-query-concrete></test-runs-ui-query-concrete>`);
   });
 
-  test('instanceof Polymer.Element', () => {
-    assert.isTrue(testRunsQuery instanceof PolymerElement);
+  test('is a registered custom element', () => {
+    assert.isTrue(new ConcreteType() instanceof HTMLElement);
+    assert.isTrue(document.createElement('test-runs-query-concrete') instanceof ConcreteType);
   });
 
   test('isDefaultProducts', () => {
@@ -174,6 +148,3 @@ suite('TestRunsQuery', () => {
   });
 
 });
-</script>
-</body>
-</html>

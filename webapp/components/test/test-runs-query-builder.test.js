@@ -1,34 +1,18 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../test-runs-query-builder.js"></script>
-</head>
-<body>
-  <test-fixture id="query-builder-fixture">
-    <template>
-      <test-runs-query-builder></test-runs-query-builder>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { aTimeout, assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import '../test-runs-query-builder.js';
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { Channels } from '../product-info.js';
 
 suite('TestRunsQueryBuilder', () => {
   let queryBuilder, sandbox;
 
   suiteSetup(() => {
-    sandbox = sinon.sandbox.create();
+    sandbox = sinon.createSandbox();
     // Spoof an empty result for /api/shas to speed up tests.
     // This is done in suiteSetup/suiteTeardown to avoid async fetches slipping
     // through between tests.
     const ignore = new RegExp('/api/(shas|versions)');
-    sandbox.stub(window, 'fetch', url => {
+    sandbox.stub(window, 'fetch').callsFake(url => {
       if (ignore.test(url.pathname)) {
         return Promise.resolve(new Response('[]'));
       }
@@ -41,12 +25,12 @@ suite('TestRunsQueryBuilder', () => {
   });
 
   setup(() => {
-    queryBuilder = fixture('query-builder-fixture');
+    queryBuilder = fixtureSync(html`<test-runs-query-builder></test-runs-query-builder>`);
     queryBuilder.productSpecs = ['chrome', 'edge'];
   });
 
-  test('instanceof Polymer.Element', () => {
-    assert.isTrue(queryBuilder instanceof PolymerElement);
+  test('is a registered custom element', () => {
+    assert.isTrue(queryBuilder instanceof window.customElements.get('test-runs-query-builder'));
   });
 
   test('add item', () => {
@@ -58,14 +42,12 @@ suite('TestRunsQueryBuilder', () => {
     assert.equal(queryBuilder.products[3].browser_name, 'blitz');
   });
 
-  test('delete item', (done) => {
-    flush(() => {
-      const first = queryBuilder.root.querySelector('product-builder');
-      first.deleteProduct();
-      assert.equal(queryBuilder.products.length, 1);
-      assert.equal(queryBuilder.products[0].browser_name, 'edge');
-      done();
-    });
+  test('delete item', async() => {
+    await aTimeout(0);
+    const first = queryBuilder.shadowRoot.querySelector('product-builder');
+    first.deleteProduct();
+    assert.equal(queryBuilder.products.length, 1);
+    assert.equal(queryBuilder.products[0].browser_name, 'edge');
   });
 
   test('clear all items', () => {
@@ -75,7 +57,8 @@ suite('TestRunsQueryBuilder', () => {
   });
 
   test('productSpecs', () => {
-    queryBuilder.set('products.0.labels', ['beta']);
+    const [first, ...rest] = queryBuilder.products;
+    queryBuilder.products = [Object.assign({}, first, { labels: ['beta'] }), ...rest];
     assert.equal(queryBuilder.productSpecs[0], 'chrome[beta]');
   });
 
@@ -112,27 +95,23 @@ suite('TestRunsQueryBuilder', () => {
     });
 
     for (const channel of Channels) {
-      test(`_channel=${channel}`, done => {
-        flush(() => {
-          for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
-            productBuilder._channel = channel;
-          }
-          expect(queryBuilder.queryParams.label).to.contain(channel);
-          done();
-        });
+      test(`_channel=${channel}`, async() => {
+        await aTimeout(0);
+        for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+          productBuilder._channel = channel;
+        }
+        expect(queryBuilder.queryParams.label).to.contain(channel);
       });
     }
 
     for (const channel of Channels) {
-      test(`labels=[${channel}]`, done => {
+      test(`labels=[${channel}]`, async() => {
         queryBuilder.labels = [channel];
         queryBuilder.submit();
-        flush(() => {
-          for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
-            expect(productBuilder._channel).to.equal(channel);
-          }
-          done();
-        });
+        await aTimeout(0);
+        for (const productBuilder of queryBuilder.shadowRoot.querySelectorAll('product-builder')) {
+          expect(productBuilder._channel).to.equal(channel);
+        }
       });
     }
   });
@@ -157,7 +136,7 @@ suite('TestRunsQueryBuilder', () => {
     let sandbox;
 
     setup(() => {
-      sandbox = sinon.sandbox.create();
+      sandbox = sinon.createSandbox();
       sandbox.spy(queryBuilder, 'shasURLUpdated');
     });
 
@@ -190,7 +169,3 @@ suite('TestRunsQueryBuilder', () => {
     });
   });
 });
-
-</script>
-</body>
-</html>

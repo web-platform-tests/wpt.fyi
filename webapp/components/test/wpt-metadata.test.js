@@ -1,26 +1,10 @@
-<!doctype html>
-<html>
-
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-
-<body>
-  <test-fixture id="wpt-metadata-fixture">
-    <template>
-      <wpt-metadata></wpt-metadata>
-    </template>
-  </test-fixture>
-
-  <script type="module">
-
+import { assert, fixtureSync, html } from '@open-wc/testing';
 import '../wpt-metadata.js';
+
 suite('<wpt-metadata>', () => {
   let appFixture = null;
   setup(() => {
-    appFixture = fixture('wpt-metadata-fixture');
+    appFixture = fixtureSync(html`<wpt-metadata></wpt-metadata>`);
   });
   suite('compute display metadata', () => {
     test('null case', () => {
@@ -397,7 +381,3 @@ suite('<wpt-metadata>', () => {
     });
   });
 });
-</script>
-</body>
-
-</html>
