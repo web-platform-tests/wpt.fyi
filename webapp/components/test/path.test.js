@@ -1,60 +1,16 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-<body>
-  <dom-module id="path-info-concrete">
-    <script type="module">
-      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-      import { PathInfo } from '../path.js';
-
-      class ConcreteType extends PathInfo(PolymerElement) {}
-      window.customElements.define('path-info-concrete', ConcreteType);
-    </script>
-  </dom-module>
-
-  <test-fixture id="path-info-fixture">
-    <template>
-      <path-info-concrete></path-info-concrete>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="path-part-dir-prefixed-fixture">
-    <template>
-      <path-part path="/a/b" is-dir="true" prefix="/foo" navigate="navigate"></path-part>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="path-part-dir-fixture">
-    <template>
-      <path-part path="/a/b" is-dir="true" navigate="navigate"></path-part>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="path-part-file-prefixed-fixture">
-    <template>
-      <path-part path="/a/b/c.html" is-dir="false" prefix="/foo" navigate="navigate"></path-part>
-    </template>
-  </test-fixture>
-
-  <test-fixture id="path-part-file-fixture">
-    <template>
-      <path-part path="/a/b/c.html" is-dir="false" navigate="navigate"></path-part>
-    </template>
-  </test-fixture>
-
-  <script type="module">
-import { PathPart } from '../path.js';
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { PathInfo, PathPart } from '../path.js';
+
+class ConcreteType extends PathInfo(PolymerElement) {}
+window.customElements.define('path-info-concrete', ConcreteType);
 
 suite('PathInfo', () => {
   let pathInfo;
 
   setup(() => {
-    pathInfo = fixture('path-info-fixture');
+    pathInfo = fixtureSync(html`<path-info-concrete></path-info-concrete>`);
   });
 
   test('pathIsATestPath', () => {
@@ -141,21 +97,21 @@ suite('PathPart', () => {
   let sandbox, ppdir, ppfile, ppdirprefixed, ppfileprefixed;
 
   setup(() => {
-    ppdir = fixture('path-part-dir-fixture');
-    ppfile = fixture('path-part-file-fixture');
-    ppdirprefixed = fixture('path-part-dir-prefixed-fixture');
-    ppfileprefixed = fixture('path-part-file-prefixed-fixture');
+    ppdir = fixtureSync(html`<path-part path="/a/b" is-dir="true" navigate="navigate"></path-part>`);
+    ppfile = fixtureSync(html`<path-part path="/a/b/c.html" is-dir="false" navigate="navigate"></path-part>`);
+    ppdirprefixed = fixtureSync(html`<path-part path="/a/b" is-dir="true" prefix="/foo" navigate="navigate"></path-part>`);
+    ppfileprefixed = fixtureSync(html`<path-part path="/a/b/c.html" is-dir="false" prefix="/foo" navigate="navigate"></path-part>`);
 
-    sandbox = sinon.sandbox.create();
+    sandbox = sinon.createSandbox();
   });
 
   teardown(() => {
     sandbox.restore();
   });
 
-  test('instanceof Polymer.Element', () => {
-    assert.isTrue(new PathPart() instanceof PolymerElement);
-    assert.isTrue(document.createElement('path-part') instanceof PolymerElement);
+  test('is a registered custom element', () => {
+    assert.isTrue(new PathPart() instanceof HTMLElement);
+    assert.isTrue(document.createElement('path-part') instanceof PathPart);
   });
 
   suite('static get is()', () => {
@@ -193,6 +149,18 @@ suite('PathPart', () => {
       });
     });
     suite('relativePath: computeDisplayableRelativePath(path)', () => {
+      // computeDisplayableRelativePath() strips the current page's path, so
+      // run these tests from a page path that is not a prefix of the paths
+      // under test (as the web-component-tester page path was).
+      let originalUrl;
+      suiteSetup(() => {
+        originalUrl = window.location.href;
+        window.history.replaceState(null, '', `/components/test/path.html${window.location.search}`);
+      });
+      suiteTeardown(() => {
+        window.history.replaceState(null, '', originalUrl);
+      });
+
       test('computeDisplayableRelativePath()', () => {
         assert.equal(typeof PathPart.prototype.computeDisplayableRelativePath, 'function');
         assert.equal(ppdir.computeDisplayableRelativePath(''), '/');
@@ -218,6 +186,3 @@ suite('PathPart', () => {
     });
   });
 });
-</script>
-</body>
-</html>

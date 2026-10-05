@@ -1,33 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-<body>
-  <dom-module id="product-info-concrete">
-    <script type="module">
-      import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-      import { ProductInfo } from '../product-info.js';
+import { expect, fixtureSync, html } from '@open-wc/testing';
+import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { ProductInfo } from '../product-info.js';
 
-      class ConcreteProductInfo extends ProductInfo(PolymerElement) {}
-      window.customElements.define('product-info-concrete', ConcreteProductInfo);
-    </script>
-  </dom-module>
+class ConcreteProductInfo extends ProductInfo(PolymerElement) {}
+window.customElements.define('product-info-concrete', ConcreteProductInfo);
 
-  <test-fixture id="product-info-fixture">
-    <template>
-      <product-info-concrete></product-info-concrete>
-    </template>
-  </test-fixture>
-
-  <script type="module">
 suite('ProductInfo', () => {
   let productInfo;
 
   setup(() => {
-    productInfo = fixture('product-info-fixture');
+    productInfo = fixtureSync(html`<product-info-concrete></product-info-concrete>`);
   });
 
   test('displayName', () => {
@@ -56,6 +38,3 @@ suite('ProductInfo', () => {
     expect(productInfo.displayLogo('firefox', ['stable'])).to.equal('/static/firefox_64x64.png');
   });
 });
-  </script>
-</body>
-</html>

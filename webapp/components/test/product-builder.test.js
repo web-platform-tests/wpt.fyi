@@ -1,27 +1,11 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../product-builder.js"></script>
-</head>
-<body>
-  <test-fixture id="product-builder-fixture">
-    <template>
-      <product-builder></product-builder>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { assert, fixtureSync, html } from '@open-wc/testing';
 import '../product-builder.js';
 
 suite('ProductBuilder', () => {
   let productBuilder;
 
   setup(() => {
-    productBuilder = fixture('product-builder-fixture');
+    productBuilder = fixtureSync(html`<product-builder></product-builder>`);
     productBuilder.product = {browser_name: 'chrome'};
   });
 
@@ -36,18 +20,14 @@ suite('ProductBuilder', () => {
         assert.equal(productBuilder.spec, 'chrome[experimental]');
       });
       test('changes value when labels are updated', () => {
-        productBuilder.set('labels', ['experimental']);
+        productBuilder.labels = ['experimental'];
         assert.equal(productBuilder._channel, 'experimental');
         assert.equal(productBuilder._source, 'any');
 
-        productBuilder.set('labels', ['buildbot']);
+        productBuilder.labels = ['buildbot'];
         assert.equal(productBuilder._source, 'buildbot');
         assert.equal(productBuilder._channel, 'any');
       });
     });
   });
 });
-
-</script>
-</body>
-</html>

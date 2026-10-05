@@ -1,26 +1,13 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-<body>
-  <test-fixture id="wpt-permalinks-fixture">
-    <template>
-      <wpt-permalinks></wpt-permalinks>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import '../wpt-permalinks.js';
 
 suite('wpt-permalinks', () => {
   let sandbox, permalinks;
 
   setup(() => {
-    permalinks = fixture('wpt-permalinks-fixture');
-    sandbox = sinon.sandbox.create();
+    permalinks = fixtureSync(html`<wpt-permalinks></wpt-permalinks>`);
+    sandbox = sinon.createSandbox();
   });
 
   teardown(() => {
@@ -47,6 +34,3 @@ suite('wpt-permalinks', () => {
     });
   });
 });
-</script>
-</body>
-</html>

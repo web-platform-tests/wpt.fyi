@@ -20,12 +20,6 @@ export default [...compat.extends("eslint:recommended"), {
         globals: {
             ...globals.browser,
             ...globals.mocha,
-            assert: true,
-            expect: true,
-            fixture: true,
-            flush: true,
-            sandbox: true,
-            sinon: true,
         },
 
         ecmaVersion: 2024,

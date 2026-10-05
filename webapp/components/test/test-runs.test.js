@@ -1,41 +1,25 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module">
-    import { TestRunsBase } from '../test-runs.js';
-    window.customElements.define(TestRunsBase.is, TestRunsBase);
-  </script>
-</head>
-<body>
-  <test-fixture id="wpt-results-base-fixture">
-    <template>
-      <wpt-results-base aligned></wpt-results-base>
-    </template>
-  </test-fixture>
-  <script type="module">
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { waitingOn, TEST_RUNS_DATA } from './util/helpers.js';
 import { TestRunsBase } from '../test-runs.js';
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+
+window.customElements.define(TestRunsBase.is, TestRunsBase);
 
 suite('TestRunsBase', () => {
   let sandbox;
 
   setup(() => {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(window, 'fetch', () => Promise.resolve(new Response(JSON.stringify(TEST_RUNS_DATA))));
+    sandbox = sinon.createSandbox();
+    sandbox.stub(window, 'fetch').callsFake(() => Promise.resolve(new Response(JSON.stringify(TEST_RUNS_DATA))));
   });
 
   teardown(() => {
     sandbox.restore();
   });
 
-  test('instanceof Polymer.Element', () => {
-    assert.isTrue(new TestRunsBase() instanceof PolymerElement);
-    assert.isTrue(document.createElement('wpt-results-base') instanceof PolymerElement);
+  test('is a registered custom element', () => {
+    assert.isTrue(new TestRunsBase() instanceof HTMLElement);
+    assert.isTrue(document.createElement('wpt-results-base') instanceof TestRunsBase);
   });
 
   suite('static get is()', () => {
@@ -57,12 +41,12 @@ suite('TestRunsBase', () => {
       let wrbf;
 
       setup(() => {
-        wrbf = fixture('wpt-results-base-fixture');
+        wrbf = fixtureSync(html`<wpt-results-base aligned></wpt-results-base>`);
         wrbf.loadRuns();
       });
 
       teardown(() => {
-        sandbox.reset();
+        sandbox.resetHistory();
       });
 
       test('calls window.fetch(...)', () => {
@@ -86,6 +70,3 @@ suite('TestRunsBase', () => {
     });
   });
 });
-</script>
-</body>
-</html>
