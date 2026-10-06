@@ -5,6 +5,7 @@
  */
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
+import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
