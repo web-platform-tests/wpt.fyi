@@ -2,11 +2,6 @@
 
 [![GitHub Actions](https://github.com/web-platform-tests/wpt.fyi/workflows/Continuous%20Integration/badge.svg)](https://github.com/web-platform-tests/wpt.fyi/actions?query=workflow%3A%22Continuous+Integration%22+branch%3Amaster)
 
-
-
-
-
-
 wpt.fyi is a dashboard of cross-browser results for [web-platform-tests](https://github.com/web-platform-tests/wpt), the data for which is uploaded by external services, primarily from various CI integrations in the wpt repo.
 
 **Backend**: An [App Engine app](webapp/) for storing test run metadata and serving HTML
