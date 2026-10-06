@@ -10,7 +10,7 @@
     "test": "mocha --ui tdd --timeout 12000 webdriver.js"
   },
   "dependencies": {
-    "chai": "6.2.2",
+    "chai": "6.3.0",
     "debug": "4.4.3",
     "flg": "^3.0.0",
     "mocha": "12.0.2",
