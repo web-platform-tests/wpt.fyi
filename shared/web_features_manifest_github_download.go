@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v91/github"
+	"github.com/google/go-github/v92/github"
 )
 
 // WebFeatureManifestRepo is where the web feature manifest is published.
