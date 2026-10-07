@@ -6,7 +6,6 @@ import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
-import '../components/wpt-bsf.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
@@ -109,20 +108,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
       <div class="separator"></div>
 
-      <template is="dom-if" if="[[showBSFGraph]]">
-        <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
-          <info-banner>
-            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></paper-icon-button>
-            [[bsfBannerMessage]]
-          </info-banner>
-          <template is="dom-if" if="[[!isBSFCollapsed]]">
-            <iron-collapse opened="[[!isBSFCollapsed]]">
-              <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
-            </iron-collapse>
-          </template>
-        </div>
-      </template>
-
       <template is="dom-if" if="[[resultsTotalsRangeMessage]]">
         <info-banner>
           [[resultsTotalsRangeMessage]]
@@ -194,27 +179,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRowCount)',
       },
       subtestRowCount: Number,
-      bsfBannerMessage: {
-        type: String,
-        computed: 'computeBSFBannerMessage(isBSFCollapsed)',
-      },
-      showBSFGraph: {
-        type: Boolean,
-        computed: 'computeShowBSFGraph(page, queryParams, pathIsRootDir)',
-      },
-      isBSFCollapsed: {
-        type: Boolean,
-        computed: 'computeIsBSFCollapsed()',
-      },
       isTriageMode: {
         type: Boolean,
         value: false,
       },
-      bsfStartTime: {
-        type: Object,
-        value: null,
-      },
-      isInteracting: Boolean,
     };
   }
 
@@ -230,50 +198,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.togglePermalinks = () => this.shadowRoot.querySelector('wpt-permalinks').open();
     this.toggleQueryEdit = () => {
       this.editingQuery = !this.editingQuery;
-    };
-    this.handleCollapse = () => {
-      this.isBSFCollapsed = !this.isBSFCollapsed;
-      // Record hide/open actions on the BSF graph. Currently, we only
-      // show it on the homepage.
-      if ('gtag' in window) {
-        window.gtag('event', 'visibility change', {
-          'event_category': 'bsf',
-          'event_label': this.path,
-          'value': this.isBSFCollapsed ? 1 : 0
-        });
-      }
-      this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
-    };
-    this.enterBSF = () => {
-      // The use of isInteracting is a workaround for a known issue,
-      // https://stackoverflow.com/questions/17244996/why-do-the-mouseenter-mouseleave-events-fire-when-entering-leaving-child-element;
-      // when users interact with the BSF chart itself, enterBSF is triggered unexpectedly.
-      // In that case, isInteracting is set to true to avoid resetting bsfStartTime.
-      if (this.isInteracting) {
-        return;
-      }
-      this.bsfStartTime = new Date();
-    };
-    this.exitBSF = () => {
-      // Similarly, when users interact with the BSF chart, isInteracting is set to
-      // true to avoid sending analytics prematurely in exitBSF.
-      if (this.isInteracting || !this.bsfStartTime) {
-        return;
-      }
-      const diff = new Date().getTime() - this.bsfStartTime.getTime();
-      const duration = Math.round(diff / 1000);
-      if (duration <= 0) {
-        return;
-      }
-
-      if ('gtag' in window) {
-        window.gtag('event', 'hover', {
-          'event_category': 'bsf',
-          'event_label': this.path,
-          'value': duration
-        });
-      }
-      this.bsfStartTime = null;
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
@@ -305,11 +229,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     }
     this.shadowRoot.querySelector('app-location')
       ._createPropertyObserver('__query', query => this.query = query);
-    this.addEventListener('interactingchanged', this.bsfIsInteractingChanged);
-  }
-
-  bsfIsInteractingChanged(e) {
-    this.isInteracting = e.detail.value;
   }
 
   queryChanged(query) {
@@ -428,43 +347,6 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         `Showing ${testsAndSubtests} from `);
     }
     return msg;
-  }
-
-  computeBSFBannerMessage(isBSFCollapsed) {
-    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
-    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
-  }
-
-  // Currently we only have BSF data for the entirety of the WPT test suite. To avoid
-  // confusing the user, we only display the graph when they are looking at top-level
-  // test results and hide it when in a subdirectory.
-  computeShowBSFGraph(page, queryParams, pathIsRootDir) {
-    // Only show on the results page.
-    if (page !== 'results') {
-      return false;
-    }
-
-    // Hide when search is in use or query by run_id/sha.
-    if (queryParams.q || queryParams.run_id || queryParams.sha) {
-      return false;
-    }
-
-    return pathIsRootDir;
-  }
-
-  computeIsBSFCollapsed() {
-    const stored = this.getLocalStorageFlag('isBSFCollapsed');
-    if (stored === null) {
-      return false;
-    }
-    return stored;
-  }
-
-  getCollapseIcon(isBSFCollapsed) {
-    if (isBSFCollapsed) {
-      return '/static/expand_more.svg';
-    }
-    return '/static/expand_less.svg';
   }
 }
 customElements.define(WPTApp.is, WPTApp);
