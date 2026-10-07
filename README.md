@@ -1,4 +1,4 @@
-# [web-platform-tests dashboard](https://wpt.fyi/) 📈
+# [web-platform-tests dashboard](https://wpt.fyi/) 📈 
 
 [![GitHub Actions](https://github.com/web-platform-tests/wpt.fyi/workflows/Continuous%20Integration/badge.svg)](https://github.com/web-platform-tests/wpt.fyi/actions?query=workflow%3A%22Continuous+Integration%22+branch%3Amaster)
 
