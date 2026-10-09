@@ -212,7 +212,7 @@ suite('wpt-amend-metadata', () => {
       };
       appFixture.handleFieldInput(event);
 
-      expect(appFixture.displayedMetadata[0].invalidUrl).to.be.falsy;
+      expect(appFixture.displayedMetadata[0].invalidUrl).to.not.be.ok;
       expect(appFixture.triageSubmitDisabled).to.be.false;
     });
     test('handleFieldInput with http vs https', () => {
