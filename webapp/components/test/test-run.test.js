@@ -1,33 +1,18 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../test-run.js"></script>
-</head>
-<body>
-  <test-fixture id="test-run-fixture">
-    <template>
-      <test-run></test-run>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { assert, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { TestRun } from '../test-run.js';
 
 suite('<test-run>', () => {
   let trf = null;
 
   setup(() => {
-    trf = fixture('test-run-fixture');
-    trf.set('testRun', {
+    trf = fixtureSync(html`<test-run></test-run>`);
+    trf.testRun = {
       browser_name: 'firefox',
       time_start: '2018-01-12T12:00:00Z',
       time_end: '2018-01-12T13:20:00Z',
       revision: '0123456789',
-    });
+    };
   });
 
   suite('static get properties()', () => {
@@ -42,11 +27,11 @@ suite('<test-run>', () => {
     let sandbox;
 
     setup(() => {
-      sandbox = sinon.sandbox.create();
+      sandbox = sinon.createSandbox();
       // Override the timezone as UTC.
       for (const method of ['toLocaleDateString', 'toLocaleTimeString']) {
         const original = Date.prototype[method];
-        sandbox.stub(Date.prototype, method, function(locale, options) {
+        sandbox.stub(Date.prototype, method).callsFake(function(locale, options) {
           return original.call(
             this, 'en-US', Object.assign(options, {timeZone: 'UTC'}));
         });
@@ -149,6 +134,3 @@ suite('<test-run>', () => {
     });
   });
 });
-</script>
-</body>
-</html>

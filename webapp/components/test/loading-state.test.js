@@ -1,37 +1,17 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-
-<body>
-<dom-module id="loading-state-concrete">
-  <script type="module">
+import { assert, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from '../loading-state.js';
 
 class ConcreteType extends LoadingState(PolymerElement) {}
 
 window.customElements.define('loading-state-concrete', ConcreteType);
-</script>
-</dom-module>
 
-<test-fixture id="loading-state-fixture">
-  <template>
-    <loading-state-concrete></loading-state-concrete>
-  </template>
-</test-fixture>
-
-  <script type="module">
-import '../../node_modules/@polymer/polymer/polymer-element.js';
-import '../loading-state.js';
 suite('LoadingState', () => {
   let state;
 
   setup(() => {
-    state = fixture('loading-state-fixture');
+    state = fixtureSync(html`<loading-state-concrete></loading-state-concrete>`);
   });
 
   suite('LoadingState.prototype.*', () => {
@@ -114,7 +94,3 @@ suite('LoadingState', () => {
     });
   });
 });
-</script>
-</body>
-
-</html>

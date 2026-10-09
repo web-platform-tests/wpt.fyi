@@ -1,39 +1,22 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-
-  <script type="module" src="../test-runs.js"></script>
-  <script type="module" src="../test-file-results.js"></script>
-</head>
-<body>
-  <test-fixture id="test-file-results-fixture">
-    <template>
-      <test-file-results
-        path="/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html">
-      </test-file-results>
-    </template>
-  </test-fixture>
-  <script type="module">
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import '../test-runs.js';
 import { TestFileResults } from '../test-file-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
 suite('TestFileResults', () => {
   let tfr;
 
   setup(() => {
-    const id = 'test-file-results-fixture';
-    document.getElementById(id)
-      .setAttribute('test-runs', JSON.stringify(TEST_RUNS_DATA));
-    tfr = fixture(id);
+    tfr = fixtureSync(html`
+      <test-file-results
+        path="/2dcontext/the-canvas-state/2d.state.saverestore.bitmap.html">
+      </test-file-results>
+    `);
   });
 
-  test('instanceof Polymer.Element', () => {
-    assert.isTrue(new TestFileResults() instanceof PolymerElement);
-    assert.isTrue(document.createElement('test-file-results') instanceof PolymerElement);
+  test('is a registered custom element', () => {
+    assert.isTrue(new TestFileResults() instanceof HTMLElement);
+    assert.isTrue(document.createElement('test-file-results') instanceof TestFileResults);
   });
 
   suite('static get is()', () => {
@@ -255,6 +238,3 @@ suite('TestFileResults', () => {
     });
   });
 });
-</script>
-</body>
-</html>

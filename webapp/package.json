@@ -30,11 +30,15 @@
     "@browser-logos/webkit-nightly": "2.0.2",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.33.0",
+    "@open-wc/testing": "4.0.0",
     "@polymer/test-fixture": "4.0.2",
+    "@web/test-runner": "0.20.2",
+    "@web/test-runner-chrome": "0.18.1",
     "cpy-cli": "7.0.0",
     "eslint": "10.11.0",
     "eslint-plugin-html": "8.2.1",
     "globals": "^17.13.0",
+    "sinon": "22.1.0",
     "wct-browser-legacy": "1.0.2",
     "wct-local": "2.1.7",
     "web-component-tester": "6.9.2"
@@ -52,12 +56,13 @@
     "multer@<1.4.5": "1.4.5-lts.1"
   },
   "scripts": {
-    "test": "wct --local chrome && wct --local firefox",
+    "test": "wct --local chrome && wct --local firefox && web-test-runner",
     "lint": "eslint 'components/**/*.js' && eslint --plugin html 'components/test/*.html'",
     "lint-fix": "eslint --fix 'components/**/*.js' && eslint --fix --plugin html 'components/test/*.html' ",
     "postinstall": "cpy 'node_modules/@browser-logos/{chrome,chrome-beta,chrome-canary,chrome-dev,chromium,deno,edge,edge-beta,edge-canary,edge-dev,firefox,firefox-beta,firefox-nightly,geckoview,node.js,safari,servo,uc}/*_64x64.png' static && cpy 'node_modules/@browser-logos/firefox-developer-edition/*_64x64.png' static --rename=firefox-dev_64x64.png && cpy 'node_modules/@browser-logos/safari/*_64x64.png' static --rename=safari-beta_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png'  static --rename=safari-dev_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png' static --rename=safari-preview_64x64.png && cpy 'node_modules/@browser-logos/webkit-nightly/*_64x64.png' static --rename=wktr_64x64.png",
     "wctp": "wct -p",
-    "wct": "wct"
+    "wct": "wct",
+    "wtr": "web-test-runner"
   },
   "dependencies": {
     "@google-web-components/google-chart": "3.1.1",

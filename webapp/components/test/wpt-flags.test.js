@@ -1,18 +1,5 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-<body>
-  <test-fixture id="wpt-flags-editor-fixture">
-    <template>
-      <wpt-flags-editor></wpt-flags-editor>
-    </template>
-  </test-fixture>
-
-  <script type="module">
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import sinon from 'sinon';
 import { WPTFlags, WPTFlagsEditor } from '../wpt-flags.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 
@@ -39,7 +26,7 @@ suite('wpt-flags', () => {
     let editor, colorHomepageStateBefore;
 
     setup(() => {
-      editor = fixture('wpt-flags-editor-fixture');
+      editor = fixtureSync(html`<wpt-flags-editor></wpt-flags-editor>`);
       colorHomepageStateBefore = editor.colorHomepage;
     });
 
@@ -61,8 +48,8 @@ suite('wpt-flags', () => {
     setup(() => {
       // Clear localStorage to ensure tests start with a clean state
       window.localStorage.removeItem('features.colorHomepage');
-      editor = fixture('wpt-flags-editor-fixture');
-      sandbox = sinon.sandbox.create();
+      editor = fixtureSync(html`<wpt-flags-editor></wpt-flags-editor>`);
+      sandbox = sinon.createSandbox();
     });
 
     teardown(() => {
@@ -100,6 +87,3 @@ suite('wpt-flags', () => {
     });
   });
 });
-</script>
-</body>
-</html>

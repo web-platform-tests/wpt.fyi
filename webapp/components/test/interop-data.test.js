@@ -1,14 +1,6 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
-</head>
-
-<body>
-<script type="module">
+import { assert } from '@open-wc/testing';
 import {interopData} from '../interop-data.js';
+
 // Check that the data in the JavaScript file and in the JSON file match.
 // interop-data.json is used by some Mozilla infrastructure, so the file should
 // not be deleted and should remain up-to-date.
@@ -19,7 +11,3 @@ suite('contents of webapp/components/interop-data.js', () => {
     assert.deepEqual(interopData, interopJson);
   });
 });
-</script>
-</body>
-
-</html>
