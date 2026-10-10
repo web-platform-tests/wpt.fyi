@@ -44,6 +44,11 @@ suite('<display-logo>', () => {
     }
   });
 
+  test('has no logo URL until the product has a browser', async() => {
+    const el = await fixture(html`<display-logo></display-logo>`);
+    assert.deepEqual(images(el).map(img => img.src), [null]);
+  });
+
   suite('small', () => {
     test('is off by default', async() => {
       const el = await fixture(html`<display-logo .product=${{browser_name: 'chrome'}}></display-logo>`);
