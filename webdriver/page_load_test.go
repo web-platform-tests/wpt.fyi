@@ -38,6 +38,20 @@ visit(document);
 return {count: count, undefinedTags: [...undefinedTags].sort()};
 `
 
+// litScript loads Lit from a module script in the page, as a component would,
+// so the page's import map resolves it. It reports the type of LitElement, or
+// the error that stopped Lit from loading.
+const litScript = `
+const done = arguments[arguments.length - 1];
+window.reportLitResult = done;
+const script = document.createElement('script');
+script.type = 'module';
+script.textContent = "import('lit').then(" +
+  "(lit) => window.reportLitResult(typeof lit.LitElement), " +
+  "(error) => window.reportLitResult(String(error)));";
+document.head.append(script);
+`
+
 // TestPagesDefineAllElements loads each page and checks that every custom
 // element on it gets defined. This catches modules that fail to load, which
 // unit tests don't, because the test runner resolves imports itself.
@@ -58,6 +72,7 @@ func TestPagesDefineAllElements(t *testing.T) {
 		for _, page := range pages {
 			t.Run(page, func(t *testing.T) {
 				testPageDefinesAllElements(t, app, wd, page)
+				testPageLoadsLit(t, wd, page)
 			})
 		}
 	})
@@ -86,4 +101,12 @@ func testPageDefinesAllElements(t *testing.T, app AppServer, wd selenium.WebDriv
 	}
 	err := wd.WaitWithTimeout(allDefined, LongTimeout)
 	assert.Nil(t, err, "%s has %v custom elements; never defined: %v", page, count, undefinedTags)
+}
+
+// testPageLoadsLit checks that the current page's import map resolves Lit.
+func testPageLoadsLit(t *testing.T, wd selenium.WebDriver, page string) {
+	result, err := wd.ExecuteScriptAsync(litScript, nil)
+	if assert.Nil(t, err) {
+		assert.Equal(t, "function", result, "typeof LitElement on %s", page)
+	}
 }

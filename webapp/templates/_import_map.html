@@ -1,0 +1,29 @@
+{{- /* no data */ -}}
+{{- /*
+  Resolves the bare module specifiers that Lit uses. The /node_modules/
+  handler only rewrites unminified imports of scoped packages, so it leaves
+  Lit's published (minified) modules unchanged.
+
+  Lit's own lit-element and lit-html are scoped to node_modules/lit/, because
+  that is where npm installs them: the top-level lit-element and lit-html are
+  older versions used by @vaadin/vaadin-themable-mixin.
+
+  TestImportMapTargetsExist (components_handler_test.go) checks these paths.
+*/ -}}
+<script type="importmap">
+{
+  "imports": {
+    "lit": "/node_modules/lit/index.js",
+    "lit/": "/node_modules/lit/"
+  },
+  "scopes": {
+    "/node_modules/lit/": {
+      "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js",
+      "@lit/reactive-element/": "/node_modules/@lit/reactive-element/",
+      "lit-element/": "/node_modules/lit/node_modules/lit-element/",
+      "lit-html": "/node_modules/lit/node_modules/lit-html/lit-html.js",
+      "lit-html/": "/node_modules/lit/node_modules/lit-html/"
+    }
+  }
+}
+</script>
