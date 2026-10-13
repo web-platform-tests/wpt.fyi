@@ -1,3 +1,6 @@
+// fake-google-charts.js must be imported before wpt-app.js, which imports the
+// <google-chart> element and google-chart-loader.js; see that file.
+import './util/fake-google-charts.js';
 import { assert, expect, fixtureSync, html } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../../views/wpt-app.js';
