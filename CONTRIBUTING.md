@@ -21,8 +21,8 @@ source util/commands.sh
 wptd_exec_it make lint
 ```
 
-To run outside docker, you'll need to install `golint` and Node.js. ESLint is a
-dev dependency of `webapp/`, so lint the JavaScript from there:
+To run outside docker, you'll need to install Node.js. ESLint is a dev
+dependency of `webapp/`, so lint the JavaScript from there:
 
 ```sh
 cd webapp
