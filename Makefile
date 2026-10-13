@@ -61,7 +61,7 @@ github_action_go_setup:
 	fi
 # NOTE: We prune before generate, because node_modules are embedded into the
 # binary (and part of the build).
-go_build: git mockgen github_action_go_setup webapp_node_modules_prod
+go_build: git github_action_go_setup webapp_node_modules_prod
 	go generate ./...
 	# Check all packages without producing any output.
 	go build -v ./...
@@ -74,12 +74,12 @@ go_build_dev:
 	@ # Disable inlining and optimizations that can interfere with debugging.
 	go build -v -tags skippackr -gcflags=all="-N -l" ./webapp/web
 
-go_lint: golint go_test_tag_lint
-	golint -set_exit_status ./api/...
-	golint -set_exit_status ./shared/...
-	golint -set_exit_status ./util/...
-	golint -set_exit_status ./webapp/...
-	golint -set_exit_status ./webdriver/...
+go_lint: go_test_tag_lint
+	go tool golint -set_exit_status ./api/...
+	go tool golint -set_exit_status ./shared/...
+	go tool golint -set_exit_status ./util/...
+	go tool golint -set_exit_status ./webapp/...
+	go tool golint -set_exit_status ./webdriver/...
 
 # TODO: run on /shared/, /util/, /webapp/, /webdriver/
 golangci_lint: golangci-lint github_action_go_setup
@@ -202,16 +202,6 @@ geckodriver: wget unzip curl jq
 golangci-lint: curl gpg
 	if [ "$$(which golangci-lint)" == "" ]; then \
 		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCI_LINT_VERSION}/install.sh | sh -s -- -b $$(go env GOPATH)/bin; \
-	fi
-
-golint: git
-	if [ "$$(which golint)" == "" ]; then \
-		go install golang.org/x/lint/golint; \
-	fi
-
-mockgen: git
-	if [ "$$(which mockgen)" == "" ]; then \
-		go install go.uber.org/mock/mockgen; \
 	fi
 
 package_service: var-APP_PATH

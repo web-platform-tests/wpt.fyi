@@ -27,7 +27,6 @@ require (
 	github.com/taskcluster/taskcluster/v112 v112.0.0
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.6.0
-	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 	golang.org/x/oauth2 v0.37.0
 	google.golang.org/api v0.300.0
 	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8
@@ -92,6 +91,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/lint v0.0.0-20241112194109-818c5a804067 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
@@ -106,3 +106,8 @@ require (
 
 // The project has been moved to GitHub and we don't want to depend on bzr (used by launchpad).
 replace launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
+
+tool (
+	go.uber.org/mock/mockgen
+	golang.org/x/lint/golint
+)
