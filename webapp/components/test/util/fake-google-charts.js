@@ -14,7 +14,9 @@
 //   import { charts } from './util/fake-google-charts.js';
 //   import { InteropDataManager } from '../interop-data-manager.js';
 //
-// Only the parts of the API that wpt.fyi uses are implemented.
+// Only the parts of the API that wpt.fyi uses are implemented: DataTable,
+// arrayToDataTable, LineChart, Timeline, ChartWrapper (for <google-chart>)
+// and events.
 
 // DataTable stores columns and rows the way google.visualization.DataTable
 // does: addColumn(type, label) or addColumn({type, label, role}), addRow(row).
@@ -38,6 +40,10 @@ class FakeDataTable {
     }
     this.rows.push(row);
     return this.rows.length - 1;
+  }
+
+  addRows(rows) {
+    rows.forEach(row => this.addRow(row));
   }
 
   getNumberOfColumns() {
@@ -94,6 +100,115 @@ class FakeLineChart {
   }
 }
 
+// Timeline records calls the same way as LineChart.
+class FakeTimeline extends FakeLineChart {}
+
+// google.visualization.events: listeners registered per target object, called
+// synchronously by trigger(), as the real charts do when the user interacts
+// with them (for example 'select' when the user clicks a bar).
+const listeners = new WeakMap();
+
+const events = {
+  addListener(target, eventName, handler) {
+    const listener = { target, eventName, handler, once: false };
+    if (!listeners.has(target)) {
+      listeners.set(target, []);
+    }
+    listeners.get(target).push(listener);
+    return listener;
+  },
+
+  addOneTimeListener(target, eventName, handler) {
+    const listener = events.addListener(target, eventName, handler);
+    listener.once = true;
+    return listener;
+  },
+
+  removeListener(listener) {
+    const targetListeners = listeners.get(listener.target) || [];
+    const index = targetListeners.indexOf(listener);
+    if (index !== -1) {
+      targetListeners.splice(index, 1);
+    }
+  },
+
+  trigger(target, eventName, eventDetails) {
+    const targetListeners = listeners.get(target) || [];
+    for (const listener of [...targetListeners]) {
+      if (listener.eventName !== eventName) {
+        continue;
+      }
+      if (listener.once) {
+        targetListeners.splice(targetListeners.indexOf(listener), 1);
+      }
+      listener.handler(eventDetails);
+    }
+  },
+};
+
+// Like google.visualization.arrayToDataTable: the first row holds the column
+// labels, and each column's type is taken from its value in the second row.
+function arrayToDataTable(rows) {
+  const typeOf = value => {
+    if (value instanceof Date) {
+      return 'date';
+    }
+    return ['number', 'boolean'].includes(typeof value) ? typeof value : 'string';
+  };
+  const dataTable = new FakeDataTable();
+  const [labels, ...dataRows] = rows;
+  labels.forEach((label, i) => {
+    dataTable.addColumn(typeOf(dataRows.length ? dataRows[0][i] : ''), label);
+  });
+  dataRows.forEach(row => dataTable.addRow(row));
+  return dataTable;
+}
+
+// ChartWrapper, as the <google-chart> element uses it: draw() creates a chart
+// of the type given to setChartType() (for example 'LineChart', which records
+// its draws in `charts`) in the container, draws it and triggers 'ready'.
+class FakeChartWrapper {
+  constructor(spec = {}) {
+    this.container = spec.container;
+    this.chartType = spec.chartType;
+    this.dataTable = null;
+    this.options = {};
+    this.chart = null;
+  }
+
+  setChartType(chartType) {
+    this.chartType = chartType;
+  }
+
+  getChartType() {
+    return this.chartType;
+  }
+
+  setDataTable(dataTable) {
+    this.dataTable = dataTable;
+  }
+
+  setOptions(options) {
+    this.options = options;
+  }
+
+  getChart() {
+    return this.chart;
+  }
+
+  draw() {
+    const ChartType = window.google.visualization[this.chartType];
+    if (!ChartType) {
+      throw new Error(`The fake Google Charts has no chart type ${this.chartType}`);
+    }
+    if (!(this.chart instanceof ChartType)) {
+      this.chart = new ChartType(this.container);
+    }
+    this.chart.draw(this.dataTable, this.options);
+    events.trigger(this, 'ready');
+  }
+}
+
 // The packages and options passed to google.charts.load().
 const loadCalls = [];
 
@@ -107,7 +222,11 @@ window.google = {
   visualization: {
     DataTable: FakeDataTable,
     LineChart: FakeLineChart,
+    Timeline: FakeTimeline,
+    ChartWrapper: FakeChartWrapper,
+    arrayToDataTable,
+    events,
   },
 };
 
-export { charts, loadCalls, FakeDataTable, FakeLineChart };
+export { charts, loadCalls, FakeChartWrapper, FakeDataTable, FakeLineChart, FakeTimeline };
