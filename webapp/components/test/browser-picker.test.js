@@ -4,8 +4,10 @@
  * found in the LICENSE file.
  */
 
-import { assert, fixture, html, oneEvent, waitUntil } from '@open-wc/testing';
+import { assert, fixture, html, nextFrame, oneEvent, waitUntil } from '@open-wc/testing';
 import '../browser-picker.js';
+// For the <wpt-anomalies> tests: the Insights page's card that uses the multi-picker.
+import '../wpt-insights.js';
 import { AllProducts } from '../product-info.js';
 
 // The four browsers a picker offers when it isn't given any products.
@@ -266,5 +268,71 @@ suite('<browser-multi-picker>', () => {
     // Where the browser is put back isn't significant, only that it's there
     // once.
     assert.sameMembers(el.selected, ['chrome', 'edge', 'firefox', 'safari']);
+  });
+
+  test('replaces selected with a new array when the user checks a box again', async() => {
+    // Parents' computed properties depend on the selection itself, so they
+    // only update when it is replaced.
+    const el = await multiPicker();
+    checkbox(el, 'edge').click();
+    const before = el.selected;
+    checkbox(el, 'edge').click();
+    assert.notStrictEqual(el.selected, before);
+    assert.include(el.selected, 'edge');
+  });
+
+  test('checkboxes added when the products change also update selected', async() => {
+    const el = await multiPicker();
+    el.products = AllProducts.filter(p => p.browser_name !== 'chrome');
+    await waitUntil(() => checkboxes(el).length === 17, 'checkboxes did not update');
+    checkbox(el, 'wktr').click();
+    assert.notInclude(el.selected, 'wktr');
+    assert.lengthOf(el.selected, 16);
+    checkbox(el, 'wktr').click();
+    assert.include(el.selected, 'wktr');
+  });
+
+  test('checks every box again when the products change', async() => {
+    const el = await multiPicker();
+    // Uncheck the first box: <dom-repeat> reuses it for the first new product.
+    checkbox(el, 'chrome').click();
+    assert.isFalse(checkbox(el, 'chrome').checked);
+    el.products = [{ browser_name: 'servo' }, { browser_name: 'deno' }];
+    await waitUntil(() => checkboxes(el).length === 2, 'checkboxes did not update');
+    assert.deepEqual(checkboxes(el).map(b => [b.value, b.checked]), [['servo', true], ['deno', true]]);
+    assert.deepEqual(el.selected, ['servo', 'deno']);
+  });
+
+  suite('inside <wpt-anomalies>', () => {
+    // The Insights page's anomalies card compares one browser with the others
+    // chosen in a <browser-multi-picker>.
+    async function anomalies() {
+      const el = await fixture(html`<wpt-anomalies></wpt-anomalies>`);
+      const picker = el.shadowRoot.querySelector('browser-multi-picker');
+      // The browser picker chooses chrome, so the others are every other product.
+      await waitUntil(() => checkboxes(picker).length === 17, 'the other products did not render');
+      return { el, picker };
+    }
+
+    test('unchecking any other browser leaves it out of the query', async() => {
+      const { el, picker } = await anomalies();
+      // wktr isn't one of the 4 default products the picker first renders.
+      checkbox(picker, 'wktr').click();
+      await nextFrame();
+      assert.notInclude(el.others, 'wktr');
+      assert.notInclude(el.othersDisplayNames, 'macOS WebKit');
+      assert.notInclude(el.query, 'wktr:');
+    });
+
+    test('checking a browser again puts it back in the query', async() => {
+      const { el, picker } = await anomalies();
+      checkbox(picker, 'edge').click();
+      await nextFrame();
+      assert.notInclude(el.query, 'edge:');
+      checkbox(picker, 'edge').click();
+      await nextFrame();
+      assert.include(el.othersDisplayNames, 'Edge');
+      assert.include(el.query, '(edge:pass|edge:ok)');
+    });
   });
 });
