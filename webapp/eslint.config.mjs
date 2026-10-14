@@ -21,7 +21,6 @@ const compat = new FlatCompat({
 const polymerFiles = [
     "components/browser-picker.js",
     "components/channel-picker.js",
-    "components/compat-2021.js",
     "components/github-login.js",
     "components/info-banner.js",
     "components/interop-dashboard.js",
@@ -42,6 +41,8 @@ const polymerFiles = [
     "components/test/loading-state.test.js",
     "components/test/path.test.js",
     "components/test/product-info.test.js",
+    "components/test/results-navigation.test.js",
+    "components/test/self-navigator.test.js",
     "components/test/test-runs-query.test.js",
     "components/test/wpt-amend-metadata.test.js",
     "components/test/wpt-flags.test.js",
