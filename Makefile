@@ -252,7 +252,7 @@ wget: apt-get-wget
 java:
 	@ # java has a different apt-get package name.
 	if [[ "$$(which java)" == "" ]]; then \
-		sudo apt-get install -qqy --no-install-suggests java-11-amazon-corretto-jdk; \
+		sudo apt-get install -qqy --no-install-suggests java-21-amazon-corretto-jdk; \
 	fi
 
 gpg:
