@@ -80,7 +80,7 @@ const TestRunsQueryLoader = (superClass) =>
         return;
       }
       const runs = await r.json();
-      this.splice('testRuns', this.testRuns.length - 1, 0, ...runs);
+      this.push('testRuns', ...runs);
       this._fireTestRunsLoadEvent();
       this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
       return runs;

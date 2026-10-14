@@ -7,8 +7,10 @@ import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 
+// productSpecs.* makes the query follow in-place edits of productSpecs (e.g.
+// this.push('productSpecs', ...)); the method ignores that extra argument.
 const testRunsQueryComputer =
-  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view)';
+  'computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view, productSpecs.*)';
 
 const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuilder(
   ProductInfo(superClass),
@@ -215,8 +217,12 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       productSpecs: Array.from(DefaultProductSpecs),
       labels: [],
       maxCount: undefined,
+      offset: undefined,
+      from: undefined,
+      to: undefined,
       shas: [],
       aligned: undefined,
+      view: undefined,
     };
   }
 
@@ -333,7 +339,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
 
 // TODO(lukebjerring): Support to & from in the builder.
 const testRunsUIQueryComputer =
-  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, view, runIds)';
+  'computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, view, runIds, productSpecs.*)';
 
 const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRunsQuery(
   superClass,
@@ -406,12 +412,9 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     batchUpdate.pr = params.pr;
     batchUpdate.search = params.q;
     batchUpdate.diff = params.diff || false;
-    if (batchUpdate.diff) {
-      batchUpdate.diffFilter = params.filter;
-    }
-    if ('run_id' in params) {
-      batchUpdate.runIds = Array.from(params['run_id']);
-    }
+    // Without a filter, go back to the default one.
+    batchUpdate.diffFilter = params.filter || 'ADC';
+    batchUpdate.runIds = 'run_id' in params ? Array.from(params['run_id']) : undefined;
     return batchUpdate;
   }
 };
