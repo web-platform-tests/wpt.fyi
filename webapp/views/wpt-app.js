@@ -322,21 +322,28 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
     this.dismissToast = e => e.target.closest('paper-toast').close();
+    // Bound once, so that disconnectedCallback can remove the same listeners.
+    this.onSearchCommit = this.handleSearchCommit.bind(this);
+    this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);
+    this.onKeyDown = this.handleKeyDown.bind(this);
+    this.onTriageToggle = this.handleTriageToggle.bind(this);
   }
 
   connectedCallback() {
     super.connectedCallback();
     const testSearch = this.shadowRoot.querySelector('test-search');
-    testSearch.addEventListener('commit', this.handleSearchCommit.bind(this));
-    testSearch.addEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
-    document.addEventListener('keydown', this.handleKeyDown.bind(this));
-    this.addEventListener('triagemode', this.handleTriageToggle.bind(this));
+    testSearch.addEventListener('commit', this.onSearchCommit);
+    testSearch.addEventListener('autocomplete', this.onSearchAutocomplete);
+    document.addEventListener('keydown', this.onKeyDown);
+    this.addEventListener('triagemode', this.onTriageToggle);
   }
 
   disconnectedCallback() {
     const testSearch = this.shadowRoot.querySelector('test-search');
-    testSearch.removeEventListener('commit', this.handleSearchCommit.bind(this));
-    testSearch.removeEventListener('autocomplete', this.handleSearchAutocomplete.bind(this));
+    testSearch.removeEventListener('commit', this.onSearchCommit);
+    testSearch.removeEventListener('autocomplete', this.onSearchAutocomplete);
+    document.removeEventListener('keydown', this.onKeyDown);
+    this.removeEventListener('triagemode', this.onTriageToggle);
     super.disconnectedCallback();
   }
 
@@ -385,14 +392,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   }
 
   handleKeyDown(e) {
-    // Ignore when something other than body has focus.
-    if (e.target !== document.body) {
+    // Ignore when something other than body has focus, and on pages without
+    // tests to move between, such as the not found page.
+    const view = this.activeView;
+    if (e.target !== document.body || !view) {
       return;
     }
     if (e.key === 'n') {
-      this.activeView.moveToNext();
+      view.moveToNext();
     } else if (e.key === 'p') {
-      this.activeView.moveToPrev();
+      view.moveToPrev();
     }
   }
 

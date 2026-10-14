@@ -98,7 +98,8 @@ const PathInfo = (superClass) => class extends superClass {
       // Return an empty array instead of an array with an empty string.
       return [];
     }
-    const parts = encoded.split('/');
+    // A trailing slash (a folder) doesn't add an empty last part.
+    const parts = encoded.endsWith('/') ? encoded.slice(0, -1).split('/') : encoded.split('/');
     let path = '';
     const linkedParts = parts.map(part => {
       path += `/${part}`;

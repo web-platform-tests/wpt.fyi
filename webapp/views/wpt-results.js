@@ -386,11 +386,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[ shouldDisplayTotals(displayedTotals, diffRun) ]]">
               <tr class="totals-row">
                 <td>
-                  <code><strong>[[getTotalText()]]</strong></code>
+                  <code><strong>[[getTotalText(view, displayedTotals)]]</strong></code>
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
-                  <td class\$="numbers [[ getTotalsClass(columnTotal) ]]">
-                    <span class\$="total [[ getTotalsClass(columnTotal) ]]">{{ getTotalDisplay(columnTotal) }}</span>
+                  <td class\$="numbers [[ getTotalsClass(columnTotal, view) ]]">
+                    <span class\$="total [[ getTotalsClass(columnTotal, view) ]]">{{ getTotalDisplay(columnTotal, view) }}</span>
                   </td>
                 </template>
               </tr>
@@ -807,8 +807,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.displayedNodes = [];
       return;
     }
-    // Prefix: includes trailing slash.
-    const prefix = this.path === '/' ? '/' : `${this.path}/`;
+    // Prefix: includes trailing slash, whether or not the path has one.
+    const prefix = this.path && this.path.endsWith('/') ? this.path : `${this.path}/`;
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
