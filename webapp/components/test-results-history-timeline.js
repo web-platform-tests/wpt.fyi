@@ -98,6 +98,27 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
     return 'test-results-history-timeline';
   }
 
+  constructor() {
+    super();
+    // Google Charts is not responsive, even if one sets a percentage-width, so
+    // we redraw the charts when the window is resized.
+    this.onWindowResize = () => {
+      if (this.historicalData) {
+        this.updateAllCharts(this.historicalData, this.subtestNames);
+      }
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('resize', this.onWindowResize);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('resize', this.onWindowResize);
+    super.disconnectedCallback();
+  }
+
   displayCharts(showTestHistory, path, subtestNames) {
     if (!path || !showTestHistory || !this.computePathIsATestFile(path)) {
       return;
@@ -108,12 +129,6 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
       this.getTestHistory(path),
       this.loadCharts()
     ]).then(() => this.updateAllCharts(this.historicalData, subtestNames));
-
-    // Google Charts is not responsive, even if one sets a percentage-width, so
-    // we add a resize observer to redraw the chart if the size changes.
-    window.addEventListener('resize', () => {
-      this.updateAllCharts(this.historicalData, subtestNames);
-    });
   }
 
   // Load Google charts for test history display
