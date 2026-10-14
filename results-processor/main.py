@@ -115,7 +115,12 @@ def task_handler() -> ResponseReturnValue:
 
     task_id = flask.request.headers.get('X-AppEngine-TaskName')
     app.logger.info('Processing task %s', task_id)
-    resp = processor.process_report(task_id, flask.request.form)
+    try:
+        resp = processor.process_report(task_id, flask.request.form)
+    except processor.ArtifactDownloadError as error:
+        app.logger.error('%s', error)
+        return ('Failed to download a required artifact.',
+                HTTPStatus.INTERNAL_SERVER_ERROR)
     status = HTTPStatus.CREATED if resp else HTTPStatus.NO_CONTENT
     if resp:
         app.logger.info(resp)

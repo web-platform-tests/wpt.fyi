@@ -3,23 +3,36 @@
 # found in the LICENSE file.
 
 import json
+import subprocess
 import unittest
 from unittest.mock import call, patch
 
+import requests
 from werkzeug.datastructures import MultiDict
 
 import test_util
 import wptreport
-from processor import Processor, process_report
+from processor import (
+    ArtifactDownloadError,
+    ArtifactNotFoundError,
+    Processor,
+    process_report,
+)
 from test_server import AUTH_CREDENTIALS
 
 
 class ProcessorTest(unittest.TestCase):
-    def fake_download(self, expected_path, response):
+    def fake_download(self, responses):
+        """Fakes a download method that serves a dict of path => response.
+
+        Each path can be downloaded once. Exception responses are raised.
+        """
         def _download(path):
-            if expected_path is None:
+            if path not in responses:
                 self.fail('Unexpected download:' + path)
-            self.assertEqual(expected_path, path)
+            response = responses.pop(path)
+            if isinstance(response, Exception):
+                raise response
             return response
         return _download
 
@@ -40,9 +53,9 @@ class ProcessorTest(unittest.TestCase):
     def test_download(self):
         with Processor() as p:
             p._download_gcs = self.fake_download(
-                'gs://wptd/foo/bar.json', '/fake/bar.json')
+                {'gs://wptd/foo/bar.json': '/fake/bar.json'})
             p._download_http = self.fake_download(
-                'https://wpt.fyi/test.txt.gz', '/fake/test.txt.gz')
+                {'https://wpt.fyi/test.txt.gz': '/fake/test.txt.gz'})
 
             p.download(
                 ['gs://wptd/foo/bar.json'],
@@ -53,9 +66,9 @@ class ProcessorTest(unittest.TestCase):
 
     def test_download_azure(self):
         with Processor() as p:
-            p._download_gcs = self.fake_download(None, None)
+            p._download_gcs = self.fake_download({})
             p._download_http = self.fake_download(
-                'https://wpt.fyi/artifact.zip', 'artifact_test.zip')
+                {'https://wpt.fyi/artifact.zip': 'artifact_test.zip'})
 
             p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 2)
@@ -71,9 +84,8 @@ class ProcessorTest(unittest.TestCase):
 
     def test_download_azure_errors(self):
         with Processor() as p:
-            p._download_gcs = self.fake_download(None, None)
-            p._download_http = self.fake_download(
-                'https://wpt.fyi/artifact.zip', None)
+            p._download_gcs = self.fake_download({})
+            p._download_http = self.fake_download({})
 
             # Incorrect param combinations (both results & azure_url):
             with self.assertRaises(AssertionError):
@@ -81,16 +93,114 @@ class ProcessorTest(unittest.TestCase):
                            [],
                            ['https://wpt.fyi/artifact.zip'])
 
-            # Download failure: no exceptions should be raised.
-            p.download([], [], ['https://wpt.fyi/artifact.zip'])
+            # Download failure: the error should be raised.
+            error = ArtifactDownloadError(
+                'https://wpt.fyi/artifact.zip', RuntimeError('failed'))
+            p._download_http = self.fake_download(
+                {'https://wpt.fyi/artifact.zip': error})
+            with self.assertRaises(ArtifactDownloadError):
+                p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 0)
+
+    def test_download_azure_partial_failure(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download({})
+            error = ArtifactDownloadError(
+                'https://wpt.fyi/artifact2.zip', RuntimeError('failed'))
+
+            # artifact3.zip is not in the dict, so downloading it would fail
+            # the test: downloads stop at the first failure.
+            p._download_http = self.fake_download({
+                'https://wpt.fyi/artifact1.zip': 'artifact_test.zip',
+                'https://wpt.fyi/artifact2.zip': error,
+            })
+
+            with self.assertRaises(ArtifactDownloadError) as cm:
+                p.download([], [], [
+                    'https://wpt.fyi/artifact1.zip',
+                    'https://wpt.fyi/artifact2.zip',
+                    'https://wpt.fyi/artifact3.zip',
+                ])
+            self.assertIs(cm.exception, error)
+
+    def test_download_result_failure(self):
+        with Processor() as p:
+            error = ArtifactNotFoundError(
+                'https://wpt.fyi/wpt_report_2.json.gz', RuntimeError('404'))
+            p._download_gcs = self.fake_download({})
+            p._download_http = self.fake_download({
+                'https://wpt.fyi/wpt_report_1.json.gz': '/fake/1.json.gz',
+                'https://wpt.fyi/wpt_report_2.json.gz': error,
+            })
+
+            # Results are required, even if they do not exist.
+            with self.assertRaises(ArtifactNotFoundError):
+                p.download([
+                    'https://wpt.fyi/wpt_report_1.json.gz',
+                    'https://wpt.fyi/wpt_report_2.json.gz',
+                    'https://wpt.fyi/wpt_report_3.json.gz',
+                ], ['https://wpt.fyi/screenshot.txt.gz'], [])
+            self.assertEqual(len(p.results), 0)
+
+    def test_download_screenshot_failures(self):
+        with Processor() as p:
+            p._download_gcs = self.fake_download({})
+            p._download_http = self.fake_download({
+                'https://wpt.fyi/wpt_report.json.gz': '/fake/report.json.gz',
+                'https://wpt.fyi/screenshot_1.txt.gz': ArtifactNotFoundError(
+                    'https://wpt.fyi/screenshot_1.txt.gz',
+                    RuntimeError('404')),
+                'https://wpt.fyi/screenshot_2.txt.gz': '/fake/2.txt.gz',
+            })
+
+            # Screenshots that do not exist are skipped.
+            with self.assertLogs('processor', level='ERROR'):
+                p.download(
+                    ['https://wpt.fyi/wpt_report.json.gz'],
+                    ['https://wpt.fyi/screenshot_1.txt.gz',
+                     'https://wpt.fyi/screenshot_2.txt.gz'],
+                    [])
+            self.assertListEqual(p.results, ['/fake/report.json.gz'])
+            self.assertListEqual(p.screenshots, ['/fake/2.txt.gz'])
+
+            # Any other screenshot failure is raised.
+            error = ArtifactDownloadError(
+                'https://wpt.fyi/screenshot.txt.gz', RuntimeError('500'))
+            p._download_http = self.fake_download({
+                'https://wpt.fyi/wpt_report.json.gz': '/fake/report.json.gz',
+                'https://wpt.fyi/screenshot.txt.gz': error,
+            })
+            with self.assertRaises(ArtifactDownloadError) as cm:
+                p.download(
+                    ['https://wpt.fyi/wpt_report.json.gz'],
+                    ['https://wpt.fyi/screenshot.txt.gz'],
+                    [])
+            self.assertIs(cm.exception, error)
+
+    @patch('gsutil.copy')
+    def test_download_gcs_failure(self, copy):
+        copy.side_effect = subprocess.CalledProcessError(1, ['gsutil'])
+        with Processor() as p:
+            with self.assertRaises(ArtifactDownloadError) as cm:
+                p._download_gcs('gs://wptd/foo/bar.json')
+            self.assertEqual(cm.exception.uri, 'gs://wptd/foo/bar.json')
+
+    @patch('requests.get')
+    def test_download_http_stream_failure(self, get):
+        get.return_value.headers = {}
+        get.return_value.iter_content.side_effect = (
+            requests.exceptions.ChunkedEncodingError('Connection broken'))
+        with Processor() as p:
+            with self.assertRaises(ArtifactDownloadError) as cm:
+                p._download_http('https://wpt.fyi/wpt_report.json')
+            self.assertEqual(
+                cm.exception.uri, 'https://wpt.fyi/wpt_report.json')
 
     def test_download_github(self):
         with Processor() as p:
-            p._download_gcs = self.fake_download(None, None)
+            p._download_gcs = self.fake_download({})
             p._download_http = self.fake_download(
-                'https://wpt.fyi/artifact.zip',
-                'artifact_test_github.zip')
+                {'https://wpt.fyi/artifact.zip': 'artifact_test_github.zip'})
 
             p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 1)
@@ -102,10 +212,10 @@ class ProcessorTest(unittest.TestCase):
 
     def test_download_numberless(self):
         with Processor() as p:
-            p._download_gcs = self.fake_download(None, None)
-            p._download_http = self.fake_download(
-                'https://wpt.fyi/artifact.zip',
-                'artifact_test_numberless.zip')
+            p._download_gcs = self.fake_download({})
+            p._download_http = self.fake_download({
+                'https://wpt.fyi/artifact.zip': 'artifact_test_numberless.zip',
+            })
 
             p.download([], [], ['https://wpt.fyi/artifact.zip'])
             self.assertEqual(len(p.results), 1)
@@ -202,6 +312,30 @@ class MockProcessorTest(unittest.TestCase):
         mock.create_run.assert_not_called()
 
     @patch('processor.Processor')
+    def test_params_plumbing_download_error(self, MockProcessor):
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.download.side_effect = ArtifactDownloadError(
+            'https://wpt.fyi/wpt_report_2.json.gz', RuntimeError('500'))
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': [
+                'https://wpt.fyi/wpt_report_1.json.gz',
+                'https://wpt.fyi/wpt_report_2.json.gz',
+            ],
+        })
+        with self.assertRaises(ArtifactDownloadError):
+            process_report('12345', params)
+
+        # The run should be left as-is, so that the task can be retried.
+        mock.update_status.assert_called_once_with(
+            '654321', 'WPTFYI_PROCESSING', None, None)
+        mock.load_report.assert_not_called()
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
     def test_params_plumbing_duplicate(self, MockProcessor):
         # Set up mock context manager to return self.
         mock = MockProcessor.return_value
@@ -246,21 +380,47 @@ class ProcessorDownloadServerTest(unittest.TestCase):
 
     def test_download(self):
         with Processor() as p:
-            p.TIMEOUT_WAIT = 0.1  # to speed up tests
             url_404 = self.url + '/404'
-            url_timeout = self.url + '/slow'
             with self.assertLogs() as lm:
                 p.download(
-                    [self.url + '/download/test.txt', url_timeout],
+                    [self.url + '/download/test.txt'],
                     [url_404],
                     [])
             self.assertEqual(len(p.results), 1)
             self.assertTrue(p.results[0].endswith('.txt'))
             self.assertEqual(len(p.screenshots), 0)
-            self.assertListEqual(
-                lm.output,
-                ['ERROR:processor:Timed out fetching: ' + url_timeout,
-                 'ERROR:processor:Failed to fetch (404): ' + url_404])
+            self.assertEqual(len(lm.output), 1)
+            self.assertTrue(lm.output[0].startswith(
+                'ERROR:processor:Failed to download ' + url_404 + ': 404'))
+
+    def test_download_http_not_found(self):
+        with Processor() as p:
+            with self.assertRaises(ArtifactNotFoundError):
+                p._download_http(self.url + '/404')
+
+    def test_download_http_timeout(self):
+        with Processor() as p:
+            p.TIMEOUT_WAIT = 0.1  # to speed up tests
+            with self.assertRaises(ArtifactDownloadError) as cm:
+                p._download_http(self.url + '/slow')
+            self.assertNotIsInstance(cm.exception, ArtifactNotFoundError)
+
+    @patch('processor.Processor.update_status')
+    def test_process_partial_download(self, update_status):
+        # Regression test for #4043 and #5157: a run with missing results
+        # should neither be published nor marked as empty.
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'archives': [
+                self.url + '/download/attachment',
+                self.url + '/404',
+            ],
+        })
+        with self.assertRaises(ArtifactDownloadError):
+            process_report('12345', params)
+        update_status.assert_called_once_with(
+            '654321', 'WPTFYI_PROCESSING', None, None)
 
     def test_download_content_disposition(self):
         with Processor() as p:
