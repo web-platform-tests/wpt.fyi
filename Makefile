@@ -15,10 +15,11 @@
 SHELL := /bin/bash
 # WPTD_PATH will have a trailing slash, e.g. /home/user/wpt.fyi/
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-GECKODRIVER_TAG := v0.36.0
+GECKODRIVER_TAG := v0.37.1
 GECKODRIVER_PATH=/usr/bin/geckodriver
+FIREFOX_VERSION := 158.0
 FIREFOX_PATH := /usr/bin/firefox
-CHROME_VERSION := 138.0.7204.94
+CHROME_VERSION := 155.0.8059.79
 CHROME_INSTALL_DIR := /opt/chrome-for-testing
  # CFT_BINARY can also be 'chrome-headless-shell'
 CFT_BINARY := chrome
@@ -148,13 +149,16 @@ web_components_test: firefox chrome webapp_node_modules_all
 
 dev_appserver_deps: gcloud-app-engine-go gcloud-cloud-datastore-emulator gcloud-beta java
 
+# Installs CHROME_VERSION, replacing any other installed version, e.g. in an
+# existing dev container after CHROME_VERSION is updated.
 chrome: wget unzip
-	if [[ ! -f "$(CHROME_ACTUAL_PATH)" ]]; then \
+	if [[ ! -f "$(CHROME_ACTUAL_PATH)" ]] || ! "$(CHROME_ACTUAL_PATH)" --version | grep -qF " $(CHROME_VERSION)"; then \
 		CHROME_CFT_URL="https://storage.googleapis.com/chrome-for-testing-public/$(CHROME_VERSION)/linux64/$(CFT_FOLDER).zip"; \
 		TEMP_DIR=$$(mktemp -d); \
 		wget -q -O $${TEMP_DIR}/$(CFT_FOLDER).zip $${CHROME_CFT_URL}; \
 		unzip -q $${TEMP_DIR}/$(CFT_FOLDER).zip -d $${TEMP_DIR}; \
 		sudo mkdir -p $(CHROME_INSTALL_DIR); \
+		sudo rm -rf $(CHROME_INSTALL_DIR)/$(CFT_FOLDER); \
 		sudo mv $${TEMP_DIR}/$(CFT_FOLDER) $(CHROME_INSTALL_DIR)/; \
 		sudo apt update; \
 		while read pkg ; do sudo apt-get satisfy -y --no-install-recommends "$${pkg}" ; done < $(CHROME_INSTALL_DIR)/$(CFT_FOLDER)/deb.deps; \
@@ -169,9 +173,11 @@ chrome: wget unzip
 #
 # CfT only has ChromeDriver URLs for chrome versions >=115. But assuming `chrome`
 # target above remains pulling the latest stable, this will not be a problem.
+#
+# Reinstalls ChromeDriver when it doesn't match the installed Chrome's build.
 chromedriver: wget unzip chrome jq
-	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]]; then \
-		CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
+	CHROME_VERSION=$$(google-chrome --version | grep -ioE "[0-9]+\.[0-9]+\.[0-9]+"); \
+	if [[ ! -f "$(CHROMEDRIVER_PATH)" ]] || ! "$(CHROMEDRIVER_PATH)" --version | grep -qF "ChromeDriver $${CHROME_VERSION}."; then \
 		CHROMEDRIVER_URL=$$(curl -s https://googlechromelabs.github.io/chrome-for-testing/latest-patch-versions-per-build-with-downloads.json | jq -r ".builds[\"$${CHROME_VERSION}\"].downloads.chromedriver[] | select(.platform == \"linux64\") | .url"); \
 		TEMP_DIR=$$(mktemp -d); \
 		wget -q -O $${TEMP_DIR}/chromedriver_linux64.zip $${CHROMEDRIVER_URL}; \
@@ -180,16 +186,19 @@ chromedriver: wget unzip chrome jq
 		sudo chmod +x $(CHROMEDRIVER_PATH); \
 	fi
 
+# Installs FIREFOX_VERSION, replacing any other installed version.
 firefox: bzip2 wget
-	if [[ -z "$$(which firefox)" ]]; then \
-		wget -O firefox.tar.xz -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"; \
+	if [[ ! -x "$(FIREFOX_PATH)" ]] || ! "$(FIREFOX_PATH)" --version 2>/dev/null | grep -qxF "Mozilla Firefox $(FIREFOX_VERSION)"; then \
+		wget -O firefox.tar.xz -q "https://archive.mozilla.org/pub/firefox/releases/$(FIREFOX_VERSION)/linux-x86_64/en-US/firefox-$(FIREFOX_VERSION).tar.xz"; \
 		mkdir -p $$HOME/browsers; \
+		rm -rf $$HOME/browsers/firefox; \
 		tar -xaf firefox.tar.xz -C $$HOME/browsers; \
-		sudo ln -s $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
+		sudo ln -sf $$HOME/browsers/firefox/firefox $(FIREFOX_PATH); \
 	fi
 
+# Installs GECKODRIVER_TAG, replacing any other installed version.
 geckodriver: wget unzip curl jq
-	if [[ ! -f "$(GECKODRIVER_PATH)" ]]; then \
+	if [[ ! -f "$(GECKODRIVER_PATH)" ]] || ! "$(GECKODRIVER_PATH)" --version | grep -qF "geckodriver $(patsubst v%,%,$(GECKODRIVER_TAG)) "; then \
 		GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_TAG}/geckodriver-${GECKODRIVER_TAG}-linux64.tar.gz"; \
 		TEMP_DIR=$$(mktemp -d); \
 		wget -q -O $${TEMP_DIR}/geckodriver-linux64.tar.gz $${GECKODRIVER_URL}; \
