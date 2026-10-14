@@ -134,7 +134,6 @@ function clickRow(chart, rowIndex) {
 suite('<test-results-history-timeline>', () => {
   let sandbox;
   let responses;
-  let resizeListeners;
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -145,21 +144,9 @@ suite('<test-results-history-timeline>', () => {
       return Promise.resolve(new Response(JSON.stringify(responses[testName])));
     });
     sandbox.stub(window, 'open');
-
-    // The element adds window resize listeners and never removes them. Keep
-    // track of them so that teardown can remove them.
-    resizeListeners = [];
-    const addEventListener = window.addEventListener;
-    sandbox.stub(window, 'addEventListener').callsFake(function(type, listener, options) {
-      if (type === 'resize') {
-        resizeListeners.push(listener);
-      }
-      return addEventListener.call(this, type, listener, options);
-    });
   });
 
   teardown(() => {
-    resizeListeners.forEach(listener => window.removeEventListener('resize', listener));
     sandbox.restore();
   });
 
@@ -499,6 +486,55 @@ suite('<test-results-history-timeline>', () => {
       // Clicks go to the redrawn chart's runs.
       clickRow(latestChart(el, 'chrome'), 1);
       assert.deepEqual(window.open.args, [[`/results${PATH}?run_id=5002`, '_blank']]);
+    });
+
+    test('redraws each chart once per resize, however often it has been drawn', async() => {
+      const el = await createTimeline();
+      await chartsDrawn(el);
+      el.subtestNames = [SUBTEST_A, ''];
+      await chartsDrawn(el, 2);
+      el.subtestNames = [SUBTEST_B];
+      await chartsDrawn(el, 3, ['edge', 'firefox']);
+
+      window.dispatchEvent(new Event('resize'));
+      await chartsDrawn(el, 4, ['edge', 'firefox']);
+      await nextFrame();
+      assert.equal(chartsFor(el, 'edge').length, 4);
+      assert.equal(chartsFor(el, 'firefox').length, 4);
+      // The redraw uses the current subtest names.
+      assert.deepEqual(drawnRowsFor(el, 'edge'), [
+        row(SUBTEST_B, 'TIMEOUT', RED, '2024-01-03T06:00:00.000Z', LAST_PROCESSED_PLUS_1H),
+      ]);
+    });
+
+    test('stops redrawing on resize once removed from the page', async() => {
+      const el = await createTimeline();
+      await chartsDrawn(el);
+
+      el.remove();
+      window.dispatchEvent(new Event('resize'));
+      await nextFrame();
+      for (const browser of BROWSERS) {
+        assert.equal(chartsFor(el, browser).length, 1, browser);
+      }
+    });
+
+    test('ignores resizes before the history has loaded', async() => {
+      let respond;
+      window.fetch.callsFake(() => new Promise(resolve => {
+        respond = resolve;
+      }));
+      const el = await createTimeline();
+      await waitUntil(() => window.fetch.called);
+
+      window.dispatchEvent(new Event('resize'));
+      await nextFrame();
+      for (const browser of BROWSERS) {
+        assert.equal(chartsFor(el, browser).length, 0, browser);
+      }
+
+      respond(new Response(JSON.stringify(HISTORY)));
+      await chartsDrawn(el);
     });
   });
 });

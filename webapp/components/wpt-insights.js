@@ -187,12 +187,14 @@ class Anomalies extends ProductInfo(PolymerElement) {
   }
 
   computeQuery(anomalyType, browser, others) {
-    const not = anomalyType === 'passing' ? '!' : '';
-    const notnot = anomalyType === 'passing' ? '' : '!';
-    const otherFilters = others
-      .map(o => `(${o}:${not}pass|${o}:${not}ok)`)
-      .join(' ');
-    return `(${browser}:${notnot}pass&${browser}:${notnot}ok) ${otherFilters}`;
+    const passing = p => `(${p}:pass|${p}:ok)`;
+    const notPassing = p => `(${p}:!pass&${p}:!ok)`;
+    // Failing: not passing in the browser, but passing in all the others.
+    // Passing: passing in the browser, but not passing in any of the others.
+    const [browserFilter, otherFilter] = anomalyType === 'passing' ?
+      [passing, notPassing] : [notPassing, passing];
+    const otherFilters = others.map(otherFilter).join(' ');
+    return `${browserFilter(browser)} ${otherFilters}`;
   }
 
   computeURL(query, browser, others) {
