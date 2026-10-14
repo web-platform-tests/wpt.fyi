@@ -387,7 +387,11 @@ def _upload_screenshots(processor: Processor) -> None:
 # ==== End of tasks ====
 
 
-def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
+def process_report(
+    task_id: Optional[str],
+    params: MultiDict[str, str],
+    last_attempt: bool = False,
+) -> str:
     # Mandatory fields (will throw if key does not exist):
     uploader = params['uploader']
     # Repeatable fields
@@ -409,7 +413,14 @@ def process_report(task_id: Optional[str], params: MultiDict[str, str]) -> str:
         else:
             _log.info("Downloading %d results & %d screenshots",
                       len(results), len(screenshots))
-        p.download(results, screenshots, archives)
+        try:
+            p.download(results, screenshots, archives)
+        except ArtifactDownloadError as e:
+            if not last_attempt:
+                raise
+            _log.error('Giving up on task %s: %s', task_id, e)
+            p.update_status(run_id, 'INVALID', str(e), callback_url)
+            return ''
         if len(p.results) == 0:
             _log.error("No results found")
             p.update_status(run_id, 'EMPTY', None, callback_url)

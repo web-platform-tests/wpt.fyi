@@ -23,6 +23,10 @@ TIMESTAMP_FILE = '/tmp/results-processor.last'
 # considered unhealthy and will be restarted by AppEngine. We set it to be
 # smaller than the 60-minute timeout of AppEngine to give a safe margin.
 TIMEOUT = 3500
+# The number of attempts at a task before its required downloads are considered
+# permanently unavailable. With the backoff of the results-arrival queue in
+# queue.yaml, the last attempt happens roughly 2.5 hours after the first one.
+MAX_ATTEMPTS = 20
 
 # Hack to work around the bad logging setup of google.cloud.*:
 # https://github.com/googleapis/google-cloud-python/issues/6742
@@ -114,9 +118,16 @@ def task_handler() -> ResponseReturnValue:
     _atomic_write(TIMESTAMP_FILE, str(time.time()))
 
     task_id = flask.request.headers.get('X-AppEngine-TaskName')
+
+    # The number of earlier responses to this task, all of which were failures.
+    execution_count = flask.request.headers.get(
+        'X-AppEngine-TaskExecutionCount', 0, type=int)
     app.logger.info('Processing task %s', task_id)
     try:
-        resp = processor.process_report(task_id, flask.request.form)
+        resp = processor.process_report(
+            task_id,
+            flask.request.form,
+            last_attempt=execution_count + 1 >= MAX_ATTEMPTS)
     except processor.ArtifactDownloadError as error:
         app.logger.error('%s', error)
         return (str(error), HTTPStatus.INTERNAL_SERVER_ERROR)

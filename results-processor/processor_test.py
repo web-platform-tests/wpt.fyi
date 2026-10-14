@@ -336,6 +336,29 @@ class MockProcessorTest(unittest.TestCase):
         mock.create_run.assert_not_called()
 
     @patch('processor.Processor')
+    def test_params_plumbing_download_error_last_attempt(self, MockProcessor):
+        mock = MockProcessor.return_value
+        mock.__enter__.return_value = mock
+        mock.download.side_effect = ArtifactDownloadError(
+            'https://wpt.fyi/wpt_report.json.gz', RuntimeError('500'))
+
+        params = MultiDict({
+            'uploader': 'blade-runner',
+            'id': '654321',
+            'results': 'https://wpt.fyi/wpt_report.json.gz',
+        })
+        with self.assertLogs():
+            process_report('12345', params, last_attempt=True)
+        mock.update_status.assert_has_calls([
+            call('654321', 'WPTFYI_PROCESSING', None, None),
+            call('654321', 'INVALID',
+                 'Failed to download https://wpt.fyi/wpt_report.json.gz: 500',
+                 None),
+        ])
+        mock.load_report.assert_not_called()
+        mock.create_run.assert_not_called()
+
+    @patch('processor.Processor')
     def test_params_plumbing_duplicate(self, MockProcessor):
         # Set up mock context manager to return self.
         mock = MockProcessor.return_value
