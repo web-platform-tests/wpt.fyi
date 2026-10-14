@@ -4,6 +4,9 @@ on:
     branches:
       - main
   pull_request:
+  # Lets the Update browser versions workflow (update-browsers.yml) start CI
+  # on its branch: pull requests it opens with GITHUB_TOKEN don't trigger runs.
+  workflow_dispatch:
 jobs:
   lint:
     runs-on: ubuntu-latest
