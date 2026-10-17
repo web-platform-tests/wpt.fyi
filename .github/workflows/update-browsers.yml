@@ -1,0 +1,63 @@
+name: Update browser versions
+on:
+  schedule:
+    # Every Monday. Chrome, Firefox and geckodriver release every few weeks.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  # To start the Continuous Integration workflow on the update branch.
+  actions: write
+jobs:
+  update:
+    # Only in the main repository, not in forks.
+    if: github.repository == 'web-platform-tests/wpt.fyi'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: automated/update-browser-versions
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update the versions in the Makefile
+        id: update
+        run: util/update-browser-versions.sh
+      - name: Open or update the pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          CHROME_OLD: ${{ steps.update.outputs.chrome_old }}
+          CHROME_NEW: ${{ steps.update.outputs.chrome_new }}
+          FIREFOX_OLD: ${{ steps.update.outputs.firefox_old }}
+          FIREFOX_NEW: ${{ steps.update.outputs.firefox_new }}
+          GECKODRIVER_OLD: ${{ steps.update.outputs.geckodriver_old }}
+          GECKODRIVER_NEW: ${{ steps.update.outputs.geckodriver_new }}
+        run: |
+          title="Update test browsers: Chrome ${CHROME_NEW}, Firefox ${FIREFOX_NEW}, geckodriver ${GECKODRIVER_NEW}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "${BRANCH}"
+          git commit -am "${title}"
+          git push --force origin "${BRANCH}"
+
+          body=$(cat <<EOF
+          Automated update of the browser versions that the tests use, from the [Update browser versions](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows/update-browsers.yml) workflow.
+
+          | | Before | After |
+          |---|---|---|
+          | Chrome (Chrome for Testing Stable) | ${CHROME_OLD} | ${CHROME_NEW} |
+          | Firefox | ${FIREFOX_OLD} | ${FIREFOX_NEW} |
+          | geckodriver | ${GECKODRIVER_OLD} | ${GECKODRIVER_NEW} |
+
+          Merge this once Continuous Integration passes. If a new version breaks the tests, fix them here or close this PR; the next run opens a new one.
+          EOF
+          )
+          if [[ -n "$(gh pr list --head "${BRANCH}" --state open --json number --jq '.[].number')" ]]; then
+            gh pr edit "${BRANCH}" --title "${title}" --body "${body}"
+          else
+            gh pr create --base main --head "${BRANCH}" --title "${title}" --body "${body}"
+          fi
+
+          # Pushes and pull requests made with GITHUB_TOKEN don't start other
+          # workflows, but workflow_dispatch does. The checks show on the PR.
+          gh workflow run ci.yml --ref "${BRANCH}"
