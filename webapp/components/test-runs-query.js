@@ -55,7 +55,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       },
       resultsRangeMessage: {
         type: String,
-        computed: 'computeResultsRangeMessage(shas, productSpecs, to, from, maxCount, labels, master, runIds)',
+        computed: 'computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds)',
       },
     };
   }

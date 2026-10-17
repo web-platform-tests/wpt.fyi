@@ -69,7 +69,9 @@ class BrowserMultiPicker extends ProductInfo(PolymerElement) {
     </style>
 
     <template is="dom-repeat" items="[[products]]" as="product">
-      <paper-checkbox checked value="[[product.browser_name]]">
+      <paper-checkbox checked="[[isSelected(product.browser_name, selected)]]"
+                      value="[[product.browser_name]]"
+                      on-change="checkboxChanged">
         <div>
           <display-logo product="[[product]]" small></display-logo>
           [[displayName(product.browser_name)]]
@@ -99,22 +101,27 @@ class BrowserMultiPicker extends ProductInfo(PolymerElement) {
     };
   }
 
-  ready() {
-    super.ready();
-    this.shadowRoot.querySelector('dom-repeat').render();
-    this.shadowRoot.querySelectorAll('paper-checkbox').forEach(c => {
-      c.addEventListener('change', e => this.selectedChanged(c.value, e));
-    });
-  }
-
   productsChanged(products) {
     this.selected = products.map(p => p.browser_name);
   }
 
-  selectedChanged(browser, e) {
-    if (e.srcElement.checked) {
+  isSelected(browser, selected) {
+    return !!selected && selected.includes(browser);
+  }
+
+  // Handles a checkbox the user checked or unchecked. The listener is declared
+  // in the template, so checkboxes added when the products change get it too.
+  checkboxChanged(e) {
+    const checkbox = e.currentTarget;
+    this.selectedChanged(checkbox.value, checkbox.checked);
+  }
+
+  // Always assigns a new array, so that parents' computed properties that
+  // depend on the selection (not on its sub-properties) update.
+  selectedChanged(browser, checked) {
+    if (checked) {
       if (!this.selected.includes(browser)) {
-        this.splice('selected', this.selected.length, 0, browser);
+        this.selected = [...this.selected, browser];
       }
     } else {
       this.selected = this.selected.filter(b => b !== browser);

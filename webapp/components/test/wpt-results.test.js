@@ -143,6 +143,16 @@ suite('<wpt-results>', () => {
         trf.shas = [sha, sha2];
         expect(trf.resultsRangeMessage).to.contain(`revisions ${sha.substr(0, 7)}, ${sha2.substr(0, 7)}`);
       });
+      test('from', () => {
+        // A minute more than 7 days ago.
+        trf.from = new Date(Date.now() - 7 * 86400000 - 60000);
+        expect(trf.resultsRangeMessage).to.contain('from the last 7 days');
+      });
+      test('from and to', () => {
+        trf.from = new Date(2026, 2, 1);
+        trf.to = new Date(2026, 2, 8);
+        expect(trf.resultsRangeMessage).to.contain('from Mar 1 to Mar 8');
+      });
     });
 
     suite('getMetadataUrl()', () => {

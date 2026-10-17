@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-//go:generate mockgen -build_flags=--mod=mod -destination sharedtest/fetch_feature_interop_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared FetchFeatureInterop
+//go:generate go tool mockgen -build_flags=--mod=mod -destination sharedtest/fetch_feature_interop_mock.go -package sharedtest github.com/web-platform-tests/wpt.fyi/shared FetchFeatureInterop
 
 package shared
 

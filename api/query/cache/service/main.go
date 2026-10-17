@@ -11,10 +11,10 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"syscall"
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/sirupsen/logrus"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/backfill"
 	"github.com/web-platform-tests/wpt.fyi/api/query/cache/index"
@@ -107,11 +107,11 @@ func init() {
 	flag.Parse()
 
 	if *maxHeapBytes == 0 {
-		var sysinfo syscall.Sysinfo_t
-		if err := syscall.Sysinfo(&sysinfo); err != nil {
+		vmem, err := mem.VirtualMemory()
+		if err != nil {
 			logrus.Fatalf("Unable to get total system memory: %s", err.Error())
 		}
-		sysmem := float64(sysinfo.Totalram) * float64(sysinfo.Unit)
+		sysmem := float64(vmem.Total)
 		// Reserve 2GB or 50% of the total memory for system (whichever is smaller).
 		if sysmem-2e9 > sysmem*0.5 {
 			*maxHeapBytes = uint64(sysmem - 2e9)
