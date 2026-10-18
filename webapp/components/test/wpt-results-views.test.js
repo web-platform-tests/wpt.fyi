@@ -401,5 +401,12 @@ suite('<wpt-results> views', () => {
         .filter(isShown).map(icon => icon.title));
       assert.deepEqual(titles, [['label: interop-2024'], ['labels: interop-2024,interop-2025']]);
     });
+
+    test('passes the labels down to wpt-metadata', async() => {
+      const el = await createResults('/dom/nodes', 'label=master');
+      const labelMap = { '/dom/nodes/Node-cloneNode.html': 'interop-2024' };
+      el.labelMap = labelMap;
+      assert.strictEqual(el.shadowRoot.querySelector('wpt-metadata').labelMap, labelMap);
+    });
   });
 });
