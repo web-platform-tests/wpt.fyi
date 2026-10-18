@@ -4,14 +4,17 @@
  * found in the LICENSE file.
  */
 import { pluralize } from './pluralize.js';
-import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
+import { ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 import {
+  emptyTestRunsState,
   isDefaultProductSpecs,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
   showsDefaultView,
+  testRunsParamsToState,
   testRunsStateToParams,
+  testRunsUIParamsToState,
   testRunsUIStateToParams,
 } from './query-state.js';
 
@@ -141,17 +144,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   get emptyQuery() {
-    return {
-      productSpecs: Array.from(DefaultProductSpecs),
-      labels: [],
-      maxCount: undefined,
-      offset: undefined,
-      from: undefined,
-      to: undefined,
-      shas: [],
-      aligned: undefined,
-      view: undefined,
-    };
+    return emptyTestRunsState();
   }
 
   clearQuery() {
@@ -174,59 +167,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   _getBatchUpdate(params) {
-    const batchUpdate = this.emptyQuery;
-    if (!this.computeIsLatest(params.sha)) {
-      batchUpdate.shas = params.sha;
-    }
-    if ('product' in params) {
-      batchUpdate.productSpecs = params.product;
-    }
-    // Expand any global channel labels into the separate products
-    let sharedChannel;
-    if ('label' in params) {
-      sharedChannel = params.label.find(l => Channels.has(l));
-      batchUpdate.labels = params.label.filter(l => !Channels.has(l));
-    }
-    if (sharedChannel) {
-      batchUpdate.productSpecs = batchUpdate.productSpecs.map(spec => {
-        const product = this.parseProductSpec(spec);
-        const labels = product.labels.filter(l => !Channels.has(l) || l === sharedChannel);
-        if (!product.labels.includes(sharedChannel)) {
-          labels.push(sharedChannel);
-        }
-        product.labels = labels;
-        return this.getSpec(product);
-      });
-    }
-    if ('productSpecs' in batchUpdate) {
-      batchUpdate.products = batchUpdate.productSpecs.map(p => this.parseProductSpec(p));
-    }
-    if ('max-count' in params) {
-      batchUpdate.maxCount = params['max-count'];
-    }
-    if ('offset' in params) {
-      batchUpdate.offset = params['offset'];
-    }
-    if ('from' in params) {
-      batchUpdate.from = new Date(params['from']);
-    }
-    if ('to' in params) {
-      batchUpdate.to = new Date(params['to']);
-    }
-    if ('aligned' in params) {
-      batchUpdate.aligned = params.aligned;
-    }
-    if ('view' in params) {
-      batchUpdate.view = params.view;
-    }
-    if ('canViewInteropScores' in params) {
-      batchUpdate.canViewInteropScores = params.canViewInteropScores;
-    }
-    batchUpdate.master = batchUpdate.labels && batchUpdate.labels.includes('master');
-    if (batchUpdate.master) {
-      batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
-    }
-    return batchUpdate;
+    return testRunsParamsToState(params);
   }
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds) {
@@ -314,15 +255,7 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   _getBatchUpdate(params) {
-    params = params || {};
-    const batchUpdate = super._getBatchUpdate(params);
-    batchUpdate.pr = params.pr;
-    batchUpdate.search = params.q;
-    batchUpdate.diff = params.diff || false;
-    // Without a filter, go back to the default one.
-    batchUpdate.diffFilter = params.filter || 'ADC';
-    batchUpdate.runIds = 'run_id' in params ? Array.from(params['run_id']) : undefined;
-    return batchUpdate;
+    return testRunsUIParamsToState(params);
   }
 };
 
