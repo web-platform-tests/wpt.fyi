@@ -33,4 +33,25 @@ suite('wpt-permalinks', () => {
       expect(`${permalinks.url}`).to.not.include('q=bar');
     });
   });
+
+  suite('flags', () => {
+    test('this query keeps flags as bare flags', () => {
+      permalinks.queryParams = {label: ['master'], aligned: true};
+      permalinks.selectedTab = 1;
+      expect(permalinks.url.search).to.equal('?label=master&aligned');
+    });
+
+    test('these runs keep the diff and its filter', () => {
+      permalinks.testRuns = [{id: 123}, {id: 234}];
+      permalinks.queryParams = {label: ['master'], diff: true, filter: 'ADC'};
+      permalinks.selectedTab = 0;
+      expect(permalinks.url.search).to.equal('?diff&filter=ADC&run_id=123&run_id=234');
+    });
+
+    test('has no query when there are no params', () => {
+      permalinks.queryParams = {label: []};
+      permalinks.selectedTab = 1;
+      expect(permalinks.url.search).to.equal('');
+    });
+  });
 });
