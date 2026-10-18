@@ -56,6 +56,17 @@ suite('<wpt-app>', () => {
         expect(appFixture.resultsTotalsRangeMessage).to.not.contain('1 subtests');
       });
 
+      test('reads like the plain message when there is nothing to count', () => {
+        appFixture.page = 'results';
+        appFixture.searchResults = [];
+        assert.equal(appFixture.resultsTotalsRangeMessage, appFixture.resultsRangeMessage);
+        assert.match(appFixture.resultsTotalsRangeMessage, /^Showing [^ ]/);
+        appFixture.searchResults = [
+          {test: '/abc.html', legacy_status: [{total: 1}, {total: 1}]},
+        ];
+        assert.equal(appFixture.resultsTotalsRangeMessage, appFixture.resultsRangeMessage);
+      });
+
       test('some sum', () => {
         appFixture.searchResults = [
           {test: '/abc.html', legacy_status: [{total: 1}, {total: 5}]},

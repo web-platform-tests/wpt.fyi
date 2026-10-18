@@ -476,6 +476,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         }
         testsAndSubtests += folder;
       }
+      if (!testsAndSubtests) {
+        // Nothing to count (one test or none, e.g. while loading).
+        return msg;
+      }
       return msg.replace(
         'Showing ',
         `Showing ${testsAndSubtests} from `);
