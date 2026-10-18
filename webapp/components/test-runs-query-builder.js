@@ -196,12 +196,14 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     return productSpecs && productSpecs.length === 2;
   }
 
+  // The products array is replaced on every change, rather than edited in
+  // place, so that the change is seen by identity.
   handleDeleteProduct(i) {
-    this.splice('products', i, 1);
+    this.products = this.products.filter((_, j) => j !== i);
   }
 
   handleProductChanged(i, product) {
-    this.set(`products.${i}`, product);
+    this.products = this.products.map((p, j) => j === i ? product : p);
   }
 
   handleSubmit() {
@@ -292,7 +294,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       next.browser_name = d;
       break;
     }
-    this.splice('products', this.products.length, 0, next);
+    this.products = [...this.products, next];
   }
 
   clearQuery() {

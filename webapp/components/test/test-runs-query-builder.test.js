@@ -56,6 +56,34 @@ suite('TestRunsQueryBuilder', () => {
     assert.equal(queryBuilder.products.length, 0);
   });
 
+  test('changing a product card updates the products, product specs and query', async() => {
+    await aTimeout(0);
+    const cards = queryBuilder.shadowRoot.querySelectorAll('product-builder');
+    cards[1].browserName = 'firefox';
+    assert.deepEqual(queryBuilder.products.map(p => p.browser_name), ['chrome', 'firefox']);
+    assert.deepEqual(queryBuilder.productSpecs, ['chrome', 'firefox']);
+    cards[1].browserVersion = '120';
+    assert.deepEqual(queryBuilder.productSpecs, ['chrome', 'firefox-120']);
+    expect(queryBuilder.query).to.contain('product=firefox-120');
+  });
+
+  test('adding, changing or deleting a product leaves the previous products array unchanged', async() => {
+    await aTimeout(0);
+    // The query round trip replaces the products array after every change, so
+    // only check that the previous array itself isn't edited.
+    const check = action => {
+      const before = queryBuilder.products;
+      const items = [...before];
+      action();
+      assert.isTrue(before.length === items.length && before.every((p, i) => p === items[i]),
+        'the previous array is unchanged');
+    };
+    check(() => queryBuilder.handleAddProduct());
+    check(() => queryBuilder.handleProductChanged(0, { browser_name: 'firefox', browser_version: '', labels: [] }));
+    check(() => queryBuilder.handleDeleteProduct(0));
+    assert.deepEqual(queryBuilder.products.map(p => p.browser_name), ['edge', 'android_webview']);
+  });
+
   test('productSpecs', () => {
     const [first, ...rest] = queryBuilder.products;
     queryBuilder.products = [Object.assign({}, first, { labels: ['beta'] }), ...rest];

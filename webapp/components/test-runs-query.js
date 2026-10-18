@@ -177,7 +177,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     } finally {
       this._productsChanging = false;
     }
-    this.notifyPath('query');
   }
 
   _getBatchUpdate(params) {
