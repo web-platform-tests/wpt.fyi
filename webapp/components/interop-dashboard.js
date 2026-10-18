@@ -680,9 +680,12 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       this.dashboardTitle = `Interop ${this.year} Dashboard`;
     }
 
-    this.scores = {};
-    this.scores.experimental = await this.dataManager.getMostRecentScores(false);
-    this.scores.stable = await this.dataManager.getMostRecentScores(true);
+    // Build the scores first and assign them once, rather than filling in an
+    // assigned object, so that the change is seen without relying on this
+    // running before super.ready().
+    const experimental = await this.dataManager.getMostRecentScores(false);
+    const stable = await this.dataManager.getMostRecentScores(true);
+    this.scores = { experimental, stable };
 
     this.features = Object.entries(this.getYearProp('focusAreas'))
       .map(([id, info]) => Object.assign({ id }, info));
@@ -904,7 +907,8 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   getAllYears() {
-    return this.dataManager.getYearProp('validYears').sort();
+    // Sort a copy: the years array is shared by every data manager.
+    return [...this.dataManager.getYearProp('validYears')].sort();
   }
 
   getYearProp(prop) {
