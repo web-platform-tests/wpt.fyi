@@ -249,13 +249,22 @@ function emptyTestRunsState() {
 }
 
 /**
+ * The Date for a date param, or undefined when it isn't a valid date.
+ */
+function parseDate(value) {
+  const date = new Date(value);
+  return isNaN(date) ? undefined : date;
+}
+
+/**
  * The state (the test runs properties) for normalized query params, the
  * reverse of testRunsStateToParams, starting from emptyTestRunsState():
  * - shas is the params' own sha array, unless it is the latest;
  * - productSpecs is the params' own product array, unless a channel label
  *   applies to every product, which then gets that channel instead of its own;
  * - products are parsed from productSpecs;
- * - the master label becomes the master flag.
+ * - the master label becomes the master flag;
+ * - invalid from and to dates are left out.
  * The keys come in the order in which they should be set, as one batch.
  */
 function testRunsParamsToState(params) {
@@ -292,11 +301,13 @@ function testRunsParamsToState(params) {
   if ('offset' in params) {
     batchUpdate.offset = params['offset'];
   }
+  // An invalid date, such as from=garbage or an empty to=, is left out as if
+  // it weren't in the query. Keeping it would make testRunsStateToParams throw.
   if ('from' in params) {
-    batchUpdate.from = new Date(params['from']);
+    batchUpdate.from = parseDate(params['from']);
   }
   if ('to' in params) {
-    batchUpdate.to = new Date(params['to']);
+    batchUpdate.to = parseDate(params['to']);
   }
   if ('aligned' in params) {
     batchUpdate.aligned = params.aligned;
