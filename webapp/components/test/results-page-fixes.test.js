@@ -142,6 +142,38 @@ suite('results page fixes', () => {
       assert.equal(el.query, 'label=foo&label=master');
     });
 
+    test('a malformed product spec in the query doesn\'t stop later changes', async() => {
+      const el = await createQuery();
+      let error;
+      try {
+        el.query = 'product=chrome[x';
+      } catch (e) {
+        error = e;
+      }
+      assert.exists(error);
+
+      el.query = 'label=foo&product=firefox';
+      assert.deepEqual(el.labels, ['foo']);
+      assert.deepEqual(el.productSpecs, ['firefox']);
+      assert.deepEqual(el.products.map(p => p.browser_name), ['firefox']);
+      el.master = true;
+      assert.equal(el.query, 'label=foo&label=master&product=firefox');
+    });
+
+    test('an invalid product doesn\'t stop later product changes', async() => {
+      const el = await createQuery();
+      let error;
+      try {
+        el.products = [null];
+      } catch (e) {
+        error = e;
+      }
+      assert.exists(error);
+
+      el.products = [{ browser_name: 'firefox' }];
+      assert.deepEqual(el.productSpecs, ['firefox']);
+    });
+
     test('a diff without a filter uses the default filter', async() => {
       const el = await createQuery();
       el.query = 'label=master&diff';
