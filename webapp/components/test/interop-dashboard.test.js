@@ -159,6 +159,14 @@ suite('<interop-dashboard>', () => {
         links.map(a => a.getAttribute('href')),
         [...interopData.valid_years].sort().map(year => `interop-${year}`));
     });
+
+    test('sorts a copy of the years, not the shared data', async() => {
+      const el = await createDashboard();
+      const years = ['2024', '2021', '2023'];
+      el.dataManager.getYearProp = prop => prop === 'validYears' ? years : undefined;
+      assert.deepEqual(el.getAllYears(), ['2021', '2023', '2024']);
+      assert.deepEqual(years, ['2024', '2021', '2023']);
+    });
   });
 
   suite('focus area scores', () => {
