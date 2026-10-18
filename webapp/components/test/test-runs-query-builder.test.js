@@ -67,6 +67,20 @@ suite('TestRunsQueryBuilder', () => {
     expect(queryBuilder.query).to.contain('product=firefox-120');
   });
 
+  test('replaces a changed product instead of editing it', async() => {
+    await aTimeout(0);
+    const before = queryBuilder.products[1];
+    const snapshot = JSON.stringify(before);
+    const card = queryBuilder.shadowRoot.querySelectorAll('product-builder')[1];
+    card.browserName = 'firefox';
+    card.browserVersion = '120';
+    card.labels = ['beta'];
+    assert.equal(queryBuilder.products[1].browser_name, 'firefox');
+    assert.equal(queryBuilder.products[1].browser_version, '120');
+    assert.deepEqual(queryBuilder.products[1].labels, ['beta']);
+    assert.equal(JSON.stringify(before), snapshot, 'the previous product is unchanged');
+  });
+
   test('adding, changing or deleting a product leaves the previous products array unchanged', async() => {
     await aTimeout(0);
     // The query round trip replaces the products array after every change, so
