@@ -162,11 +162,13 @@ func convertTestRunUIFilter(testRunFilter shared.TestRunFilter) (filter testRunU
 	filter.MaxCount = testRunFilter.MaxCount
 	filter.Offset = testRunFilter.Offset
 	filter.Aligned = testRunFilter.Aligned != nil && *testRunFilter.Aligned
+	// The dates are rendered in UTC: the time zone offset of the query (which
+	// can be up to +/-24:00 for Go) might not be one that JavaScript can parse.
 	if testRunFilter.From != nil {
-		filter.From = testRunFilter.From.Format(time.RFC3339)
+		filter.From = testRunFilter.From.UTC().Format(time.RFC3339)
 	}
 	if testRunFilter.To != nil {
-		filter.To = testRunFilter.To.Format(time.RFC3339)
+		filter.To = testRunFilter.To.UTC().Format(time.RFC3339)
 	}
 	if testRunFilter.View != nil {
 		filter.View = *testRunFilter.View

@@ -387,6 +387,13 @@ suite('query-state', () => {
       assert.deepEqual(testRunsParamsToState({ sha: ['latest'] }).shas, []);
     });
 
+    test('reads dates and times without a time zone in UTC, as the server does', () => {
+      assert.equal(testRunsParamsToState({ from: '2024-01-02T03:04' }).from.toISOString(), '2024-01-02T03:04:00.000Z');
+      assert.equal(testRunsParamsToState({ from: '2024-01-02' }).from.toISOString(), '2024-01-02T00:00:00.000Z');
+      assert.equal(testRunsParamsToState({ from: '2024-01-02T03:04:05+02:00' }).from.toISOString(),
+        '2024-01-02T01:04:05.000Z');
+    });
+
     test('leaves out invalid dates', () => {
       const state = testRunsParamsToState({ from: 'garbage', to: '' });
       assert.isUndefined(state.from);
