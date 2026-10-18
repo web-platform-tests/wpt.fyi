@@ -470,8 +470,16 @@ suite('query-state', () => {
 
     test('is false for a query with other params, or without a view', () => {
       assert.isFalse(isViewOnlyQuery('label=master&view=interop'));
+      assert.isFalse(isViewOnlyQuery('view=interop&label=master'));
       assert.isFalse(isViewOnlyQuery('label=master'));
       assert.isFalse(isViewOnlyQuery(''));
+    });
+
+    test('is false for other queries that mention view', () => {
+      assert.isFalse(isViewOnlyQuery('q=preview'));
+      assert.isFalse(isViewOnlyQuery('product=android_webview'));
+      assert.isFalse(isViewOnlyQuery('label=webview'));
+      assert.isFalse(isViewOnlyQuery('aligned&view=interop'));
     });
   });
 });
