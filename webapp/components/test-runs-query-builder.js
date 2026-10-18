@@ -59,9 +59,9 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     </template>
     <div>
       <template is="dom-repeat" items="[[products]]" as="p" index-as="i">
-        <product-builder browser-name="{{p.browser_name}}"
-                         browser-version="{{p.browser_version}}"
-                         labels="{{p.labels}}"
+        <product-builder browser-name="[[p.browser_name]]"
+                         browser-version="[[p.browser_version]]"
+                         labels="[[p.labels]]"
                          debug="[[debug]]"
                          on-product-changed="[[productChanged(i)]]"
                          on-delete="[[productDeleted(i)]]">
