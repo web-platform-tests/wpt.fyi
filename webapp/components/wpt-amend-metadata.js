@@ -425,18 +425,15 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
     // Detect which input was filled.
     const index = event.model.__data.index;
     const isLabel = event.target.label === 'Label';
-    const path = `displayedMetadata.${index}.url`;
-    const labelPath = `displayedMetadata.${index}.label`;
-    const updatedPath = isLabel ? labelPath : path;
 
-    const newValue = event.target.value;
-    this.set(updatedPath, newValue);
-
-    const url = this.get(path);
-    const label = this.get(labelPath);
+    // Update a copy of the row and replace it, rather than editing the row in
+    // place, so that the change doesn't depend on Polymer path notifications.
+    const node = Object.assign({}, this.displayedMetadata[index]);
+    node[isLabel ? 'label' : 'url'] = event.target.value;
+    const url = node.url;
+    const label = node.label;
 
     if (!isLabel) {
-      const invalidUrlPath = `displayedMetadata.${index}.invalidUrl`;
       let isInvalidUrl = false;
       if (url !== '') {
         try {
@@ -448,8 +445,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           isInvalidUrl = true;
         }
       }
-      this.set(invalidUrlPath, isInvalidUrl);
+      node.invalidUrl = isInvalidUrl;
     }
+    this.displayedMetadata = this.displayedMetadata.map((n, i) => i === index ? node : n);
 
     // Check if the input is empty.
     if (url === '' && (label === '' || label === undefined)) {

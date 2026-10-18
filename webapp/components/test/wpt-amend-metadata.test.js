@@ -1,4 +1,4 @@
-import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { assert, expect, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
 
@@ -202,6 +202,32 @@ suite('wpt-amend-metadata', () => {
       event.target.value = 'ftp://example.com';
       appFixture.handleFieldInput(event);
       expect(appFixture.displayedMetadata[0].invalidUrl).to.be.true;
+    });
+    test('marks the URL input invalid while it holds an invalid URL', async() => {
+      appFixture.path = '/abc';
+      appFixture.selectedMetadata = [
+        { product: 'chrome', test: 'testA.html' },
+        { product: 'firefox', test: 'testA.html' },
+      ];
+      appFixture.populateDisplayData();
+      const inputs = () => [...appFixture.shadowRoot.querySelectorAll('paper-input[label="Bug URL"]')];
+      await waitUntil(() => inputs().length === 2, 'expected an input per product');
+      const input = inputs()[1];
+      const type = value => {
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+      };
+
+      type('not-a-url');
+      await waitUntil(() => input.invalid, 'expected the input to be invalid');
+      assert.notOk(inputs()[0].invalid);
+      assert.isTrue(appFixture.triageSubmitDisabled);
+
+      type('https://bug.com/123');
+      await waitUntil(() => !input.invalid, 'expected the input to be valid');
+      assert.equal(input.value, 'https://bug.com/123');
+      assert.isTrue(inputs()[1] === input, 'the same input element is kept');
+      assert.deepEqual(appFixture.displayedMetadata.map(node => node.url), ['', 'https://bug.com/123']);
     });
     test('getSearchURL', () => {
       expect(appFixture.getSearchURL('/a/b/*', 'chrome')).to.equal('https://issues.chromium.org/issues?q="/a/b"');
