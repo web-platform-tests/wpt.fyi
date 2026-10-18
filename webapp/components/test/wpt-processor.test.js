@@ -395,6 +395,26 @@ suite('<wpt-processor>', () => {
       assert.isTrue(rowCheckbox(grid, 1).checked);
     });
 
+    test('unchecking one row after "Show all" closes only its error and keeps every run', async() => {
+      const el = await fixture(html`<wpt-processor></wpt-processor>`);
+      const grid = await rowsRendered(el, 2);
+      showAllCheckbox(grid).click();
+      await waitUntil(() => bodyRows(grid).every(row => !detailsCell(row).hidden));
+
+      rowCheckbox(grid, 0).click();
+      await waitUntil(() => detailsCell(bodyRows(grid)[0]).hidden, 'the first row\'s details should close');
+      assert.isFalse(detailsCell(bodyRows(grid)[1]).hidden);
+      assert.equal(el.testRuns.length, 2);
+      assert.equal(bodyRows(grid).length, 2);
+
+      // "Show all" opens every error again, including the closed one.
+      showAllCheckbox(grid).click();
+      await waitUntil(() => bodyRows(grid).every(row => detailsCell(row).hidden), 'all details should close');
+      showAllCheckbox(grid).click();
+      await waitUntil(() => bodyRows(grid).every(row => !detailsCell(row).hidden), 'all details should open again');
+      assert.deepEqual(el.testRuns.map(run => run.id), PENDING_RUNS.map(run => run.id));
+    });
+
     test('unchecking "Show all" closes every error', async() => {
       const el = await fixture(html`<wpt-processor></wpt-processor>`);
       const grid = await rowsRendered(el, 2);

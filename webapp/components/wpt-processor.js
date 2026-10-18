@@ -215,7 +215,9 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
     const grid = this.shadowRoot.querySelector('vaadin-grid');
     // checked
     if (e.detail.value) {
-      grid.detailsOpenedItems = this.testRuns;
+      // A copy: the grid edits detailsOpenedItems in place when a row's
+      // details are closed, which must not remove runs from testRuns.
+      grid.detailsOpenedItems = [...this.testRuns];
     } else {
       grid.detailsOpenedItems = [];
     }
