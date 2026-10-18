@@ -257,6 +257,16 @@ suite('results page fixes', () => {
       assert.deepEqual(errors, []);
     });
 
+    test('shows the dates of the runs in the order they were given', async() => {
+      const el = await createApp('/results/dom/');
+      el.setProperties({ from: new Date(2024, 0, 2), to: new Date(2024, 1, 3) });
+      assert.include(el.resultsTotalsRangeMessage, 'from Jan 2 to Feb 3');
+
+      el.to = undefined;
+      el.from = new Date(Date.now() - 3 * 86400000 - 60000);
+      assert.include(el.resultsTotalsRangeMessage, 'from the last 3 days');
+    });
+
     test('has no empty breadcrumb for a folder path with a trailing slash', async() => {
       const el = await createApp('/results/dom/nodes/');
       await waitUntil(() => el.shadowRoot.querySelectorAll('.path a').length > 1, 'expected the breadcrumbs');

@@ -217,7 +217,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       searchResults: Array,
       resultsTotalsRangeMessage: {
         type: String,
-        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, to, from, maxCount, labels, master, runIds, subtestRowCount)',
+        computed: 'computeResultsTotalsRangeMessage(page, path, searchResults, shas, productSpecs, from, to, maxCount, labels, master, runIds, subtestRowCount)',
       },
       subtestRowCount: Number,
       graphBannerMessage: {
