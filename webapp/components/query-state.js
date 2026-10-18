@@ -229,13 +229,116 @@ function testRunsUIStateToParams(state) {
   return params;
 }
 
+/**
+ * The state for no query: the latest runs of the default products, with no
+ * labels or other options.
+ */
+function emptyTestRunsState() {
+  return {
+    productSpecs: Array.from(DefaultProductSpecs),
+    labels: [],
+    maxCount: undefined,
+    offset: undefined,
+    from: undefined,
+    to: undefined,
+    shas: [],
+    aligned: undefined,
+    view: undefined,
+  };
+}
+
+/**
+ * The state (the test runs properties) for normalized query params, the
+ * reverse of testRunsStateToParams, starting from emptyTestRunsState():
+ * - shas is the params' own sha array, unless it is the latest;
+ * - productSpecs is the params' own product array, unless a channel label
+ *   applies to every product, which then gets that channel instead of its own;
+ * - products are parsed from productSpecs;
+ * - the master label becomes the master flag.
+ * The keys come in the order in which they should be set, as one batch.
+ */
+function testRunsParamsToState(params) {
+  const batchUpdate = emptyTestRunsState();
+  if (!isLatestSha(params.sha)) {
+    batchUpdate.shas = params.sha;
+  }
+  if ('product' in params) {
+    batchUpdate.productSpecs = params.product;
+  }
+  // Expand any global channel labels into the separate products
+  let sharedChannel;
+  if ('label' in params) {
+    sharedChannel = params.label.find(l => Channels.has(l));
+    batchUpdate.labels = params.label.filter(l => !Channels.has(l));
+  }
+  if (sharedChannel) {
+    batchUpdate.productSpecs = batchUpdate.productSpecs.map(spec => {
+      const product = parseProductSpec(spec);
+      const labels = product.labels.filter(l => !Channels.has(l) || l === sharedChannel);
+      if (!product.labels.includes(sharedChannel)) {
+        labels.push(sharedChannel);
+      }
+      product.labels = labels;
+      return getSpec(product);
+    });
+  }
+  if ('productSpecs' in batchUpdate) {
+    batchUpdate.products = batchUpdate.productSpecs.map(p => parseProductSpec(p));
+  }
+  if ('max-count' in params) {
+    batchUpdate.maxCount = params['max-count'];
+  }
+  if ('offset' in params) {
+    batchUpdate.offset = params['offset'];
+  }
+  if ('from' in params) {
+    batchUpdate.from = new Date(params['from']);
+  }
+  if ('to' in params) {
+    batchUpdate.to = new Date(params['to']);
+  }
+  if ('aligned' in params) {
+    batchUpdate.aligned = params.aligned;
+  }
+  if ('view' in params) {
+    batchUpdate.view = params.view;
+  }
+  if ('canViewInteropScores' in params) {
+    batchUpdate.canViewInteropScores = params.canViewInteropScores;
+  }
+  batchUpdate.master = batchUpdate.labels && batchUpdate.labels.includes('master');
+  if (batchUpdate.master) {
+    batchUpdate.labels = batchUpdate.labels.filter(l => l !== 'master');
+  }
+  return batchUpdate;
+}
+
+/**
+ * testRunsParamsToState, followed by the results pages' own state: pr,
+ * search, diff with its filter (ADC by default), and a copy of the run IDs.
+ */
+function testRunsUIParamsToState(params) {
+  params = params || {};
+  const batchUpdate = testRunsParamsToState(params);
+  batchUpdate.pr = params.pr;
+  batchUpdate.search = params.q;
+  batchUpdate.diff = params.diff || false;
+  // Without a filter, go back to the default one.
+  batchUpdate.diffFilter = params.filter || 'ADC';
+  batchUpdate.runIds = 'run_id' in params ? Array.from(params['run_id']) : undefined;
+  return batchUpdate;
+}
+
 export {
+  emptyTestRunsState,
   isDefaultProductSpecs,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
   paramsToQuery,
   queryToParams,
   showsDefaultView,
+  testRunsParamsToState,
   testRunsStateToParams,
+  testRunsUIParamsToState,
   testRunsUIStateToParams,
 };
