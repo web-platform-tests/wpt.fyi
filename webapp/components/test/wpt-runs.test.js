@@ -71,6 +71,10 @@ suite('<wpt-runs>', () => {
         const headers = nextPageToken ? { 'wpt-next-page': nextPageToken } : {};
         return Promise.resolve(jsonResponse(RUNS, headers));
       }
+      // The query builder asks for SHAs and versions to suggest; none here.
+      if (u.pathname === '/api/shas' || u.pathname === '/api/versions') {
+        return Promise.resolve(jsonResponse([]));
+      }
       return Promise.resolve(new Response('', { status: 404 }));
     });
     // SelfNavigation reads the page path and pushes history entries.
@@ -86,7 +90,9 @@ suite('<wpt-runs>', () => {
   async function createRuns() {
     const el = await fixture(html`
       <wpt-runs .productSpecs=${['chrome', 'firefox', 'safari']}></wpt-runs>`);
-    await waitUntil(() => el.testRunsBySHA && !el.isLoading, 'expected the runs to load');
+    // The wait is normally ~50 ms, but has occasionally exceeded the default
+    // timeout of 1 s when several browser runs share the machine.
+    await waitUntil(() => el.testRunsBySHA && !el.isLoading, 'expected the runs to load', { timeout: 5000 });
     await nextFrame();
     return el;
   }
