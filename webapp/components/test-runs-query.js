@@ -6,7 +6,14 @@
 import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
-import { normalizeTestRunsParams, normalizeTestRunsUIParams, showsDefaultView } from './query-state.js';
+import {
+  isDefaultProductSpecs,
+  normalizeTestRunsParams,
+  normalizeTestRunsUIParams,
+  showsDefaultView,
+  testRunsStateToParams,
+  testRunsUIStateToParams,
+} from './query-state.js';
 
 // productSpecs.* makes the query follow in-place edits of productSpecs (e.g.
 // this.push('productSpecs', ...)); the method ignores that extra argument.
@@ -113,65 +120,8 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   * Convert the UI property values into their equivalent URI query params.
   */
   computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view) {
-    const params = {};
-    if (!this.computeIsLatest(shas)) {
-      params.sha = shas;
-    }
-    // Convert bool master to label 'master'
-    labels = labels && Array.from(labels) || [];
-    if (master && !labels.includes('master')) {
-      labels.push('master');
-    }
-    if (labels.length) {
-      params.label = labels;
-    }
-    maxCount = maxCount || this.defaultMaxCount;
-    if (maxCount) {
-      params['max-count'] = maxCount;
-    }
-    if (offset) {
-      params['offset'] = offset;
-    }
-    if (from) {
-      params.from = from.toISOString();
-    }
-    if (to) {
-      params.to = to.toISOString();
-    }
-
-    // Collapse a globally shared channel into a single label.
-    if (productSpecs && productSpecs.length) {
-      const products = productSpecs.map(p => this.parseProductSpec(p));
-      let allChannelsSame = true;
-      const channel = (products[0].labels || []).find(l => Channels.has(l));
-      for (const p of products) {
-        if (!(p.labels || []).find(l => l === channel)) {
-          allChannelsSame = false;
-        }
-      }
-      if (allChannelsSame) {
-        productSpecs = products.map(p => {
-          const nonChannel = (p.labels || []).filter(l => !Channels.has(l));
-          return this.getSpec(Object.assign({}, p, {labels: nonChannel}));
-        });
-        if (!labels.includes(channel)) {
-          params.label = labels.concat(channel);
-        }
-      } else {
-        productSpecs = products.map(p => this.getSpec(p));
-      }
-      if (!this.computeIsDefaultProducts(productSpecs)) {
-        params.product = productSpecs;
-      }
-    }
-    // Requesting a specific SHA makes aligned redundant.
-    if (aligned && this.computeIsLatest(shas)) {
-      params.aligned = true;
-    }
-    if (view) {
-      params.view = view;
-    }
-    return params;
+    return testRunsStateToParams(
+      { shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view });
   }
 
   showDefaultView(view, q) {
@@ -187,8 +137,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   computeIsDefaultProducts(productSpecs) {
-    return !productSpecs || !productSpecs.length
-      || DefaultProductSpecs.join(',') === (productSpecs || []).join(',');
+    return isDefaultProductSpecs(productSpecs);
   }
 
   get emptyQuery() {
@@ -350,23 +299,14 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   computeTestRunUIQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff, search, pr, view, runIds) {
-    const params = this.computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view);
-    if (diff || this.diff) {
-      params.diff = true;
-      if (this.diffFilter) {
-        params.filter = this.diffFilter;
-      }
-    }
-    if (search) {
-      params.q = search;
-    }
-    if (pr) {
-      params.pr = pr;
-    }
-    if (runIds) {
-      params['run_id'] = Array.from(this.runIds);
-    }
-    return params;
+    // diff and runIds are read from the properties as well as the arguments,
+    // as this method always has. Polymer passes the current property values,
+    // so the two agree. diffFilter isn't an argument, so a change to it alone
+    // doesn't recompute the params.
+    return testRunsUIStateToParams({
+      shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff: diff || this.diff, search, pr, view,
+      runIds: runIds && this.runIds, diffFilter: this.diffFilter,
+    });
   }
 
   parseQuery(query) {
