@@ -7,6 +7,7 @@
 // The query state of the results pages as plain functions, without Polymer,
 // so that Polymer and Lit components can share it.
 
+import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, getSpec, isLatestSha, parseProductSpec } from './product-info.js';
 
 /**
@@ -329,13 +330,66 @@ function testRunsUIParamsToState(params) {
   return batchUpdate;
 }
 
+/**
+ * The sentence above the results that says which runs are shown, e.g.
+ * "Showing the latest master test runs for the default product set". from and
+ * to are Dates; with from but no to, it counts the days from from to now
+ * (Date.now()).
+ */
+function resultsRangeMessage({ shas, productSpecs, from, to, maxCount, labels, master, runIds }) {
+  if (runIds && runIds.length) {
+    return `Showing ${runIds.length} run(s) based on query parameters`;
+  }
+  const latest = isLatestSha(shas) ? 'the latest ' : '';
+  const branch = master ? 'master ' : '';
+  let msg = `Showing ${latest}${branch}test runs`;
+  if (shas && shas.length) {
+    // Shorten to 7 chars.
+    shas = shas.map(s => !isLatestSha(s) && s.length > 7 ? s.substr(0, 7) : s);
+    msg += ` from ${pluralize('revision', shas.length)} ${shas.join(', ')}`;
+  } else if (from) {
+    const max = to || Date.now();
+    const diff = Math.floor((max - from) / 86400000);
+    const shortDate = date => date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+    msg += to
+      ? ` from ${shortDate(from)} to ${shortDate(to)}`
+      : ` from the last ${diff} days`;
+  } else if (maxCount) {
+    msg = `Showing ${maxCount} ${branch}test runs per product`;
+  } else if (isDefaultProductSpecs(productSpecs)) {
+    msg += ' for the default product set';
+  } else {
+    msg += ` for ${productSpecs.join(', ')}`;
+  }
+  if (labels && labels.length) {
+    const joined = labels.map(l => `'${l}'`).join(', ');
+    msg = `${msg} with ${pluralize('label', labels.length)} ${joined}`;
+  }
+  return msg;
+}
+
+/**
+ * Whether a query mentions "view" and has exactly one "=", which the results
+ * page takes to mean that only the view changed, so it doesn't load the
+ * results again. Note that it also matches other queries like that, such as
+ * q=preview, or aligned&view=interop (a bare flag has no "=").
+ */
+function isViewOnlyQuery(query) {
+  return query.includes('view') && query.split('=').length === 2;
+}
+
 export {
   emptyTestRunsState,
   isDefaultProductSpecs,
+  isViewOnlyQuery,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
   paramsToQuery,
   queryToParams,
+  resultsRangeMessage,
   showsDefaultView,
   testRunsParamsToState,
   testRunsStateToParams,
