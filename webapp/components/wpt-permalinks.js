@@ -12,9 +12,12 @@ import '../node_modules/@polymer/paper-tabs/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import { QueryBuilder } from './results-navigation.js';
+import { paramsToQuery } from './query-state.js';
 
-class Permalinks extends QueryBuilder(PolymerElement) {
+// The permalinks only turn the query params they're given into URLs. They
+// don't use the QueryBuilder mixin, whose round trip through the query string
+// would replace those params with their string forms (true becomes '').
+class Permalinks extends PolymerElement {
   static get is() {
     return 'wpt-permalinks';
   }
@@ -129,7 +132,7 @@ class Permalinks extends QueryBuilder(PolymerElement) {
     if (includePath && this.path) {
       url.pathname += this.path.slice(1);
     }
-    url.search = this.computeQuery(params);
+    url.search = paramsToQuery(params) || '';
     return url;
   }
 
