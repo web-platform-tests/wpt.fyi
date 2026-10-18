@@ -345,6 +345,13 @@ suite('query-state', () => {
       assert.deepEqual(testRunsParamsToState({ sha: ['latest'] }).shas, []);
     });
 
+    test('leaves out invalid dates', () => {
+      const state = testRunsParamsToState({ from: 'garbage', to: '' });
+      assert.isUndefined(state.from);
+      assert.isUndefined(state.to);
+      assert.deepEqual(testRunsStateToParams(state), {});
+    });
+
     test('turns the master label into the master flag', () => {
       const state = testRunsParamsToState({ label: ['foo', 'master'] });
       assert.isTrue(state.master);

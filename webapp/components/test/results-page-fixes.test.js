@@ -5,9 +5,9 @@
  */
 
 // Regression tests for bugs in the results pages, found while adding the
-// tests in #5195-#5199. They're in their own file so that the fixes don't
-// conflict with those PRs; they can move next to the other tests once
-// everything has merged.
+// tests in #5195-#5199 and while moving the query state into query-state.js.
+// They're in their own file so that the fixes don't conflict with those PRs;
+// they can move next to the other tests once everything has merged.
 
 // fake-google-charts.js must be imported before wpt-app.js, which imports
 // google-chart-loader.js; see that file.
@@ -129,6 +129,17 @@ suite('results page fixes', () => {
       assert.notOk(el.from);
       assert.notOk(el.view);
       assert.equal(el.query, '');
+    });
+
+    test('a URL with an invalid date is read as having no date', async() => {
+      const el = await createQuery();
+      el.query = 'label=foo&from=garbage&to=';
+      assert.notOk(el.from);
+      assert.notOk(el.to);
+      assert.deepEqual(el.queryParams, { label: ['foo'] });
+      // The invalid dates don't come back with the next change.
+      el.master = true;
+      assert.equal(el.query, 'label=foo&label=master');
     });
 
     test('a diff without a filter uses the default filter', async() => {
