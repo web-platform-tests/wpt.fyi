@@ -90,9 +90,14 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     if (!query || query === queryBefore || this._dontReact) {
       return;
     }
+    // The guards are reset even if this throws (e.g. for a malformed product
+    // spec), so that the element keeps reacting to later changes.
     this._dontReact = true;
-    this.updateQueryParams(this.parseQuery(query));
-    this._dontReact = false;
+    try {
+      this.updateQueryParams(this.parseQuery(query));
+    } finally {
+      this._dontReact = false;
+    }
   }
 
   // sha is a convenience method for getting (the) single sha.
@@ -106,8 +111,11 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       return;
     }
     this._productsChanging = true;
-    this.productSpecs = (products || []).map(p => this.getSpec(p));
-    this._productsChanging = false;
+    try {
+      this.productSpecs = (products || []).map(p => this.getSpec(p));
+    } finally {
+      this._productsChanging = false;
+    }
   }
 
   productSpecsChanged(productSpecs) {
@@ -115,8 +123,11 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
       return;
     }
     this._productsChanging = true;
-    this.products = (productSpecs || []).map(p => this.parseProductSpec(p));
-    this._productsChanging = false;
+    try {
+      this.products = (productSpecs || []).map(p => this.parseProductSpec(p));
+    } finally {
+      this._productsChanging = false;
+    }
   }
 
   /**
@@ -161,8 +172,11 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     }
     const batchUpdate = this._getBatchUpdate(params);
     this._productsChanging = true;
-    this.setProperties(batchUpdate);
-    this._productsChanging = false;
+    try {
+      this.setProperties(batchUpdate);
+    } finally {
+      this._productsChanging = false;
+    }
     this.notifyPath('query');
   }
 

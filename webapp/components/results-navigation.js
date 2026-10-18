@@ -70,8 +70,11 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
       return;
     }
     this._dontReact = true;
-    this.queryParams = this.parseQuery(query);
-    this._dontReact = false;
+    try {
+      this.queryParams = this.parseQuery(query);
+    } finally {
+      this._dontReact = false;
+    }
   }
 
   parseQuery(query) {
