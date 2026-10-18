@@ -3,7 +3,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-import { pluralize } from './pluralize.js';
 import { ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 import {
@@ -11,6 +10,7 @@ import {
   isDefaultProductSpecs,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
+  resultsRangeMessage,
   showsDefaultView,
   testRunsParamsToState,
   testRunsStateToParams,
@@ -171,38 +171,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds) {
-    if (runIds && runIds.length) {
-      return `Showing ${runIds.length} run(s) based on query parameters`;
-    }
-    const latest = this.computeIsLatest(shas) ? 'the latest ' : '';
-    const branch = master ? 'master ' : '';
-    let msg = `Showing ${latest}${branch}test runs`;
-    if (shas && shas.length) {
-      // Shorten to 7 chars.
-      shas = shas.map(s => !this.computeIsLatest(s) && s.length > 7 ? s.substr(0, 7) : s);
-      msg += ` from ${pluralize('revision', shas.length)} ${shas.join(', ')}`;
-    } else if (from) {
-      const max = to || Date.now();
-      var diff = Math.floor((max - from) / 86400000);
-      const shortDate = date => date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-      msg += to
-        ? ` from ${shortDate(from)} to ${shortDate(to)}`
-        : ` from the last ${diff} days`;
-    } else if (maxCount) {
-      msg = `Showing ${maxCount} ${branch}test runs per product`;
-    } else if (this.computeIsDefaultProducts(productSpecs)) {
-      msg += ' for the default product set';
-    } else {
-      msg += ` for ${productSpecs.join(', ')}`;
-    }
-    if (labels && labels.length) {
-      const joined = labels.map(l => `'${l}'`).join(', ');
-      msg = `${msg} with ${pluralize('label', labels.length)} ${joined}`;
-    }
-    return msg;
+    return resultsRangeMessage({ shas, productSpecs, from, to, maxCount, labels, master, runIds });
   }
 };
 

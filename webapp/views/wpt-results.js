@@ -33,6 +33,7 @@ import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
+import { isViewOnlyQuery } from '../components/query-state.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec', 'test262'];
 
@@ -1354,7 +1355,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // TODO (danielrsmith): fix the query logic so that this statement isn't needed
     // to avoid duplicate calls. Hacky fix here that will not reload the data if
     // 'view' is the only query string param.
-    if (query.includes('view') && query.split('=').length === 2) {
+    if (isViewOnlyQuery(query)) {
       return;
     }
 

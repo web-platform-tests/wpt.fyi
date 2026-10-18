@@ -8,10 +8,12 @@ import { assert } from '@open-wc/testing';
 import {
   emptyTestRunsState,
   isDefaultProductSpecs,
+  isViewOnlyQuery,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
   paramsToQuery,
   queryToParams,
+  resultsRangeMessage,
   showsDefaultView,
   testRunsParamsToState,
   testRunsStateToParams,
@@ -409,6 +411,60 @@ suite('query-state', () => {
 
     test('treats missing params as no params', () => {
       assert.deepEqual(testRunsUIParamsToState(undefined), testRunsUIParamsToState({}));
+    });
+  });
+
+  suite('resultsRangeMessage', () => {
+    test('describes the latest runs of the default products', () => {
+      assert.equal(resultsRangeMessage({ shas: [], productSpecs: ['chrome', 'edge', 'firefox', 'safari'] }),
+        'Showing the latest test runs for the default product set');
+      assert.equal(resultsRangeMessage({ master: true }), 'Showing the latest master test runs for the default product set');
+    });
+
+    test('lists products other than the default ones', () => {
+      assert.equal(resultsRangeMessage({ productSpecs: ['chrome', 'firefox[experimental]'] }),
+        'Showing the latest test runs for chrome, firefox[experimental]');
+    });
+
+    test('names the revisions, shortened to 7 characters', () => {
+      assert.equal(resultsRangeMessage({ shas: ['abcdef0123'] }), 'Showing test runs from revision abcdef0');
+      assert.equal(resultsRangeMessage({ shas: ['abcdef0123', '0123abcdef'] }),
+        'Showing test runs from revisions abcdef0, 0123abc');
+    });
+
+    test('gives the number of runs per product', () => {
+      assert.equal(resultsRangeMessage({ maxCount: 5, master: true }), 'Showing 5 master test runs per product');
+    });
+
+    test('gives the dates', () => {
+      assert.equal(resultsRangeMessage({ from: new Date(2024, 0, 2), to: new Date(2024, 1, 3) }),
+        'Showing the latest test runs from Jan 2 to Feb 3');
+      const from = new Date(Date.now() - 3 * 86400000 - 60000);
+      assert.equal(resultsRangeMessage({ from }), 'Showing the latest test runs from the last 3 days');
+    });
+
+    test('lists the labels', () => {
+      assert.equal(resultsRangeMessage({ labels: ['foo', 'bar'] }),
+        'Showing the latest test runs for the default product set with labels \'foo\', \'bar\'');
+      assert.equal(resultsRangeMessage({ labels: ['foo'] }),
+        'Showing the latest test runs for the default product set with label \'foo\'');
+    });
+
+    test('counts specific runs', () => {
+      assert.equal(resultsRangeMessage({ runIds: ['1', '2'], labels: ['foo'] }), 'Showing 2 run(s) based on query parameters');
+    });
+  });
+
+  suite('isViewOnlyQuery', () => {
+    test('is true for a query with only a view', () => {
+      assert.isTrue(isViewOnlyQuery('view=interop'));
+      assert.isTrue(isViewOnlyQuery('view=subtest'));
+    });
+
+    test('is false for a query with other params, or without a view', () => {
+      assert.isFalse(isViewOnlyQuery('label=master&view=interop'));
+      assert.isFalse(isViewOnlyQuery('label=master'));
+      assert.isFalse(isViewOnlyQuery(''));
     });
   });
 });
