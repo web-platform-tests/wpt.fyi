@@ -7,6 +7,8 @@
 // The query state of the results pages as plain functions, without Polymer,
 // so that Polymer and Lit components can share it.
 
+import { Channels, DefaultProductSpecs, getSpec, isLatestSha, parseProductSpec } from './product-info.js';
+
 /**
  * The URL query string (without "?") for an object of params. Array values
  * repeat the param, true values become bare flags ("aligned"), and spaces are
@@ -120,10 +122,120 @@ function normalizeTestRunsUIParams(params) {
   return params;
 }
 
+/**
+ * Whether a list of product specs means the default products: none, or
+ * exactly the default ones in the default order.
+ */
+function isDefaultProductSpecs(productSpecs) {
+  return !productSpecs || !productSpecs.length
+    || DefaultProductSpecs.join(',') === (productSpecs || []).join(',');
+}
+
+/**
+ * The query params for the test runs that the given state asks for. The keys
+ * are added in this order, which is also their order in the query (see
+ * paramsToQuery):
+ * - sha, unless it is the latest; the array is the state's own shas;
+ * - label, with "master" for the master flag (a copy of the state's labels);
+ * - max-count, offset, from and to;
+ * - product, unless the products are the default ones. A channel that every
+ *   product has becomes a label instead; when there were no labels before,
+ *   label is only added at this point, after max-count, offset, from and to;
+ * - aligned, only for the latest revision, and view.
+ */
+function testRunsStateToParams({ shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view }) {
+  const params = {};
+  if (!isLatestSha(shas)) {
+    params.sha = shas;
+  }
+  // Convert bool master to label 'master'
+  labels = labels && Array.from(labels) || [];
+  if (master && !labels.includes('master')) {
+    labels.push('master');
+  }
+  if (labels.length) {
+    params.label = labels;
+  }
+  if (maxCount) {
+    params['max-count'] = maxCount;
+  }
+  if (offset) {
+    params['offset'] = offset;
+  }
+  if (from) {
+    params.from = from.toISOString();
+  }
+  if (to) {
+    params.to = to.toISOString();
+  }
+
+  // Collapse a globally shared channel into a single label.
+  if (productSpecs && productSpecs.length) {
+    const products = productSpecs.map(p => parseProductSpec(p));
+    let allChannelsSame = true;
+    const channel = (products[0].labels || []).find(l => Channels.has(l));
+    for (const p of products) {
+      if (!(p.labels || []).find(l => l === channel)) {
+        allChannelsSame = false;
+      }
+    }
+    if (allChannelsSame) {
+      productSpecs = products.map(p => {
+        const nonChannel = (p.labels || []).filter(l => !Channels.has(l));
+        return getSpec(Object.assign({}, p, {labels: nonChannel}));
+      });
+      if (!labels.includes(channel)) {
+        params.label = labels.concat(channel);
+      }
+    } else {
+      productSpecs = products.map(p => getSpec(p));
+    }
+    if (!isDefaultProductSpecs(productSpecs)) {
+      params.product = productSpecs;
+    }
+  }
+  // Requesting a specific SHA makes aligned redundant.
+  if (aligned && isLatestSha(shas)) {
+    params.aligned = true;
+  }
+  if (view) {
+    params.view = view;
+  }
+  return params;
+}
+
+/**
+ * testRunsStateToParams, followed by the results pages' own params: diff with
+ * the state's diffFilter as filter, q for the search, pr, and run_id (a copy
+ * of the run IDs).
+ */
+function testRunsUIStateToParams(state) {
+  const params = testRunsStateToParams(state);
+  if (state.diff) {
+    params.diff = true;
+    if (state.diffFilter) {
+      params.filter = state.diffFilter;
+    }
+  }
+  if (state.search) {
+    params.q = state.search;
+  }
+  if (state.pr) {
+    params.pr = state.pr;
+  }
+  if (state.runIds) {
+    params['run_id'] = Array.from(state.runIds);
+  }
+  return params;
+}
+
 export {
+  isDefaultProductSpecs,
   normalizeTestRunsParams,
   normalizeTestRunsUIParams,
   paramsToQuery,
   queryToParams,
   showsDefaultView,
+  testRunsStateToParams,
+  testRunsUIStateToParams,
 };
