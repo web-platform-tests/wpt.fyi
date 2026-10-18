@@ -383,13 +383,12 @@ function resultsRangeMessage({ shas, productSpecs, from, to, maxCount, labels, m
 }
 
 /**
- * Whether a query mentions "view" and has exactly one "=", which the results
- * page takes to mean that only the view changed, so it doesn't load the
- * results again. Note that it also matches other queries like that, such as
- * q=preview, or aligned&view=interop (a bare flag has no "=").
+ * Whether view is the only param of a query, which the results page takes to
+ * mean that only the view changed, so it doesn't load the results again.
  */
 function isViewOnlyQuery(query) {
-  return query.includes('view') && query.split('=').length === 2;
+  const names = Array.from(new URLSearchParams(query).keys());
+  return names.length === 1 && names[0] === 'view';
 }
 
 export {

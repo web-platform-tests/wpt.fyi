@@ -200,6 +200,12 @@ suite('results page fixes', () => {
       assert.deepEqual([...search.url.searchParams], [['diff', 'true'], ['filter', 'ADC']]);
     });
 
+    test('loads the results for a query whose only param mentions "view"', async() => {
+      const el = await createResults('/dom', 'label=webview');
+      assert.equal(rows(el).length, 2);
+      assert.isTrue(requests.some(r => r.url.pathname === '/api/search'));
+    });
+
     test('the totals follow the view', async() => {
       const el = await createResults('/dom', 'label=master&q=interop-2024-dom&view=interop');
       assert.deepEqual(totals(el),
