@@ -121,6 +121,32 @@ function parseProduct(name) {
   };
 }
 
+// The spec string of a product object, the reverse of parseProductSpec:
+// browser[-version][[labels]][@revision]. The revision is left out when it is
+// "latest" or when withRevision is false.
+function getSpec(product, withRevision = true) {
+  let spec = product.browser_name;
+  if (product.browser_version) {
+    spec += `-${product.browser_version}`;
+  }
+  if (product.labels && product.labels.length) {
+    spec += `[${product.labels.join(',')}]`;
+  }
+  if (withRevision && product.revision && !isLatestSha(product.revision)) {
+    spec += `@${product.revision}`;
+  }
+  return spec;
+}
+
+// Whether a revision, or a list of revisions, means the latest runs: no
+// revision, "latest", or a list of no revisions or just one of those.
+function isLatestSha(sha) {
+  if (Array.isArray(sha)) {
+    return !sha.length || sha.length === 1 && isLatestSha(sha[0]);
+  }
+  return !sha || sha === 'latest';
+}
+
 function productFromRun(run) {
   const product = {
     browser_name: run.browser_name,
@@ -242,25 +268,12 @@ const ProductInfo = (superClass) => class extends superClass {
     return parseProduct(name);
   }
 
-  getSpec(product, withRevision=true) {
-    let spec = product.browser_name;
-    if (product.browser_version) {
-      spec += `-${product.browser_version}`;
-    }
-    if (product.labels && product.labels.length) {
-      spec += `[${product.labels.join(',')}]`;
-    }
-    if (withRevision && product.revision && !this.computeIsLatest(product.revision)) {
-      spec += `@${product.revision}`;
-    }
-    return spec;
+  getSpec(product, withRevision = true) {
+    return getSpec(product, withRevision);
   }
 
   computeIsLatest(sha) {
-    if (Array.isArray(sha)) {
-      return !sha.length || sha.length === 1 && this.computeIsLatest(sha[0]);
-    }
-    return !sha || sha === 'latest';
+    return isLatestSha(sha);
   }
 };
 
@@ -277,6 +290,8 @@ export {
   Sources,
   SemanticLabels,
   ProductInfo,
+  getSpec,
+  isLatestSha,
   parseProductSpec,
   parseProduct,
   productFromRun,
