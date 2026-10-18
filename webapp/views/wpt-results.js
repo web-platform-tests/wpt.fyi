@@ -10,7 +10,6 @@ import '../components/path.js';
 import '../components/test-file-results.js';
 import '../components/test-results-history-timeline.js';
 import '../components/test-run.js';
-import '../components/test-runs-query-builder.js';
 import { TestRunsUIBase } from '../components/test-runs.js';
 import '../components/test-search.js';
 import { WPTColors } from '../components/wpt-colors.js';
@@ -18,8 +17,8 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
+import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
@@ -274,12 +273,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </info-banner>
     </template>
 
-    <iron-collapse opened="[[editingQuery]]">
-      <test-runs-query-builder query="[[query]]"
-                               on-submit="[[submitQuery]]">
-      </test-runs-query-builder>
-    </iron-collapse>
-
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
@@ -502,10 +495,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       },
       resultsLoadFailed: Boolean,
       noResults: Boolean,
-      editingQuery: {
-        type: Boolean,
-        value: false,
-      },
       sortCol: {
         type: Array,
         value: [],
@@ -569,9 +558,6 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.onLoadingComplete = () => {
       this.noResults = !this.resultsLoadFailed
         && !(this.searchResults && this.searchResults.length);
-    };
-    this.toggleQueryEdit = () => {
-      this.editingQuery = !this.editingQuery;
     };
     this.toggleDiffFilter = () => {
       this.onlyShowDifferences = !this.onlyShowDifferences;

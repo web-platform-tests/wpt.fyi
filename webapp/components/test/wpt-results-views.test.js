@@ -408,5 +408,38 @@ suite('<wpt-results> views', () => {
       el.labelMap = labelMap;
       assert.strictEqual(el.shadowRoot.querySelector('wpt-metadata').labelMap, labelMap);
     });
+
+    test('draws the label icons', async() => {
+      const el = await createResults('/dom/nodes', 'label=master');
+      el.labelMap = { '/dom/nodes/Node-cloneNode.html': 'interop-2024' };
+      await nextFrame();
+      const icon = row(el, '/dom/nodes/Node-cloneNode.html').querySelector('iron-icon[icon="label"]');
+      assert.isTrue(!!icon.shadowRoot.querySelector('svg'), 'the icon is drawn');
+    });
+  });
+
+  suite('requests', () => {
+    test('doesn\'t ask for SHAs or browser versions when the query changes', async() => {
+      const el = await createResults('/dom', 'label=master');
+      el.query = 'label=experimental';
+      await waitUntil(() => requestsTo('/api/search').length === 2, 'expected the results to load again');
+      await nextFrame();
+      assert.lengthOf(requestsTo('/api/shas'), 0);
+      assert.lengthOf(requestsTo('/api/versions'), 0);
+    });
+
+    test('keeps reacting to queries after a malformed one', async() => {
+      const el = await createResults('/dom', 'label=master');
+      let error;
+      try {
+        el.query = 'product=chrome[x';
+      } catch (e) {
+        error = e;
+      }
+      assert.exists(error);
+      el.query = 'label=master&product=firefox';
+      await waitUntil(() => requestsTo('/api/search').length === 2, 'expected the results to load again');
+      assert.deepEqual(el.productSpecs, ['firefox']);
+    });
   });
 });
