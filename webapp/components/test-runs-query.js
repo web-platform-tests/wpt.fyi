@@ -6,6 +6,7 @@
 import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
+import { normalizeTestRunsParams, normalizeTestRunsUIParams, showsDefaultView } from './query-state.js';
 
 // productSpecs.* makes the query follow in-place edits of productSpecs (e.g.
 // this.push('productSpecs', ...)); the method ignores that extra argument.
@@ -174,33 +175,11 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   showDefaultView(view, q) {
-    return !view || !q || !q.includes('interop-202');
+    return showsDefaultView(view, q);
   }
 
   parseQuery(query) {
-    const parsed = super.parseQuery(query);
-
-    // The 'view' query string param should only be used on 'interop-202*'
-    // results. Removing this allows special views (interop) to be
-    // viewed on any results page.
-    if (this.showDefaultView(parsed.view, parsed.q)) {
-      parsed.canViewInteropScores = false;
-    } else {
-      parsed.canViewInteropScores = true;
-    }
-
-    for (const repeatable of ['label', 'product', 'sha']) {
-      if (repeatable in parsed
-          && !(parsed[repeatable] instanceof Array)) {
-        parsed[repeatable] = [parsed[repeatable]];
-      }
-    }
-    for (const b of ['aligned', 'master']) {
-      if (b in parsed) {
-        parsed[b] = true;
-      }
-    }
-    return parsed;
+    return normalizeTestRunsParams(super.parseQuery(query));
   }
 
   computeProducts(productSpecs) {
@@ -391,19 +370,7 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
   }
 
   parseQuery(query) {
-    const parsed = super.parseQuery(query);
-    for (const repeatable of ['run_id']) {
-      if (repeatable in parsed
-          && !(parsed[repeatable] instanceof Array)) {
-        parsed[repeatable] = [parsed[repeatable]];
-      }
-    }
-    for (const b of ['diff']) {
-      if (b in parsed) {
-        parsed[b] = true;
-      }
-    }
-    return parsed;
+    return normalizeTestRunsUIParams(super.parseQuery(query));
   }
 
   _getBatchUpdate(params) {
