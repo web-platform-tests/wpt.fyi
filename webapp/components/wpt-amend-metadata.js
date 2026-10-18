@@ -210,7 +210,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
       prLink: String,
       prText: String,
       errorMessage: String,
-      fieldsFilled: Object,
+      // this.fieldsFilled is a plain field, not a property: it's bookkeeping
+      // that is edited in place and never rendered.
       selectedMetadata: {
         type: Array,
       },

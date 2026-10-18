@@ -76,8 +76,9 @@ class TestResultsTimeline extends PathInfo(PolymerElement) {
   }
 
   static get properties() {
+    // this.dataTable, this.charts and this.chartRunIDs are plain fields, not
+    // properties: they're built and read by the code, never rendered.
     return {
-      dataTable: Object,
       runIDs: Array,
       path: String,
       showTestHistory: {
