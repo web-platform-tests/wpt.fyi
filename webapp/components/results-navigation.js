@@ -5,6 +5,7 @@
  */
 
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
+import { paramsToQuery, queryToParams } from './query-state.js';
 
 /**
  * QueryBuilder contains a helper method for building a query string from
@@ -54,25 +55,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   computeQuery(params) {
-    if (!params || Object.keys(params).length < 1) {
-      return '';
-    }
-    const url = new URL(window.location.origin);
-    for (const k of Object.keys(params)) {
-      const v = params[k];
-      if (Array.isArray(v)) {
-        v.forEach(i => url.searchParams.append(k, i));
-      } else {
-        url.searchParams.set(k, params[k]);
-      }
-    }
-    const afterQ = url.search
-      .replace(/=true/g, '')
-      .replace(/:00.000Z/g, '')
-      // Work around bug where space => + => %2B is not decoded correctly.
-      .replace(/\+/g, '%20')
-      .split('?');
-    return afterQ.length && afterQ[1];
+    return paramsToQuery(params);
   }
 
   _queryChanged(query, queryBefore) {
@@ -92,16 +75,7 @@ const QueryBuilder = (superClass, opts_queryParamsComputer) => class extends sup
   }
 
   parseQuery(query) {
-    const params = new URLSearchParams(query);
-    const result = {};
-    for (const param of params.keys()) {
-      const values = params.getAll(param);
-      if (!values.length) {
-        continue;
-      }
-      result[param] = values.length > 1 ? values : values[0];
-    }
-    return result;
+    return queryToParams(query);
   }
 };
 
