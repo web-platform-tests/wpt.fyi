@@ -80,7 +80,9 @@ const TestRunsQueryLoader = (superClass) =>
         return;
       }
       const runs = await r.json();
-      this.push('testRuns', ...runs);
+      // Replace the array rather than pushing into it, so that the change is
+      // seen by identity (as Lit sees changes), not through Polymer's splices.
+      this.testRuns = [...this.testRuns, ...runs];
       this._fireTestRunsLoadEvent();
       this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
       return runs;

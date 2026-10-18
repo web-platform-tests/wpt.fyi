@@ -233,6 +233,19 @@ suite('TestRunsQueryLoader', () => {
       assert.equal(el.nextPageToken, 'page-3');
     });
 
+    test('replaces the runs array instead of changing it', async() => {
+      responses = [{ nextPage: 'page-2' }, { runs: MORE_RUNS }];
+      const el = await fixture(html`<wpt-results-base></wpt-results-base>`);
+      el.setProperties({ productSpecs: ['chrome', 'firefox'] });
+      await el.loadRuns();
+      const before = el.testRuns;
+      const ids = before.map(run => run.id);
+      await el.loadMoreRuns();
+      assert.notStrictEqual(el.testRuns, before);
+      assert.deepEqual(before.map(run => run.id), ids);
+      assert.deepEqual(el.testRuns.map(run => run.id), [...ids, ...MORE_RUNS.map(run => run.id)]);
+    });
+
     test('stops paging after the last page', async() => {
       responses = [{ nextPage: 'page-2' }, { runs: MORE_RUNS }];
       const el = await fixture(html`<wpt-results-base></wpt-results-base>`);
