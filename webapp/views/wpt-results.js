@@ -432,7 +432,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                   path="[[path]]"
                   search-results="[[searchResults]]"
                   metadata-map="[[metadataMap]]"
-                  label-map="[[labelMap}]]"
+                  label-map="[[labelMap]]"
                   triage-notifier="[[triageNotifier]]"></wpt-metadata>
     <wpt-amend-metadata id="amend" selected-metadata="[[selectedMetadata]]" path="[[path]]"></wpt-amend-metadata>
 `;
