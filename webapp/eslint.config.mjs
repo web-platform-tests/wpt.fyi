@@ -40,6 +40,8 @@ const polymerFiles = [
     "components/test-search.js",
     "components/test/loading-state.test.js",
     "components/test/path.test.js",
+    // Tests binding Polymer parents to Lit children; goes with polymer-notify.js.
+    "components/test/polymer-notify.test.js",
     "components/test/product-info.test.js",
     "components/test/results-navigation.test.js",
     "components/test/self-navigator.test.js",
