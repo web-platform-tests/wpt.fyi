@@ -248,11 +248,19 @@ function emptyTestRunsState() {
   };
 }
 
+// A date and time in minutes without a time zone offset, e.g.
+// 2024-01-02T03:04: the only such form that both the server and new Date()
+// accept. (The server rejects seconds without an offset.)
+const DATE_TIME_WITHOUT_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
 /**
- * The Date for a date param, or undefined when it isn't a valid date.
+ * The Date for a date param, or undefined when it isn't a valid date. A date
+ * and time without a time zone offset is read in UTC, as the server reads it
+ * (new Date() would read it in local time; a date alone is already UTC).
  */
 function parseDate(value) {
-  const date = new Date(value);
+  const utc = typeof value === 'string' && DATE_TIME_WITHOUT_OFFSET.test(value) ? `${value}Z` : value;
+  const date = new Date(utc);
   return isNaN(date) ? undefined : date;
 }
 
