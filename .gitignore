@@ -4,3 +4,6 @@ debug.test
 
 # Google Cloud secret
 client-secret.json
+
+# Written and removed by util/deploy.sh for branch previews
+webapp/web/app.preview.yaml

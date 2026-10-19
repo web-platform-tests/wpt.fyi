@@ -90,6 +90,23 @@ then
   VERSION="rev-$(git rev-parse --short HEAD)"
 fi
 
+# Branch previews of the webapp (anything but a release) run on fewer
+# instances than the staging release: each instance uses one of the staging
+# project's limited IP addresses, and a preview keeps running for as long as
+# its branch exists.
+if [[ -z ${RELEASE} && "${APP_PATH}" == "webapp/web/app.staging.yaml" ]]
+then
+  PREVIEW_PATH="webapp/web/app.preview.yaml"
+  sed -e 's/^\(  min_num_instances:\).*/\1 1/' \
+      -e 's/^\(  max_num_instances:\).*/\1 2/' \
+      "${APP_PATH}" > "${PREVIEW_PATH}"
+  trap 'rm -f "${PREVIEW_PATH}"' EXIT
+  grep -q '^  min_num_instances: 1$' "${PREVIEW_PATH}" \
+    && grep -q '^  max_num_instances: 2$' "${PREVIEW_PATH}" \
+    || fatal "Could not set the preview's scaling in ${PREVIEW_PATH}."
+  APP_PATH="${PREVIEW_PATH}"
+fi
+
 PROMOTE_FLAG="--no-promote"
 if [[ -n ${PROMOTE} ]]
 then
