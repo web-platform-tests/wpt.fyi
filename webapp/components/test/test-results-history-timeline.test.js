@@ -7,7 +7,7 @@
 // fake-google-charts.js must be imported before the component, which uses the
 // global google.charts and google.visualization. The component doesn't load
 // the library itself: on wpt.fyi, google-chart-loader.js (imported by
-// wpt-interop-graph.js in wpt-app.js) does.
+// google-chart.js, through wpt-bsf.js in wpt-app.js) does.
 import { charts, loadCalls } from './util/fake-google-charts.js';
 import { assert, fixture, html, nextFrame, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
