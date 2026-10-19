@@ -449,14 +449,13 @@ suite('<wpt-bsf>', () => {
 
   suite('in <wpt-app>', () => {
     // wpt-app shows <wpt-bsf> on the results page for the root directory when
-    // the showInteropGraph flag is off and the graph is not collapsed.
-    const FLAGS = ['features.showInteropGraph', 'features.isGraphCollapsed'];
+    // the graph is not collapsed.
+    const FLAGS = ['features.isBSFCollapsed'];
     let savedFlags;
 
     setup(() => {
       savedFlags = FLAGS.map(flag => localStorage.getItem(flag));
-      localStorage.setItem('features.showInteropGraph', 'false');
-      localStorage.removeItem('features.isGraphCollapsed');
+      localStorage.removeItem('features.isBSFCollapsed');
       // wpt-app also loads these; empty responses are enough here.
       window.fetch.callsFake(input => {
         const url = new URL(String(input), window.location.href);

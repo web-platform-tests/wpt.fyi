@@ -103,7 +103,7 @@ suite('<wpt-app>', () => {
 // banners, links and controls around <wpt-results>.
 suite('<wpt-app> page', () => {
   const originalUrl = window.location.href;
-  const FLAGS = ['features.isGraphCollapsed', 'features.showInteropGraph'];
+  const FLAGS = ['features.isBSFCollapsed'];
   let sandbox;
   let requests;
   let savedFlags;
@@ -480,48 +480,21 @@ suite('<wpt-app> page', () => {
     });
   });
 
-  suite('graphs', () => {
+  suite('BSF graph', () => {
     function graphBanner(el) {
       return [...el.shadowRoot.querySelectorAll('info-banner')]
         .find(b => b.querySelector('paper-icon-button'));
-    }
-
-    function graphButton(el, name) {
-      return [...el.shadowRoot.querySelectorAll('.graph-toggle paper-button')]
-        .find(b => b.textContent.trim() === name);
     }
 
     function bannerText(el) {
       return graphBanner(el).textContent.replace(/\s+/g, ' ').trim();
     }
 
-    test('shows the Feature Level Support graph at the root by default', async() => {
+    test('shows the Browser Specific Failures graph at the root', async() => {
       const el = await createApp('/results/', HOME);
       await waitUntil(() => graphBanner(el), 'expected the graph banner');
-      assert.equal(bannerText(el), 'Feature Level Support graph (click the arrow to collapse)');
-      assert.isTrue(isShown(el.shadowRoot.querySelector('wpt-interop-graph')));
-      assert.notOk(el.shadowRoot.querySelector('wpt-bsf'));
-      assert.equal(graphButton(el, 'Feature Level Support').className.trim().split(/\s+/)[0], 'selected');
-    });
-
-    test('switches to the Browser Specific Failures graph and remembers it', async() => {
-      const el = await createApp('/results/', HOME);
-      await waitUntil(() => graphButton(el, 'Browser Specific Failures'), 'expected the toggle');
-      graphButton(el, 'Browser Specific Failures').click();
-      await waitUntil(() => el.shadowRoot.querySelector('wpt-bsf'), 'expected the BSF graph');
       assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to collapse)');
-      assert.equal(localStorage.getItem('features.showInteropGraph'), 'false');
-
-      graphButton(el, 'Feature Level Support').click();
-      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-interop-graph')), 'expected the interop graph');
-      assert.equal(localStorage.getItem('features.showInteropGraph'), 'true');
-    });
-
-    test('opens with the graph chosen before', async() => {
-      localStorage.setItem('features.showInteropGraph', 'false');
-      const el = await createApp('/results/', HOME);
-      await waitUntil(() => el.shadowRoot.querySelector('wpt-bsf'), 'expected the BSF graph');
-      assert.notOk(isShown(el.shadowRoot.querySelector('wpt-interop-graph')));
+      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-bsf')), 'expected the BSF graph');
     });
 
     test('collapses the graph and remembers it', async() => {
@@ -530,23 +503,23 @@ suite('<wpt-app> page', () => {
       const arrow = graphBanner(el).querySelector('paper-icon-button');
       assert.equal(arrow.src, '/static/expand_less.svg');
       arrow.click();
-      assert.equal(bannerText(el), 'Feature Level Support graph (click the arrow to expand)');
+      assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to expand)');
       assert.equal(arrow.src, '/static/expand_more.svg');
-      assert.equal(localStorage.getItem('features.isGraphCollapsed'), 'true');
+      assert.equal(localStorage.getItem('features.isBSFCollapsed'), 'true');
       await nextFrame();
-      assert.isFalse(isShown(el.shadowRoot.querySelector('.graph-toggle')));
+      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-bsf')));
 
       arrow.click();
-      assert.equal(localStorage.getItem('features.isGraphCollapsed'), 'false');
-      await waitUntil(() => isShown(el.shadowRoot.querySelector('.graph-toggle')), 'expected the graph');
+      assert.equal(localStorage.getItem('features.isBSFCollapsed'), 'false');
+      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-bsf')), 'expected the graph');
     });
 
     test('opens collapsed if it was collapsed before', async() => {
-      localStorage.setItem('features.isGraphCollapsed', 'true');
+      localStorage.setItem('features.isBSFCollapsed', 'true');
       const el = await createApp('/results/', HOME);
       await waitUntil(() => graphBanner(el), 'expected the graph banner');
-      assert.equal(bannerText(el), 'Feature Level Support graph (click the arrow to expand)');
-      assert.isFalse(isShown(el.shadowRoot.querySelector('.graph-toggle')));
+      assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to expand)');
+      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-bsf')));
     });
 
     for (const [name, url, attributes] of [
@@ -556,10 +529,10 @@ suite('<wpt-app> page', () => {
       ['for a revision', '/results/?sha=abcdef0123', { shas: ['abcdef0123'] }],
       ['on the not found page', '/nothing-here/', HOME],
     ]) {
-      test(`hides the graphs ${name}`, async() => {
+      test(`hides the graph ${name}`, async() => {
         const el = await createApp(url, attributes);
         await nextFrame();
-        assert.isFalse(el.showGraph);
+        assert.isFalse(el.showBSFGraph);
         assert.isFalse(isShown(graphBanner(el)));
       });
     }
