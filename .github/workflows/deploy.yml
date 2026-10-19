@@ -4,6 +4,15 @@ on:
     branches:
       - main
   pull_request:
+# One run per pull request branch at a time: App Engine rejects a deploy while
+# another operation on the same version is in progress, so a newer push waits
+# for the deploy that is already running instead of failing. (While a run is in
+# progress, only the newest waiting run is kept.) The key includes the head
+# repository, so that a fork's branch with the same name doesn't share the
+# group. Pushes to main keep a group of their own each, as before.
+concurrency:
+  group: deploy-${{ github.event_name == 'pull_request' && format('{0}:{1}', github.event.pull_request.head.repo.full_name, github.head_ref) || github.run_id }}
+  cancel-in-progress: false
 jobs:
   deploy-staging:
     # Forks and dependabot cannot access secrets so the job would fail.

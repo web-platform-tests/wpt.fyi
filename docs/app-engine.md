@@ -47,6 +47,14 @@ wptd_exec_it make deploy_staging PROJECT=wptdashboard-staging APP_PATH=results-p
 wptd_exec_it make deploy_staging PROJECT=wptdashboard-staging APP_PATH=api/query/cache/service/app.staging.yaml
 ```
 
+A deploy of a branch other than `main` is a preview: for the webapp,
+`util/deploy.sh` deploys it with at most 2 instances (and at least 1) instead
+of the scaling in `app.staging.yaml`, to stay within the staging project's IP
+address quota. Previews are deleted by `util/cleanup-versions.sh` (run after
+each deploy from `main`) once they haven't been deployed for a day and no
+branch has the version's name, e.g. after their pull request is merged and its
+branch deleted.
+
 ## Out-of-repo configurations
 
 There are more configurations required in Google Cloud in addition to the YAML
