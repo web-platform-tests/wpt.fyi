@@ -12,6 +12,7 @@ import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './channel-picker.js';
 import './info-banner.js';
+import './wpt-bsf.js';
 import { AllProducts, DefaultProductSpecs, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
 
@@ -27,6 +28,9 @@ class Insights extends ProductInfo(PolymerElement) {
       }
     </style>
 
+    <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+      <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
+    </div>
     <wpt-anomalies></wpt-anomalies>
     <wpt-flakes></wpt-flakes>
     <wpt-release-regressions></wpt-release-regressions>
@@ -35,6 +39,60 @@ class Insights extends ProductInfo(PolymerElement) {
 
   static get is() {
     return 'wpt-insights';
+  }
+
+  static get properties() {
+    return {
+      bsfStartTime: {
+        type: Object,
+        value: null,
+      },
+      isInteracting: Boolean,
+    };
+  }
+
+  constructor() {
+    super();
+    this.enterBSF = () => {
+      // The use of isInteracting is a workaround for a known issue,
+      // https://stackoverflow.com/questions/17244996/why-do-the-mouseenter-mouseleave-events-fire-when-entering-leaving-child-element;
+      // when users interact with the BSF chart itself, enterBSF is triggered unexpectedly.
+      // In that case, isInteracting is set to true to avoid resetting bsfStartTime.
+      if (this.isInteracting) {
+        return;
+      }
+      this.bsfStartTime = new Date();
+    };
+    this.exitBSF = () => {
+      // Similarly, when users interact with the BSF chart, isInteracting is set to
+      // true to avoid sending analytics prematurely in exitBSF.
+      if (this.isInteracting || !this.bsfStartTime) {
+        return;
+      }
+      const diff = new Date().getTime() - this.bsfStartTime.getTime();
+      const duration = Math.round(diff / 1000);
+      if (duration <= 0) {
+        return;
+      }
+
+      if ('gtag' in window) {
+        window.gtag('event', 'hover', {
+          'event_category': 'bsf',
+          'event_label': 'insights',
+          'value': duration
+        });
+      }
+      this.bsfStartTime = null;
+    };
+  }
+
+  ready() {
+    super.ready();
+    this.addEventListener('interactingchanged', this.bsfIsInteractingChanged);
+  }
+
+  bsfIsInteractingChanged(e) {
+    this.isInteracting = e.detail.value;
   }
 }
 window.customElements.define(Insights.is, Insights);
