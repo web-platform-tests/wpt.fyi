@@ -19,7 +19,7 @@ GECKODRIVER_TAG := v0.37.1
 GECKODRIVER_PATH=/usr/bin/geckodriver
 FIREFOX_VERSION := 158.0
 FIREFOX_PATH := /usr/bin/firefox
-CHROME_VERSION := 155.0.8059.79
+CHROME_VERSION := 155.0.8059.84
 CHROME_INSTALL_DIR := /opt/chrome-for-testing
  # CFT_BINARY can also be 'chrome-headless-shell'
 CFT_BINARY := chrome
