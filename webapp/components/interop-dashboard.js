@@ -93,7 +93,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           margin-block-start: 25px;
           margin-bottom: 35px;
           border-radius: 3px;
-          box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+          box-shadow: var(--wpt-shadow-2dp);
         }
 
         .channel-area[hidden] {

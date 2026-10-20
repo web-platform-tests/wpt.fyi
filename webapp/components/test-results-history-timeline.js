@@ -8,9 +8,9 @@ import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-e
 const pageStyle = getComputedStyle(document.body);
 import { PathInfo } from './path.js';
 
-const PASS_COLOR = pageStyle.getPropertyValue('--paper-green-300');
-const FAIL_COLOR = pageStyle.getPropertyValue('--paper-red-300');
-const NEUTRAL_COLOR = pageStyle.getPropertyValue('--paper-grey-300');
+const PASS_COLOR = pageStyle.getPropertyValue('--wpt-green-300');
+const FAIL_COLOR = pageStyle.getPropertyValue('--wpt-red-300');
+const NEUTRAL_COLOR = pageStyle.getPropertyValue('--wpt-grey-300');
 const COLOR_MAPPING = {
   // Passing statuses
   OK: PASS_COLOR,

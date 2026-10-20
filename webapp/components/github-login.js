@@ -13,7 +13,6 @@ import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
-import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 
 class GitHubLogin extends PolymerElement {

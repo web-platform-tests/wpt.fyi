@@ -7,7 +7,6 @@
 /*
 `<path-part>` is a stateless component for displaying part of a test path.
 */
-import '../node_modules/@polymer/paper-styles/color.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 const PathInfo = (superClass) => class extends superClass {
@@ -122,12 +121,12 @@ class PathPart extends PathInfo(PolymerElement) {
     <style>
       a {
         text-decoration: none;
-        color: var(--paper-blue-700);
+        color: var(--wpt-blue-700);
         font-family: monospace;
       }
       a:hover {
         cursor: pointer;
-        color: var(--paper-blue-900);
+        color: var(--wpt-blue-900);
       }
       .dir-path {
         font-weight: bold;

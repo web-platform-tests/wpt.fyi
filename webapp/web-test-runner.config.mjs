@@ -49,6 +49,17 @@ export default {
   concurrency: 1,
   concurrentBrowsers: 1,
   testsFinishTimeout: 5 * 60 * 1000,
+  // Test pages load the theme tokens, as every wpt.fyi page does (see
+  // templates/_head_common.html).
+  testRunnerHtml: testFramework => `<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/theme.css">
+  </head>
+  <body>
+    <script type="module" src="${testFramework}"></script>
+  </body>
+</html>`,
   // @open-wc/testing loads Lit in development mode, which logs this notice in
   // every test file. Lit's other development-mode warnings are still shown.
   filterBrowserLogs: ({ args }) => !String(args[0]).startsWith('Lit is in dev mode.'),

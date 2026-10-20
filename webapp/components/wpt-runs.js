@@ -11,7 +11,6 @@ import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
@@ -49,13 +48,13 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         margin: 0;
       }
       td[day-boundary] {
-        border-top: 1px solid var(--paper-blue-100);
+        border-top: 1px solid var(--wpt-blue-100);
       }
       .time {
-        color: var(--paper-grey-300);
+        color: var(--wpt-grey-300);
       }
       .missing {
-        background-color: var(--paper-grey-100);
+        background-color: var(--wpt-grey-100);
       }
       .runs {
         text-align: center;
@@ -64,7 +63,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         display: inline-block;
       }
       .runs.present {
-        background-color: var(--paper-blue-100);
+        background-color: var(--wpt-blue-100);
       }
       .loading {
         display: flex;
@@ -91,7 +90,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       }
       test-run[selected] {
         padding: 4px;
-        background: var(--paper-blue-700);
+        background: var(--wpt-blue-700);
         border-radius: 50%;
       }
       paper-toast {
@@ -110,8 +109,8 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         flex-shrink: 0;
       }
       paper-progress {
-        --paper-progress-active-color: var(--paper-light-blue-500);
-        --paper-progress-secondary-color: var(--paper-light-blue-100);
+        --paper-progress-active-color: var(--wpt-light-blue-500);
+        --paper-progress-secondary-color: var(--wpt-light-blue-100);
         width: 100%;
       }
 

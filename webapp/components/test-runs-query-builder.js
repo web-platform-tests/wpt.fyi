@@ -31,15 +31,15 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     return html`
     <style>
       #add-button {
-        background-color: var(--paper-blue-500);
+        background-color: var(--wpt-blue-500);
         color: white;
       }
       #clear-button {
-        background-color: var(--paper-red-500);
+        background-color: var(--wpt-red-500);
         color: white;
       }
       #submit-button {
-        background-color: var(--paper-green-500);
+        background-color: var(--wpt-green-500);
         color: white;
       }
       product-builder {
