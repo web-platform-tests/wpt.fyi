@@ -39,14 +39,15 @@ function announce(text) {
 
 /**
  * `<wpt-toast>` is a short message at the bottom left of the window, which
- * replaces `paper-toast` with the same API and look:
+ * replaces `paper-toast` with the same look and almost the same API (`show()`
+ * takes the text and duration as separate arguments, not an object):
  *
  *     <wpt-toast text="Saved"></wpt-toast>
  *     <wpt-toast duration="0">Any content, such as <button>Undo</button></wpt-toast>
  *
  *     toast.show();                  // or open()
  *     toast.show('Saved');           // sets text, then opens
- *     toast.show({text: 'Saved', duration: 5000});
+ *     toast.show('Saved', 5000);     // sets text and duration, then opens
  *     toast.hide();                  // or close()
  *
  * It closes itself after `duration` milliseconds (3000 by default); 0, a
@@ -134,14 +135,19 @@ class WptToast extends LitElement {
   }
 
   /**
-   * Opens the toast, after setting `text` (given a string) or the given
-   * properties (`{text, duration}`).
+   * Opens the toast. If given, `text` and `duration` replace the current
+   * values first.
+   *
+   * @param {string=} text the message to show
+   * @param {number=} duration milliseconds before it closes itself
    */
-  show(properties) {
-    if (typeof properties === 'string') {
-      properties = { text: properties };
+  show(text, duration) {
+    if (text !== undefined) {
+      this.text = text;
     }
-    Object.assign(this, properties);
+    if (duration !== undefined) {
+      this.duration = duration;
+    }
     this.open();
   }
 
