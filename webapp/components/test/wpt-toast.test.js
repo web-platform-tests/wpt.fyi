@@ -100,13 +100,29 @@ suite('<wpt-toast>', () => {
       assert.isTrue(isOpen(toast));
     });
 
-    test('sets the text and duration with show({text, duration})', async() => {
+    test('sets the text and duration with show(text, duration)', async() => {
       fakeTimers();
       const toast = await fixture(html`<wpt-toast></wpt-toast>`);
-      toast.show({ text: 'Failed to copy', duration: 5000 });
+      toast.show('Failed to copy', 5000);
       await toast.updateComplete;
       assert.equal(toast.text, 'Failed to copy');
       assert.equal(toast.duration, 5000);
+      clock.tick(4999);
+      await toast.updateComplete;
+      assert.isTrue(isOpen(toast));
+      clock.tick(1);
+      await toast.updateComplete;
+      assert.isFalse(isOpen(toast));
+    });
+
+    test('keeps its text and duration with show()', async() => {
+      fakeTimers();
+      const toast = await fixture(html`<wpt-toast text="Saved" duration="5000"></wpt-toast>`);
+      toast.show();
+      await toast.updateComplete;
+      assert.equal(toast.text, 'Saved');
+      assert.equal(toast.duration, 5000);
+      assert.equal(toast.shadowRoot.querySelector('#label').textContent, 'Saved');
       clock.tick(4999);
       await toast.updateComplete;
       assert.isTrue(isOpen(toast));
