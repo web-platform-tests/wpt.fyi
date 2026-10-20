@@ -74,9 +74,9 @@ const HISTORY = {
   last_processed: LAST_PROCESSED,
 };
 
-const GREEN = '#81c784'; // --paper-green-300
-const RED = '#e57373'; // --paper-red-300
-const GREY = '#e0e0e0'; // --paper-grey-300
+const GREEN = '#81c784'; // --wpt-green-300
+const RED = '#e57373'; // --wpt-red-300
+const GREY = '#e0e0e0'; // --wpt-grey-300
 
 function tooltip(status, start, end) {
   return `${status} ${new Date(start).toLocaleDateString()}-${new Date(end).toLocaleDateString()}`;

@@ -23,10 +23,10 @@ class Permalinks extends QueryBuilder(PolymerElement) {
     return html`
       <style>
         paper-tabs {
-          --paper-tabs-selection-bar-color: var(--paper-blue-500);
+          --paper-tabs-selection-bar-color: var(--wpt-blue-500);
         }
         paper-tab {
-          --paper-tab-ink: var(--paper-blue-300);
+          --paper-tab-ink: var(--wpt-blue-300);
         }
       </style>
       <paper-dialog>

@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 
 /**

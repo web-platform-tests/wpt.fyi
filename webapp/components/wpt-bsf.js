@@ -46,7 +46,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
           background-color: white;
         }
         .selected{
-          background-color: var(--paper-blue-100);
+          background-color: var(--wpt-blue-100);
         }
         paper-button {
           color: black;

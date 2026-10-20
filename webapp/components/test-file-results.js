@@ -36,9 +36,9 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         padding: 8px;
       }
       paper-toggle-button {
-        --paper-toggle-button-checked-bar-color:  var(--paper-blue-500);
-        --paper-toggle-button-checked-button-color:  var(--paper-blue-700);
-        --paper-toggle-button-checked-ink-color: var(--paper-blue-300);
+        --paper-toggle-button-checked-bar-color:  var(--wpt-blue-500);
+        --paper-toggle-button-checked-button-color:  var(--wpt-blue-700);
+        --paper-toggle-button-checked-ink-color: var(--wpt-blue-300);
       }
     </style>
 

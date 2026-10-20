@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@vaadin/vaadin-button/vaadin-button.js';
@@ -39,11 +38,11 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
         color: #ccc;
       }
       paper-tabs {
-        --paper-tabs-selection-bar-color: var(--paper-blue-500);
+        --paper-tabs-selection-bar-color: var(--wpt-blue-500);
         margin-bottom: 20px;
       }
       paper-tab {
-        --paper-tab-ink: var(--paper-blue-300);
+        --paper-tab-ink: var(--wpt-blue-300);
       }
       vaadin-grid {
         flex-grow: 1;

@@ -25,7 +25,6 @@ import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-styles/color.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -108,14 +107,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         border-collapse: collapse;
       }
       tr:nth-child(2n), tr.spec {
-        background-color: var(--paper-grey-200);
+        background-color: var(--wpt-grey-200);
       }
       tr td {
         padding: 0.25em 0.5em;
       }
       tr.spec td {
         padding: 0.2em 0.5em;
-        border: solid 1px var(--paper-grey-300);
+        border: solid 1px var(--wpt-grey-300);
       }
       thead {
         border-bottom: 8px solid white;
@@ -138,13 +137,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
       .top,
       .delta {
-        background-color: var(--paper-grey-200);
+        background-color: var(--wpt-grey-200);
       }
       span.delta.regressions {
-        color: var(--paper-red-700);
+        color: var(--wpt-red-700);
       }
       span.delta.passes {
-        color: var(--paper-green-700);
+        color: var(--wpt-green-700);
       }
       td.none {
         visibility: hidden;
@@ -168,7 +167,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         padding: 4px;
       }
       .yellow-button {
-        color: var(--paper-yellow-500);
+        color: var(--wpt-yellow-500);
         margin-left: 32px;
       }
       .history {
@@ -176,17 +175,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         text-align: center;
       }
       .history h3 span {
-        color: var(--paper-red-500);
+        color: var(--wpt-red-500);
       }
       #show-history {
-        background: var(--paper-blue-700);
+        background: var(--wpt-blue-700);
         color: white;
       }
       .test-type {
         margin-left: 8px;
         padding: 4px;
         border-radius: 4px;
-        background-color: var(--paper-blue-100);
+        background-color: var(--wpt-blue-100);
       }
       @media (max-width: 1200px) {
         table tr td:first-child::after {
@@ -216,7 +215,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         margin-inline: auto;
         border-radius: 3px;
         margin-bottom:20px;
-        box-shadow: var(--shadow-elevation-2dp_-_box-shadow);
+        box-shadow: var(--wpt-shadow-2dp);
       }
 
       .channel-area > paper-button {
@@ -236,7 +235,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         background-color: white;
       }
       .selected {
-        background-color: var(--paper-blue-700);
+        background-color: var(--wpt-blue-700);
         color: white;
       }
 
@@ -250,7 +249,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         width: var(--_size);
         height: var(--_half-size);
         left: calc(50% - var(--_half-size));
-        background: var(--paper-blue-700);
+        background: var(--wpt-blue-700);
         clip-path: polygon(46% 100%, 0 0, 100% 0);
       }
     </style>

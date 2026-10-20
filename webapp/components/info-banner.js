@@ -8,7 +8,6 @@
 `<info-banner>` is a stateless component for displaying an information banner,
 of type info, warning, or error.
 */
-import '../node_modules/@polymer/paper-styles/color.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 class InfoBanner extends PolymerElement {
@@ -25,8 +24,8 @@ class InfoBanner extends PolymerElement {
         flex-direction: row;
         justify-items: center;
         justify-content: space-between;
-        background-color: var(--paper-blue-100);
-        border-left: solid 4px var(--paper-blue-300);
+        background-color: var(--wpt-blue-100);
+        border-left: solid 4px var(--wpt-blue-300);
       }
       .main {
         padding: 0.5em;
@@ -35,8 +34,8 @@ class InfoBanner extends PolymerElement {
         display: flex;
       }
       .banner.error {
-        background-color: var(--paper-red-100);
-        border-left: solid 4px var(--paper-red-300);
+        background-color: var(--wpt-red-100);
+        border-left: solid 4px var(--wpt-red-300);
       }
     </style>
 

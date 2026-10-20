@@ -48,7 +48,6 @@ const polymerFiles = [
     "components/test/wpt-flags.test.js",
     "components/wpt-amend-metadata.js",
     "components/wpt-bsf.js",
-    "components/wpt-colors.js",
     "components/wpt-flags.js",
     "components/wpt-header.js",
     "components/wpt-insights.js",
