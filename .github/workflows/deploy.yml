@@ -4,14 +4,21 @@ on:
     branches:
       - main
   pull_request:
-# One run per pull request branch at a time: App Engine rejects a deploy while
-# another operation on the same version is in progress, so a newer push waits
-# for the deploy that is already running instead of failing. (While a run is in
-# progress, only the newest waiting run is kept.) The key includes the head
-# repository, so that a fork's branch with the same name doesn't share the
-# group. Pushes to main keep a group of their own each, as before.
+# One run at a time per pull request branch, and one at a time for main.
+# - Pull requests: App Engine rejects a deploy while another operation on the
+#   same version is in progress, so a newer push waits for the deploy that is
+#   already running instead of failing. The key includes the head repository,
+#   so that a fork's branch with the same name doesn't share the group.
+# - main: every push deploys a release and makes it the serving version, which
+#   stops the version that was serving before. When runs overlap, they can
+#   finish out of order, so an older commit can end up serving and a replaced
+#   release can be left running without traffic until the cleanup deletes it.
+#   One group for main keeps the releases in order.
+# While a run is in progress, GitHub keeps only the newest waiting run of a
+# group and cancels the older waiting ones, so the newest commit always deploys
+# last. A running deploy is never cancelled (cancel-in-progress: false).
 concurrency:
-  group: deploy-${{ github.event_name == 'pull_request' && format('{0}:{1}', github.event.pull_request.head.repo.full_name, github.head_ref) || github.run_id }}
+  group: deploy-${{ github.event_name == 'pull_request' && format('{0}:{1}', github.event.pull_request.head.repo.full_name, github.head_ref) || github.ref }}
   cancel-in-progress: false
 jobs:
   deploy-staging:
