@@ -11,39 +11,37 @@ import { pluralize } from './pluralize.js';
 import { Channels, DefaultProductSpecs, getSpec, isLatestSha, parseProductSpec } from './product-info.js';
 
 /**
- * The URL query string (without "?") for an object of params. Array values
- * repeat the param, true values become bare flags ("aligned"), and spaces are
- * encoded as %20 rather than +.
- *
- * Kept exactly as QueryBuilder.computeQuery has always behaved, quirks
- * included:
- * - every "=true" is removed, so a value that starts with "true" is shortened
- *   too (q=truetype becomes qtype);
- * - an undefined value becomes the string "undefined";
- * - it returns '' for no params, but undefined when every value is an empty
- *   array;
- * - the ":00.000Z" replacement never matches, because ":" is encoded as %3A.
+ * The params as an application/x-www-form-urlencoded string (without "?"),
+ * in the order of their keys. An array value repeats the param, a true value
+ * becomes a bare flag ("aligned"), and undefined and null values are left out.
+ * Spaces are encoded as +.
  */
-function paramsToQuery(params) {
-  if (!params || Object.keys(params).length < 1) {
-    return '';
-  }
-  const url = new URL(window.location.origin);
-  for (const k of Object.keys(params)) {
-    const v = params[k];
-    if (Array.isArray(v)) {
-      v.forEach(i => url.searchParams.append(k, i));
-    } else {
-      url.searchParams.set(k, params[k]);
+function encodeParams(params) {
+  const pairs = [];
+  for (const [key, value] of Object.entries(params || {})) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item === undefined || item === null) {
+        continue;
+      }
+      if (item === true) {
+        // The key alone: drop the "=" of "key=".
+        pairs.push(new URLSearchParams([[key, '']]).toString().slice(0, -1));
+      } else {
+        pairs.push(new URLSearchParams([[key, item]]).toString());
+      }
     }
   }
-  const afterQ = url.search
-    .replace(/=true/g, '')
-    .replace(/:00.000Z/g, '')
-    // Work around bug where space => + => %2B is not decoded correctly.
-    .replace(/\+/g, '%20')
-    .split('?');
-  return afterQ.length && afterQ[1];
+  return pairs.join('&');
+}
+
+/**
+ * The URL query string (without "?") for an object of params, as written by
+ * encodeParams, except that spaces are encoded as %20 rather than +. It is
+ * always a string, '' when there is nothing to write.
+ */
+function paramsToQuery(params) {
+  // Work around bug where space => + => %2B is not decoded correctly.
+  return encodeParams(params).replace(/\+/g, '%20');
 }
 
 /**
@@ -393,6 +391,7 @@ function isViewOnlyQuery(query) {
 
 export {
   emptyTestRunsState,
+  encodeParams,
   isDefaultProductSpecs,
   isViewOnlyQuery,
   normalizeTestRunsParams,

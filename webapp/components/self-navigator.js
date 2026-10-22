@@ -6,6 +6,7 @@
 
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from './path.js';
+import { encodeParams } from './query-state.js';
 
 const $_documentContainer = document.createElement('template');
 $_documentContainer.innerHTML = `<dom-module id="self-navigator">
@@ -124,9 +125,6 @@ const SelfNavigation = (superClass) => class SelfNavigation extends PathInfo(sup
     if (path !== this.path) {
       this.path = path;
     }
-    url.search = url.search
-      .replace(/=true/g, '')
-      .replace(/%3A00.000Z/g, '');
     window.history.pushState(params, '', url);
 
     // Send Google Analytics page_view event
@@ -145,18 +143,9 @@ const SelfNavigation = (superClass) => class SelfNavigation extends PathInfo(sup
 
   getLocation(params, location) {
     const url = new URL(location);
-    url.search = '';
-    if (params) {
-      for (const [k, v] of Object.entries(params)) {
-        const list = (v instanceof Array) ? v : [v];
-        for (const item of list) {
-          url.searchParams.append(k, item);
-        }
-      }
-    }
-    url.search = url.search
-      .replace(/=true/g, '')
-      .replace(/%3A00.000Z/g, '');
+    // Times are written without ":00.000Z": their zero seconds and
+    // milliseconds, and the Z.
+    url.search = encodeParams(params).replace(/%3A00.000Z/g, '');
     return url;
   }
 };
