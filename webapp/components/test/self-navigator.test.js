@@ -110,6 +110,13 @@ suite('SelfNavigation', () => {
       assert.deepEqual(window.history.state, { q: 'x' });
     });
 
+    test('keeps the string "true" in the URL', async() => {
+      const el = await createAt('/a.html', html`
+        <self-navigation-test .queryParams=${{ q: 'true', aligned: true }}></self-navigation-test>`);
+      el.navigateToPath('/b.html');
+      assert.equal(window.location.search, '?q=true&aligned');
+    });
+
     test('adds the navigation path prefix to the URL', async() => {
       const el = await createAt('/runs/a.html', html`
         <prefixed-self-navigation-test></prefixed-self-navigation-test>`);
@@ -247,6 +254,25 @@ suite('SelfNavigation', () => {
       assert.equal(url.pathname, '/results/x.html');
       // "=true" and the zero seconds and milliseconds of times are left out.
       assert.equal(url.search, '?label=a&label=b&aligned&from=2020-01-02T03%3A00');
+    });
+
+    test('getLocation() keeps values that start with "true"', () => {
+      const el = new SelfNavigationTest();
+      const url = el.getLocation({ q: 'truetype', aligned: true }, 'https://wpt.fyi/results/');
+      assert.equal(url.search, '?q=truetype&aligned');
+    });
+
+    test('getLocation() writes the string "true" as a value, not a flag', () => {
+      const el = new SelfNavigationTest();
+      const url = el.getLocation({ q: 'true', aligned: true }, 'https://wpt.fyi/results/');
+      assert.equal(url.search, '?q=true&aligned');
+    });
+
+    test('getLocation() leaves out null and undefined values', () => {
+      const el = new SelfNavigationTest();
+      const url = el.getLocation(
+        { q: null, view: undefined, label: ['a', null, undefined] }, 'https://wpt.fyi/results/');
+      assert.equal(url.search, '?label=a');
     });
 
     test('getLocation() leaves out the query when there are no params', () => {

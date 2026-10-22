@@ -7,6 +7,7 @@
 import { assert } from '@open-wc/testing';
 import {
   emptyTestRunsState,
+  encodeParams,
   isDefaultProductSpecs,
   isViewOnlyQuery,
   normalizeTestRunsParams,
@@ -43,6 +44,35 @@ suite('query-state', () => {
       assert.equal(paramsToQuery({ label: 'master', aligned: true, diff: true }), 'label=master&aligned&diff');
     });
 
+    test('keeps values that start with "true"', () => {
+      assert.equal(paramsToQuery({ q: 'truetype', aligned: true }), 'q=truetype&aligned');
+      assert.equal(paramsToQuery({ q: 'trueish', label: 'true-ish' }), 'q=trueish&label=true-ish');
+    });
+
+    test('writes the string "true" as a value, not a flag', () => {
+      assert.equal(paramsToQuery({ q: 'true', aligned: true }), 'q=true&aligned');
+      assert.deepEqual(queryToParams(paramsToQuery({ q: 'true' })), { q: 'true' });
+    });
+
+    test('writes true and "true" the same way inside arrays', () => {
+      assert.equal(paramsToQuery({ label: ['true', 'x'], aligned: [true] }), 'label=true&label=x&aligned');
+    });
+
+    test('leaves out undefined and null values', () => {
+      assert.equal(
+        paramsToQuery({ label: 'master', view: undefined, q: null, product: ['chrome', undefined, null, 'firefox'] }),
+        'label=master&product=chrome&product=firefox');
+    });
+
+    test('is an empty string when there is nothing to write', () => {
+      assert.strictEqual(paramsToQuery({ run_id: [] }), '');
+      assert.strictEqual(paramsToQuery({ label: [], view: undefined }), '');
+    });
+
+    test('keeps the whole time, with its seconds and time zone', () => {
+      assert.equal(paramsToQuery({ from: '2020-01-02T03:00:00.000Z' }), 'from=2020-01-02T03%3A00%3A00.000Z');
+    });
+
     test('encodes spaces as %20 and plus signs as %2B', () => {
       assert.equal(paramsToQuery({ q: 'a b+c' }), 'q=a%20b%2Bc');
     });
@@ -50,6 +80,18 @@ suite('query-state', () => {
     test('encodes the characters of product specs', () => {
       assert.equal(paramsToQuery({ product: ['chrome[experimental]@abcdef0123'] }),
         'product=chrome%5Bexperimental%5D%40abcdef0123');
+    });
+  });
+
+  suite('encodeParams', () => {
+    test('writes params like paramsToQuery, but with spaces as +', () => {
+      assert.equal(encodeParams({ q: 'a b+c', label: ['x', 'y'], aligned: true, view: undefined }),
+        'q=a+b%2Bc&label=x&label=y&aligned');
+    });
+
+    test('is an empty string without params', () => {
+      assert.strictEqual(encodeParams(undefined), '');
+      assert.strictEqual(encodeParams({}), '');
     });
   });
 
