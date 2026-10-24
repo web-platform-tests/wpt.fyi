@@ -6,20 +6,20 @@
 
 import { assert } from '@open-wc/testing';
 import {
-  emptyTestRunsState,
+  emptyRunsState,
   encodeParams,
   isDefaultProductSpecs,
   isViewOnlyQuery,
-  normalizeTestRunsParams,
-  normalizeTestRunsUIParams,
+  normalizeRunsParams,
+  normalizeRunsUIParams,
   paramsToQuery,
   queryToParams,
   resultsRangeMessage,
+  runsParamsToState,
+  runsStateToParams,
+  runsUIParamsToState,
+  runsUIStateToParams,
   showsDefaultView,
-  testRunsParamsToState,
-  testRunsStateToParams,
-  testRunsUIParamsToState,
-  testRunsUIStateToParams,
 } from '../query-state.js';
 
 suite('query-state', () => {
@@ -146,56 +146,56 @@ suite('query-state', () => {
     });
   });
 
-  suite('normalizeTestRunsParams', () => {
+  suite('normalizeRunsParams', () => {
     test('makes label, product and sha arrays', () => {
-      assert.deepEqual(normalizeTestRunsParams({ label: 'master', product: 'chrome', sha: 'abcdef0123' }),
+      assert.deepEqual(normalizeRunsParams({ label: 'master', product: 'chrome', sha: 'abcdef0123' }),
         { label: ['master'], product: ['chrome'], sha: ['abcdef0123'], canViewInteropScores: false });
     });
 
     test('keeps arrays as they are', () => {
       const params = { label: ['master', 'foo'], product: ['chrome', 'firefox'] };
-      assert.deepEqual(normalizeTestRunsParams(params).label, ['master', 'foo']);
+      assert.deepEqual(normalizeRunsParams(params).label, ['master', 'foo']);
       assert.deepEqual(params.product, ['chrome', 'firefox']);
     });
 
     test('makes the aligned and master flags true', () => {
-      const params = normalizeTestRunsParams({ aligned: '', master: '' });
+      const params = normalizeRunsParams({ aligned: '', master: '' });
       assert.isTrue(params.aligned);
       assert.isTrue(params.master);
     });
 
     test('allows the interop view only for an interop search', () => {
-      assert.isTrue(normalizeTestRunsParams({ view: 'interop', q: 'interop-2024-dom' }).canViewInteropScores);
-      assert.isFalse(normalizeTestRunsParams({ view: 'interop', q: 'cloneNode' }).canViewInteropScores);
-      assert.isFalse(normalizeTestRunsParams({}).canViewInteropScores);
+      assert.isTrue(normalizeRunsParams({ view: 'interop', q: 'interop-2024-dom' }).canViewInteropScores);
+      assert.isFalse(normalizeRunsParams({ view: 'interop', q: 'cloneNode' }).canViewInteropScores);
+      assert.isFalse(normalizeRunsParams({}).canViewInteropScores);
     });
 
     test('changes the params it is given, and returns them', () => {
       const params = { label: 'master' };
-      assert.strictEqual(normalizeTestRunsParams(params), params);
+      assert.strictEqual(normalizeRunsParams(params), params);
       assert.deepEqual(params.label, ['master']);
     });
 
     test('leaves other params alone', () => {
-      assert.deepEqual(normalizeTestRunsParams({ 'max-count': '3', q: 'cloneNode', view: 'subtest' }),
+      assert.deepEqual(normalizeRunsParams({ 'max-count': '3', q: 'cloneNode', view: 'subtest' }),
         { 'max-count': '3', q: 'cloneNode', view: 'subtest', canViewInteropScores: false });
     });
   });
 
-  suite('normalizeTestRunsUIParams', () => {
+  suite('normalizeRunsUIParams', () => {
     test('makes run_id an array', () => {
-      assert.deepEqual(normalizeTestRunsUIParams({ run_id: '123' }).run_id, ['123']);
-      assert.deepEqual(normalizeTestRunsUIParams({ run_id: ['123', '456'] }).run_id, ['123', '456']);
+      assert.deepEqual(normalizeRunsUIParams({ run_id: '123' }).run_id, ['123']);
+      assert.deepEqual(normalizeRunsUIParams({ run_id: ['123', '456'] }).run_id, ['123', '456']);
     });
 
     test('makes the diff flag true', () => {
-      assert.isTrue(normalizeTestRunsUIParams({ diff: '' }).diff);
-      assert.notProperty(normalizeTestRunsUIParams({}), 'diff');
+      assert.isTrue(normalizeRunsUIParams({ diff: '' }).diff);
+      assert.notProperty(normalizeRunsUIParams({}), 'diff');
     });
 
     test('changes the params it is given, and returns them', () => {
       const params = { run_id: '123', filter: 'ADC' };
-      assert.strictEqual(normalizeTestRunsUIParams(params), params);
+      assert.strictEqual(normalizeRunsUIParams(params), params);
       assert.deepEqual(params, { run_id: ['123'], filter: 'ADC' });
     });
   });
@@ -215,14 +215,14 @@ suite('query-state', () => {
     });
   });
 
-  suite('testRunsStateToParams', () => {
+  suite('runsStateToParams', () => {
     test('is empty for the latest runs of the default products', () => {
-      assert.deepEqual(testRunsStateToParams({}), {});
-      assert.deepEqual(testRunsStateToParams({ shas: [], labels: [], productSpecs: ['chrome', 'edge', 'firefox', 'safari'] }), {});
+      assert.deepEqual(runsStateToParams({}), {});
+      assert.deepEqual(runsStateToParams({ shas: [], labels: [], productSpecs: ['chrome', 'edge', 'firefox', 'safari'] }), {});
     });
 
     test('gives every param, in a fixed order', () => {
-      const params = testRunsStateToParams({
+      const params = runsStateToParams({
         view: 'subtest',
         aligned: true,
         productSpecs: ['chrome', 'firefox'],
@@ -247,49 +247,49 @@ suite('query-state', () => {
 
     test('names a revision with the state\'s own array, and drops aligned for it', () => {
       const shas = ['abcdef0123'];
-      const params = testRunsStateToParams({ shas, aligned: true });
+      const params = runsStateToParams({ shas, aligned: true });
       assert.strictEqual(params.sha, shas);
       assert.notProperty(params, 'aligned');
     });
 
     test('leaves out the latest revision', () => {
-      assert.deepEqual(testRunsStateToParams({ shas: ['latest'] }), {});
+      assert.deepEqual(runsStateToParams({ shas: ['latest'] }), {});
     });
 
     test('adds the master label once, to a copy of the labels', () => {
       const labels = ['foo'];
-      assert.deepEqual(testRunsStateToParams({ labels, master: true }).label, ['foo', 'master']);
+      assert.deepEqual(runsStateToParams({ labels, master: true }).label, ['foo', 'master']);
       assert.deepEqual(labels, ['foo'], 'the state\'s labels are unchanged');
-      assert.deepEqual(testRunsStateToParams({ labels: ['master'], master: true }).label, ['master']);
+      assert.deepEqual(runsStateToParams({ labels: ['master'], master: true }).label, ['master']);
     });
 
     test('adds a label from a shared channel after the dates and counts', () => {
-      assert.deepEqual(Object.keys(testRunsStateToParams({ productSpecs: ['chrome[beta]', 'firefox[beta]'], maxCount: 3 })),
+      assert.deepEqual(Object.keys(runsStateToParams({ productSpecs: ['chrome[beta]', 'firefox[beta]'], maxCount: 3 })),
         ['max-count', 'label', 'product']);
     });
 
     test('turns a channel every product shares into a label', () => {
-      assert.deepEqual(testRunsStateToParams({ labels: ['foo'], productSpecs: ['chrome[beta]', 'firefox[beta,bar]'] }),
+      assert.deepEqual(runsStateToParams({ labels: ['foo'], productSpecs: ['chrome[beta]', 'firefox[beta,bar]'] }),
         { label: ['foo', 'beta'], product: ['chrome', 'firefox[bar]'] });
-      assert.deepEqual(testRunsStateToParams({ labels: ['beta'], productSpecs: ['chrome[beta]', 'firefox[beta]'] }),
+      assert.deepEqual(runsStateToParams({ labels: ['beta'], productSpecs: ['chrome[beta]', 'firefox[beta]'] }),
         { label: ['beta'], product: ['chrome', 'firefox'] });
     });
 
     test('keeps the products\' channels when they differ', () => {
-      assert.deepEqual(testRunsStateToParams({ productSpecs: ['chrome[stable]', 'firefox[experimental]'] }),
+      assert.deepEqual(runsStateToParams({ productSpecs: ['chrome[stable]', 'firefox[experimental]'] }),
         { product: ['chrome[stable]', 'firefox[experimental]'] });
     });
 
     test('leaves out the default products after taking out their shared channel', () => {
       assert.deepEqual(
-        testRunsStateToParams({ productSpecs: ['chrome[experimental]', 'edge[experimental]', 'firefox[experimental]', 'safari[experimental]'] }),
+        runsStateToParams({ productSpecs: ['chrome[experimental]', 'edge[experimental]', 'firefox[experimental]', 'safari[experimental]'] }),
         { label: ['experimental'] });
     });
   });
 
-  suite('testRunsUIStateToParams', () => {
+  suite('runsUIStateToParams', () => {
     test('puts its params after the test runs params', () => {
-      const params = testRunsUIStateToParams(
+      const params = runsUIStateToParams(
         { runIds: ['5'], pr: 7, search: 'a b', diff: true, diffFilter: 'ADC', labels: ['bar'], productSpecs: ['chrome', 'firefox'] });
       assert.deepEqual(Object.entries(params), [
         ['label', ['bar']],
@@ -303,24 +303,24 @@ suite('query-state', () => {
     });
 
     test('gives a diff without a filter when there is none', () => {
-      assert.deepEqual(testRunsUIStateToParams({ diff: true }), { diff: true });
+      assert.deepEqual(runsUIStateToParams({ diff: true }), { diff: true });
     });
 
     test('copies the run IDs', () => {
       const runIds = ['5', '6'];
-      const params = testRunsUIStateToParams({ runIds });
+      const params = runsUIStateToParams({ runIds });
       assert.deepEqual(params.run_id, runIds);
       assert.notStrictEqual(params.run_id, runIds);
     });
 
     test('gives the state\'s diff filter as the filter', () => {
-      assert.deepEqual(testRunsUIStateToParams({ diff: true, diffFilter: 'AD' }), { diff: true, filter: 'AD' });
+      assert.deepEqual(runsUIStateToParams({ diff: true, diffFilter: 'AD' }), { diff: true, filter: 'AD' });
     });
   });
 
-  suite('emptyTestRunsState', () => {
+  suite('emptyRunsState', () => {
     test('is the latest runs of the default products', () => {
-      assert.deepEqual(emptyTestRunsState(), {
+      assert.deepEqual(emptyRunsState(), {
         productSpecs: ['chrome', 'edge', 'firefox', 'safari'],
         labels: [],
         maxCount: undefined,
@@ -334,16 +334,16 @@ suite('query-state', () => {
     });
 
     test('gives new arrays every time, which can be changed', () => {
-      const state = emptyTestRunsState();
-      assert.notStrictEqual(state.productSpecs, emptyTestRunsState().productSpecs);
+      const state = emptyRunsState();
+      assert.notStrictEqual(state.productSpecs, emptyRunsState().productSpecs);
       state.productSpecs.push('servo');
-      assert.deepEqual(emptyTestRunsState().productSpecs, ['chrome', 'edge', 'firefox', 'safari']);
+      assert.deepEqual(emptyRunsState().productSpecs, ['chrome', 'edge', 'firefox', 'safari']);
     });
   });
 
-  suite('testRunsParamsToState', () => {
+  suite('runsParamsToState', () => {
     test('starts from the empty state', () => {
-      const state = testRunsParamsToState({});
+      const state = runsParamsToState({});
       assert.deepEqual(state.productSpecs, ['chrome', 'edge', 'firefox', 'safari']);
       assert.deepEqual(state.products.map(p => p.browser_name), ['chrome', 'edge', 'firefox', 'safari']);
       assert.deepEqual(state.labels, []);
@@ -352,7 +352,7 @@ suite('query-state', () => {
     });
 
     test('reads every param', () => {
-      const state = testRunsParamsToState({
+      const state = runsParamsToState({
         sha: ['abcdef0123'], product: ['chrome', 'firefox'], label: ['foo'], 'max-count': '3', offset: '6',
         from: '2024-01-02T03:04:00.000Z', to: '2024-02-03T04:05:06.000Z', aligned: true, view: 'subtest',
         canViewInteropScores: false,
@@ -370,7 +370,7 @@ suite('query-state', () => {
     });
 
     test('gives the keys in the order they are set in', () => {
-      assert.deepEqual(Object.keys(testRunsParamsToState({ label: ['master'], view: 'subtest', canViewInteropScores: true })), [
+      assert.deepEqual(Object.keys(runsParamsToState({ label: ['master'], view: 'subtest', canViewInteropScores: true })), [
         'productSpecs', 'labels', 'maxCount', 'offset', 'from', 'to', 'shas', 'aligned', 'view',
         'products', 'canViewInteropScores', 'master',
       ]);
@@ -378,58 +378,58 @@ suite('query-state', () => {
 
     test('uses the params\' own sha and product arrays', () => {
       const params = { sha: ['abcdef0123'], product: ['chrome', 'firefox'] };
-      const state = testRunsParamsToState(params);
+      const state = runsParamsToState(params);
       assert.strictEqual(state.shas, params.sha);
       assert.strictEqual(state.productSpecs, params.product);
     });
 
     test('leaves out the latest revision', () => {
-      assert.deepEqual(testRunsParamsToState({ sha: ['latest'] }).shas, []);
+      assert.deepEqual(runsParamsToState({ sha: ['latest'] }).shas, []);
     });
 
     test('reads dates and times without a time zone in UTC, as the server does', () => {
-      assert.equal(testRunsParamsToState({ from: '2024-01-02T03:04' }).from.toISOString(), '2024-01-02T03:04:00.000Z');
-      assert.equal(testRunsParamsToState({ from: '2024-01-02' }).from.toISOString(), '2024-01-02T00:00:00.000Z');
-      assert.equal(testRunsParamsToState({ from: '2024-01-02T03:04:05+02:00' }).from.toISOString(),
+      assert.equal(runsParamsToState({ from: '2024-01-02T03:04' }).from.toISOString(), '2024-01-02T03:04:00.000Z');
+      assert.equal(runsParamsToState({ from: '2024-01-02' }).from.toISOString(), '2024-01-02T00:00:00.000Z');
+      assert.equal(runsParamsToState({ from: '2024-01-02T03:04:05+02:00' }).from.toISOString(),
         '2024-01-02T01:04:05.000Z');
     });
 
     test('leaves out invalid dates', () => {
-      const state = testRunsParamsToState({ from: 'garbage', to: '' });
+      const state = runsParamsToState({ from: 'garbage', to: '' });
       assert.isUndefined(state.from);
       assert.isUndefined(state.to);
-      assert.deepEqual(testRunsStateToParams(state), {});
+      assert.deepEqual(runsStateToParams(state), {});
     });
 
     test('turns the master label into the master flag', () => {
-      const state = testRunsParamsToState({ label: ['foo', 'master'] });
+      const state = runsParamsToState({ label: ['foo', 'master'] });
       assert.isTrue(state.master);
       assert.deepEqual(state.labels, ['foo']);
     });
 
     test('gives every product a shared channel label, replacing its own channel', () => {
-      const state = testRunsParamsToState({ label: ['experimental', 'foo'], product: ['chrome', 'firefox[stable,bar]'] });
+      const state = runsParamsToState({ label: ['experimental', 'foo'], product: ['chrome', 'firefox[stable,bar]'] });
       assert.deepEqual(state.productSpecs, ['chrome[experimental]', 'firefox[bar,experimental]']);
       assert.deepEqual(state.labels, ['foo']);
       assert.deepEqual(state.products.map(p => p.labels), [['experimental'], ['bar', 'experimental']]);
     });
 
     test('keeps a product\'s own label when it is the shared channel', () => {
-      assert.deepEqual(testRunsParamsToState({ label: ['beta'], product: ['chrome', 'firefox[beta,bar]'] }).productSpecs,
+      assert.deepEqual(runsParamsToState({ label: ['beta'], product: ['chrome', 'firefox[beta,bar]'] }).productSpecs,
         ['chrome[beta]', 'firefox[beta,bar]']);
     });
 
     test('gives the default products a shared channel when none are listed', () => {
-      assert.deepEqual(testRunsParamsToState({ label: ['beta'] }).productSpecs,
+      assert.deepEqual(runsParamsToState({ label: ['beta'] }).productSpecs,
         ['chrome[beta]', 'edge[beta]', 'firefox[beta]', 'safari[beta]']);
     });
 
-    test('reads back what testRunsStateToParams writes', () => {
+    test('reads back what runsStateToParams writes', () => {
       const state = {
         shas: ['abcdef0123'], labels: ['foo'], master: true, productSpecs: ['chrome[beta]', 'firefox'],
         maxCount: 3, offset: 6, view: 'subtest',
       };
-      const read = testRunsParamsToState(testRunsStateToParams(state));
+      const read = runsParamsToState(runsStateToParams(state));
       assert.deepEqual(read.shas, state.shas);
       assert.deepEqual(read.labels, state.labels);
       assert.isTrue(read.master);
@@ -440,9 +440,9 @@ suite('query-state', () => {
     });
   });
 
-  suite('testRunsUIParamsToState', () => {
+  suite('runsUIParamsToState', () => {
     test('adds the results pages\' own state after the test runs state', () => {
-      const state = testRunsUIParamsToState({ pr: '5', q: 'cloneNode', diff: true, filter: 'AD', run_id: ['7', '8'] });
+      const state = runsUIParamsToState({ pr: '5', q: 'cloneNode', diff: true, filter: 'AD', run_id: ['7', '8'] });
       assert.deepEqual(Object.keys(state).slice(-5), ['pr', 'search', 'diff', 'diffFilter', 'runIds']);
       assert.equal(state.pr, '5');
       assert.equal(state.search, 'cloneNode');
@@ -452,7 +452,7 @@ suite('query-state', () => {
     });
 
     test('turns the diff off and goes back to the default filter without them', () => {
-      const state = testRunsUIParamsToState({});
+      const state = runsUIParamsToState({});
       assert.isFalse(state.diff);
       assert.equal(state.diffFilter, 'ADC');
       assert.isUndefined(state.runIds);
@@ -462,11 +462,11 @@ suite('query-state', () => {
 
     test('copies the run IDs', () => {
       const params = { run_id: ['7'] };
-      assert.notStrictEqual(testRunsUIParamsToState(params).runIds, params.run_id);
+      assert.notStrictEqual(runsUIParamsToState(params).runIds, params.run_id);
     });
 
     test('treats missing params as no params', () => {
-      assert.deepEqual(testRunsUIParamsToState(undefined), testRunsUIParamsToState({}));
+      assert.deepEqual(runsUIParamsToState(undefined), runsUIParamsToState({}));
     });
   });
 
