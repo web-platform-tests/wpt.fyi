@@ -6,16 +6,16 @@
 import { ProductInfo } from './product-info.js';
 import { QueryBuilder } from './results-navigation.js';
 import {
-  emptyTestRunsState,
+  emptyRunsState,
   isDefaultProductSpecs,
-  normalizeTestRunsParams,
-  normalizeTestRunsUIParams,
+  normalizeRunsParams,
+  normalizeRunsUIParams,
   resultsRangeMessage,
+  runsParamsToState,
+  runsStateToParams,
+  runsUIParamsToState,
+  runsUIStateToParams,
   showsDefaultView,
-  testRunsParamsToState,
-  testRunsStateToParams,
-  testRunsUIParamsToState,
-  testRunsUIStateToParams,
 } from './query-state.js';
 
 // productSpecs.* makes the query follow in-place edits of productSpecs (e.g.
@@ -134,7 +134,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   * Convert the UI property values into their equivalent URI query params.
   */
   computeTestRunQueryParams(shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view) {
-    return testRunsStateToParams(
+    return runsStateToParams(
       { shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view });
   }
 
@@ -143,7 +143,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   parseQuery(query) {
-    return normalizeTestRunsParams(super.parseQuery(query));
+    return normalizeRunsParams(super.parseQuery(query));
   }
 
   computeProducts(productSpecs) {
@@ -155,7 +155,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   get emptyQuery() {
-    return emptyTestRunsState();
+    return emptyRunsState();
   }
 
   clearQuery() {
@@ -180,7 +180,7 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
   }
 
   _getBatchUpdate(params) {
-    return testRunsParamsToState(params);
+    return runsParamsToState(params);
   }
 
   computeResultsRangeMessage(shas, productSpecs, from, to, maxCount, labels, master, runIds) {
@@ -226,18 +226,18 @@ const TestRunsUIQuery = (superClass, opt_queryCompute) => class extends TestRuns
     // as this method always has. Polymer passes the current property values,
     // so the two agree. diffFilter isn't an argument, so a change to it alone
     // doesn't recompute the params.
-    return testRunsUIStateToParams({
+    return runsUIStateToParams({
       shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, diff: diff || this.diff, search, pr, view,
       runIds: runIds && this.runIds, diffFilter: this.diffFilter,
     });
   }
 
   parseQuery(query) {
-    return normalizeTestRunsUIParams(super.parseQuery(query));
+    return normalizeRunsUIParams(super.parseQuery(query));
   }
 
   _getBatchUpdate(params) {
-    return testRunsUIParamsToState(params);
+    return runsUIParamsToState(params);
   }
 };
 
