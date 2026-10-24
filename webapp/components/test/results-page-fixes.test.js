@@ -308,7 +308,7 @@ suite('results page fixes', () => {
 
     test('shows the dates of the runs in the order they were given', async() => {
       const el = await createApp('/results/dom/');
-      el.setProperties({ from: new Date(2024, 0, 2), to: new Date(2024, 1, 3) });
+      el.setProperties({ from: new Date(Date.UTC(2024, 0, 2)), to: new Date(Date.UTC(2024, 1, 3)) });
       assert.include(el.resultsTotalsRangeMessage, 'from Jan 2 to Feb 3');
 
       el.to = undefined;

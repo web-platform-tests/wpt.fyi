@@ -350,8 +350,8 @@ function testRunsUIParamsToState(params) {
 /**
  * The sentence above the results that says which runs are shown, e.g.
  * "Showing the latest master test runs for the default product set". from and
- * to are Dates; with from but no to, it counts the days from from to now
- * (Date.now()).
+ * to are Dates, shown as UTC dates; with from but no to, it counts the days
+ * from from to now (Date.now()).
  */
 function resultsRangeMessage({ shas, productSpecs, from, to, maxCount, labels, master, runIds }) {
   if (runIds && runIds.length) {
@@ -367,9 +367,12 @@ function resultsRangeMessage({ shas, productSpecs, from, to, maxCount, labels, m
   } else if (from) {
     const max = to || Date.now();
     const diff = Math.floor((max - from) / 86400000);
+    // The dates are shown in UTC, the time zone of the query's dates and of
+    // the runs, rather than in the browser's local time zone.
     const shortDate = date => date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      timeZone: 'UTC',
     });
     msg += to
       ? ` from ${shortDate(from)} to ${shortDate(to)}`

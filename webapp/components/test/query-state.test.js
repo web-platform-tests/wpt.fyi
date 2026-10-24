@@ -493,10 +493,23 @@ suite('query-state', () => {
     });
 
     test('gives the dates', () => {
-      assert.equal(resultsRangeMessage({ from: new Date(2024, 0, 2), to: new Date(2024, 1, 3) }),
+      assert.equal(resultsRangeMessage({ from: new Date('2024-01-02T00:00:00Z'), to: new Date('2024-02-03T00:00:00Z') }),
         'Showing the latest test runs from Jan 2 to Feb 3');
       const from = new Date(Date.now() - 3 * 86400000 - 60000);
       assert.equal(resultsRangeMessage({ from }), 'Showing the latest test runs from the last 3 days');
+    });
+
+    test('shows the dates in UTC, whatever the local time zone', () => {
+      // Midnight UTC is still the previous day west of UTC, and late in the day
+      // is already the next day east of UTC.
+      assert.equal(resultsRangeMessage({ from: new Date('2024-03-01T00:00:00Z'), to: new Date('2024-03-08T23:30:00Z') }),
+        'Showing the latest test runs from Mar 1 to Mar 8');
+    });
+
+    test('shows dates from the query in UTC, whatever the local time zone', () => {
+      // A date and time without an offset, as SelfNavigation writes, is UTC.
+      const state = testRunsParamsToState({ from: '2024-03-01T00:00', to: '2024-03-08T23:30' });
+      assert.equal(resultsRangeMessage(state), 'Showing the latest test runs from Mar 1 to Mar 8');
     });
 
     test('lists the labels', () => {
