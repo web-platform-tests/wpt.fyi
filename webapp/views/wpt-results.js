@@ -586,8 +586,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     this.resultsLoadFailed = false;
     this.load(
       this.loadRuns().then(async runs => {
-        // Pass current (un)structured query is passed to fetchResults().
-        this.fetchResults(this.structuredSearch || this.search);
+        // /api/search only accepts a structured query, and rejects a plain
+        // string with a 400. If the search couldn't be parsed into a
+        // structured query, search for it as a test name pattern instead.
+        this.fetchResults(this.structuredSearch
+          || (this.search && { exists: [{ pattern: this.search }] }));
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {

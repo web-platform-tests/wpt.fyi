@@ -83,17 +83,19 @@ const QUERY_GRAMMAR = ohm.grammar(`
       = "(" Exp ")"   -- paren
       | not NestedExp -- not
 
+    // The word operators only match whole words, so that e.g. "android",
+    // "origin" and "notifications" are patterns rather than operators.
     or
       = "|"
-      | caseInsensitive<"or">
+      | caseInsensitive<"or"> ~basicNameFragmentChar
 
     and
       = "&"
-      | caseInsensitive<"and">
+      | caseInsensitive<"and"> ~basicNameFragmentChar
 
     not
       = "!"
-      | "not"
+      | "not" ~basicNameFragmentChar
 
     inequality
       = ">="
@@ -142,7 +144,10 @@ const QUERY_GRAMMAR = ohm.grammar(`
     isExp
       = caseInsensitive<"is"> ":" metadataQualityLiteral
 
-    patternExp = ~reserved nameFragment
+    // A reserved word is only rejected as a whole word, so that patterns which
+    // merely start with one (e.g. "flow-start", "counter-style", "isolation")
+    // are still patterns.
+    patternExp = ~reservedWord nameFragment
 
     productSpec = browserName ("-" browserVersion)?
 
@@ -180,6 +185,8 @@ const QUERY_GRAMMAR = ohm.grammar(`
         | caseInsensitive<"label">
         | caseInsensitive<"feature">
         | caseInsensitive<"is">
+
+    reservedWord = reserved ~basicNameFragmentChar
 
     nameFragment
       = basicNameFragment                       -- basic
@@ -483,6 +490,9 @@ class TestSearch extends WPTFlags(PolymerElement) {
       // eslint-disable-next-line no-unused-vars
       } catch (err) {
         // TODO: Handle query parse/interpret error.
+        // Don't keep the previous query's structured query, which would
+        // silently show the results of the previous search.
+        this.structuredQuery = null;
       }
     }
   }
