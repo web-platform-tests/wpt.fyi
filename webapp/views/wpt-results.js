@@ -1155,7 +1155,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     } else if (formatPasses === parseFloat(total)) {
       // If almost every test is passing, but there are some failures,
       // don't round up to 'total / total' so that it's clear some failure exists.
-      cellDisplay = `${formatPasses - 0.01}`;
+      cellDisplay = `${formatPasses - 0.01}${separator}${total}`;
     } else {
       cellDisplay = `${formatPasses}${separator}${total}`;
     }
