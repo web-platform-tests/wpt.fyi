@@ -78,6 +78,13 @@ jobs:
       - name: deploy webapp
         run: ./util/deploy-staging.sh "${FORCE_DEPLOYMENT}" webapp/web/app.staging.yaml
 
+      # Right after the deploy, while App Engine moves traffic to the new
+      # version, some requests to staging can fail. Wait until it consistently
+      # serves the app before testing against it.
+      - name: Wait for staging to serve the new version
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: ./util/wait-for-staging.sh
+
       - name: Run go_large_test in main
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker exec -t "${DOCKER_INSTANCE}" make go_large_test STAGING=true
