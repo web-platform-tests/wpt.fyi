@@ -210,7 +210,12 @@ suite('<wpt-results> views', () => {
       viewButtons(el)[1].click();
       assert.equal(el.view, 'subtest');
       assert.equal(window.location.search, '?label=master&q=interop-2024-dom&view=subtest');
-      await waitUntil(() => cells(row(el, '/dom/nodes'))[0] === '4 / 6', 'expected subtest counts');
+      // The table reloads after the view changes, so the row can briefly be
+      // missing.
+      await waitUntil(() => {
+        const tr = row(el, '/dom/nodes');
+        return !!tr && cells(tr)[0] === '4 / 6';
+      }, 'expected subtest counts');
       assert.isTrue(viewButtons(el)[1].classList.contains('selected'));
       assert.isTrue(viewButtons(el)[0].classList.contains('unselected'));
 
