@@ -166,6 +166,53 @@ suite('<wpt-results> directory table', () => {
         { run_ids: [123, 234, 345, 456], query: { exists: [{ pattern: 'cloneNode' }] } });
     });
 
+    function invalidSearchBanner(el) {
+      const banner = el.shadowRoot.querySelector('info-banner.invalid-search');
+      // dom-if hides its content rather than removing it.
+      return banner && getComputedStyle(banner).display !== 'none' ? banner : null;
+    }
+
+    test('warns when the search isn\'t a valid query', async() => {
+      // <test-search> leaves the structured search null when the search
+      // doesn't parse.
+      const el = await fixture(html`<wpt-results .path=${'/dom'}></wpt-results>`);
+      el.structuredSearch = null;
+      el.query = 'label=master&q=safari:fai';
+      await waitUntil(() => invalidSearchBanner(el), 'expected the invalid search warning');
+      assert.equal(invalidSearchBanner(el).type, 'warning');
+      assert.include(invalidSearchBanner(el).textContent.replace(/\s+/g, ' '),
+        '"safari:fai" isn\'t a valid search query, so it\'s being matched against test names instead.');
+      assert.isNull(el.shadowRoot.querySelector('info-banner[type="error"]'));
+      await waitUntil(() => requestsTo('/api/search').length, 'expected a search');
+      assert.deepEqual(JSON.parse(requestsTo('/api/search')[0].options.body),
+        { run_ids: [123, 234, 345, 456], query: { exists: [{ pattern: 'safari:fai' }] } });
+    });
+
+    test('doesn\'t warn for a valid query', async() => {
+      const el = await fixture(html`<wpt-results .path=${'/dom'}></wpt-results>`);
+      el.structuredSearch = { exists: [{ pattern: 'cloneNode' }] };
+      el.query = 'label=master&q=cloneNode';
+      await waitUntil(() => el.searchResults.length && rows(el).length, 'expected the results table');
+      assert.isNull(invalidSearchBanner(el));
+    });
+
+    test('doesn\'t warn without a search', async() => {
+      const el = await createResults('/dom', 'label=master');
+      assert.isNull(invalidSearchBanner(el));
+    });
+
+    test('stops warning when the search becomes valid', async() => {
+      const el = await fixture(html`<wpt-results .path=${'/dom'}></wpt-results>`);
+      el.structuredSearch = null;
+      el.query = 'label=master&q=safari:fai';
+      await waitUntil(() => invalidSearchBanner(el), 'expected the invalid search warning');
+      el.setProperties({
+        structuredSearch: { exists: [{ product: 'safari', status: 'FAIL' }] },
+        query: 'label=master&q=safari:fail',
+      });
+      await waitUntil(() => !invalidSearchBanner(el), 'expected the warning to go away');
+    });
+
     test('loads again for a new query', async() => {
       const el = await createResults('/dom', 'label=master');
       el.query = 'label=experimental';

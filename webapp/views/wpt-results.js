@@ -273,6 +273,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </info-banner>
     </template>
 
+    <template is="dom-if" if="[[isInvalidSearch(search, structuredSearch)]]">
+      <info-banner type="warning" class="invalid-search">
+        "[[search]]" isn't a valid search query, so it's being matched against
+        test names instead. See the
+        <a href="https://github.com/web-platform-tests/wpt.fyi/blob/main/api/query/README.md">search documentation</a>
+        for the query syntax.
+      </info-banner>
+    </template>
+
     <template is="dom-if" if="[[testRuns]]">
       <template is="dom-if" if="{{ pathIsATestFile }}">
         <test-file-results test-runs="[[testRuns]]"
@@ -526,6 +535,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return diff && testRuns && testRuns.length !== 2;
   }
 
+  // Whether there is a search that couldn't be parsed into a structured query
+  // (see <test-search>), so that it is matched against test names instead.
+  isInvalidSearch(search, structuredSearch) {
+    return !!search && !structuredSearch;
+  }
+
   computePathIsASubfolderOrFile(isSubfolder, isFile) {
     return isSubfolder || isFile;
   }
@@ -588,9 +603,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.loadRuns().then(async runs => {
         // /api/search only accepts a structured query, and rejects a plain
         // string with a 400. If the search couldn't be parsed into a
-        // structured query, search for it as a test name pattern instead.
-        this.fetchResults(this.structuredSearch
-          || (this.search && { exists: [{ pattern: this.search }] }));
+        // structured query, search for it as a test name pattern instead
+        // (and show a warning; see isInvalidSearch()).
+        this.fetchResults(this.isInvalidSearch(this.search, this.structuredSearch)
+          ? { exists: [{ pattern: this.search }] }
+          : this.structuredSearch);
 
         // Load a diff data into this.diffRun, if needed.
         if (this.diff && runs && runs.length === 2) {
