@@ -115,6 +115,16 @@ def task_handler() -> ResponseReturnValue:
 
     task_id = flask.request.headers.get('X-AppEngine-TaskName')
     app.logger.info('Processing task %s', task_id)
+
+    # Validate the mandatory/structured fields before handing the raw form
+    # data to the processor, to avoid malformed values reaching unsafe
+    # processing paths.
+    if not flask.request.form.get('uploader'):
+        return ('Missing required field: uploader', HTTPStatus.BAD_REQUEST)
+    if not flask.request.form.get('id', '0').isdigit():
+        return ('Field "id" must be a non-negative integer',
+                HTTPStatus.BAD_REQUEST)
+
     resp = processor.process_report(task_id, flask.request.form)
     status = HTTPStatus.CREATED if resp else HTTPStatus.NO_CONTENT
     if resp:
