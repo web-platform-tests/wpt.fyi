@@ -993,6 +993,65 @@ suite('<test-search>', () => {
           assertQueryParse('"chrome"', {exists: [{pattern: 'chrome'}]});
         });
       });
+
+      // Keywords are only reserved as whole words: a pattern that merely
+      // starts with one is still a pattern (#5203).
+      suite('patterns that start with a keyword', () => {
+        const patterns = [
+          // Browser names.
+          'flow-start', 'flow-end', 'flowchart', 'edge-cases', 'chrome-extension', 'servo-only',
+          'safari_quirks', 'chrome_android2', 'node.json',
+          // Root query and count keywords.
+          'allow-headers', 'nonempty', 'existsSync', 'sequence', 'counter-style', 'oneline',
+          'twophase', 'threejs',
+          // Field keywords.
+          'statusText', 'subtests', 'pathname', 'linked', 'triaged-tests', 'labels', 'features',
+          'isolation',
+          // Operators.
+          'android', 'origin', 'nothing', 'notifications',
+        ];
+        for (const pattern of patterns) {
+          test(pattern, () => {
+            assertQueryParse(pattern, {exists: [{pattern}]});
+          });
+        }
+
+        test('upper case', () => {
+          assertQueryParse('Flow-Start', {exists: [{pattern: 'Flow-Start'}]});
+        });
+
+        test('with other patterns and operators', () => {
+          assertQueryParse('flow-start or counter-style and isolation', {
+            exists: [{
+              or: [
+                {pattern: 'flow-start'},
+                {and: [{pattern: 'counter-style'}, {pattern: 'isolation'}]},
+              ],
+            }],
+          });
+        });
+
+        test('next to keywords', () => {
+          assertQueryParse('not flow-start', {exists: [{not: {pattern: 'flow-start'}}]});
+          assertQueryParse('!notifications', {exists: [{not: {pattern: 'notifications'}}]});
+          assertQueryParse('edge-cases edge:pass', {
+            exists: [{pattern: 'edge-cases'}, {product: 'edge', status: 'PASS'}],
+          });
+          assertQueryParse('all(flow-start)', {all: [{pattern: 'flow-start'}]});
+        });
+
+        test('after another pattern', () => {
+          assertQueryParse('webxr android', {exists: [{pattern: 'webxr'}, {pattern: 'android'}]});
+          assertQueryParse('cors origin', {exists: [{pattern: 'cors'}, {pattern: 'origin'}]});
+          assertQueryParse('css notifications', {exists: [{pattern: 'css'}, {pattern: 'notifications'}]});
+        });
+
+        test('keywords on their own are still reserved', () => {
+          for (const keyword of ['flow', 'edge', 'all', 'count', 'status', 'is', 'not', 'and', 'or']) {
+            assertQueryFail(keyword);
+          }
+        });
+      });
     });
   });
   suite('TestSearch.prototype.*', () => {
@@ -1012,6 +1071,18 @@ suite('<test-search>', () => {
               exists: [{ pattern: 'shadow-dom/DocumentOrShadowRoot-prototype-elementFromPoint.html' }]
             });
           });
+      });
+    });
+
+    suite('queryUpdated()', () => {
+      test('clears the structured query when the query fails to parse', () => {
+        const search = fixtureSync(html`<test-search></test-search>`);
+        search.query = 'css';
+        assert.deepEqual(search.structuredQuery, {exists: [{pattern: 'css'}]});
+        // A query that doesn't parse mustn't keep the previous structured query,
+        // or the previous search's results would be shown for it.
+        search.query = 'chrome';
+        assert.isNull(search.structuredQuery);
       });
     });
   });

@@ -157,12 +157,13 @@ suite('<wpt-results> directory table', () => {
         { run_ids: [123, 234, 345, 456], query: structuredSearch });
     });
 
-    test('searches with the plain search otherwise', async() => {
+    test('searches with the plain search as a pattern otherwise', async() => {
+      // /api/search rejects a plain string query with a 400.
       const el = await fixture(html`<wpt-results .path=${'/dom'}></wpt-results>`);
       el.query = 'label=master&q=cloneNode';
       await waitUntil(() => requestsTo('/api/search').length, 'expected a search');
       assert.deepEqual(JSON.parse(requestsTo('/api/search')[0].options.body),
-        { run_ids: [123, 234, 345, 456], query: 'cloneNode' });
+        { run_ids: [123, 234, 345, 456], query: { exists: [{ pattern: 'cloneNode' }] } });
     });
 
     test('loads again for a new query', async() => {
