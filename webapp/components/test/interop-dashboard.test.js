@@ -125,6 +125,26 @@ suite('<interop-dashboard>', () => {
     return el;
   }
 
+  test('shows a message instead of a blank page when the scores fail to load', async() => {
+    const realFetch = window.fetch.bind(window);
+    sandbox.stub(window, 'fetch').callsFake((url, ...args) =>
+      String(url).startsWith('/') ? realFetch(url, ...args) : Promise.resolve(new Response('', { status: 500 })));
+    const consoleError = sandbox.stub(console, 'error');
+    const rejections = [];
+    const onRejection = event => rejections.push(String(event.reason));
+    window.addEventListener('unhandledrejection', onRejection);
+    try {
+      const el = await fixture(html`<interop-dashboard year="${CURRENT_YEAR}"></interop-dashboard>`);
+      await waitUntil(() => el.textContent.includes('could not be loaded'), 'expected the message', { timeout: 5000 });
+      assert.equal(el.textContent, 'The Interop scores could not be loaded. Please try reloading the page.');
+      assert.isTrue(consoleError.calledOnce);
+      await nextFrame();
+      assert.deepEqual(rejections, []);
+    } finally {
+      window.removeEventListener('unhandledrejection', onRejection);
+    }
+  });
+
   test('is a registered custom element', () => {
     assert.isTrue(new InteropDashboard() instanceof HTMLElement);
     assert.isTrue(document.createElement('interop-dashboard') instanceof InteropDashboard);

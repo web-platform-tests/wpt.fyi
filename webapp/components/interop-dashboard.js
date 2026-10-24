@@ -683,8 +683,18 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     // Build the scores first and assign them once, rather than filling in an
     // assigned object, so that the change is seen without relying on this
     // running before super.ready().
-    const experimental = await this.dataManager.getMostRecentScores(false);
-    const stable = await this.dataManager.getMostRecentScores(true);
+    let experimental, stable;
+    try {
+      experimental = await this.dataManager.getMostRecentScores(false);
+      stable = await this.dataManager.getMostRecentScores(true);
+    } catch (error) {
+      // The dashboard can't be shown without the scores, so show a message
+      // instead of leaving the page blank.
+      // eslint-disable-next-line no-console
+      console.error('Failed to load the Interop scores:', error);
+      this.textContent = 'The Interop scores could not be loaded. Please try reloading the page.';
+      return;
+    }
     this.scores = { experimental, stable };
 
     this.features = Object.entries(this.getYearProp('focusAreas'))
