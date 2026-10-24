@@ -802,7 +802,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       const name = isDir ? suffix.substring(0, slashIdx) : suffix;
       // Either add new node to acc, or add passes, total to an
       // existing node.
-      if (!nodes.hasOwnProperty(name)) {
+      if (!(name in nodes)) {
         nodes[name] = {
           path: `${prefix}${name}`,
           isDir,
@@ -821,15 +821,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
       .filter(r => r.test.startsWith(prefix))
-      // Accumulate displayedNodes from remaining files.
-      .reduce((nodes, r) => {
+      // Accumulate displayedNodes from remaining files. The rows are kept by
+      // name apart from the totals, in an object without a prototype, so that
+      // any file or folder name (e.g. "totals" or "constructor") is just a row.
+      .reduce((acc, r) => {
         // Compute dir/file name that is direct descendant of this.path.
         let testPath = r.test;
         let previousTestPath;
         if (this.diffResults && this.diffResults.renames) {
           if (testPath in this.diffResults.renames) {
             // This path was renamed; ignore.
-            return nodes;
+            return acc;
           }
           const rename = Object.entries(this.diffResults.renames).find(e => e[1] === testPath);
           if (rename) {
@@ -837,22 +839,22 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             previousTestPath = rename[0];
           }
         }
-        const name = collapsePathOnto(testPath, nodes);
+        const name = collapsePathOnto(testPath, acc.rows);
 
         const rs = r.legacy_status;
-        const row = nodes[name];
+        const row = acc.rows[name];
         if (!rs) {
-          return nodes;
+          return acc;
         }
 
         // Keep track of overall total.
-        if (!('totals' in nodes)) {
-          nodes['totals'] = this.testRuns.map(() => {
+        if (!acc.totals) {
+          acc.totals = this.testRuns.map(() => {
             return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0, test_view_passes: 0, test_view_total: 0 };
           });
         }
         // Accumulate the sums.
-        aggregateTestTotals(nodes, row, r.legacy_status, diffRun);
+        aggregateTestTotals(acc, row, r.legacy_status, diffRun);
 
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
@@ -882,15 +884,13 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             row.diff.total += diff[2];
           }
         }
-        return nodes;
-      }, {});
+        return acc;
+      }, { rows: Object.create(null), totals: undefined });
 
     // Take the calculated totals to be displayed at bottom of results page.
-    // Delete key after reassignment.
     this.displayedTotals = resultsByPath.totals;
-    delete resultsByPath.totals;
 
-    this.displayedNodes = Object.values(resultsByPath)
+    this.displayedNodes = Object.values(resultsByPath.rows)
       .filter(row => {
         if (!this.onlyShowDifferences) {
           return true;

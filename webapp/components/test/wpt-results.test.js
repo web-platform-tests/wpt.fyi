@@ -206,6 +206,21 @@ suite('<wpt-results>', () => {
       expect(trf.displayedNodes).to.be.empty;
     });
 
+    test('shows files and folders whose names are also object keys', () => {
+      trf.searchResults = [
+        { test: '/totals/a.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+        { test: '/hasOwnProperty/b.html', legacy_status: [{ status: 'F', passes: 0, total: 2, newAggProcess: true }] },
+        { test: '/other.html', legacy_status: [{ status: 'P', passes: 3, total: 3, newAggProcess: true }] },
+        { test: '/__proto__/c.html', legacy_status: [{ status: 'P', passes: 1, total: 1, newAggProcess: true }] },
+      ];
+      trf.refreshDisplayedNodes();
+      assert.deepEqual(trf.displayedNodes.map(n => n.path), ['/totals', '/hasOwnProperty', '/other.html', '/__proto__']);
+      // Each row has its own results, and the totals add them up.
+      const totals = trf.displayedNodes.map(n => n.results[0].total);
+      assert.lengthOf(trf.displayedTotals, 1);
+      assert.equal(trf.displayedTotals[0].total, totals.reduce((a, b) => a + b));
+    });
+
     test('filtering by path', () => {
       trf.path = '/foo';
       trf.searchResults = [
