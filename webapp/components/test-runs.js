@@ -36,6 +36,11 @@ const TestRunsQueryLoader = (superClass) =>
     }
 
     async loadRuns() {
+      // Only the latest call assigns its runs: an earlier call that finishes
+      // later (e.g. after the query changed) must not overwrite them.
+      const call = this._loadRunsCall = (this._loadRunsCall || 0) + 1;
+      let fetched = false;
+      let nextPageToken;
       const preloaded = this.testRuns;
       const runs = [];
       if (preloaded) {
@@ -47,7 +52,8 @@ const TestRunsQueryLoader = (superClass) =>
         runs.push(
           fetch(`/api/runs?${this.query}`)
             .then(r => r.ok && r.json().then(runs => {
-              this.nextPageToken = r.headers && r.headers.get('wpt-next-page');
+              fetched = true;
+              nextPageToken = r.headers && r.headers.get('wpt-next-page');
               return runs;
             }))
         );
@@ -59,6 +65,12 @@ const TestRunsQueryLoader = (superClass) =>
       const flattened = nonEmpty.reduce((sum, item) => {
         return sum.concat(Array.isArray(item) ? item : [item]);
       }, []);
+      if (call !== this._loadRunsCall) {
+        return flattened;
+      }
+      if (fetched) {
+        this.nextPageToken = nextPageToken;
+      }
       this.testRuns = flattened;
       this.displayedProducts = this.testRuns.map(productFromRun);
       this._fireTestRunsLoadEvent();

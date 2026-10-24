@@ -584,8 +584,14 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
   loadData() {
     this.resultsLoadFailed = false;
+    // Responses to an earlier load that arrive after a newer load started are
+    // ignored (see also fetchResults and fetchDiff).
+    const call = this._loadDataCall = (this._loadDataCall || 0) + 1;
     this.load(
       this.loadRuns().then(async runs => {
+        if (call !== this._loadDataCall) {
+          return;
+        }
         // Pass current (un)structured query is passed to fetchResults().
         this.fetchResults(this.structuredSearch || this.search);
 
@@ -599,7 +605,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         }
       }),
       () => {
-        this.resultsLoadFailed = true;
+        if (call === this._loadDataCall) {
+          this.resultsLoadFailed = true;
+        }
       }
     );
   }
@@ -654,6 +662,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     // 422, expect backend to attempt write-on-read of missing data. In such
     // cases, retry fetch up to 5 times with 5000ms waits in between.
     const toast = this.shadowRoot.querySelector('#runsNotInCache');
+    const call = this._loadDataCall;
     this.load(
       this.retry(
         async() => {
@@ -672,10 +681,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         5000
       ).then(
         json => {
+          if (call !== this._loadDataCall) {
+            return;
+          }
           this.searchResults = json.results.sort((a, b) => a.test.localeCompare(b.test));
           this.refreshDisplayedNodes();
         },
         (e) => {
+          if (call !== this._loadDataCall) {
+            return;
+          }
           toast.close();
           // eslint-disable-next-line no-console
           console.log(`Failed to load: ${e}`);
@@ -686,6 +701,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   fetchDiff() {
+    const call = this._loadDataCall;
     this.load(
       window.fetch(this.diffURL)
         .then(r => {
@@ -695,9 +711,17 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           return r.json();
         })
         .then(json => {
+          if (call !== this._loadDataCall) {
+            return;
+          }
           this.diffResults = json;
           this.refreshDisplayedNodes();
-        })
+        }),
+      () => {
+        if (call === this._loadDataCall) {
+          this.resultsLoadFailed = true;
+        }
+      }
     );
   }
 
