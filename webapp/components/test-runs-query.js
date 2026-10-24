@@ -146,10 +146,6 @@ const TestRunsQuery = (superClass, opt_queryCompute) => class extends QueryBuild
     return normalizeTestRunsParams(super.parseQuery(query));
   }
 
-  computeProducts(productSpecs) {
-    return productSpecs && productSpecs.map(s => this.parseProductSpec(s));
-  }
-
   computeIsDefaultProducts(productSpecs) {
     return isDefaultProductSpecs(productSpecs);
   }
