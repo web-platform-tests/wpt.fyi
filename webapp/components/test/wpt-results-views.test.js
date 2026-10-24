@@ -53,10 +53,27 @@ suite('<wpt-results> views', () => {
   const originalUrl = window.location.href;
   let sandbox;
   let requests;
+  // Holds back the /api/search responses whose request body it matches; held
+  // responses are answered by calling the functions in heldSearches.
+  let holdSearch;
+  let heldSearches;
+  let diffFails;
+  // Runs for label=slow are held back until the functions in heldRuns are
+  // called; label=none has no runs.
+  let heldRuns;
+  // While holdDiff is set, /api/diff responses wait for heldDiffs.
+  let holdDiff;
+  let heldDiffs;
 
   setup(() => {
     sandbox = sinon.createSandbox();
     requests = [];
+    holdSearch = null;
+    heldSearches = [];
+    diffFails = false;
+    heldRuns = [];
+    holdDiff = false;
+    heldDiffs = [];
     sandbox.stub(window, 'fetch').callsFake((input, options) => {
       const url = new URL(input, window.location);
       requests.push({ url, options });
@@ -68,14 +85,34 @@ suite('<wpt-results> views', () => {
       switch (url.pathname) {
       case '/api/runs': {
         // Chrome and Firefox when asked for them, otherwise all four.
+        if (url.searchParams.get('label') === 'none') {
+          return json([]);
+        }
+        if (url.searchParams.get('label') === 'slow') {
+          return new Promise(resolve => heldRuns.push(() => resolve(json(TEST_RUNS_DATA))));
+        }
         const products = url.searchParams.getAll('product');
         return json(products.length
           ? TEST_RUNS_DATA.filter(run => products.includes(run.browser_name))
           : TEST_RUNS_DATA);
       }
-      case '/api/search':
-        return json(searchResponse(JSON.parse(options.body).run_ids));
+      case '/api/search': {
+        const body = JSON.parse(options.body);
+        if (holdSearch && holdSearch(body)) {
+          // A held response only has the first test.
+          const response = searchResponse(body.run_ids);
+          response.results = response.results.slice(0, 1);
+          return new Promise(resolve => heldSearches.push(() => resolve(json(response))));
+        }
+        return json(searchResponse(body.run_ids));
+      }
       case '/api/diff':
+        if (holdDiff) {
+          return new Promise(resolve => heldDiffs.push(() => resolve(json(DIFF))));
+        }
+        if (diffFails) {
+          return Promise.resolve(new Response('', { status: 500 }));
+        }
         return json(DIFF);
       case '/api/history':
         // Never answers, so that the timeline isn't drawn.
@@ -283,6 +320,13 @@ suite('<wpt-results> views', () => {
       await waitUntil(() => rowPaths(el).length === 2, 'expected both rows again');
     });
 
+    test('shows an error when the differences fail to load', async() => {
+      diffFails = true;
+      const el = await createResults('/dom', DIFF_QUERY);
+      await waitUntil(() => el.resultsLoadFailed, 'expected the error');
+      assert.isNotOk(el.diffResults);
+    });
+
     test('warns that a diff needs exactly two runs', async() => {
       const el = await createResults('/dom', 'label=master&diff&filter=ADC');
       await waitUntil(() => el.shadowRoot.querySelector('#diffInvalid'), 'expected the warning');
@@ -290,6 +334,75 @@ suite('<wpt-results> views', () => {
       assert.isTrue(toast.opened);
       assert.equal(toast.text, '\'diff\' was requested, but is only valid when comparing two runs.');
       assert.lengthOf(requestsTo('/api/diff'), 0);
+    });
+  });
+
+  suite('loading', () => {
+    test('ignores results of an earlier query when the newer query has no runs', async() => {
+      const el = await createResults('/dom', 'label=master');
+      holdSearch = body => body.query === 'first';
+      el.query = 'label=master&q=first';
+      await waitUntil(() => heldSearches.length === 1, 'expected the first search');
+      holdSearch = null;
+      el.query = 'label=none';
+      await waitUntil(() => requestsTo('/api/runs').some(r => r.url.searchParams.get('label') === 'none'));
+      await new Promise(resolve => setTimeout(resolve, 50));
+      assert.lengthOf(el.testRuns, 0);
+      heldSearches[0]();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await nextFrame();
+      assert.lengthOf(el.searchResults, 0, 'stale results shown for the newer query');
+    });
+
+    test('ignores results of an earlier query while the newer runs load', async() => {
+      const el = await createResults('/dom', 'label=master');
+      holdSearch = body => body.query === 'first';
+      el.query = 'label=master&q=first';
+      await waitUntil(() => heldSearches.length === 1, 'expected the first search');
+      holdSearch = null;
+      el.query = 'label=slow&q=second';
+      await waitUntil(() => heldRuns.length === 1);
+      heldSearches[0]();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await nextFrame();
+      assert.lengthOf(el.searchResults, 0, 'stale results shown while newer runs load');
+      heldRuns[0]();
+      await waitUntil(() => el.searchResults.length === 3, 'expected the second results');
+    });
+
+    test('ignores the diff of an earlier query when the newer query has none', async() => {
+      const el = await createResults('/dom', 'label=master');
+      holdDiff = true;
+      el.query = 'label=master&product=chrome&product=firefox&diff&filter=ADC';
+      await waitUntil(() => heldDiffs.length === 1, 'expected the diff request');
+      holdDiff = false;
+      el.query = 'label=master&q=other';
+      await waitUntil(() => requestsTo('/api/search').some(r => JSON.parse(r.options.body).query === 'other'));
+      await waitUntil(() => el.searchResults.length === 3);
+      heldDiffs[0]();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await nextFrame();
+      assert.isNotOk(el.diffResults, 'stale diff assigned for the newer query');
+    });
+
+    test('ignores results that arrive after a newer query was loaded', async() => {
+      const el = await createResults('/dom', 'label=master');
+      holdSearch = body => body.query === 'first';
+      el.query = 'label=master&q=first';
+      await waitUntil(() => heldSearches.length === 1, 'expected the first search');
+      holdSearch = null;
+      el.query = 'label=master&q=second';
+      await waitUntil(() => requestsTo('/api/search').length === 3, 'expected the second search');
+      await waitUntil(() => el.searchResults.length === 3, 'expected the second results');
+
+      // The earlier search is still being loaded; once loadingCount is back to
+      // 0, its response has been handled (or ignored).
+      assert.isAbove(el.loadingCount, 0, 'expected the earlier search to be pending');
+      heldSearches[0]();
+      await waitUntil(() => el.loadingCount === 0, 'expected the earlier search to settle');
+      await nextFrame();
+      assert.lengthOf(el.searchResults, 3);
+      assert.deepEqual(rowPaths(el), ['/dom/historical.html', '/dom/nodes']);
     });
   });
 
