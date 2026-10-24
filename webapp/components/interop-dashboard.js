@@ -863,8 +863,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   getSummaryOptionText() {
-    // Show "Active" in graph summary text if it is the current interop year.
-    if (parseInt(this.year) === new Date().getFullYear()) {
+    // Show "Active" in graph summary text if it is the current interop year
+    // (the latest year in the interop data), whatever the calendar year.
+    if (this.isCurrentYear) {
       return 'All Active Focus Areas';
     }
     return 'All Focus Areas';
