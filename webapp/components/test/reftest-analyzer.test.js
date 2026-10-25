@@ -25,4 +25,10 @@ suite('ReftestAnalyzer', () => {
   test('is a registered custom element', () => {
     assert.isTrue(analyzer instanceof window.customElements.get('reftest-analyzer'));
   });
+
+  test('explains the highlight diff checkbox in a tooltip', () => {
+    const tooltip = analyzer.shadowRoot.querySelector('wpt-tooltip');
+    assert.equal(tooltip.target && tooltip.target.id, 'diff-button');
+    assert.include(tooltip.textContent, 'the areas where two images differ');
+  });
 });

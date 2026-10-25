@@ -24,7 +24,8 @@ let nextId = 0;
  *
  * `position` (top, bottom, left or right; bottom by default) and `offset`
  * (14px by default) place it next to the target. It's a popover, so it shows
- * above everything else, and it stays inside the window. The target is
+ * above everything else, and it stays inside the window: like paper-tooltip,
+ * one that would go past the right edge wraps its text instead of moving. The target is
  * described by the tooltip for screen readers.
  */
 class WptTooltip extends LitElement {
@@ -213,29 +214,47 @@ class WptTooltip extends LitElement {
     if (!this.showing || !this._target) {
       return;
     }
+    // Measure the tooltip at its natural size, away from the window's edges.
+    this.style.maxWidth = '';
+    this.style.left = '0px';
     const target = this._target.getBoundingClientRect();
-    const tip = this.getBoundingClientRect();
+    let tip = this.getBoundingClientRect();
     const offset = Number(this.offset) || 0;
-    let left = target.left + (target.width - tip.width) / 2;
-    let top = target.top + (target.height - tip.height) / 2;
-    switch (this.position) {
-    case 'top':
-      top = target.top - tip.height - offset;
-      break;
-    case 'left':
-      left = target.left - tip.width - offset;
-      break;
-    case 'right':
-      left = target.right + offset;
-      break;
-    default:
-      top = target.bottom + offset;
+    const place = tip => {
+      let left = target.left + (target.width - tip.width) / 2;
+      let top = target.top + (target.height - tip.height) / 2;
+      switch (this.position) {
+      case 'top':
+        top = target.top - tip.height - offset;
+        break;
+      case 'left':
+        left = target.left - tip.width - offset;
+        break;
+      case 'right':
+        left = target.right + offset;
+        break;
+      default:
+        top = target.bottom + offset;
+      }
+      return { left, top };
+    };
+    let { left, top } = place(tip);
+    left = Math.max(0, left);
+    // Like paper-tooltip, a tooltip that would go past the right edge of the
+    // window keeps its place and wraps its text to the space that is left,
+    // rather than moving away from its target.
+    const windowWidth = document.documentElement.clientWidth;
+    if (left + tip.width > windowWidth) {
+      this.style.maxWidth = `${Math.max(0, windowWidth - left)}px`;
+      tip = this.getBoundingClientRect();
+      // Wrapping makes it taller, which moves a tooltip above the target.
+      top = place(tip).top;
     }
-    const maxLeft = document.documentElement.clientWidth - tip.width;
     const maxTop = document.documentElement.clientHeight - tip.height;
-    this.style.left = `${Math.max(0, Math.min(left, maxLeft))}px`;
+    this.style.left = `${left}px`;
     this.style.top = `${Math.max(0, Math.min(top, maxTop))}px`;
   }
+
 }
 window.customElements.define('wpt-tooltip', WptTooltip);
 

@@ -1,4 +1,4 @@
-import { assert, fixtureSync, html } from '@open-wc/testing';
+import { assert, fixtureSync, html, nextFrame } from '@open-wc/testing';
 import sinon from 'sinon';
 import { TestRun } from '../test-run.js';
 
@@ -131,6 +131,20 @@ suite('<test-run>', () => {
 
     teardown(() => {
       sandbox.restore();
+    });
+  });
+
+  suite('tooltip', () => {
+    test('describes the run when hovering over it', async() => {
+      trf.testRun = Object.assign({}, trf.testRun, {
+        browser_version: '63.0', os_name: 'linux', labels: ['stable'],
+      });
+      await nextFrame();
+      const tooltip = trf.shadowRoot.querySelector('wpt-tooltip');
+      assert.equal(tooltip.offset, 0);
+      assert.isTrue(tooltip.target === trf.shadowRoot.querySelector('div'), 'targets the run');
+      assert.include(tooltip.textContent, 'Platform: Linux');
+      assert.include(tooltip.textContent, 'Labels: stable');
     });
   });
 });
