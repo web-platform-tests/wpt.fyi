@@ -5,7 +5,6 @@
  */
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
@@ -22,6 +21,7 @@ import { SelfNavigation } from './self-navigator.js';
 import './test-run.js';
 import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
+import './wpt-collapse.js';
 import { WPTFlags } from './wpt-flags.js';
 import { Pluralizer } from './pluralize.js';
 
@@ -141,7 +141,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       </info-banner>
     </template>
 
-    <iron-collapse opened="[[editingQuery]]">
+    <wpt-collapse opened="[[editingQuery]]">
       <test-runs-query-builder product-specs="[[productSpecs]]"
                                labels="[[labels]]"
                                master="[[master]]"
@@ -153,7 +153,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
                                diff="[[diff]]"
                                show-time-range>
       </test-runs-query-builder>
-    </iron-collapse>
+    </wpt-collapse>
 
     <template is="dom-if" if="[[loadingFailed]]">
       <info-banner type="error">
