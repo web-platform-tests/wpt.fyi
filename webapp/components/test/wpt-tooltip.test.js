@@ -204,6 +204,30 @@ suite('<wpt-tooltip>', () => {
       assert.isAtLeast(tip.top, 0);
     });
 
+    test('wraps its text at the right edge of the window instead of moving, like paper-tooltip', async() => {
+      const text = 'A long tooltip next to the right edge of the window';
+      const el = await fixture(html`
+        <div>
+          <button id="middle" style="position: fixed; left: 50%; top: 100px; width: 10px">x</button>
+          <wpt-tooltip for="middle">${text}</wpt-tooltip>
+          <button id="edge" style="position: fixed; right: 0; top: 200px; width: 10px">x</button>
+          <wpt-tooltip for="edge">${text}</wpt-tooltip>
+        </div>`);
+      const [middle, edge] = el.querySelectorAll('button');
+      const [middleTooltip, edgeTooltip] = el.querySelectorAll('wpt-tooltip');
+      hover(middle);
+      const natural = middleTooltip.getBoundingClientRect();
+      unhover(middle);
+      hover(edge);
+      const target = edge.getBoundingClientRect();
+      const tip = edgeTooltip.getBoundingClientRect();
+      // Centered under the target as it would be at its natural width...
+      assert.closeTo(tip.left, target.left + (target.width - natural.width) / 2, 1);
+      // ...and wrapped to the space that is left.
+      assert.isAtMost(tip.right, document.documentElement.clientWidth + 1);
+      assert.isAbove(tip.height, natural.height);
+    });
+
     test('follows the target when the page scrolls', async() => {
       const el = await fixture(html`
         <div style="height: 300px; overflow: auto">

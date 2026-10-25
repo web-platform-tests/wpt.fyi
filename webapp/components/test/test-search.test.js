@@ -1015,4 +1015,19 @@ suite('<test-search>', () => {
       });
     });
   });
+
+  suite('tooltip', () => {
+    test('shows the Enter hint above the query while the query has focus', () => {
+      const search = fixtureSync(html`<test-search></test-search>`);
+      const tooltip = search.shadowRoot.querySelector('wpt-tooltip');
+      assert.equal(tooltip.position, 'top');
+      assert.isTrue(tooltip.manualMode);
+      assert.include(tooltip.textContent, 'Press <Enter> to commit query');
+      const query = search.shadowRoot.querySelector('.query');
+      query.dispatchEvent(new FocusEvent('focus'));
+      assert.isTrue(tooltip.matches(':popover-open'), 'shown on focus');
+      query.dispatchEvent(new FocusEvent('blur'));
+      assert.isFalse(tooltip.matches(':popover-open'), 'hidden on blur');
+    });
+  });
 });
