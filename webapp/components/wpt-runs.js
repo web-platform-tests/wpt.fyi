@@ -8,7 +8,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import './wpt-toast.js';
 import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -93,17 +93,17 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         background: var(--wpt-blue-700);
         border-radius: 50%;
       }
-      paper-toast {
+      wpt-toast {
         min-width: 320px;
       }
-      paper-toast div {
+      wpt-toast div {
         display: flex;
         align-items: center;
       }
-      paper-toast span {
+      wpt-toast span {
         flex-grow: 1;
       }
-      paper-toast paper-button {
+      wpt-toast paper-button {
         display: inline-block;
         flex-grow: 0;
         flex-shrink: 0;
@@ -124,7 +124,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       }
     </style>
 
-    <paper-toast id="selected-toast" duration="0">
+    <wpt-toast id="selected-toast" duration="0">
       <div style="display: flex;">
         <span>[[selectedRuns.length]] [[runPlural]] selected</span>
         <paper-button onclick="[[showRuns]]">View [[runPlural]]</paper-button>
@@ -132,7 +132,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
           <paper-button onclick="[[showDiff]]">View diff</paper-button>
         </template>
       </div>
-    </paper-toast>
+    </wpt-toast>
 
     <template is="dom-if" if="[[resultsRangeMessage]]">
       <info-banner>
