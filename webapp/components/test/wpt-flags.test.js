@@ -86,4 +86,31 @@ suite('wpt-flags', () => {
       });
     });
   });
+
+  suite('look', () => {
+    // Each option is a row with paper-item's look, but not a focusable list
+    // option: the checkbox in it is what takes focus.
+    function assertRowLook(row, name) {
+      const style = getComputedStyle(row);
+      assert.equal(style.display, 'flex', name);
+      assert.equal(style.alignItems, 'center', name);
+      assert.equal(style.minHeight, '48px', name);
+      assert.equal(style.paddingLeft, '16px', name);
+      assert.equal(style.paddingRight, '16px', name);
+      assert.equal(style.fontSize, '16px', name);
+      assert.equal(style.lineHeight, '24px', name);
+      assert.include(style.fontFamily, 'Roboto', name);
+      assert.isFalse(row.hasAttribute('tabindex'), name);
+      assert.isFalse(row.hasAttribute('role'), name);
+    }
+
+    test('shows each flag in a 48px Roboto row', () => {
+      const editor = fixtureSync(html`<wpt-flags-editor></wpt-flags-editor>`);
+      const checkboxes = [...editor.shadowRoot.querySelectorAll('paper-checkbox')];
+      assert.deepEqual(checkboxes.map(c => c.id), ['colorHomepage', 'showMobileScoresView']);
+      for (const checkbox of checkboxes) {
+        assertRowLook(checkbox.parentElement, checkbox.id);
+      }
+    });
+  });
 });
