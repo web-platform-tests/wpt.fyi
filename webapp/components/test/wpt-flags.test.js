@@ -106,7 +106,7 @@ suite('wpt-flags', () => {
 
     test('shows each flag in a 48px Roboto row', () => {
       const editor = fixtureSync(html`<wpt-flags-editor></wpt-flags-editor>`);
-      const checkboxes = [...editor.shadowRoot.querySelectorAll('paper-checkbox')];
+      const checkboxes = [...editor.shadowRoot.querySelectorAll('wpt-checkbox')];
       assert.deepEqual(checkboxes.map(c => c.id), ['colorHomepage', 'showMobileScoresView']);
       for (const checkbox of checkboxes) {
         assertRowLook(checkbox.parentElement, checkbox.id);
