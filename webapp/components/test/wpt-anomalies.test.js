@@ -14,7 +14,7 @@ function queryLink(el) {
 }
 
 function radio(el, name) {
-  return el.shadowRoot.querySelector(`paper-radio-button[name="${name}"]`);
+  return el.shadowRoot.querySelector(`wpt-radio-button[name="${name}"]`);
 }
 
 // Waits until the card links to /results/ with the given query.

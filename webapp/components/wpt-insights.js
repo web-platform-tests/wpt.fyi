@@ -7,13 +7,12 @@
 import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
-import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './channel-picker.js';
 import './info-banner.js';
 import { AllProducts, DefaultProductSpecs, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
+import './wpt-radio-group.js';
 
 class Insights extends ProductInfo(PolymerElement) {
   static get template() {
@@ -131,10 +130,10 @@ class Anomalies extends ProductInfo(PolymerElement) {
           <browser-multi-picker products="[[allProductsExcept(browser)]]" selected="{{others}}"></browser-multi-picker>
         </div>
         where [[browserDisplayName]] is the only one
-        <paper-radio-group selected="{{anomalyType}}">
-          <paper-radio-button name="failing">Failing</paper-radio-button>
-          <paper-radio-button name="passing">Passing</paper-radio-button>
-        </paper-radio-group>
+        <wpt-radio-group selected="{{anomalyType}}">
+          <wpt-radio-button name="failing">Failing</wpt-radio-button>
+          <wpt-radio-button name="passing">Passing</wpt-radio-button>
+        </wpt-radio-group>
         <info-banner>
           <a class="query" href="[[url]]">[[query]]</a>
         </info-banner>

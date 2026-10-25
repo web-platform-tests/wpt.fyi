@@ -1,4 +1,4 @@
-import { assert, fixtureSync, html } from '@open-wc/testing';
+import { assert, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../reftest-analyzer.js';
 
@@ -20,6 +20,20 @@ suite('ReftestAnalyzer', () => {
 
   teardown(() => {
     sandbox.restore();
+  });
+
+  test('the radio buttons choose the image to show', async() => {
+    const [actual, expected] = analyzer.shadowRoot.querySelectorAll('wpt-radio-button');
+    assert.equal(analyzer.selectedImage, 'before');
+    await waitUntil(() => actual.checked, 'Actual screenshot is checked');
+    expected.click();
+    assert.equal(analyzer.selectedImage, 'after');
+    assert.isTrue(expected.checked);
+    assert.isFalse(actual.checked);
+    // The page's 1 and 2 keys set selectedImage.
+    analyzer.selectedImage = 'before';
+    assert.isTrue(actual.checked);
+    assert.isFalse(expected.checked);
   });
 
   test('is a registered custom element', () => {
