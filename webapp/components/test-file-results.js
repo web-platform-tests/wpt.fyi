@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
@@ -12,6 +11,7 @@ import './test-file-results-table.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { TestRunsQueryLoader } from './test-runs.js';
 import './wpt-colors.js';
+import './wpt-toggle-button.js';
 import { timeTaken } from './utils.js';
 import { WPTFlags } from './wpt-flags.js';
 import { PathInfo } from './path.js';
@@ -32,20 +32,20 @@ class TestFileResults extends WPTFlags(LoadingState(PathInfo(
         display: flex;
         justify-content: flex-end;
       }
-      .right paper-toggle-button {
+      .right wpt-toggle-button {
         padding: 8px;
       }
-      paper-toggle-button {
-        --paper-toggle-button-checked-bar-color:  var(--wpt-blue-500);
-        --paper-toggle-button-checked-button-color:  var(--wpt-blue-700);
-        --paper-toggle-button-checked-ink-color: var(--wpt-blue-300);
+      wpt-toggle-button {
+        --wpt-toggle-button-checked-bar-color: var(--wpt-blue-500);
+        --wpt-toggle-button-checked-button-color: var(--wpt-blue-700);
+        --wpt-toggle-button-checked-ink-color: var(--wpt-blue-300);
       }
     </style>
 
     <div class="right">
-      <paper-toggle-button checked="{{isVerbose}}">
+      <wpt-toggle-button checked="{{isVerbose}}">
         Show Details
-      </paper-toggle-button>
+      </wpt-toggle-button>
     </div>
 
     <test-file-results-table test-runs="[[testRuns]]"
