@@ -523,7 +523,7 @@ suite('<wpt-processor>', () => {
         resolve = r;
       });
       const el = await fixture(html`<wpt-processor></wpt-processor>`);
-      const spinner = $(el, 'paper-spinner-lite');
+      const spinner = $(el, 'wpt-spinner');
       assert.isTrue(el.isLoading);
       assert.isTrue(spinner.active);
 
@@ -541,7 +541,7 @@ suite('<wpt-processor>', () => {
       assert.isTrue(el.resultsLoadFailed);
       assert.deepEqual(el.testRuns, []);
       assert.isFalse(isShown(getGrid(el)));
-      assert.isFalse($(el, 'paper-spinner-lite').active);
+      assert.isFalse($(el, 'wpt-spinner').active);
     });
 
     test('treats an error status as a failure even when the body is JSON', async() => {
