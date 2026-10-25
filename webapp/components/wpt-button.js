@@ -99,6 +99,11 @@ class WptButton extends LitElement {
       letter-spacing: inherit;
       cursor: inherit;
     }
+    /* The unset above removes the browser's focus ring; bring it back, as
+       paper-button shows it with keyboard focus. */
+    button:focus-visible {
+      outline: revert;
+    }
     /* Instead of paper-button's ink ripple, it darkens while pressed, about as
        much as a fully grown ripple. */
     button::after {
