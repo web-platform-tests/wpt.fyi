@@ -19,7 +19,7 @@ The schema for the testRun property is as follows:
 
 See models.go for more details.
 */
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
+import './wpt-tooltip.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
@@ -74,7 +74,7 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
         </template>
       </template>
 
-      <paper-tooltip offset="0">
+      <wpt-tooltip offset="0">
         <template is="dom-if" if="[[ !isDiff(testRun.browser_name) ]]">
           [[displayName(testRun.browser_name)]] [[testRun.browser_version]]<br>
           Platform: [[displayName(testRun.os_name)]] [[displaySource(testRun)]]<br>
@@ -86,7 +86,7 @@ class TestRun extends WPTFlags(ProductInfo(PolymerElement)) {
           diff numbers are for:<br>
           [newly passing] / [newly failing] / [total count delta]
         </template>
-      </paper-tooltip>
+      </wpt-tooltip>
     </div>
 `;
   }
