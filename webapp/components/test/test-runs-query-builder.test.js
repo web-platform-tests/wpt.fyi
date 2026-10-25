@@ -118,6 +118,41 @@ suite('TestRunsQueryBuilder', () => {
     expect(queryBuilder.query).to.contain('aligned');
   });
 
+  test('clicking the checkboxes updates aligned, diff and master', () => {
+    const [aligned, diff, master] = queryBuilder.shadowRoot.querySelectorAll('wpt-checkbox');
+    queryBuilder.aligned = false;
+    aligned.click();
+    assert.isTrue(queryBuilder.aligned);
+    expect(queryBuilder.query).to.contain('aligned');
+    aligned.click();
+    // The query's round trip leaves a flag that is off undefined.
+    assert.isNotOk(queryBuilder.aligned);
+    expect(queryBuilder.query).to.not.contain('aligned');
+    assert.isNotOk(aligned.checked);
+
+    queryBuilder.diff = false;
+    diff.click();
+    assert.isTrue(queryBuilder.diff);
+
+    queryBuilder.master = false;
+    master.click();
+    assert.isTrue(queryBuilder.master);
+    expect(queryBuilder.query).to.contain('label=master');
+    master.click();
+    assert.isNotOk(queryBuilder.master);
+    expect(queryBuilder.query).to.not.contain('master');
+    assert.isNotOk(master.checked);
+  });
+
+  test('Show diff can only be checked with two products', () => {
+    const diff = queryBuilder.shadowRoot.querySelectorAll('wpt-checkbox')[1];
+    assert.isFalse(diff.disabled);
+    queryBuilder.productSpecs = ['chrome', 'edge', 'firefox'];
+    assert.isTrue(diff.disabled);
+    queryBuilder.productSpecs = ['chrome', 'firefox'];
+    assert.isFalse(diff.disabled);
+  });
+
   test('labels', () => {
     queryBuilder.labelsString = '';
     expect(queryBuilder.query).to.not.contain('label');

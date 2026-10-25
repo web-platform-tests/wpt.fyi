@@ -25,4 +25,13 @@ suite('ReftestAnalyzer', () => {
   test('is a registered custom element', () => {
     assert.isTrue(analyzer instanceof window.customElements.get('reftest-analyzer'));
   });
+
+  test('the Highlight diff checkbox turns the diff on and off', () => {
+    const checkbox = analyzer.shadowRoot.querySelector('#diff-button');
+    assert.isTrue(checkbox.checked);
+    checkbox.click();
+    assert.isFalse(analyzer.showDiff);
+    checkbox.click();
+    assert.isTrue(analyzer.showDiff);
+  });
 });

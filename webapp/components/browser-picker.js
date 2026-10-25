@@ -1,10 +1,10 @@
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-item/paper-icon-item.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
+import './wpt-checkbox.js';
 import { DefaultBrowserNames, DefaultProducts, ProductInfo } from './product-info.js';
 
 // A component allowing the user to select one of a list of browsers.
@@ -56,27 +56,27 @@ class BrowserMultiPicker extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
     <style>
-      paper-checkbox {
+      wpt-checkbox {
         margin-left: 16px;
       }
-      paper-checkbox div {
+      wpt-checkbox div {
         display: flex;
         align-items: center;
       }
-      paper-checkbox display-logo {
+      wpt-checkbox display-logo {
         margin-right: 8px;
       }
     </style>
 
     <template is="dom-repeat" items="[[products]]" as="product">
-      <paper-checkbox checked="[[isSelected(product.browser_name, selected)]]"
-                      value="[[product.browser_name]]"
-                      on-change="checkboxChanged">
+      <wpt-checkbox checked="[[isSelected(product.browser_name, selected)]]"
+                    value="[[product.browser_name]]"
+                    on-change="checkboxChanged">
         <div>
           <display-logo product="[[product]]" small></display-logo>
           [[displayName(product.browser_name)]]
         </div>
-      </paper-checkbox>
+      </wpt-checkbox>
     </template>
 `;
   }
