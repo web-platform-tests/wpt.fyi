@@ -36,6 +36,15 @@ suite('<wpt-button>', () => {
       assert.isTrue(el.shadowRoot.activeElement === innerButton(el));
     });
 
+    test('shows the browser\'s focus ring with keyboard focus', async() => {
+      const el = await fixture(html`<wpt-button>Go</wpt-button>`);
+      el.focus();
+      const button = innerButton(el);
+      // Focus from a script, with no mouse use, counts as keyboard focus.
+      assert.isTrue(button.matches(':focus-visible'));
+      assert.notEqual(getComputedStyle(button).outlineStyle, 'none');
+    });
+
     test('takes raised and disabled as properties, as Polymer bindings set them', async() => {
       const el = await fixture(html`<wpt-button>Go</wpt-button>`);
       el.raised = true;
