@@ -12,8 +12,8 @@ import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
-import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import './wpt-icon.js';
+import './wpt-toggle-button.js';
 
 class GitHubLogin extends PolymerElement {
   static get template() {
@@ -50,7 +50,7 @@ class GitHubLogin extends PolymerElement {
     <template is="dom-if" if="[[user]]">
       <div class="logged-in">
         <template is="dom-if" if="[[showTriage]]">
-          <paper-toggle-button on-click="handleTriageToggle" checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></paper-toggle-button>
+          <wpt-toggle-button on-click="handleTriageToggle" checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></wpt-toggle-button>
           Triage Mode
         </template>
         <img class="github-icon" src="/static/github.svg" alt="">

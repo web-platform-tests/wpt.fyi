@@ -1,4 +1,4 @@
-import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { aTimeout, assert, expect, fixtureSync, html } from '@open-wc/testing';
 import '../test-runs.js';
 import { TestFileResults } from '../test-file-results.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
@@ -17,6 +17,37 @@ suite('TestFileResults', () => {
   test('is a registered custom element', () => {
     assert.isTrue(new TestFileResults() instanceof HTMLElement);
     assert.isTrue(document.createElement('test-file-results') instanceof TestFileResults);
+  });
+
+  suite('Show Details toggle', () => {
+    function toggle() {
+      return tfr.shadowRoot.querySelector('.right [role="button"]');
+    }
+
+    test('shows verbose results, in the table too, while it\'s on', () => {
+      assert.equal(toggle().textContent.trim(), 'Show Details');
+      assert.isFalse(tfr.isVerbose);
+      assert.isFalse(toggle().checked);
+      const table = tfr.shadowRoot.querySelector('test-file-results-table');
+      toggle().click();
+      assert.isTrue(tfr.isVerbose);
+      assert.isTrue(table.verbose);
+      toggle().click();
+      assert.isFalse(tfr.isVerbose);
+      assert.isFalse(table.verbose);
+    });
+
+    test('is blue while it\'s on', async() => {
+      const el = tfr.shadowRoot.querySelector('.right wpt-toggle-button');
+      el.click();
+      await el.updateComplete;
+      // Let the color transitions end.
+      await aTimeout(300);
+      assert.equal(getComputedStyle(el.shadowRoot.querySelector('.bar')).backgroundColor, 'rgb(33, 150, 243)');
+      assert.equal(getComputedStyle(el.shadowRoot.querySelector('.knob')).backgroundColor, 'rgb(25, 118, 210)');
+      assert.equal(getComputedStyle(el.shadowRoot.querySelector('.ink')).color, 'rgb(100, 181, 246)');
+      assert.equal(getComputedStyle(el).paddingTop, '8px');
+    });
   });
 
   suite('static get is()', () => {
