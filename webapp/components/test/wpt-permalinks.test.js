@@ -54,4 +54,26 @@ suite('wpt-permalinks', () => {
       expect(permalinks.url.search).to.equal('');
     });
   });
+
+  suite('copy to clipboard', () => {
+    function toast() {
+      return permalinks.shadowRoot.querySelector('#toast');
+    }
+
+    test('says that the URL was copied', async() => {
+      sandbox.stub(document, 'execCommand').returns(true);
+      await permalinks.handleCopyToClipboard();
+      expect(toast().opened).to.be.true;
+      expect(toast().text).to.equal('URL copied to clipboard!');
+      expect(toast().duration).to.equal(2000);
+    });
+
+    test('says when the URL could not be copied', async() => {
+      sandbox.stub(document, 'execCommand').throws(new Error('not allowed'));
+      await permalinks.handleCopyToClipboard();
+      expect(toast().opened).to.be.true;
+      expect(toast().text).to.equal('Failed to copy URL to clipboard. Copy it manually.');
+      expect(toast().duration).to.equal(5000);
+    });
+  });
 });

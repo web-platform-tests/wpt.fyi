@@ -25,7 +25,7 @@ import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import '../components/wpt-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
@@ -254,18 +254,18 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       }
     </style>
 
-    <paper-toast id="selected-toast" duration="0">
+    <wpt-toast id="selected-toast" duration="0">
       <span>[[triageToastMsg(selectedMetadata.length)]]</span>
       <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
-    </paper-toast>
+    </wpt-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
-      <paper-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
+      <wpt-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
         <paper-button onclick="[[dismissToast]]" class="yellow-button">Close</paper-button>
-      </paper-toast>
+      </wpt-toast>
     </template>
 
-    <paper-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></paper-toast>
+    <wpt-toast id="runsNotInCache" duration="5000" text="One or more of the runs requested is currently being loaded into the cache. Trying again..."></wpt-toast>
 
     <template is="dom-if" if="[[resultsLoadFailed]]">
       <info-banner type="error">
@@ -563,7 +563,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       this.onlyShowDifferences = !this.onlyShowDifferences;
       this.refreshDisplayedNodes();
     };
-    this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.dismissToast = e => e.target.closest('wpt-toast').close();
     this.reloadPendingMetadata = this.handleReloadPendingMetadata.bind(this);
     this.sortTestName = this.sortTestName.bind(this);
     this.addEventListener('selected-metadata-changed', this.selectedMetadataChanged);

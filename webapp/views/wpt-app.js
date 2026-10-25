@@ -16,6 +16,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
 import '../views/wpt-results.js';
+import '../components/wpt-toast.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   static get is() {
@@ -158,14 +159,14 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <wpt-404 name="404" ></wpt-404>
       </iron-pages>
 
-      <paper-toast id="masterLabelMissing" duration="15000">
+      <wpt-toast id="masterLabelMissing" duration="15000">
         <div style="display: flex;">
           wpt.fyi now includes affected tests results from PRs. <br>
           Did you intend to view results for complete (master) runs only?
           <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
           <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
         </div>
-      </paper-toast>
+      </wpt-toast>
     `;
   }
 
@@ -277,7 +278,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
     };
     this.submitQuery = this.handleSubmitQuery.bind(this);
     this.addMasterLabel = this.handleAddMasterLabel.bind(this);
-    this.dismissToast = e => e.target.closest('paper-toast').close();
+    this.dismissToast = e => e.target.closest('wpt-toast').close();
     // Bound once, so that disconnectedCallback can remove the same listeners.
     this.onSearchCommit = this.handleSearchCommit.bind(this);
     this.onSearchAutocomplete = this.handleSearchAutocomplete.bind(this);

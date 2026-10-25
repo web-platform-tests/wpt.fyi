@@ -80,7 +80,7 @@ class WptToast extends LitElement {
       border-radius: 2px;
       font-family: 'Roboto', 'Noto', sans-serif;
       font-size: 14px;
-      line-height: 20px;
+      /* No line-height: like paper-toast, it uses the page's. */
       cursor: default;
       /* Slides up and fades in when it opens, and back when it closes. */
       opacity: 0;

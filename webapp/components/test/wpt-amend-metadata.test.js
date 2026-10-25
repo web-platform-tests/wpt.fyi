@@ -14,7 +14,7 @@ suite('wpt-amend-metadata', () => {
     setup(() => {
       appFixture = fixtureSync(html`<amend-metadata-util-concrete></amend-metadata-util-concrete>`);
       td = document.createElement('td');
-      toast = document.createElement('paper-toast');
+      toast = document.createElement('wpt-toast');
     });
 
     test('handleSelect', () => {
