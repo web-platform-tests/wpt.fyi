@@ -259,6 +259,37 @@ suite('<wpt-runs>', () => {
     });
   });
 
+  suite('loading', () => {
+    function progressBar(el) {
+      return el.shadowRoot.querySelector('[role="progressbar"]');
+    }
+
+    function spinner(el) {
+      return el.shadowRoot.querySelector('.loading > *');
+    }
+
+    test('shows a progress bar below the runs while more runs load', async() => {
+      const el = await createRuns();
+      assert.equal(getComputedStyle(progressBar(el)).display, 'none');
+      assert.isFalse(spinner(el).active);
+      el.loadingCount = 1;
+      assert.equal(getComputedStyle(progressBar(el)).display, 'block');
+      assert.equal(progressBar(el).offsetWidth, progressBar(el).parentElement.clientWidth);
+      assert.isFalse(spinner(el).active, 'no spinner when there are runs');
+      el.loadingCount = 0;
+      assert.equal(getComputedStyle(progressBar(el)).display, 'none');
+    });
+
+    test('shows a spinner while the first runs load', async() => {
+      const el = await createRuns();
+      el.testRuns = [];
+      el.loadingCount = 1;
+      assert.isTrue(spinner(el).active);
+      el.loadingCount = 0;
+      assert.isFalse(spinner(el).active);
+    });
+  });
+
   suite('editing the query', () => {
     test('Edit opens the query builder', async() => {
       const el = await createRuns();
