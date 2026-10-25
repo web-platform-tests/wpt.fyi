@@ -1,4 +1,4 @@
-import { expect, fixtureSync, html } from '@open-wc/testing';
+import { assert, expect, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../wpt-permalinks.js';
 
@@ -74,6 +74,30 @@ suite('wpt-permalinks', () => {
       expect(toast().opened).to.be.true;
       expect(toast().text).to.equal('Failed to copy URL to clipboard. Copy it manually.');
       expect(toast().duration).to.equal(5000);
+    });
+  });
+
+  suite('copy link', () => {
+    // The text field with the URL.
+    function field() {
+      return [...permalinks.shadowRoot.querySelectorAll('paper-dialog > *')]
+        .find(el => el.shadowRoot && el.shadowRoot.querySelector('input'));
+    }
+
+    test('shows the URL in the text field, and copies it from there', async() => {
+      permalinks.testRuns = [{id: 123}, {id: 234}];
+      permalinks.queryParams = {label: ['master']};
+      permalinks.selectedTab = 0;
+      await waitUntil(() => field() && field().shadowRoot.querySelector('input').value === `${permalinks.url}`,
+        'expected the URL in the field');
+      const input = field().shadowRoot.querySelector('input');
+      const copied = [];
+      sandbox.stub(document, 'execCommand').callsFake(command => {
+        copied.push([command, input.value.substring(input.selectionStart, input.selectionEnd)]);
+        return true;
+      });
+      await permalinks.handleCopyToClipboard();
+      assert.deepEqual(copied, [['copy', `${permalinks.url}`]]);
     });
   });
 });

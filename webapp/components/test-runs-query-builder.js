@@ -18,6 +18,7 @@ import { AllBrowserNames, SemanticLabels} from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
 import './wpt-icon.js';
+import './wpt-input.js';
 
 
 /**
@@ -104,8 +105,8 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
     </div>
     <div class="item">
-      <paper-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
-      </paper-input>
+      <wpt-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
+      </wpt-input>
     </div>
     <div class="item">
       <paper-input-container always-float-label>
