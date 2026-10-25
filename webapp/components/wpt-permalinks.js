@@ -10,7 +10,7 @@ import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-tabs/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { paramsToQuery } from './query-state.js';
 
@@ -52,7 +52,7 @@ class Permalinks extends PolymerElement {
         <paper-button dialog-dismiss>Dismiss</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="toast"></paper-toast>
+      <wpt-toast id="toast"></wpt-toast>
 `;
   }
 
@@ -143,16 +143,10 @@ class Permalinks extends PolymerElement {
         .shadowRoot.querySelector('input');
       input.select();
       document.execCommand('copy');
-      this.toast.show({
-        text: 'URL copied to clipboard!',
-        duration: 2000,
-      });
+      this.toast.show('URL copied to clipboard!', 2000);
     // eslint-disable-next-line no-unused-vars
     } catch (e) {
-      this.toast.show({
-        text: 'Failed to copy URL to clipboard. Copy it manually.',
-        duration: 5000,
-      });
+      this.toast.show('Failed to copy URL to clipboard. Copy it manually.', 5000);
     }
 
   }
