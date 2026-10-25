@@ -3,6 +3,15 @@ import sinon from 'sinon';
 import '../test-runs-query-builder.js';
 import { Channels } from '../product-info.js';
 
+
+// Types into the text field as a user would: sets the native input's value
+// and fires an input event from it.
+function typeInto(field, value) {
+  const input = field.shadowRoot.querySelector('input');
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+}
+
 suite('TestRunsQueryBuilder', () => {
   let queryBuilder, sandbox;
 
@@ -208,6 +217,23 @@ suite('TestRunsQueryBuilder', () => {
 
       queryBuilder.master = false;
       expect(queryBuilder.query).to.not.contain('master');
+    });
+  });
+
+  suite('text fields', () => {
+    test('typing labels sets the labels', async() => {
+      await aTimeout(10);
+      const field = queryBuilder.shadowRoot.querySelector('[label="Labels"]');
+      typeInto(field, 'foo, bar');
+      assert.deepEqual(queryBuilder.labels, ['foo', 'bar']);
+      assert.equal(field.value, 'foo, bar');
+    });
+
+    test('shows the labels in the Labels field', async() => {
+      queryBuilder.labels = ['foo', 'bar'];
+      await aTimeout(10);
+      const field = queryBuilder.shadowRoot.querySelector('[label="Labels"]');
+      assert.equal(field.shadowRoot.querySelector('input').value, 'foo, bar');
     });
   });
 });
