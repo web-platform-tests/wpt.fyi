@@ -122,6 +122,23 @@ suite('wpt-insights.js', () => {
       assert.equal(getComputedStyle(shadow(el).querySelector('wpt-flakes')).display, 'block');
     });
 
+    test('shows each card in a full-width <wpt-card> with a gap above it', async() => {
+      const el = await fixture(html`<div style="width: 600px; font-size: 16px"><wpt-insights></wpt-insights></div>`);
+      const insights = el.querySelector('wpt-insights');
+      for (const name of ['wpt-anomalies', 'wpt-flakes', 'wpt-release-regressions']) {
+        const card = shadow(shadow(insights).querySelector(name)).querySelector('wpt-card');
+        assert.isTrue(card !== null, `${name} has a <wpt-card>`);
+        const content = card.querySelector(':scope > .card-content');
+        assert.isTrue(content !== null, `${name}'s card has a .card-content child`);
+        assert.equal(content.querySelector('h3').textContent.trim(), heading(shadow(insights).querySelector(name)));
+        const style = getComputedStyle(card);
+        assert.equal(style.display, 'block', name);
+        assert.equal(style.marginTop, '16px', name);
+        assert.equal(card.getBoundingClientRect().width, 600, name);
+        assert.equal(getComputedStyle(content).paddingTop, '16px', name);
+      }
+    });
+
     test('gives each card a Chrome query link by default', async() => {
       const el = await fixture(html`<wpt-insights></wpt-insights>`);
       const flakes = shadow(el).querySelector('wpt-flakes');

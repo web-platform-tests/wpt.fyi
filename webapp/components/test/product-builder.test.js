@@ -9,6 +9,17 @@ suite('ProductBuilder', () => {
     productBuilder.product = {browser_name: 'chrome'};
   });
 
+  test('shows the controls in a <wpt-card>', async() => {
+    const card = productBuilder.shadowRoot.querySelector('wpt-card');
+    assert.isTrue(card !== null);
+    await card.updateComplete;
+    const content = card.querySelector(':scope > .card-content');
+    assert.isTrue(content !== null);
+    assert.isTrue(content.querySelector('browser-picker') !== null);
+    assert.equal(getComputedStyle(card).display, 'inline-block');
+    assert.equal(getComputedStyle(content).paddingTop, '16px');
+  });
+
   suite('ProductBuilder.prototype.*', () => {
     suite('_channel', () => {
       test('updates the labels when value changes', () => {
