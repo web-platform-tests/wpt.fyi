@@ -14,7 +14,6 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
-import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './info-banner.js';
 import './product-builder.js';
 import { AllBrowserNames, SemanticLabels} from './product-info.js';
