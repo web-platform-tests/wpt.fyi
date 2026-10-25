@@ -15,6 +15,7 @@ import {
 import { LoadingState } from './loading-state.js';
 import { PathInfo } from './path.js';
 import { ProductInfo } from './product-info.js';
+import './wpt-icon.js';
 
 class WPTMetadataNode extends ProductInfo(PolymerElement) {
   static get template() {
@@ -39,7 +40,7 @@ class WPTMetadataNode extends ProductInfo(PolymerElement) {
 
       </style>
       <div class="metadataNode">
-        <iron-icon class="bug" icon="bug-report"></iron-icon>
+        <wpt-icon class="bug" icon="bug-report"></wpt-icon>
         <div>
           <a href="[[testHref]]" target="_blank">[[metadataNode.test]]</a> >
           <img class="browser" src="[[displayMetadataLogo(metadataNode.product)]]"> :
