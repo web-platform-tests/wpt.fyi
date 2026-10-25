@@ -5,6 +5,7 @@ import '../components/test-search.js';
 import '../components/wpt-flags.js';
 import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
+import '../components/wpt-spinner.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-bsf.js';
 import '../node_modules/@polymer/app-route/app-location.js';
@@ -31,7 +32,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         section.search .path {
           margin-top: 1em;
         }
-        section.search paper-spinner-lite {
+        section.search wpt-spinner {
           position: absolute;
           top: 0;
           right: 0;
@@ -83,7 +84,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
             ><span class="path-separator">/</span><a href="/[[page]][[ part.path ]]?[[ query ]]">[[ part.name ]]</a></template>
         </div>
 
-        <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+        <wpt-spinner active="[[isLoading]]" class="blue"></wpt-spinner>
 
         <test-search query="[[search]]"
                      structured-query="{{structuredSearch}}"
