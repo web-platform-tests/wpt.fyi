@@ -17,10 +17,8 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
-import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
-import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
@@ -33,6 +31,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
 import { isViewOnlyQuery } from '../components/query-state.js';
+import '../components/wpt-icon.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec', 'test262'];
 
@@ -336,10 +335,10 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       is-triage-mode=[[isTriageMode]]>
                   </path-part>
                   <template is="dom-if" if="[[shouldDisplayMetadata(null, node.path, metadataMap)]]">
-                    <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
+                    <a href="[[ getMetadataUrl(null, node.path, metadataMap) ]]" target="_blank"><wpt-icon class="bug" icon="bug-report"></wpt-icon></a>
                   </template>
                   <template is="dom-if" if="[[shouldDisplayTestLabel(node.path, labelMap)]]">
-                    <iron-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></iron-icon>
+                    <wpt-icon class="bug" icon="label" title="[[getTestLabelTitle(node.path, labelMap)]]"></wpt-icon>
                   </template>
                 </td>
 
@@ -357,7 +356,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                       </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
-                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
+                      <a href="[[ getMetadataUrl(index, node.path, metadataMap) ]]" target="_blank"><wpt-icon class="bug" icon="bug-report"></wpt-icon></a>
                     </template>
                   </td>
                 </template>

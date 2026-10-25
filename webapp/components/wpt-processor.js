@@ -14,6 +14,7 @@ import '../node_modules/@vaadin/vaadin-grid/vaadin-grid.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import './wpt-icon.js';
 
 class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
   static get template() {
@@ -61,7 +62,7 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
         <p>Note: timestamps are displayed in your local timezone.</p>
         <vaadin-context-menu open-on="click">
           <vaadin-button theme="icon" aria-label="Select columns">
-            <iron-icon icon="icons:menu"></iron-icon>
+            <wpt-icon icon="icons:menu"></wpt-icon>
           </vaadin-button>
         </vaadin-context-menu>
       </div>
