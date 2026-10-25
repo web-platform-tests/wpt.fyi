@@ -1,4 +1,4 @@
-import { aTimeout, assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { aTimeout, assert, expect, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../test-runs-query-builder.js';
 import { Channels } from '../product-info.js';
@@ -190,6 +190,30 @@ suite('TestRunsQueryBuilder', () => {
       // Should only trigger a single update, in spite of many params changing.
       queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
       expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
+    });
+  });
+
+  suite('time range', () => {
+    test('the From field opens a date picker, and a picked date sets from', async() => {
+      queryBuilder.showTimeRange = true;
+      await waitUntil(() => queryBuilder.shadowRoot.querySelector('vaadin-date-picker-light'), 'the date fields should render');
+      const picker = queryBuilder.shadowRoot.querySelector('vaadin-date-picker-light');
+      picker.open();
+      try {
+        await waitUntil(() => picker.opened, 'the picker should open');
+        // The overlay moves itself to <body> while it is open; it shows months.
+        const overlay = document.querySelector('vaadin-date-picker-overlay[opened]');
+        assert.isNotNull(overlay);
+        assert.isOk(customElements.get('vaadin-date-picker-overlay-content'));
+        assert.isOk(customElements.get('vaadin-month-calendar'));
+        // Pick a date, as a click in the calendar does.
+        picker.value = '2026-03-10';
+        await waitUntil(() => queryBuilder.from && queryBuilder.from.getDate() === 10, 'from should be set');
+        assert.equal(queryBuilder.from.getMonth(), 2);
+        assert.equal(queryBuilder.from.getFullYear(), 2026);
+      } finally {
+        picker.close();
+      }
     });
   });
 
