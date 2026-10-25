@@ -8,7 +8,6 @@ import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
-import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -49,6 +48,20 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       vaadin-date-picker-light + vaadin-date-picker-light {
         margin-left: 16px;
       }
+      /* A row with paper-item's look: Roboto, at least 48px high. */
+      .item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+        min-height: 48px;
+        padding: 0 16px;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 24px;
+      }
     </style>
 
     <h3>
@@ -74,35 +87,35 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       </template>
     </div>
     <template is="dom-if" if="[[showTimeRange]]">
-      <paper-item>
+      <div class="item">
         <vaadin-date-picker-light attr-for-value="value" value="[[fromISO]]">
           <paper-input label="From" value="{{fromISO}}"></paper-input>
         </vaadin-date-picker-light>
         <vaadin-date-picker-light attr-for-value="value" value="[[toISO]]">
           <paper-input label="To" value="{{toISO}}"></paper-input>
         </vaadin-date-picker-light>
-      </paper-item>
+      </div>
     </template>
-    <paper-item>
+    <div class="item">
       <paper-checkbox id="aligned-checkbox" checked="{{aligned}}">Aligned runs only</paper-checkbox>
-    </paper-item>
-    <paper-item>
+    </div>
+    <div class="item">
       <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
-    </paper-item>
-    <paper-item>
+    </div>
+    <div class="item">
       <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
-    </paper-item>
-    <paper-item>
+    </div>
+    <div class="item">
       <paper-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">
       </paper-input>
-    </paper-item>
-    <paper-item>
+    </div>
+    <div class="item">
       <paper-input-container always-float-label>
         <label slot="label">SHA</label>
         <input name="os_version" placeholder="(Latest)" list="shas-datalist" value="{{ _sha::input }}" slot="input">
         <datalist id="shas-datalist"></datalist>
       </paper-input-container>
-    </paper-item>
+    </div>
     <br>
     <paper-button raised id="add-button" onclick="[[addProduct]]">
       <iron-icon icon="add"></iron-icon> Add product

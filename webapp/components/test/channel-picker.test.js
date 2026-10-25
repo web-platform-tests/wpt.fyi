@@ -5,10 +5,6 @@
  */
 
 import { assert, fixture, html, oneEvent, waitUntil } from '@open-wc/testing';
-// channel-picker.js uses <paper-item> for its "Any" option without importing
-// it; on the insights page wpt-header.js registers it (through wpt-flags.js).
-// These tests only rely on that option's value and text, which work whether
-// or not <paper-item> is registered, so they don't import it.
 import '../channel-picker.js';
 
 function dropdown(el) {
@@ -67,6 +63,13 @@ async function choose(el, value) {
 
 suite('<channel-picker>', () => {
   suite('options', () => {
+    test('registers the paper-item of its "Any" option itself', async() => {
+      const el = await fixture(html`<channel-picker browser="chrome"></channel-picker>`);
+      const any = el.shadowRoot.querySelector('[value="any"]');
+      assert.equal(any.localName, 'paper-item');
+      assert.isTrue(any instanceof window.customElements.get('paper-item'));
+    });
+
     test('offers Any and then each channel, with the browser\'s logos', async() => {
       const el = await rendered(await fixture(html`<channel-picker></channel-picker>`), 4);
       assert.deepEqual(await options(el), [
