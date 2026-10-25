@@ -8,10 +8,9 @@ import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
-import '../node_modules/@polymer/paper-tabs/paper-tab.js';
-import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import './wpt-tabs.js';
 import { paramsToQuery } from './query-state.js';
 import './wpt-button.js';
 
@@ -25,19 +24,11 @@ class Permalinks extends PolymerElement {
 
   static get template() {
     return html`
-      <style>
-        paper-tabs {
-          --paper-tabs-selection-bar-color: var(--wpt-blue-500);
-        }
-        paper-tab {
-          --paper-tab-ink: var(--wpt-blue-300);
-        }
-      </style>
       <paper-dialog>
-        <paper-tabs selected="{{selectedTab}}">
-          <paper-tab title="Link to these specific runs, via their IDs">These runs</paper-tab>
-          <paper-tab title="Link to this query, showing the latest matching runs">This query</paper-tab>
-        </paper-tabs>
+        <wpt-tabs selected="{{selectedTab}}">
+          <wpt-tab title="Link to these specific runs, via their IDs">These runs</wpt-tab>
+          <wpt-tab title="Link to this query, showing the latest matching runs">This query</wpt-tab>
+        </wpt-tabs>
         <paper-checkbox checked="{{includePath}}">
           Include the current path (directory)
         </paper-checkbox>
