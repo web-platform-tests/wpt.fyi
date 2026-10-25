@@ -262,7 +262,7 @@ suite('<wpt-runs>', () => {
   suite('editing the query', () => {
     test('Edit opens the query builder', async() => {
       const el = await createRuns();
-      const collapse = el.shadowRoot.querySelector('iron-collapse');
+      const collapse = el.shadowRoot.querySelector('wpt-collapse');
       assert.isFalse(collapse.opened);
       el.shadowRoot.querySelector('info-banner paper-button').click();
       await nextFrame();

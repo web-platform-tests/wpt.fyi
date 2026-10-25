@@ -1,4 +1,4 @@
-import { assert, fixtureSync, html } from '@open-wc/testing';
+import { assert, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import '../wpt-metadata.js';
 
 suite('<wpt-metadata>', () => {
@@ -6,6 +6,59 @@ suite('<wpt-metadata>', () => {
   setup(() => {
     appFixture = fixtureSync(html`<wpt-metadata></wpt-metadata>`);
   });
+  suite('more than three links', () => {
+    const TESTS = ['/ab/a.html', '/ab/b.html', '/ab/c.html', '/ab/d.html', '/ab/e.html'];
+
+    function setLinks(tests) {
+      appFixture.searchResults = tests.map(test => ({ test }));
+      appFixture.pendingMetadata = {};
+      appFixture.mergedMetadata = Object.fromEntries(
+        tests.map((test, i) => [test, [{ url: `bug${i}`, product: 'chrome' }]]));
+      appFixture.path = '/ab';
+    }
+
+    function shown(el) {
+      return !!el && el.getClientRects().length > 0 && el.getBoundingClientRect().height > 0;
+    }
+
+    function collapsible() {
+      return appFixture.shadowRoot.querySelector('#metadata-collapsible');
+    }
+
+    function showMore() {
+      return appFixture.shadowRoot.querySelector('#metadata-toggle');
+    }
+
+    function shownTests() {
+      return [...appFixture.shadowRoot.querySelectorAll('wpt-metadata-node')]
+        .filter(shown).map(node => node.metadataNode.test);
+    }
+
+    test('shows the first three, and the others after Show more', async() => {
+      setLinks(TESTS);
+      await waitUntil(() => shown(showMore()), 'the Show more button');
+      assert.deepEqual(shownTests(), TESTS.slice(0, 3));
+      assert.isFalse(collapsible().opened);
+      showMore().click();
+      assert.isFalse(shown(showMore()));
+      assert.isTrue(collapsible().opened);
+      await waitUntil(() => shownTests().length === 5, 'all five links');
+      assert.deepEqual(shownTests(), TESTS);
+    });
+
+    test('closes the others again when the links change', async() => {
+      setLinks(TESTS);
+      await waitUntil(() => shown(showMore()), 'the Show more button');
+      showMore().click();
+      await waitUntil(() => shownTests().length === 5, 'all five links');
+      setLinks(TESTS.slice(1));
+      assert.isFalse(collapsible().opened);
+      await waitUntil(() => shown(showMore()), 'the Show more button again');
+      await waitUntil(() => shownTests().length === 3, 'only three links');
+      assert.deepEqual(shownTests(), TESTS.slice(1, 4));
+    });
+  });
+
   suite('compute display metadata', () => {
     test('null case', () => {
       appFixture.path = null;
