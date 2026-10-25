@@ -8,9 +8,8 @@ import { assert, fixture, fixtureSync, html, nextFrame, waitUntil } from '@open-
 import sinon from 'sinon';
 // <wpt-404> is only shown inside <wpt-app>, whose module is the page's entry
 // point (templates/index.html). Load it the same way: wpt-app.js imports
-// wpt-404.js and also provides the iron-icons iconset that the "error" icon
-// comes from (through test-runs-query-builder.js); wpt-404.js doesn't import
-// an iconset itself.
+// wpt-404.js. It also loads the iron-icons iconset (through
+// test-runs-query-builder.js), which the test compares the icon with.
 import '../../views/wpt-app.js';
 import { TEST_RUNS_DATA } from './util/helpers.js';
 
@@ -43,11 +42,12 @@ suite('<wpt-404>', () => {
     });
 
     test('shows the error icon above the message', async() => {
-      const icon = el.shadowRoot.querySelector('iron-icon');
+      const icon = el.shadowRoot.querySelector('wpt-icon');
       assert.isNotNull(icon);
       assert.equal(icon.getAttribute('icon'), 'error');
-      // The icon is drawn with the "error" glyph of the default iconset.
-      await waitUntil(() => icon.shadowRoot.querySelector('svg'), 'icon was not drawn');
+      // The icon is drawn with the same "error" glyph as in the iron-icons
+      // iconset.
+      await waitUntil(() => icon.shadowRoot && icon.shadowRoot.querySelector('svg'), 'icon was not drawn');
       const drawn = icon.shadowRoot.querySelector('svg path').getAttribute('d');
       const glyph = document.querySelector('iron-iconset-svg[name="icons"]')
         .querySelector('#error path').getAttribute('d');

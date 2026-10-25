@@ -1,5 +1,5 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/iron-icon/iron-icon.js';
+import '../components/wpt-icon.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 
 class WPT404 extends PolymerElement {
@@ -11,7 +11,7 @@ class WPT404 extends PolymerElement {
         text-align: center;
         color: var(--app-secondary-color);
       }
-      iron-icon {
+      wpt-icon {
         display: inline-block;
         width: 60px;
         height: 60px;
@@ -22,7 +22,7 @@ class WPT404 extends PolymerElement {
       }
     </style>
     <div>
-      <iron-icon icon="error"></iron-icon>
+      <wpt-icon icon="error"></wpt-icon>
       <h1>Sorry, we couldn't find that page</h1>
     </div>
     <a href="/">

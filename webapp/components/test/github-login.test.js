@@ -106,6 +106,17 @@ suite('<github-login>', () => {
       assert.include(pageUrl, 'label=experimental&q=a+b%2Fc', 'the query was added to the page URL');
     });
 
+    test('shows the GitHub logo on the sign-in button', async() => {
+      const el = await fixture(html`<github-login></github-login>`);
+      const logo = signInButton(el).querySelector('img.github-icon');
+      assert.isNotNull(logo);
+      assert.equal(logo.getAttribute('src'), '/static/github.svg');
+      await waitUntil(() => logo.complete, 'expected the logo to load');
+      const box = logo.getBoundingClientRect();
+      assert.equal(box.width, 24);
+      assert.equal(box.height, 24);
+    });
+
     test('hides the triage help icon when no triage mode is given', async() => {
       const el = await fixture(html`<github-login></github-login>`);
       assert.isFalse(isShown(helpIcon(el)));
@@ -114,6 +125,8 @@ suite('<github-login>', () => {
     test('shows a triage help icon when a triage mode is given', async() => {
       const el = await fixture(html`<github-login .isTriageMode=${false}></github-login>`);
       assert.isTrue(isShown(helpIcon(el)));
+      assert.equal(helpIcon(el).localName, 'wpt-icon');
+      assert.equal(helpIcon(el).getAttribute('icon'), 'icons:help-outline');
       // The triage toggle is only for signed-in users.
       assert.isFalse(isShown(triageToggle(el)));
     });

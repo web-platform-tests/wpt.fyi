@@ -8,12 +8,12 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
+import './wpt-icon.js';
 
 class GitHubLogin extends PolymerElement {
   static get template() {
@@ -23,6 +23,9 @@ class GitHubLogin extends PolymerElement {
         text-transform: inherit;
       }
       .github-icon {
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
         margin-right: 8px;
         margin-left: 8px;
         fill: white;
@@ -37,10 +40,10 @@ class GitHubLogin extends PolymerElement {
     </style>
     <template is="dom-if" if="[[!user]]">
       <template is="dom-if" if="[[showTriage]]">
-        <iron-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></iron-icon>
+        <wpt-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></wpt-icon>
       </template>
       <paper-button class="login-button" raised on-click="handleLogIn">
-        <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
+        <img class="github-icon" src="/static/github.svg" alt="">
           Sign in with GitHub
       </paper-button>
     </template>
@@ -50,7 +53,7 @@ class GitHubLogin extends PolymerElement {
           <paper-toggle-button on-click="handleTriageToggle" checked="{{isTriageMode}}" aria-label="Toggle Triage Mode"></paper-toggle-button>
           Triage Mode
         </template>
-        <iron-icon class="github-icon" src="/static/github.svg"></iron-icon>
+        <img class="github-icon" src="/static/github.svg" alt="">
         [[user]]
         <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
       </div>
