@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
-import '../node_modules/@polymer/paper-input/paper-input.js';
+import './wpt-input.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
 // InteropFeatureChart is a wrapper around a Google Charts chart. We cannot
@@ -80,8 +80,8 @@ class InteropFeatureChart extends PolymerElement {
           corresponding revision on the
           <a href="https://hg.mozilla.org/mozilla-central/firefoxreleases"
              target="_blank">release page</a>, enter them below, and click "Go".
-          <paper-input id="firefoxNightlyDialogFrom" label="From revision"></paper-input>
-          <paper-input id="firefoxNightlyDialogTo" label="To revision"></paper-input>
+          <wpt-input id="firefoxNightlyDialogFrom" label="From revision"></wpt-input>
+          <wpt-input id="firefoxNightlyDialogTo" label="To revision"></wpt-input>
         </div>
 
         <div class="buttons">
