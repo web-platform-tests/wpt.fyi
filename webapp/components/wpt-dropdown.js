@@ -5,54 +5,95 @@
  */
 
 import { LitElement, css, html, nothing } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
 import { PolymerNotify } from './polymer-notify.js';
+import './wpt-icon.js';
 
-let nextId = 0;
+// The fonts of paper-styles/typography.js that paper-dropdown-menu uses.
+const subhead = css`
+  font-family: 'Roboto', 'Noto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+`;
+const caption = css`
+  font-family: 'Roboto', 'Noto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.011em;
+  line-height: 20px;
+`;
 
 /**
  * `<wpt-dropdown-item>` is a choice in a `<wpt-dropdown>`, with an optional
  * icon (such as a browser logo) before its text:
  *
  *     <wpt-dropdown-item value="chrome">
- *       <display-logo slot="icon" small .product=${chrome}></display-logo>
+ *       <display-logo slot="icon" small product="[[chrome]]"></display-logo>
  *       Chrome
  *     </wpt-dropdown-item>
+ *
+ * It looks like `paper-item`, or like `paper-icon-item` when it has an icon:
+ * a row at least 48px high, with the icon in a 56px column. The chosen item is
+ * bold, and the focused one is shaded.
  */
 class WptDropdownItem extends LitElement {
   static properties = {
     value: { type: String, reflect: true },
     selected: { type: Boolean, reflect: true },
+    _hasIcon: { state: true },
   };
 
+  // paper-item's and paper-icon-item's styles.
   static styles = css`
     :host {
       display: flex;
+      flex-direction: row;
       align-items: center;
-      gap: 16px;
+      position: relative;
       min-height: 48px;
-      padding: 0 16px;
-      box-sizing: border-box;
-      font-size: 16px;
-      white-space: nowrap;
-      cursor: pointer;
-      outline: none;
+      padding: 0px 16px;
+      ${subhead}
     }
-    :host(:hover),
-    :host(:focus-visible),
-    :host(:focus) {
-      background-color: rgba(0, 0, 0, 0.08);
+    :host([hidden]),
+    [hidden] {
+      display: none !important;
     }
     :host([selected]) {
       font-weight: bold;
     }
-    ::slotted([slot="icon"]) {
-      flex: none;
+    :host(:focus) {
+      position: relative;
+      outline: 0;
+    }
+    :host(:focus)::before {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: currentColor;
+      content: '';
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .content-icon {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      width: 56px;
     }
   `;
 
   constructor() {
     super();
     this.selected = false;
+    this._hasIcon = false;
   }
 
   connectedCallback() {
@@ -77,8 +118,12 @@ class WptDropdownItem extends LitElement {
       .trim();
   }
 
+  _onIconSlotChange(e) {
+    this._hasIcon = e.target.assignedNodes().length > 0;
+  }
+
   render() {
-    return html`<slot name="icon"></slot><slot></slot>`;
+    return html`<div class="content-icon" ?hidden=${!this._hasIcon}><slot name="icon" @slotchange=${this._onIconSlotChange}></slot></div><slot></slot>`;
   }
 }
 window.customElements.define('wpt-dropdown-item', WptDropdownItem);
@@ -86,7 +131,8 @@ window.customElements.define('wpt-dropdown-item', WptDropdownItem);
 /**
  * `<wpt-dropdown>` lets the user pick one of its `<wpt-dropdown-item>`s, like
  * a `<select>` whose options can have icons. It replaces `paper-dropdown-menu`
- * with a `paper-listbox` of `paper-item`s or `paper-icon-item`s:
+ * with a `paper-listbox` of `paper-item`s or `paper-icon-item`s, with the same
+ * look:
  *
  *     <wpt-dropdown label="Browser" value="{{ browser }}">
  *       <wpt-dropdown-item value="chrome">...</wpt-dropdown-item>
@@ -96,83 +142,215 @@ window.customElements.define('wpt-dropdown-item', WptDropdownItem);
  * `value` is the chosen item's value. When the user picks an item, it fires
  * `change` and, for Polymer parents' two-way bindings, `value-changed`.
  *
- * The button shows the label and the chosen item's text. It opens a popover
- * list, which follows the WAI-ARIA listbox pattern: arrows, Home and End move
- * between the items, typing jumps to an item, Enter or Space picks one, and
- * Escape, Tab or a click outside closes the list.
+ * Closed, it looks like paper-dropdown-menu's read-only text field: the label
+ * floats above the chosen item's text, with an arrow at the end, and the
+ * underline is blue while it has focus. It is a button, which opens a popover
+ * list over the field, like paper-dropdown-menu's: its top 8px below the
+ * field's top, its right edge at the field's right edge. The list moves with
+ * the field when the page scrolls or the window is resized.
+ *
+ * The list follows the WAI-ARIA listbox pattern: the arrow keys move between
+ * the items, wrapping around at the ends, Home and End go to the first and the
+ * last, typing jumps to the first item whose text starts with what was typed
+ * in the last second, Enter or Space picks the focused item, and Escape, Tab
+ * or a click outside closes the list.
  */
 class WptDropdown extends PolymerNotify(LitElement) {
   static properties = {
     label: { type: String },
     value: { type: String, notify: true },
     opened: { type: Boolean, reflect: true },
+    _focused: { state: true },
   };
 
+  // Focusing the element focuses the button.
+  static shadowRootOptions = { ...LitElement.shadowRootOptions, delegatesFocus: true };
+
+  // paper-dropdown-menu's styles: those of its paper-input (with
+  // paper-input-container and iron-input), and of the paper-menu-button
+  // dropdown and paper-listbox for the list.
   static styles = css`
     :host {
       display: inline-block;
       position: relative;
-      font-family: 'Roboto', 'Noto', sans-serif;
+      text-align: left;
+      -webkit-tap-highlight-color: transparent;
     }
-    #button {
+    [hidden] {
+      display: none !important;
+    }
+    .container {
+      display: block;
+      padding: 8px 0;
+    }
+    .floated-label-placeholder {
+      ${caption}
+    }
+    .input-wrapper {
       display: flex;
-      align-items: flex-end;
-      gap: 4px;
+      flex-direction: row;
+      align-items: center;
+      position: relative;
+    }
+    .input-content {
+      flex: 1 1 auto;
+      position: relative;
+      max-width: 100%;
+    }
+    /* A floating label is placed relative to .input-wrapper. */
+    .input-content.label-is-floating {
+      position: static;
+    }
+    label {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      min-width: 200px;
-      margin: 0;
-      padding: 8px 0 6px;
-      border: none;
-      border-bottom: 1px solid #737373;
-      background: none;
-      color: inherit;
-      font: inherit;
-      text-align: start;
-      cursor: pointer;
-    }
-    #button:focus-visible {
-      outline: none;
-      border-bottom: 2px solid var(--wpt-blue-700, #1976d2);
-      padding-bottom: 5px;
-    }
-    #text {
-      display: flex;
-      flex-direction: column;
-      flex: auto;
-      min-width: 0;
-    }
-    #label {
-      font-size: 12px;
-      line-height: 16px;
       color: #737373;
-    }
-    #value {
-      font-size: 16px;
-      line-height: 24px;
-      min-height: 24px;
+      transition: transform 0.25s, width 0.25s;
+      transform-origin: left top;
+      min-height: 1px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      ${subhead}
+      pointer-events: none;
+    }
+    .label-is-floating label {
+      transform: translateY(-75%) scale(0.75);
+      /* Scaled to 75%, it has 100/75 of the width available. */
+      width: 133%;
+    }
+    .label-is-highlighted label {
+      color: #3f51b5;
+    }
+    /* The read-only input that shows the chosen item's text, and its
+       wrapper. The input sizes the field like paper-dropdown-menu's. */
+    .input-element,
+    input {
+      position: relative;
+      outline: none;
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+      background: transparent;
+      border: none;
+      color: #212121;
+      -webkit-appearance: none;
+      text-align: inherit;
+      vertical-align: bottom;
+      ${subhead}
+    }
+    .input-element {
+      display: inline-block;
+      overflow: hidden;
       white-space: nowrap;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      cursor: pointer;
     }
-    svg {
+    input {
+      font-family: inherit;
+      font-weight: inherit;
+      font-size: inherit;
+      letter-spacing: inherit;
+      word-spacing: inherit;
+      line-height: inherit;
+      text-shadow: inherit;
+      color: inherit;
+      cursor: inherit;
+      min-width: 0;
+    }
+    .suffix wpt-icon {
+      display: inline-block;
       flex: none;
-      width: 24px;
-      height: 24px;
-      fill: #737373;
+      color: #9b9b9b;
+      ${subhead}
     }
+    .underline {
+      height: 2px;
+      position: relative;
+    }
+    .unfocused-line,
+    .focused-line {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+    .unfocused-line {
+      border-bottom: 1px solid #737373;
+    }
+    .focused-line {
+      border-bottom: 2px solid #3f51b5;
+      transform-origin: center center;
+      transform: scale3d(0, 1, 1);
+    }
+    /* It grows from the middle when the field gets focus, and disappears
+       right away when it loses it. */
+    .underline.is-highlighted .focused-line {
+      transform: none;
+      transition: transform 0.25s;
+    }
+    .add-on-content {
+      position: relative;
+    }
+    /* The button covers the field, which shows its state. */
+    #button {
+      position: absolute;
+      z-index: 1;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+    }
+    /* The popover is iron-dropdown, #wrapper its content wrapper, #content
+       paper-menu-button's dropdown content, with the same offsets, and #items
+       the paper-listbox in it. The same boxes give the list the same
+       compositing layer as paper-dropdown-menu's, so that the browser logos
+       and source icons in it are drawn exactly the same. */
     #listbox {
       position: fixed;
       inset: auto;
       margin: 0;
-      padding: 8px 0;
+      padding: 0;
       border: none;
+      background: transparent;
+      overflow: visible;
+      outline: none;
+    }
+    /* Without a backdrop, the list gets its own layer, as iron-dropdown did,
+       rather than being drawn in the backdrop's full-window one. */
+    #listbox::backdrop {
+      display: none;
+    }
+    #content {
+      position: relative;
+      top: 10px;
+      margin-top: -10px;
+      margin-bottom: 20px;
+      border-radius: 2px;
       box-sizing: border-box;
       overflow: auto;
-      background: white;
-      color: #212121;
+      background-color: #ffffff;
       box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
                   0 1px 5px 0 rgba(0, 0, 0, 0.12),
                   0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    }
+    #items {
+      display: block;
+      padding: 8px 0;
+      background: #ffffff;
+      color: #212121;
     }
   `;
 
@@ -181,14 +359,29 @@ class WptDropdown extends PolymerNotify(LitElement) {
     this.label = '';
     this.value = '';
     this.opened = false;
-    this._id = nextId++;
+    this._focused = false;
     this._typed = '';
     this._typedAt = 0;
+    this._reposition = () => this._position();
+    // Whether the button or an item has focus. Items are in the light DOM,
+    // so this follows focus events rather than :focus-within.
+    this._focusInside = false;
+    this.addEventListener('focusin', () => {
+      this._focusInside = true;
+    });
+    this.addEventListener('focusout', () => {
+      this._focusInside = false;
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._stopFollowing();
   }
 
   /** The `<wpt-dropdown-item>`s, in order. */
   get items() {
-    const slot = this.shadowRoot && this.shadowRoot.querySelector('slot');
+    const slot = this.shadowRoot && this.shadowRoot.querySelector('#items slot');
     return slot ? slot.assignedElements({ flatten: true }).filter(el => el instanceof WptDropdownItem) : [];
   }
 
@@ -207,23 +400,45 @@ class WptDropdown extends PolymerNotify(LitElement) {
 
   render() {
     const selected = this.selectedItem;
-    const labelId = `wpt-dropdown-label-${this._id}`;
+    const text = selected ? selected.label : '';
+    const floating = !!text;
+    const content = {
+      'input-content': true,
+      'label-is-floating': floating,
+      'label-is-highlighted': floating && this._focused,
+      'focused': this._focused,
+    };
+    // The field comes last, with nothing after it, so that the element's
+    // baseline is that of the field's text, as with paper-dropdown-menu.
     return html`
       <button id="button" type="button" aria-haspopup="listbox" aria-expanded=${this.opened ? 'true' : 'false'}
-              aria-labelledby="${labelId} value" @click=${this._onButtonClick} @keydown=${this._onButtonKeyDown}>
-        <span id="text">
-          ${this.label ? html`<span id="label">${this.label}</span>` : nothing}
-          <span id="value">${selected ? selected.label : ''}</span>
-        </span>
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"></path></svg>
-      </button>
-      <span id=${labelId} hidden>${this.label}</span>
-      <div id="listbox" role="listbox" popover="auto" aria-label=${this.label || nothing}
+              aria-labelledby="label-text value-text" @click=${this._onButtonClick} @keydown=${this._onButtonKeyDown}
+              @focus=${this._onButtonFocus} @blur=${this._onButtonBlur}></button>
+      <span id="label-text" hidden>${this.label}</span>
+      <span id="value-text" hidden>${text}</span>
+      <div id="listbox" popover="auto"
            @keydown=${this._onListKeyDown} @click=${this._onListClick}
            @beforetoggle=${this._onBeforeToggle} @toggle=${this._onToggle}>
-        <slot @slotchange=${this._onSlotChange}></slot>
+        <div id="wrapper"><div id="content"><div id="items" role="listbox" aria-label=${this.label || nothing}><slot @slotchange=${this._onSlotChange}></slot></div></div></div>
       </div>
-    `;
+      <div class="container" aria-hidden="true">
+        <div class="floated-label-placeholder">&nbsp;</div>
+        <div class="input-wrapper">
+          <!-- paper-input's empty prefix: as the first flex item, it sets the
+               baseline of the field, and of this element, in the middle. -->
+          <span class="prefix"></span>
+          <div class=${classMap(content)}>
+            <label ?hidden=${!this.label}>${this.label}</label>
+            <span class="input-element"><input type="text" readonly inert tabindex="-1" .value=${text}></span>
+          </div>
+          <span class="suffix"><wpt-icon icon="arrow-drop-down"></wpt-icon></span>
+        </div>
+        <div class=${classMap({ underline: true, 'is-highlighted': this._focused })}>
+          <div class="unfocused-line"></div>
+          <div class="focused-line"></div>
+        </div>
+        <div class="add-on-content"></div>
+      </div>`;
   }
 
   updated(changedProperties) {
@@ -232,15 +447,19 @@ class WptDropdown extends PolymerNotify(LitElement) {
     if (changedProperties.has('opened')) {
       const listbox = this._listbox;
       const open = listbox.matches(':popover-open');
+      // Focus moves after the update, as it updates the field's look.
       if (this.opened && !open) {
         listbox.showPopover();
         this._position();
-        (this.selectedItem || this.items[0])?.focus();
+        this._startFollowing();
+        const item = this.selectedItem || this.items[0];
+        Promise.resolve().then(() => item?.focus());
       } else if (!this.opened && open) {
         const hadFocus = this._hasFocus();
         listbox.hidePopover();
+        this._stopFollowing();
         if (hadFocus) {
-          this._button.focus();
+          Promise.resolve().then(() => this._button.focus());
         }
       }
     }
@@ -248,7 +467,7 @@ class WptDropdown extends PolymerNotify(LitElement) {
 
   // Whether focus is on the button or an item.
   _hasFocus() {
-    return this.contains(document.activeElement) || this.shadowRoot.activeElement !== null;
+    return this._focusInside;
   }
 
   _syncSelection() {
@@ -261,6 +480,14 @@ class WptDropdown extends PolymerNotify(LitElement) {
     // The items changed: update which is selected and the button's text.
     this._syncSelection();
     this.requestUpdate();
+  }
+
+  _onButtonFocus() {
+    this._focused = true;
+  }
+
+  _onButtonBlur() {
+    this._focused = false;
   }
 
   /** Opens the list of items. */
@@ -295,6 +522,7 @@ class WptDropdown extends PolymerNotify(LitElement) {
   // The list closed by itself: Escape or a click outside it.
   _onToggle(e) {
     if (e.newState === 'closed' && this.opened) {
+      this._stopFollowing();
       this.opened = false;
       if (this._hadFocus) {
         this._button.focus();
@@ -311,21 +539,22 @@ class WptDropdown extends PolymerNotify(LitElement) {
 
   _onListKeyDown(e) {
     const items = this.items;
+    const count = items.length;
     const current = items.indexOf(e.composedPath().find(node => node instanceof WptDropdownItem));
     let next = null;
     switch (e.key) {
     case 'ArrowDown':
-      // Past the last item, there's no next one, so focus stays.
-      next = items[current + 1];
+      // Like paper-listbox, wrap around at the ends.
+      next = items[(current + 1) % count];
       break;
     case 'ArrowUp':
-      next = items[current - 1];
+      next = items[(current - 1 + count) % count];
       break;
     case 'Home':
       next = items[0];
       break;
     case 'End':
-      next = items[items.length - 1];
+      next = items[count - 1];
       break;
     case 'Enter':
     case ' ':
@@ -339,7 +568,7 @@ class WptDropdown extends PolymerNotify(LitElement) {
       return;
     default:
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        next = this._findTyped(e.key, items, current);
+        next = this._findTyped(e.key, items);
       }
     }
     if (next) {
@@ -348,16 +577,13 @@ class WptDropdown extends PolymerNotify(LitElement) {
     }
   }
 
-  // Finds the next item whose text starts with what the user has typed in
-  // the last half second, starting after the current item.
-  _findTyped(key, items, current) {
+  // Like paper-listbox: finds the first item whose text starts with what the
+  // user has typed, adding keys typed less than a second apart.
+  _findTyped(key, items) {
     const now = Date.now();
-    this._typed = now - this._typedAt < 500 ? this._typed + key.toLowerCase() : key.toLowerCase();
+    this._typed = (now - this._typedAt < 1000 ? this._typed : '') + key.toLocaleLowerCase();
     this._typedAt = now;
-    const ordered = [...items.slice(current + 1), ...items.slice(0, current + 1)];
-    // Typing the same letter again moves to the next item with it.
-    const search = this._typed.split('').every(c => c === this._typed[0]) ? this._typed[0] : this._typed;
-    return ordered.find(item => item.label.toLowerCase().startsWith(search)) || null;
+    return items.find(item => item.label.toLocaleLowerCase().startsWith(this._typed)) || null;
   }
 
   _pick(item) {
@@ -369,28 +595,34 @@ class WptDropdown extends PolymerNotify(LitElement) {
     }
   }
 
-  // Places the list under the button, or above it if there's more room there,
-  // at least as wide as the button and inside the window.
+  _startFollowing() {
+    window.addEventListener('scroll', this._reposition, { capture: true, passive: true });
+    window.addEventListener('resize', this._reposition);
+  }
+
+  _stopFollowing() {
+    window.removeEventListener('scroll', this._reposition, { capture: true });
+    window.removeEventListener('resize', this._reposition);
+  }
+
+  // Places the list like paper-dropdown-menu's: its top 8px below the top of
+  // the field, below the floating label, and its right edge at the field's
+  // right edge. Like iron-fit-behavior, it narrows the list rather than move
+  // it past the window's left edge, and limits its height to the window,
+  // keeping a 20px margin at the bottom.
   _position() {
     const listbox = this._listbox;
-    const button = this._button.getBoundingClientRect();
-    const viewportWidth = document.documentElement.clientWidth;
-    const viewportHeight = document.documentElement.clientHeight;
-    listbox.style.minWidth = `${button.width}px`;
-    listbox.style.maxHeight = '';
-    const below = viewportHeight - button.bottom;
-    const above = button.top;
-    const height = listbox.getBoundingClientRect().height;
-    let top;
-    if (height <= below || below >= above) {
-      top = button.bottom;
-      listbox.style.maxHeight = `${below}px`;
-    } else {
-      listbox.style.maxHeight = `${above}px`;
-      top = Math.max(0, button.top - listbox.getBoundingClientRect().height);
+    if (!listbox.matches(':popover-open')) {
+      return;
     }
+    const field = this.getBoundingClientRect();
+    const viewportHeight = document.documentElement.clientHeight;
+    const top = field.top + 8;
+    const content = this.shadowRoot.querySelector('#content');
+    content.style.maxWidth = `${Math.max(0, field.right)}px`;
+    content.style.maxHeight = `${Math.max(0, viewportHeight - top - 20)}px`;
     const width = listbox.getBoundingClientRect().width;
-    listbox.style.left = `${Math.max(0, Math.min(button.left, viewportWidth - width))}px`;
+    listbox.style.left = `${Math.max(0, field.right - width)}px`;
     listbox.style.top = `${top}px`;
   }
 }
