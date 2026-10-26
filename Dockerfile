@@ -1,6 +1,6 @@
 # vim: set expandtab sw=4
 # Go 1.27 is required for taskcluster >= v107.0.0
-FROM golang:1.27.2-bookworm
+FROM golang:1.27.3-bookworm
 
 # Create a non-priviledged user to run browsers as (Firefox and Chrome do not
 # like to run as root).
