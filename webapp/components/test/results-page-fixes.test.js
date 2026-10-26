@@ -10,7 +10,7 @@
 // they can move next to the other tests once everything has merged.
 
 // fake-google-charts.js must be imported before wpt-app.js, which imports
-// google-chart-loader.js; see that file.
+// google-chart's loader.js; see that file.
 import './util/fake-google-charts.js';
 import { assert, fixture, html, nextFrame, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';

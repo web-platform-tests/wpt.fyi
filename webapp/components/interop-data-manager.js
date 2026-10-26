@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-import { load } from '../node_modules/@google-web-components/google-chart/google-chart-loader.js';
+import { load } from '../node_modules/@google-web-components/google-chart/loader.js';
 import { interopData } from './interop-data.js';
 
 // Information about how to display the browsers.
