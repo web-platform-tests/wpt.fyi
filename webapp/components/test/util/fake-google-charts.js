@@ -7,9 +7,9 @@
 // A minimal stand-in for the Google Charts library, for component tests.
 //
 // The real library is loaded from https://www.gstatic.com/charts/loader.js,
-// which tests must not depend on. google-chart-loader.js skips adding that
+// which tests must not depend on. google-chart's loader.js skips adding that
 // script when `google.charts.load` already exists, so this module must be
-// imported before any module that imports google-chart-loader.js:
+// imported before any module that imports google-chart's loader.js:
 //
 //   import { charts } from './util/fake-google-charts.js';
 //   import { InteropDataManager } from '../interop-data-manager.js';
