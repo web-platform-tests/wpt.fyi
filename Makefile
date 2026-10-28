@@ -17,9 +17,9 @@ SHELL := /bin/bash
 WPTD_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GECKODRIVER_TAG := v0.37.1
 GECKODRIVER_PATH=/usr/bin/geckodriver
-FIREFOX_VERSION := 158.0
+FIREFOX_VERSION := 158.0.1
 FIREFOX_PATH := /usr/bin/firefox
-CHROME_VERSION := 155.0.8059.84
+CHROME_VERSION := 156.0.8078.47
 CHROME_INSTALL_DIR := /opt/chrome-for-testing
  # CFT_BINARY can also be 'chrome-headless-shell'
 CFT_BINARY := chrome
