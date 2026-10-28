@@ -72,7 +72,7 @@ async function linkParamsAre(card, params) {
 
 // The options a <browser-picker> or <channel-picker> offers: value and label.
 function pickerItems(picker) {
-  return [...shadow(picker).querySelectorAll('paper-item, paper-icon-item')];
+  return shadow(picker).querySelector('wpt-dropdown').items;
 }
 
 function itemValue(item) {
@@ -88,7 +88,7 @@ function pickerOptions(picker) {
 
 // What the closed dropdown shows as the current choice.
 function pickerShows(picker) {
-  return shadow(picker).querySelector('paper-dropdown-menu').value;
+  return shadow(picker).querySelector('wpt-dropdown').shadowRoot.querySelector('input').value;
 }
 
 // Clicks the picker's option with the given value, as a user would.
