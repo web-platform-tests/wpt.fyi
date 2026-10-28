@@ -14,8 +14,8 @@ cloud.google.com/go/cloudtasks v1.21.0 h1:9/hJzEQwxHO3LAnRQZq4CoBgLRunU58jSIgYA0
 cloud.google.com/go/cloudtasks v1.21.0/go.mod h1:HKiAjy/Q855vfmbInJn7i1DxQ0vbyUgoKva6Q51m7eA=
 cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwSA7Ej6LAvvtY=
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
-cloud.google.com/go/datastore v1.27.0 h1:JcnNVNNpEkZAkPd6x+GK8XyHoGIwq40Fl3+s+174quo=
-cloud.google.com/go/datastore v1.27.0/go.mod h1:nWk/77Jm6IFzMBpaVtThPKHp5SmBRLThUQLDOQdS8sk=
+cloud.google.com/go/datastore v1.28.0 h1:izs0Nx55hXXopvf/zzXFc449U979XeYOGh95RjlOxKE=
+cloud.google.com/go/datastore v1.28.0/go.mod h1:0h1rDMllJDV4I2GvYH/VRhu8WNcyLAqNFzeusP0ABnw=
 cloud.google.com/go/iam v1.14.0 h1:YRIB1/4xxwJ+NfI6RQr1WaOoHHeV0MizJEj940nBXJA=
 cloud.google.com/go/iam v1.14.0/go.mod h1:JTPZfbHdGXJrOYREtkRoFzCDGaBdbA7ILLKO/DDuav0=
 cloud.google.com/go/logging v1.20.0 h1:l7yzCB8/JSY5PHT9RsaqdT1jaBGbM6KlSJDX210HlXM=
