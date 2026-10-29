@@ -1,10 +1,13 @@
 FROM python:3.11.16-slim-bookworm
 
-# Install runtime dependencies.
-# python3-crcmod for faster gsutil checksum
-# python3-virtualenv for virtualenv
-# https://cloud.google.com/storage/docs/gsutil/commands/rsync#slow-checksums
-RUN apt-get update -q && apt-get install -qy python3-crcmod python3-virtualenv  && apt-get clean
+# Install runtime dependencies, including curl and ca-certificates
+RUN apt-get update -q && apt-get install -qy \
+    curl \
+    ca-certificates \
+    python3-crcmod \
+    python3-virtualenv \
+    && apt-get clean
+
 # gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
