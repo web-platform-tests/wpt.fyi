@@ -12,7 +12,9 @@ COPY $LOCAL_SRC .
 RUN CGO_ENABLED=0 make go_build
 
 # Application image.
-FROM nginx:1.26.3-alpine3.20
+FROM nginx:1.30.6-alpine3.24
+
+RUN apk update && apk upgrade --no-cache
 
 # Copy your application binary
 COPY --from=builder /go/src/wpt.fyi/web /usr/local/bin/app
