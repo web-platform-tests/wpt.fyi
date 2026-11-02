@@ -3,7 +3,7 @@ module github.com/web-platform-tests/wpt.fyi
 go 1.27.1
 
 require (
-	cloud.google.com/go/cloudtasks v1.21.0
+	cloud.google.com/go/cloudtasks v1.21.1
 	cloud.google.com/go/datastore v1.28.0
 	cloud.google.com/go/logging v1.20.0
 	cloud.google.com/go/secretmanager v1.23.0
@@ -29,8 +29,8 @@ require (
 	go.uber.org/mock v0.6.0
 	golang.org/x/oauth2 v0.37.0
 	google.golang.org/api v0.308.0
-	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8
-	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8
+	google.golang.org/genproto v0.0.0-20261012220534-4341edf3f941
+	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941
 	google.golang.org/grpc v1.84.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -64,7 +64,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
-	github.com/googleapis/gax-go/v2 v2.26.2 // indirect
+	github.com/googleapis/gax-go/v2 v2.27.0 // indirect
 	github.com/johncgriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
