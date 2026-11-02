@@ -1,16 +1,19 @@
 FROM python:3.11.16-slim-bookworm
 
 # Install runtime dependencies, including curl and ca-certificates
-RUN apt-get update -q && apt-get install -qy \
+RUN apt-get update -q && apt-get upgrade -qy && apt-get install -qy \
     curl \
     ca-certificates \
     python3-crcmod \
     python3-virtualenv \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
-RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null
+RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null && \
+    rm -rf install-gcloud.sh /opt/google-cloud-sdk/platform/bundledpythonunix
+ENV CLOUDSDK_PYTHON=python3.11
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
 RUN gcloud config set disable_usage_reporting false
 # This file caches whether we are running on GCE. When created during the image

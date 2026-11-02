@@ -21,7 +21,7 @@ RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-rele
 # firefox-esr: provides deps for Firefox (we don't use ESR directly)
 # java-21-amazon-corretto-jdk: provides the JRE that the Cloud Datastore emulator needs
 # python-crcmod: native module to speed up CRC checksum in gsutil
-RUN apt-get update -qqy && apt-get install -qqy --no-install-suggests \
+RUN apt-get update -qqy && apt-get upgrade -qqy && apt-get install -qqy --no-install-suggests \
         curl \
         firefox-esr \
         java-21-amazon-corretto-jdk \
