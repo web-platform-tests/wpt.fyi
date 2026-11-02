@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -122,7 +122,7 @@ func (tm triageMetadata) pushCommit(ref *github.Reference, tree *github.Tree) (e
 
 	// Create the commit using the tree.
 	date := time.Now()
-	author := &github.CommitAuthor{Date: &github.Timestamp{date}, Name: &tm.authorName, Email: &tm.authorEmail}
+	author := &github.CommitAuthor{Date: &github.Timestamp{Time: date}, Name: &tm.authorName, Email: &tm.authorEmail}
 	commit := &github.Commit{Author: author, Message: &tm.commitMessage, Tree: tree, Parents: []*github.Commit{parent.Commit}}
 	newCommit, _, err := client.Git.CreateCommit(tm.ctx, tm.sourceOwner, tm.sourceRepo, *commit, &github.CreateCommitOptions{})
 	if err != nil {
