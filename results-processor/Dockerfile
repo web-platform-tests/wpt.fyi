@@ -1,4 +1,4 @@
-FROM python:3.11.16-slim-bookworm
+FROM python:3.11.18-slim-bookworm
 
 # Install runtime dependencies, including curl and ca-certificates
 RUN apt-get update -q && apt-get upgrade -qy && apt-get install -qy \
