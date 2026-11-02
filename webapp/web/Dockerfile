@@ -12,7 +12,7 @@ COPY $LOCAL_SRC .
 RUN CGO_ENABLED=0 make go_build
 
 # Application image.
-FROM nginx:1.30.6-alpine3.24
+FROM nginx:1.31.8-alpine3.24
 
 RUN apk update && apk upgrade --no-cache
 
