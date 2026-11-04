@@ -27,7 +27,6 @@
  */
 
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
-import '../node_modules/@polymer/paper-item/paper-item.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTEnvironmentFlags } from '../dynamic-components/wpt-env-flags.js';
 
@@ -176,20 +175,31 @@ class WPTFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ false) {
   static get template() {
     return html`
     <style>
-      paper-item[sub-item] {
-        margin-left: 32px;
+      /* A row with paper-item's look: Roboto, at least 48px high. */
+      .item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+        min-height: 48px;
+        padding: 0 16px;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 24px;
       }
     </style>
-    <paper-item>
+    <div class="item">
       <paper-checkbox id="colorHomepage" checked="[[colorHomepage]]" on-change="handleChange">
         Use pass-rate colors on the homepage
       </paper-checkbox>
-    </paper-item>
-    <paper-item>
+    </div>
+    <div class="item">
       <paper-checkbox id="showMobileScoresView" checked="[[showMobileScoresView]]" on-change="handleChange">
         Enable mobile results view on Interop dashboard
       </paper-checkbox>
-    </paper-item>
+    </div>
 `;
   }
 
@@ -209,17 +219,17 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
     ${WPTFlagsEditor.template}
 
     <h3>Server-side only features</h3>
-    <paper-item>
+    <div class="item">
       <paper-checkbox id="ignoreHarnessInTotal" checked="[[ignoreHarnessInTotal]]" on-change="handleChange">
         Ignore "OK" harness status in test summary numbers.
       </paper-checkbox>
-    </paper-item>
+    </div>
     <h4>GitHub Status Checks</h4>
-    <paper-item>
+    <div class="item">
       <paper-checkbox id="failChecksOnRegression" checked="[[failChecksOnRegression]]" on-change="handleChange">
         Set the wpt.fyi GitHub status check to action_required if regressions are found.
       </paper-checkbox>
-    </paper-item>
+    </div>
 `;
   }
 
