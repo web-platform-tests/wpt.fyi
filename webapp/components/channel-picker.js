@@ -1,10 +1,8 @@
-import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../node_modules/@polymer/paper-item/paper-icon-item.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
-import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
+import './wpt-dropdown.js';
 import { Channels, DefaultBrowserNames, ProductInfo } from './product-info.js';
 
 class ChannelPicker extends ProductInfo(PolymerElement) {
@@ -14,17 +12,15 @@ class ChannelPicker extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-    <paper-dropdown-menu label="Channel" no-animations>
-      <paper-listbox slot="dropdown-content" selected="{{ channel }}" attr-for-selected="value">
-        <paper-item value="any">Any</paper-item>
-        <template is="dom-repeat" items="[[channels]]" as="channel">
-          <paper-icon-item value="[[channel]]">
-            <display-logo slot="item-icon" product="[[productWithChannel(browser, channel)]]" small></display-logo>
-            [[displayName(channel)]]
-          </paper-icon-item>
-        </template>
-      </paper-listbox>
-    </paper-dropdown-menu>
+    <wpt-dropdown label="Channel" value="{{ channel }}">
+      <wpt-dropdown-item value="any">Any</wpt-dropdown-item>
+      <template is="dom-repeat" items="[[channels]]" as="channel">
+        <wpt-dropdown-item value="[[channel]]">
+          <display-logo slot="icon" product="[[productWithChannel(browser, channel)]]" small></display-logo>
+          [[displayName(channel)]]
+        </wpt-dropdown-item>
+      </template>
+    </wpt-dropdown>
 `;
   }
 

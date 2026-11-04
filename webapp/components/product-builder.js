@@ -5,18 +5,15 @@
  */
 
 import '../node_modules/@polymer/paper-card/paper-card.js';
-import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
-import '../node_modules/@polymer/paper-item/paper-icon-item.js';
-import '../node_modules/@polymer/paper-item/paper-item.js';
-import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
 import './browser-picker.js';
+import './wpt-dropdown.js';
 import { Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 
 class ProductBuilder extends ProductInfo(PolymerElement) {
@@ -47,30 +44,26 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         <browser-picker browser="{{browserName}}" products="[[allProducts]]"></browser-picker>
 
         <br>
-        <paper-dropdown-menu label="Channel" no-animations>
-          <paper-listbox slot="dropdown-content" selected="{{ _channel }}" attr-for-selected="value">
-            <paper-item value="any">Any</paper-item>
-            <template is="dom-repeat" items="[[channels]]" as="channel">
-              <paper-icon-item value="[[channel]]">
-                <display-logo slot="item-icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
-                [[displayName(channel)]]
-              </paper-icon-item>
-            </template>
-          </paper-listbox>
-        </paper-dropdown-menu>
+        <wpt-dropdown label="Channel" value="{{ _channel }}">
+          <wpt-dropdown-item value="any">Any</wpt-dropdown-item>
+          <template is="dom-repeat" items="[[channels]]" as="channel">
+            <wpt-dropdown-item value="[[channel]]">
+              <display-logo slot="icon" product="[[productWithChannel(_product, channel)]]" small></display-logo>
+              [[displayName(channel)]]
+            </wpt-dropdown-item>
+          </template>
+        </wpt-dropdown>
 
         <br>
-        <paper-dropdown-menu label="Source" no-animations>
-          <paper-listbox slot="dropdown-content" selected="{{ _source }}" attr-for-selected="value">
-            <paper-item value="any">Any</paper-item>
-            <template is="dom-repeat" items="[[sources]]" as="source">
-              <paper-icon-item value="[[source]]">
-                <img slot="item-icon" class="source" src="/static/[[source]].svg">
-                [[displayName(source)]]
-              </paper-icon-item>
-            </template>
-          </paper-listbox>
-        </paper-dropdown-menu>
+        <wpt-dropdown label="Source" value="{{ _source }}">
+          <wpt-dropdown-item value="any">Any</wpt-dropdown-item>
+          <template is="dom-repeat" items="[[sources]]" as="source">
+            <wpt-dropdown-item value="[[source]]">
+              <img slot="icon" class="source" src="/static/[[source]].svg">
+              [[displayName(source)]]
+            </wpt-dropdown-item>
+          </template>
+        </wpt-dropdown>
 
         <br>
         <paper-input-container always-float-label>
