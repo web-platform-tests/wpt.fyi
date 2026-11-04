@@ -333,6 +333,19 @@ suite('<interop-dashboard>', () => {
       assert.deepEqual(totalRow(scoreTables(el)[0]), ['TOTAL', '97.3%', '86.4%', '95.9%', '83.3%']);
     });
 
+    test('updates the history entry of the page it loads instead of adding one', async() => {
+      sandbox.spy(window.history, 'pushState');
+      sandbox.spy(window.history, 'replaceState');
+      const el = await createDashboard(YEAR, 'stable');
+      assert.equal(window.history.pushState.callCount, 0);
+      assert.equal(urlQuery(), 'stable');
+
+      toggles(el)[1].click();
+      await nextFrame();
+      assert.equal(window.history.pushState.callCount, 1);
+      assert.equal(urlQuery(), '');
+    });
+
     test('clicking Experimental switches back', async() => {
       const el = await createDashboard(YEAR, 'stable');
       const [stable, experimental] = toggles(el);
@@ -492,6 +505,25 @@ suite('<interop-dashboard>', () => {
       const el = await createDashboard('2024', 'mobile-view&stable');
       assert.isFalse(el.stable);
       assert.equal(urlQuery(), 'mobile-view');
+    });
+
+    test('switching to or from the mobile view keeps the embedded option', async() => {
+      const el = await createDashboard('2024', 'embedded');
+      const path = window.location.pathname;
+      assert.equal(el.mobileViewUrl(true, false), `${path}?mobile-view&embedded`);
+      assert.equal(el.mobileViewUrl(false, true), `${path}?stable&embedded`);
+      el.embedded = false;
+      assert.equal(el.mobileViewUrl(false, false), path);
+    });
+
+    test('switching to or from the mobile view keeps the feature if that view has it', async() => {
+      const el = await createDashboard('2024', 'feature=interop-2024-nesting');
+      const path = window.location.pathname;
+      assert.equal(el.mobileViewUrl(true, false), `${path}?feature=interop-2024-nesting&mobile-view`);
+      assert.equal(el.mobileViewUrl(false, false), `${path}?feature=interop-2024-nesting`);
+      // The 2024 mobile view doesn't have the 2021 focus areas.
+      el.feature = 'interop-2021-aspect-ratio';
+      assert.equal(el.mobileViewUrl(true, false), `${path}?mobile-view`);
     });
 
     test('clicking Stable or Experimental leaves the mobile view', async() => {
