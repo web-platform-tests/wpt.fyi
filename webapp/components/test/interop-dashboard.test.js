@@ -373,6 +373,17 @@ suite('<interop-dashboard>', () => {
       assert.equal(urlQuery(), '');
     });
 
+    test('calls the summary "All Active Focus Areas" for the current Interop year, whatever the date', async() => {
+      // In January, the current Interop year is still the previous calendar year.
+      sandbox.useFakeTimers({ now: new Date(`${parseInt(CURRENT_YEAR) + 1}-01-15T12:00:00Z`), toFake: ['Date'] });
+      const realFetch = window.fetch.bind(window);
+      const csv = desktopCsv(CURRENT_YEAR, 500);
+      sandbox.stub(window, 'fetch').callsFake((url, ...args) =>
+        String(url).startsWith('/') ? realFetch(url, ...args) : Promise.resolve(new Response(csv)));
+      const el = await createDashboard(CURRENT_YEAR);
+      assert.equal(featureSelect(el).options[0].textContent.trim(), 'All Active Focus Areas');
+    });
+
     test('lists the focus areas by table, without the investigations', async() => {
       const el = await createDashboard();
       const groups = [...featureSelect(el).querySelectorAll('optgroup')];
