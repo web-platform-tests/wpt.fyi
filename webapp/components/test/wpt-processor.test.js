@@ -460,7 +460,7 @@ suite('<wpt-processor>', () => {
     // checkboxes.
     async function openColumnMenu(el) {
       contextMenu = $(el, 'vaadin-context-menu');
-      const button = contextMenu.querySelector('vaadin-button');
+      const button = contextMenu.querySelector('button');
       assert.equal(button.getAttribute('aria-label'), 'Select columns');
       button.click();
       await waitUntil(() => contextMenu.opened, 'menu should open');
@@ -470,6 +470,30 @@ suite('<wpt-processor>', () => {
         'menu should list the columns');
       return Array.from(overlay.content.querySelectorAll('vaadin-checkbox'));
     }
+
+    test('opens from a native button that looks like a Vaadin icon button', async() => {
+      const el = await fixture(html`<wpt-processor></wpt-processor>`);
+      await rowsRendered(el, 2);
+      const button = $(el, 'vaadin-context-menu').querySelector('button');
+      assert.equal(button.type, 'button');
+      assert.equal(button.getAttribute('aria-label'), 'Select columns');
+      assert.equal(button.querySelector('iron-icon').icon, 'icons:menu');
+      const style = getComputedStyle(button);
+      const box = button.getBoundingClientRect();
+      assert.equal(box.width, 42);
+      assert.equal(box.height, 36);
+      assert.equal(style.marginTop, '4px');
+      assert.equal(style.color, 'rgb(22, 118, 243)');
+      assert.equal(style.backgroundColor, 'rgba(25, 59, 103, 0.05)');
+      assert.equal(style.borderTopLeftRadius, '4px');
+      assert.equal(style.borderTopWidth, '0px');
+      assert.equal(style.boxShadow, 'none');
+      // Keyboard focus (focus from a script, with no mouse use, counts as
+      // keyboard focus) shows Vaadin's focus ring instead of an outline.
+      button.focus();
+      assert.equal(getComputedStyle(button).outlineStyle, 'none');
+      assert.equal(getComputedStyle(button).boxShadow, 'rgba(22, 118, 243, 0.5) 0px 0px 0px 2px');
+    });
 
     test('lists every column with its visibility', async() => {
       const el = await fixture(html`<wpt-processor></wpt-processor>`);
