@@ -11,7 +11,7 @@ import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
+import './wpt-tooltip.js';
 import { LoadingState } from './loading-state.js';
 
 const nsSVG = 'http://www.w3.org/2000/svg';
@@ -99,10 +99,10 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             <paper-radio-button name="after">Expected screenshot</paper-radio-button>
           </paper-radio-group>
           <paper-checkbox id="diff-button" checked="{{showDiff}}">Highlight diff</paper-checkbox>
-          <paper-tooltip for="diff-button">
+          <wpt-tooltip for="diff-button">
             Apply a semi-transparent mask over the selected image, and highlight
             the areas where two images differ with a solid 1px red border.
-          </paper-tooltip>
+          </wpt-tooltip>
           <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
         </div>
 
