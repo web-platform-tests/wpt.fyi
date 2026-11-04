@@ -9,8 +9,8 @@ import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
-import '../node_modules/@polymer/paper-progress/paper-progress.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import './wpt-progress.js';
+import './wpt-spinner.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
@@ -108,9 +108,8 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         flex-grow: 0;
         flex-shrink: 0;
       }
-      paper-progress {
-        --paper-progress-active-color: var(--wpt-light-blue-500);
-        --paper-progress-secondary-color: var(--wpt-light-blue-100);
+      wpt-progress {
+        --wpt-progress-active-color: var(--wpt-light-blue-500);
         width: 100%;
       }
 
@@ -216,7 +215,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         </template>
           <tr>
             <td colspan="999" no-padding>
-              <paper-progress indeterminate hidden="[[!isLoading]]"></paper-progress>
+              <wpt-progress hidden="[[!isLoading]]"></wpt-progress>
             </td>
           </tr>
         </tbody>
@@ -227,7 +226,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
     </template>
 
     <div class="loading">
-      <paper-spinner-lite active="[[isLoadingFirstRuns]]" class="blue"></paper-spinner-lite>
+      <wpt-spinner active="[[isLoadingFirstRuns]]" class="blue"></wpt-spinner>
     </div>
 `;
   }
