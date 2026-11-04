@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
@@ -16,6 +15,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
+import './wpt-card.js';
 import './browser-picker.js';
 import { Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 
@@ -34,7 +34,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
         width: 24px;
       }
     </style>
-    <paper-card>
+    <wpt-card>
       <div class="card-content">
         <paper-icon-button icon="delete" onclick="[[deleteProduct]]"></paper-icon-button>
 
@@ -78,7 +78,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
           <input slot="input" placeholder="(Any version)" list="versions-datalist" value="{{ browserVersion::input }}">
           <datalist id="versions-datalist"></datalist>
         </paper-input-container>
-      </div></paper-card>
+      </div></wpt-card>
 `;
   }
 
