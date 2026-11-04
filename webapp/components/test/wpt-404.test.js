@@ -102,7 +102,7 @@ suite('<wpt-404>', () => {
     });
 
     function notFound() {
-      return app.shadowRoot.querySelector('iron-pages > wpt-404');
+      return app.shadowRoot.querySelector('[role="main"] > wpt-404');
     }
 
     test('is shown for a page that does not exist', async() => {
@@ -121,6 +121,20 @@ suite('<wpt-404>', () => {
       assert.isNotNull(notFound());
       assert.isFalse(notFound().hasAttribute('visible'));
       assert.equal(notFound().offsetHeight, 0);
+      const results = app.shadowRoot.querySelector('[role="main"] > wpt-results');
+      assert.isTrue(results.hasAttribute('visible'));
+      assert.notEqual(getComputedStyle(results).display, 'none');
+    });
+
+    test('is hidden again when going from a missing page to the results page', async() => {
+      app.page = 'no-such-page';
+      await nextFrame();
+      assert.isTrue(notFound().hasAttribute('visible'));
+      app.page = 'results';
+      await nextFrame();
+      assert.isFalse(notFound().hasAttribute('visible'));
+      assert.equal(notFound().offsetHeight, 0);
+      assert.isTrue(app.shadowRoot.querySelector('wpt-results').hasAttribute('visible'));
     });
   });
 });
