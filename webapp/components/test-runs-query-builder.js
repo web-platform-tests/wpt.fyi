@@ -20,6 +20,7 @@ import './product-builder.js';
 import { AllBrowserNames, SemanticLabels} from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-icon.js';
 
 
 /**
@@ -69,7 +70,7 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       </template>
       <template is="dom-if" if="[[!products.length]]">
         <info-banner>
-          <iron-icon icon="info"></iron-icon> No products selected. The default products will be used.
+          <wpt-icon icon="info"></wpt-icon> No products selected. The default products will be used.
         </info-banner>
       </template>
     </div>
@@ -105,13 +106,13 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     </paper-item>
     <br>
     <paper-button raised id="add-button" onclick="[[addProduct]]">
-      <iron-icon icon="add"></iron-icon> Add product
+      <wpt-icon icon="add"></wpt-icon> Add product
     </paper-button>
     <paper-button raised id="clear-button" onclick="[[clearAll]]">
-      <iron-icon icon="delete"></iron-icon> Clear all
+      <wpt-icon icon="delete"></wpt-icon> Clear all
     </paper-button>
     <paper-button raised id="submit-button" onclick="[[submit]]">
-      <iron-icon icon="done"></iron-icon> Submit
+      <wpt-icon icon="done"></wpt-icon> Submit
     </paper-button>
 `;
   }

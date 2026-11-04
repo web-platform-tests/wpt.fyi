@@ -397,7 +397,7 @@ suite('<wpt-results> views', () => {
         '/dom/nodes/Node-isEqualNode.html': 'interop-2024,interop-2025',
       };
       await nextFrame();
-      const titles = rows(el).map(tr => [...tr.querySelectorAll('iron-icon[icon="label"]')]
+      const titles = rows(el).map(tr => [...tr.querySelectorAll('wpt-icon[icon="label"]')]
         .filter(isShown).map(icon => icon.title));
       assert.deepEqual(titles, [['label: interop-2024'], ['labels: interop-2024,interop-2025']]);
     });
@@ -413,7 +413,7 @@ suite('<wpt-results> views', () => {
       const el = await createResults('/dom/nodes', 'label=master');
       el.labelMap = { '/dom/nodes/Node-cloneNode.html': 'interop-2024' };
       await nextFrame();
-      const icon = row(el, '/dom/nodes/Node-cloneNode.html').querySelector('iron-icon[icon="label"]');
+      const icon = row(el, '/dom/nodes/Node-cloneNode.html').querySelector('wpt-icon[icon="label"]');
       assert.isTrue(!!icon.shadowRoot.querySelector('svg'), 'the icon is drawn');
     });
   });
