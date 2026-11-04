@@ -376,6 +376,25 @@ suite('<wpt-results>', () => {
       // test-file-results-table.js takes care of capitalizing it to MISSING.
       expect(formatted).to.equal('Missing');
     });
+
+    // Interop View, Directory: passes are fractional (each test counts as its
+    // share of passing subtests) and the total is the number of tests.
+    test('should format some passes with a percentage (interop view, directory)', () => {
+      trf.view = VIEW_ENUM.Interop;
+      expect(trf.formatCellDisplay(2.5, 5, undefined, true)).to.equal('2.5 / 5 (50%)');
+    });
+
+    test('should show 0.01 for passes that round to zero (interop view, directory)', () => {
+      trf.view = VIEW_ENUM.Interop;
+      expect(trf.formatCellDisplay(0.004, 5, undefined, true)).to.equal('0.01 / 5 (0.1%)');
+    });
+
+    test('should show the total for passes that round to it (interop view, directory)', () => {
+      trf.view = VIEW_ENUM.Interop;
+      // 4.996 rounds to 5, but not every test passes, so it is shown as 4.99.
+      expect(trf.formatCellDisplay(4.996, 5, undefined, true)).to.equal('4.99 / 5 (99.9%)');
+      expect(trf.formatCellDisplay(299.999, 300, undefined, true)).to.equal('299.99 / 300 (99.9%)');
+    });
   });
 
   teardown(() => {
