@@ -500,7 +500,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
                 </thead>
                 <template is="dom-if" if="[[!section.score_as_group]]">
                   <tbody>
-                    <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc)}}" as="rowName">
+                    <template is="dom-repeat" items="{{sortRows(section.rows, index, sortColumn, isSortedAsc, stable)}}" as="rowName">
                       <tr data-feature$="[[rowName]]">
                         <td>
                           <div class="card-header-mobile">
@@ -1083,14 +1083,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
   };
 
-  numericalSort = (rows, featureOrder, sortColumn) => {
+  numericalSort = (rows, featureOrder, sortColumn, isStable) => {
     const browserIndex = (this.isMobileScoresView && sortColumn === 4) ? 2 : sortColumn - 1;
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
       individualScores[i] = [
         feature,
-        this.getNumericalBrowserScoreByFeature(browserIndex, feature, this.stable)
+        this.getNumericalBrowserScoreByFeature(browserIndex, feature, isStable)
       ];
     }
     individualScores.sort((a, b) => a[1] - b[1]);
@@ -1099,7 +1099,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
   };
 
-  sortRows = (rows, index, sortColumn, isSortedAsc) => {
+  // isStable is an argument (rather than read from this.stable) so that the
+  // rows are sorted again when the channel changes.
+  sortRows = (rows, index, sortColumn, isSortedAsc, isStable) => {
     if(index !== 0) {
       return rows;
     }
@@ -1113,7 +1115,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       this.alphabeticalSort(rows, sortedFeatureOrder);
     } else {
       // For the other columns, sort numerically by score
-      this.numericalSort(rows, sortedFeatureOrder, sortColumn);
+      this.numericalSort(rows, sortedFeatureOrder, sortColumn, isStable);
     }
 
     // Reverse current sort order

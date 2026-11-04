@@ -273,6 +273,21 @@ suite('<interop-dashboard>', () => {
       assert.equal(sortIcons(el)[1], 'expand_less.svg');
     });
 
+    test('keeps a score column sorted after switching between Stable and Experimental', async() => {
+      const el = await createDashboard();
+      sortableHeaders(el)[1].click();
+      await nextFrame();
+      el.shadowRoot.querySelector('#toggleStable').click();
+      await nextFrame();
+      const stable = chromeScores(el);
+      assert.deepEqual(stable, [...stable].sort((a, b) => b - a));
+
+      el.shadowRoot.querySelector('#toggleExperimental').click();
+      await nextFrame();
+      const experimental = chromeScores(el);
+      assert.deepEqual(experimental, [...experimental].sort((a, b) => b - a));
+    });
+
     test('clicking the Interop column sorts by the Interop score', async() => {
       const el = await createDashboard();
       sortableHeaders(el)[4].click();
