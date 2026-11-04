@@ -281,6 +281,8 @@ suite('<wpt-toast>', () => {
       assert.equal(style.minHeight, '48px');
       assert.equal(style.padding, '16px 24px');
       assert.equal(style.fontSize, '14px');
+      // Like paper-toast, it has no line height of its own.
+      assert.equal(style.lineHeight, getComputedStyle(document.body).lineHeight);
       assert.equal(style.opacity, '1');
     });
 
