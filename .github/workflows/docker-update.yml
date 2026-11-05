@@ -23,9 +23,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: elgohr/Publish-Docker-Github-Action@v5
         # https://github.com/elgohr/Publish-Docker-Github-Action
+        # Disable BuildKit provenance attestations so the image is pushed as a
+        # single Docker V2 Schema 2 manifest (application/vnd.docker.distribution.manifest.v2+json)
+        # instead of an OCI Image Index (application/vnd.oci.image.index.v1+json).
+        # Cloud Build's Docker daemon pulls via mirror.gcr.io and only accepts
+        # Docker V2 Schema 2 manifests, so an OCI Image Index causes it to serve
+        # a stale cached image.
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
           name: webplatformtests/wpt.fyi
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           dockerfile: Dockerfile
           snapshot: true
+          buildoptions: --provenance=false
