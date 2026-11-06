@@ -7,6 +7,9 @@ on:
   # Lets the Update browser versions workflow (update-browsers.yml) start CI
   # on its branch: pull requests it opens with GITHUB_TOKEN don't trigger runs.
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   lint:
     runs-on: ubuntu-latest
