@@ -19,12 +19,12 @@ RUN export DISTRO_CODENAME=$(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-rele
 
 # Sort the package names!
 # firefox-esr: provides deps for Firefox (we don't use ESR directly)
-# java-21-amazon-corretto-jdk: provides the JRE that the Cloud Datastore emulator needs
+# java-25-amazon-corretto-jdk: provides the JRE that the Cloud Datastore emulator needs
 # python-crcmod: native module to speed up CRC checksum in gsutil
 RUN apt-get update -qqy && apt-get upgrade -qqy && apt-get install -qqy --no-install-suggests \
         curl \
         firefox-esr \
-        java-21-amazon-corretto-jdk \
+        java-25-amazon-corretto-jdk \
         nodejs \
         python3.11 \
         python3-crcmod \
@@ -40,7 +40,7 @@ RUN apt-get update -qqy && apt-get upgrade -qqy && apt-get install -qqy --no-ins
 RUN echo "root ALL=(ALL:ALL) ALL" > /etc/sudoers
 
 # Google Cloud SDK configuration: the latest release, from the archive tarball.
-# The Cloud Datastore emulator in releases from 528.0.0 on needs Java 21+.
+# The Cloud Datastore emulator in releases from 592.0.0 on needs Java 25+.
 RUN curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz | tar -xz -C /usr/local && \
     /usr/local/google-cloud-sdk/bin/gcloud components install --quiet \
         app-engine-python \
