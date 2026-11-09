@@ -1,4 +1,4 @@
-import { aTimeout, assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { aTimeout, assert, expect, fixtureSync, html, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../test-runs-query-builder.js';
 import { Channels } from '../product-info.js';
@@ -190,6 +190,66 @@ suite('TestRunsQueryBuilder', () => {
       // Should only trigger a single update, in spite of many params changing.
       queryBuilder.updateQueryParams({ product: ['chrome'], aligned: true, label: ['dev'] });
       expect(queryBuilder.shasURLUpdated.callCount).to.equal(1);
+    });
+  });
+
+  suite('time range', () => {
+    const dateInputs = builder => Array.from(builder.shadowRoot.querySelectorAll('paper-input'))
+      .filter(p => p.label === 'From' || p.label === 'To')
+      .map(p => p.inputElement.inputElement);
+    const enterDate = (input, value) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    };
+
+    test('the From and To fields are native date inputs', async() => {
+      queryBuilder.showTimeRange = true;
+      await waitUntil(() => dateInputs(queryBuilder).length === 2, 'the date fields should render');
+      assert.deepEqual(dateInputs(queryBuilder).map(i => i.type), ['date', 'date']);
+    });
+
+    test('entering dates sets from, to and the query', async() => {
+      queryBuilder.showTimeRange = true;
+      await waitUntil(() => dateInputs(queryBuilder).length === 2, 'the date fields should render');
+      const [fromInput, toInput] = dateInputs(queryBuilder);
+      enterDate(fromInput, '2026-03-10');
+      assert.equal(queryBuilder.fromISO, '2026-03-10');
+      assert.equal(queryBuilder.from.toISOString(), '2026-03-10T00:00:00.000Z');
+      enterDate(toInput, '2026-04-01');
+      assert.equal(queryBuilder.toISO, '2026-04-01');
+      assert.equal(queryBuilder.to.toISOString(), '2026-04-01T00:00:00.000Z');
+      const params = new URLSearchParams(queryBuilder.query);
+      assert.equal(params.get('from'), '2026-03-10T00:00:00.000Z');
+      assert.equal(params.get('to'), '2026-04-01T00:00:00.000Z');
+    });
+
+    test('emptying a field drops its date from the query', async() => {
+      queryBuilder.showTimeRange = true;
+      await waitUntil(() => dateInputs(queryBuilder).length === 2, 'the date fields should render');
+      const [fromInput, toInput] = dateInputs(queryBuilder);
+      enterDate(fromInput, '2026-03-10');
+      enterDate(toInput, '2026-04-01');
+      enterDate(fromInput, '');
+      assert.isUndefined(queryBuilder.from);
+      let params = new URLSearchParams(queryBuilder.query);
+      assert.isFalse(params.has('from'));
+      assert.equal(params.get('to'), '2026-04-01T00:00:00.000Z');
+      enterDate(toInput, '');
+      assert.isUndefined(queryBuilder.to);
+      params = new URLSearchParams(queryBuilder.query);
+      assert.isFalse(params.has('to'));
+    });
+
+    test('the fields show the from and to dates of the query', async() => {
+      const builder = fixtureSync(html`<test-runs-query-builder show-time-range
+          .from=${new Date('2026-01-15T00:00:00Z')}
+          .to=${new Date('2026-02-01T00:00:00Z')}></test-runs-query-builder>`);
+      await waitUntil(() => dateInputs(builder).length === 2, 'the date fields should render');
+      assert.deepEqual(dateInputs(builder).map(i => i.value), ['2026-01-15', '2026-02-01']);
+      // Showing them leaves the dates in the query.
+      const params = new URLSearchParams(builder.query);
+      assert.equal(params.get('from'), '2026-01-15T00:00:00.000Z');
+      assert.equal(params.get('to'), '2026-02-01T00:00:00.000Z');
     });
   });
 
