@@ -9,7 +9,7 @@ import sinon from 'sinon';
 import { WptIcon } from '../wpt-icon.js';
 
 // Every icon that wpt.fyi uses with iron-icon or paper-icon-button, and the
-// one paper-dropdown-menu draws.
+// arrow that wpt-dropdown draws.
 const USED_ICONS = [
   'add', 'arrow-drop-down', 'bug-report', 'compare', 'delete', 'done', 'error',
   'exit-to-app', 'filter-list', 'help-outline', 'info', 'label', 'menu',

@@ -5,24 +5,19 @@
  */
 
 import { assert, fixture, html, oneEvent, waitUntil } from '@open-wc/testing';
-// channel-picker.js uses <paper-item> for its "Any" option without importing
-// it; on the insights page wpt-header.js registers it (through wpt-flags.js).
-// These tests only rely on that option's value and text, which work whether
-// or not <paper-item> is registered, so they don't import it.
 import '../channel-picker.js';
 
 function dropdown(el) {
-  return el.shadowRoot.querySelector('paper-dropdown-menu');
+  return el.shadowRoot.querySelector('wpt-dropdown');
 }
 
 function optionItems(el) {
-  return [...el.shadowRoot.querySelector('paper-listbox').items];
+  return dropdown(el).items;
 }
 
-// The listbox selects items by their `value`: "Any" has it as an attribute,
-// and the template sets the channels' as a property.
+// The dropdown matches items by their `value`.
 function optionValue(item) {
-  return item.value ?? item.getAttribute('value');
+  return item.value;
 }
 
 // The src of the browser logo in an option, or null if it has none.
@@ -51,13 +46,13 @@ async function rendered(el, count) {
 
 // The text shown in the closed dropdown.
 function shownValue(el) {
-  return dropdown(el).shadowRoot.querySelector('paper-input').value;
+  return dropdown(el).shadowRoot.querySelector('input').value;
 }
 
 // Opens the dropdown and chooses the option with the given value, like a user.
 async function choose(el, value) {
   const menu = dropdown(el);
-  menu.click();
+  menu.shadowRoot.querySelector('#button').click();
   await waitUntil(() => menu.opened, 'dropdown did not open');
   const item = optionItems(el).find(i => optionValue(i) === value);
   assert.exists(item, `no option ${value}`);

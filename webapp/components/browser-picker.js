@@ -1,10 +1,8 @@
-import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../node_modules/@polymer/paper-item/paper-icon-item.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
-import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import './display-logo.js';
+import './wpt-dropdown.js';
 import { DefaultBrowserNames, DefaultProducts, ProductInfo } from './product-info.js';
 
 // A component allowing the user to select one of a list of browsers.
@@ -15,16 +13,14 @@ class BrowserPicker extends ProductInfo(PolymerElement) {
 
   static get template() {
     return html`
-  <paper-dropdown-menu label="Browser" no-animations>
-    <paper-listbox slot="dropdown-content" selected="{{ browser }}" attr-for-selected="value">
-      <template is="dom-repeat" items="[[products]]" as="product">
-        <paper-icon-item value="[[product.browser_name]]">
-          <display-logo slot="item-icon" product="[[product]]" small></display-logo>
-          [[displayName(product.browser_name)]]
-        </paper-icon-item>
-      </template>
-    </paper-listbox>
-  </paper-dropdown-menu>
+  <wpt-dropdown label="Browser" value="{{ browser }}">
+    <template is="dom-repeat" items="[[products]]" as="product">
+      <wpt-dropdown-item value="[[product.browser_name]]">
+        <display-logo slot="icon" product="[[product]]" small></display-logo>
+        [[displayName(product.browser_name)]]
+      </wpt-dropdown-item>
+    </template>
+  </wpt-dropdown>
 `;
   }
 
