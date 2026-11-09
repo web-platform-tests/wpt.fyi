@@ -5,7 +5,7 @@
  */
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import './wpt-spinner.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@vaadin/vaadin-button/vaadin-button.js';
@@ -117,7 +117,7 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
     </template>
 
     <div class="loading">
-      <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+      <wpt-spinner active="[[isLoading]]" class="blue"></wpt-spinner>
     </div>
 `;
   }
