@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+import { interopData } from './interop-data.js';
 import { InteropDataManager } from './interop-data-manager.js';
 import { WPTFlags } from './wpt-flags.js';
 import { calculateColor } from './utils.js';
@@ -950,7 +951,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     if (params.length) {
       url += `?${params.join('&')}`;
     }
-    history.pushState('', '', url);
+    // The first call comes from setting up the page: update its history entry
+    // instead of adding another one for the same page.
+    if (!this._urlParamsInitialized) {
+      this._urlParamsInitialized = true;
+      history.replaceState('', '', url);
+    } else if (url !== `${location.pathname}${location.search}`) {
+      history.pushState('', '', url);
+    }
   }
 
   experimentalButtonClass(stable, isMobileScoresView) {
@@ -1001,19 +1009,33 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
   }
 
   toggleMobileView(showMobileScores, isStable) {
-    let queryString = '';
+    window.location = this.mobileViewUrl(showMobileScores, isStable);
+  }
+
+  // The URL of the mobile or desktop view. It keeps the chosen feature if that
+  // view has it (the mobile view can have fewer focus areas), and the embedded
+  // option.
+  mobileViewUrl(showMobileScores, isStable) {
+    const params = [];
+    const yearInfo = interopData[this.year];
+    const focusAreas = showMobileScores
+      ? yearInfo.mobile_focus_areas || []
+      : Object.keys(yearInfo.focus_areas || {});
+    if (this.feature && this.feature !== this.getYearProp('summaryFeatureName')
+        && focusAreas.includes(this.feature)) {
+      params.push(`feature=${this.feature}`);
+    }
     if (showMobileScores) {
-      queryString += 'mobile-view';
+      params.push('mobile-view');
     }
     if (isStable) {
-      queryString += (queryString.length) ? '&stable' : 'stable';
+      params.push('stable');
     }
-    if (queryString.length) {
-      queryString = `?${queryString}`;
+    if (this.embedded) {
+      params.push('embedded');
     }
-
-    const url = `${location.pathname}${queryString}`;
-    window.location = url;
+    const queryString = params.length ? `?${params.join('&')}` : '';
+    return `${location.pathname}${queryString}`;
   }
 
   shouldShowMobileScoresView() {
