@@ -32,6 +32,15 @@ async function chartsDrawn(el, count) {
   await waitUntil(() => chartsFor(el).length === count, `expected ${count} charts`);
 }
 
+
+// Types into the text field as a user would: sets the native input's value
+// and fires an input event from it.
+function typeInto(field, value) {
+  const input = field.shadowRoot.querySelector('input');
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+}
+
 suite('<interop-feature-chart>', () => {
   let dataManager;
 
@@ -191,6 +200,30 @@ suite('<interop-feature-chart>', () => {
       await chartsDrawn(el, 2);
       assert.isNull(el.selectedChartIndex);
       assert.deepEqual(chartsFor(el)[1].getSelection(), []);
+    });
+  });
+
+  suite('Firefox Nightly changelog', () => {
+    test('Go opens the changes between the entered revisions', async() => {
+      const el = await createChart();
+      const opened = [];
+      const originalOpen = window.open;
+      window.open = url => opened.push(url);
+      try {
+        typeInto(el.$.firefoxNightlyDialogFrom, 'abc123');
+        typeInto(el.$.firefoxNightlyDialogTo, 'def456');
+        el.clickFirefoxNightlyDialogGoButton();
+      } finally {
+        window.open = originalOpen;
+      }
+      assert.deepEqual(opened,
+        ['https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=abc123&tochange=def456']);
+    });
+
+    test('labels the revision fields', async() => {
+      const el = await createChart();
+      assert.equal(el.$.firefoxNightlyDialogFrom.label, 'From revision');
+      assert.equal(el.$.firefoxNightlyDialogTo.label, 'To revision');
     });
   });
 });

@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-dialog-scrollable/paper-dialog-scrollable.js';
-import '../node_modules/@polymer/paper-input/paper-input.js';
+import './wpt-input.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
@@ -139,7 +139,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           text-transform: none;
           margin-top: 5px;
         }
-        paper-input {
+        wpt-input {
           text-transform: none;
           align-items: center;
           margin-bottom: 20px;
@@ -175,12 +175,12 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
               :
-              <paper-input label="Bug URL" on-input="handleFieldInput" value="[[node.url]]" autofocus
+              <wpt-input label="Bug URL" on-input="handleFieldInput" value="[[node.url]]" autofocus
                 error-message="Must be a valid URL (e.g. https://bug.com/123)"
                 invalid="[[node.invalidUrl]]">
-              </paper-input>
+              </wpt-input>
               <template is="dom-if" if="[[!node.product]]">
-                <paper-input label="Label" on-input="handleFieldInput" value="[[node.label]]"></paper-input>
+                <wpt-input label="Label" on-input="handleFieldInput" value="[[node.label]]"></wpt-input>
               </template>
             </div>
             <template is="dom-repeat" items="[[node.tests]]" as="test">
