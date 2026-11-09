@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -19,6 +18,7 @@ import './info-banner.js';
 import './product-builder.js';
 import { AllBrowserNames, SemanticLabels} from './product-info.js';
 import { TestRunsUIQuery } from './test-runs-query.js';
+import './wpt-checkbox.js';
 import { WPTFlags } from './wpt-flags.js';
 
 
@@ -84,13 +84,13 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       </paper-item>
     </template>
     <paper-item>
-      <paper-checkbox id="aligned-checkbox" checked="{{aligned}}">Aligned runs only</paper-checkbox>
+      <wpt-checkbox id="aligned-checkbox" checked="{{aligned}}">Aligned runs only</wpt-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox checked="{{diff}}" disabled="{{!canShowDiff}}">Show diff</paper-checkbox>
+      <wpt-checkbox checked="{{diff}}" disabled="[[!canShowDiff]]">Show diff</wpt-checkbox>
     </paper-item>
     <paper-item>
-      <paper-checkbox id="master-checkbox" checked="{{master}}">Only master branch</paper-checkbox>
+      <wpt-checkbox id="master-checkbox" checked="{{master}}">Only master branch</wpt-checkbox>
     </paper-item>
     <paper-item>
       <paper-input label="Labels" always-float-label placeholder="e.g. stable,buildbot" value="{{ labelsString::input }}">

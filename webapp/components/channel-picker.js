@@ -1,6 +1,5 @@
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../node_modules/@polymer/paper-item/paper-icon-item.js';
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-listbox/paper-listbox.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';

@@ -1,4 +1,4 @@
-import { expect, fixtureSync, html } from '@open-wc/testing';
+import { assert, expect, fixtureSync, html } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../wpt-permalinks.js';
 
@@ -31,6 +31,24 @@ suite('wpt-permalinks', () => {
       expect(`${permalinks.url}`).to.include('q=bar');
       permalinks.includeSearch = false;
       expect(`${permalinks.url}`).to.not.include('q=bar');
+    });
+
+    test('the checkboxes choose whether to include the path and the search', () => {
+      permalinks.queryParams = {q: 'foo'};
+      permalinks.path = '/css';
+      permalinks.selectedTab = 1;
+      const [path, search] = permalinks.shadowRoot.querySelectorAll('wpt-checkbox');
+      assert.isTrue(path.checked);
+      assert.isTrue(search.checked);
+      expect(`${permalinks.url}`).to.include('/css?q=foo');
+      search.click();
+      assert.isFalse(permalinks.includeSearch);
+      expect(`${permalinks.url}`).to.not.include('q=foo');
+      path.click();
+      assert.isFalse(permalinks.includePath);
+      expect(`${permalinks.url}`).to.not.include('/css');
+      permalinks.includeSearch = true;
+      assert.isTrue(search.checked);
     });
   });
 

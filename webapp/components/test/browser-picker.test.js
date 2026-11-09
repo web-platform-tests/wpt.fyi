@@ -185,7 +185,7 @@ suite('<browser-picker>', () => {
 
 suite('<browser-multi-picker>', () => {
   function checkboxes(el) {
-    return [...el.shadowRoot.querySelectorAll('paper-checkbox')];
+    return [...el.shadowRoot.querySelectorAll('wpt-checkbox')];
   }
 
   // Each checkbox, as the user sees it.
