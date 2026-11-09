@@ -7,10 +7,9 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-header.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-bsf.js';
+import '../components/wpt-collapse.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
-import '../node_modules/@polymer/iron-pages/iron-pages.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -58,6 +57,10 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         test-runs-query-builder {
           display: block;
           margin-bottom: 32px;
+        }
+        /* Only the page that is shown, which has the visible attribute. */
+        .pages > :not([visible]) {
+          display: none !important;
         }
         .query-actions paper-button {
           display: inline-block;
@@ -116,9 +119,9 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
             [[bsfBannerMessage]]
           </info-banner>
           <template is="dom-if" if="[[!isBSFCollapsed]]">
-            <iron-collapse opened="[[!isBSFCollapsed]]">
+            <wpt-collapse opened="[[!isBSFCollapsed]]">
               <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
-            </iron-collapse>
+            </wpt-collapse>
           </template>
         </div>
       </template>
@@ -138,12 +141,13 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
           <paper-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</paper-button>
         </info-banner>
       </template>
-      <iron-collapse opened="[[editingQuery]]">
+      <wpt-collapse opened="[[editingQuery]]">
         <test-runs-query-builder query-params="[[queryParams]]" on-submit="[[submitQuery]]"></test-runs-query-builder>
-      </iron-collapse>
+      </wpt-collapse>
 
-      <iron-pages role="main" selected="[[page]]" attr-for-selected="name" selected-attribute="visible" fallback-selection="404">
+      <div class="pages" role="main">
         <wpt-results name="results"
+                     visible\$="[[isShownPage(shownPage, 'results')]]"
                      is-loading="{{resultsLoading}}"
                      structured-search="[[structuredSearch]]"
                      path="[[subroute.path]]"
@@ -155,8 +159,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                      on-testrunsload="handleTestRunsLoad"
                      view="[[view]]"></wpt-results>
 
-        <wpt-404 name="404" ></wpt-404>
-      </iron-pages>
+        <wpt-404 name="404" visible\$="[[isShownPage(shownPage, '404')]]"></wpt-404>
+      </div>
 
       <paper-toast id="masterLabelMissing" duration="15000">
         <div style="display: flex;">
@@ -174,6 +178,11 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       page: {
         type: String,
         reflectToAttribute: true,
+      },
+      // The page that is shown: the 404 page for pages that don't exist.
+      shownPage: {
+        type: String,
+        computed: 'computeShownPage(page)',
       },
       user: String,
       path: String,
@@ -337,6 +346,16 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
 
   _subrouteChanged(subroute) {
     this.path = subroute.path || '/';
+  }
+
+  computeShownPage(page) {
+    // The names of the pages in the template; any other page shows the 404
+    // page.
+    return ['results', '404'].includes(page) ? page : '404';
+  }
+
+  isShownPage(shownPage, name) {
+    return shownPage === name;
   }
 
   get activeView() {

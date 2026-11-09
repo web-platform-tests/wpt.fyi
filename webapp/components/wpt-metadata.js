@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
@@ -15,6 +14,7 @@ import {
 import { LoadingState } from './loading-state.js';
 import { PathInfo } from './path.js';
 import { ProductInfo } from './product-info.js';
+import './wpt-collapse.js';
 
 class WPTMetadataNode extends ProductInfo(PolymerElement) {
   static get template() {
@@ -92,14 +92,14 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
           <wpt-metadata-node metadata-node="[[metadataNode]]" path="[[path]]"></wpt-metadata-node>
         </template>
         <template is="dom-if" if="[[others]]">
-          <iron-collapse id="metadata-collapsible">
+          <wpt-collapse id="metadata-collapsible">
             <template is="dom-repeat" items="[[others]]" as="metadataNode">
               <wpt-metadata-node
                 metadata-node="[[metadataNode]]"
                 path="[[path]]"
               ></wpt-metadata-node>
             </template>
-          </iron-collapse>
+          </wpt-collapse>
           <paper-button id="metadata-toggle" on-click="handleOpenCollapsible">
             Show more
           </paper-button>
