@@ -20,6 +20,7 @@ import requests
 from google.cloud import datastore
 from typing_extensions import Self
 from werkzeug.datastructures.structures import MultiDict
+from werkzeug.http import parse_options_header
 
 import config
 import gsutil
@@ -136,10 +137,24 @@ class Processor(object):
     def _github_token(self) -> str:
         return self._secret('github-wpt-fyi-bot-token')
 
+    def _make_temp_file(
+        self, name: str, ext: Optional[str]
+    ) -> Tuple[int, str]:
+        """Creates a temporary file whose name is based on name and ext.
+
+        `name` is used as mkstemp's prefix, so it must be one path component;
+        `ext` moves to the suffix to stay at the end of the filename, where
+        load_file() looks for '.gz'.
+        """
+        if ext:
+            name = name.removesuffix(ext)
+        return tempfile.mkstemp(prefix=name + '-' if name else None,
+                                suffix=ext, dir=self._temp_dir)
+
     def _download_gcs(self, gcs: str) -> str:
         assert gcs.startswith('gs://')
-        ext = self.known_extension(gcs)
-        fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
+        name = posixpath.basename(urlsplit(gcs).path)
+        fd, path = self._make_temp_file(name, self.known_extension(gcs))
         os.close(fd)
         # gsutil will log itself.
         gsutil.copy(gcs, path)
@@ -179,13 +194,18 @@ class Processor(object):
             except requests.HTTPError:
                 _log.error("Failed to fetch (%d): %s", r.status_code, url)
                 return None
-        ext = (self.known_extension(r.headers.get('Content-Disposition', ''))
-               or self.known_extension(url))
-        fd, path = tempfile.mkstemp(suffix=ext, dir=self._temp_dir)
+        disposition = r.headers.get('Content-Disposition', '')
+        filename = posixpath.basename(
+            parse_options_header(disposition)[1].get('filename')
+            or urlsplit(url).path)
+        fd, path = self._make_temp_file(
+            filename,
+            self.known_extension(filename) or self.known_extension(url))
         with os.fdopen(fd, mode='wb') as f:
             for chunk in r.iter_content(chunk_size=512*1024):
                 f.write(chunk)
         # Closing f will automatically close the underlying fd.
+        _log.info('Downloaded %s to %s', url, path)
         return path
 
     def _download_single(self, uri: str) -> Optional[str]:
@@ -197,16 +217,27 @@ class Processor(object):
         artifact = self._download_http(archive_url)
         if artifact is None:
             return
+        name = os.path.basename(artifact)
+        ext = self.known_extension(name)
+        if ext:
+            name = name.removesuffix(ext)
+        dest = os.path.join(self._temp_dir, name)
+        try:
+            os.mkdir(dest, 0o700)
+        except FileExistsError:
+            dest = tempfile.mkdtemp(prefix=name + '-' if name else None,
+                                    dir=self._temp_dir)
+        _log.info('Extracting %s into %s', archive_url, dest)
         with zipfile.ZipFile(artifact, mode='r') as z:
             for f in z.infolist():
                 if f.is_dir():
                     continue
                 basename = posixpath.basename(f.filename)
                 if fnmatch.fnmatchcase(basename, 'wpt_report*.json'):
-                    path = z.extract(f, path=self._temp_dir)
+                    path = z.extract(f, path=dest)
                     self.results.append(path)
                 elif fnmatch.fnmatchcase(basename, 'wpt_screenshot*.txt'):
-                    path = z.extract(f, path=self._temp_dir)
+                    path = z.extract(f, path=dest)
                     self.screenshots.append(path)
 
     def download(
