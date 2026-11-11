@@ -40,6 +40,23 @@ func (h FeatureInteropHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		isExperimental = *val
 	}
 
+	mode := q.Get("mode")
+	scope := q.Get("scope")
+	tier := q.Get("tier")
+	if mode != "" || scope != "" || tier != "" {
+		if bundled, ok := shared.LoadBundledFeatureInteropData(isExperimental, mode, scope, tier); ok {
+			marshalled, err := json.Marshal(bundled)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if _, err := w.Write(marshalled); err != nil {
+				shared.GetLogger(ctx).Warningf("Failed to write data: %s", err.Error())
+			}
+			return
+		}
+	}
+
 	// Two fetches, as the breakdown is published per date and the trendline is
 	// what says which date is newest.
 	trendline, breakdown, err := h.fetcher.Fetch(ctx, isExperimental)
@@ -58,5 +75,18 @@ func (h FeatureInteropHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if _, err := w.Write(marshalled); err != nil {
 		shared.GetLogger(ctx).Warningf("Failed to write data: %s", err.Error())
+	}
+}
+
+// apiWebFeaturesManifestHandler serves the cached WEB_FEATURES_MANIFEST and
+// WebStatus maturity tier mapping used by the results page.
+func apiWebFeaturesManifestHandler(w http.ResponseWriter, r *http.Request) {
+	raw, err := shared.LoadBundledWebFeaturesManifest()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := w.Write(raw); err != nil {
+		shared.GetLogger(r.Context()).Warningf("Failed to write manifest data: %s", err.Error())
 	}
 }
