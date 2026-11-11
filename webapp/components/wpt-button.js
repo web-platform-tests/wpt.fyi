@@ -50,34 +50,15 @@ class WptButton extends LitElement {
       user-select: none;
       cursor: pointer;
       z-index: 0;
-      transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     }
     :host([hidden]) {
       display: none !important;
-    }
-    :host(.keyboard-focus) {
-      font-weight: bold;
-    }
-    /* paper-button's shadows: 2dp at rest, 6dp with keyboard focus, 8dp while
-       pressed. */
-    :host([raised]) {
-      box-shadow: var(--wpt-shadow-2dp, 0 2px 2px 0 rgba(0, 0, 0, 0.14),
-        0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2));
-    }
-    :host([raised].keyboard-focus) {
-      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12),
-        0 3px 5px -1px rgba(0, 0, 0, 0.4);
-    }
-    :host([raised]:active) {
-      box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12),
-        0 5px 5px -3px rgba(0, 0, 0, 0.4);
     }
     :host([disabled]) {
       background: none;
       color: #a8a8a8;
       cursor: auto;
       pointer-events: none;
-      box-shadow: none;
     }
     :host([disabled][raised]) {
       background: #eaeaea;
@@ -98,6 +79,30 @@ class WptButton extends LitElement {
       text-transform: inherit;
       letter-spacing: inherit;
       cursor: inherit;
+      transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    /* Keyboard focus and pressing are styled on the inner button, which fills
+       the element: only the inner button matches :focus-visible, so focus from
+       the mouse doesn't change the look, as with paper-button. */
+    button:focus-visible {
+      font-weight: bold;
+    }
+    /* paper-button's shadows: 2dp at rest, 6dp with keyboard focus, 8dp while
+       pressed. */
+    :host([raised]) button {
+      box-shadow: var(--wpt-shadow-2dp, 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+        0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2));
+    }
+    :host([raised]) button:focus-visible {
+      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12),
+        0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    }
+    :host([raised]) button:active {
+      box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12),
+        0 5px 5px -3px rgba(0, 0, 0, 0.4);
+    }
+    :host([disabled]) button {
+      box-shadow: none;
     }
     /* The unset above removes the browser's focus ring; bring it back, as
        paper-button shows it with keyboard focus. */
@@ -124,12 +129,6 @@ class WptButton extends LitElement {
     super();
     this.raised = false;
     this.disabled = false;
-    // Like paper-button, show focus only when it comes from the keyboard.
-    this.addEventListener('focusin', () => {
-      const button = this.renderRoot.querySelector('button');
-      this.classList.toggle('keyboard-focus', !!button && button.matches(':focus-visible'));
-    });
-    this.addEventListener('focusout', () => this.classList.remove('keyboard-focus'));
   }
 
   render() {
