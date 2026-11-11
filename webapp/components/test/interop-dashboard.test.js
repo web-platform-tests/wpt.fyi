@@ -279,13 +279,13 @@ suite('<interop-dashboard>', () => {
       await nextFrame();
       el.shadowRoot.querySelector('#toggleStable').click();
       await nextFrame();
-      const stable = chromeScores(el);
-      assert.deepEqual(stable, [...stable].sort((a, b) => b - a));
+      const stableChannelScores = chromeScores(el);
+      assert.deepEqual(stableChannelScores, [...stableChannelScores].sort((a, b) => b - a));
 
       el.shadowRoot.querySelector('#toggleExperimental').click();
       await nextFrame();
-      const experimental = chromeScores(el);
-      assert.deepEqual(experimental, [...experimental].sort((a, b) => b - a));
+      const experimentalChannelScores = chromeScores(el);
+      assert.deepEqual(experimentalChannelScores, [...experimentalChannelScores].sort((a, b) => b - a));
     });
 
     test('clicking the Interop column sorts by the Interop score', async() => {

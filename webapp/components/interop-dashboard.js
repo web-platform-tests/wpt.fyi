@@ -1083,14 +1083,14 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
   };
 
-  numericalSort = (rows, featureOrder, sortColumn, isStable) => {
+  numericalSort = (rows, featureOrder, sortColumn, isStableChannel) => {
     const browserIndex = (this.isMobileScoresView && sortColumn === 4) ? 2 : sortColumn - 1;
     const individualScores = [];
     for (let i = 0; i < rows.length; i++) {
       const feature = rows[i];
       individualScores[i] = [
         feature,
-        this.getNumericalBrowserScoreByFeature(browserIndex, feature, isStable)
+        this.getNumericalBrowserScoreByFeature(browserIndex, feature, isStableChannel)
       ];
     }
     individualScores.sort((a, b) => a[1] - b[1]);
@@ -1099,9 +1099,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
     }
   };
 
-  // isStable is an argument (rather than read from this.stable) so that the
-  // rows are sorted again when the channel changes.
-  sortRows = (rows, index, sortColumn, isSortedAsc, isStable) => {
+  // isStableChannel is an argument (rather than read from this.stable) so that
+  // the rows are sorted again when the channel changes.
+  sortRows = (rows, index, sortColumn, isSortedAsc, isStableChannel) => {
     if(index !== 0) {
       return rows;
     }
@@ -1115,7 +1115,7 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
       this.alphabeticalSort(rows, sortedFeatureOrder);
     } else {
       // For the other columns, sort numerically by score
-      this.numericalSort(rows, sortedFeatureOrder, sortColumn, isStable);
+      this.numericalSort(rows, sortedFeatureOrder, sortColumn, isStableChannel);
     }
 
     // Reverse current sort order
