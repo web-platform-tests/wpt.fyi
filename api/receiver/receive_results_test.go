@@ -278,19 +278,56 @@ func TestHandleResultsUpload_file(t *testing.T) {
 
 			mockAE := mock_receiver.NewMockAPI(mockCtrl)
 			mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
+			mockAE.EXPECT().GetHostname().Return("staging.wpt.fyi").AnyTimes()
 			gomock.InOrder(
 				mockAE.EXPECT().IsAdmin(req).Return(false),
 				mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
 				mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), gomock.Any(), emptyParams).Return("task", nil),
 			)
 			for range filenames {
-				mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
+				mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer-staging/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
 			}
 
 			HandleResultsUpload(mockAE, resp, req)
 			assert.Equal(t, resp.Code, http.StatusOK)
 		})
 	}
+}
+
+func TestHandleResultsUpload_file_prod(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	buffer := new(bytes.Buffer)
+	writer := multipart.NewWriter(buffer)
+	writer.CreateFormFile("result_file", "wpt_report.json.gz")
+	writer.CreateFormFile("screenshot_file", "wpt_screenshot.txt.gz")
+	writer.Close()
+	req := httptest.NewRequest("POST", "/api/results/upload", buffer)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.SetBasicAuth("blade-runner", "123")
+	resp := httptest.NewRecorder()
+
+	mockAE := mock_receiver.NewMockAPI(mockCtrl)
+	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().GetHostname().Return("wpt.fyi").AnyTimes()
+	gomock.InOrder(
+		mockAE.EXPECT().IsAdmin(req).Return(false),
+		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
+		mockAE.EXPECT().ScheduleResultsTask("blade-runner", gomock.Any(), gomock.Any(), gomock.Any(), emptyParams).Return("task", nil),
+	)
+	mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(nil)
+	mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.db$`), gomock.Any(), true).Return(nil)
+
+	HandleResultsUpload(mockAE, resp, req)
+	assert.Equal(t, resp.Code, http.StatusOK)
+}
+
+func TestBufferBucket(t *testing.T) {
+	assert.Equal(t, "wptd-results-buffer", BufferBucket("wpt.fyi"))
+	assert.Equal(t, "wptd-results-buffer-staging", BufferBucket("staging.wpt.fyi"))
+	assert.Equal(t, "wptd-results-buffer-staging", BufferBucket("localhost"))
+	assert.Equal(t, "wptd-results-buffer-staging", BufferBucket(""))
 }
 
 func TestHandleResultsUpload_fail_uploading(t *testing.T) {
@@ -309,10 +346,11 @@ func TestHandleResultsUpload_fail_uploading(t *testing.T) {
 	errGCS := fmt.Errorf("failed to upload to GCS")
 	mockAE := mock_receiver.NewMockAPI(mockCtrl)
 	mockAE.EXPECT().Context().Return(sharedtest.NewTestContext()).AnyTimes()
+	mockAE.EXPECT().GetHostname().Return("staging.wpt.fyi").AnyTimes()
 	gomock.InOrder(
 		mockAE.EXPECT().IsAdmin(req).Return(false),
 		mockAE.EXPECT().GetUploader("blade-runner").Return(shared.Uploader{"blade-runner", "123"}, nil),
-		mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer/blade-runner/.*\.json$`), gomock.Any(), true).Return(errGCS),
+		mockAE.EXPECT().UploadToGCS(matchRegex(`^gs://wptd-results-buffer-staging/blade-runner/.*\.json$`), gomock.Any(), true).Return(errGCS),
 	)
 
 	HandleResultsUpload(mockAE, resp, req)
