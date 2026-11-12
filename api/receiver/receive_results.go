@@ -14,8 +14,26 @@ import (
 	"github.com/web-platform-tests/wpt.fyi/shared"
 )
 
-// BufferBucket is the GCS bucket to temporarily store results until they are proccessed.
-const BufferBucket = "wptd-results-buffer"
+// Buffer buckets temporarily store uploaded results until they are processed.
+// Each environment has its own bucket so that non-production deployments do
+// not need (and must not have) write access to the production bucket.
+const (
+	// ProdBufferBucket is the buffer bucket used by production (wpt.fyi).
+	ProdBufferBucket = "wptd-results-buffer"
+	// StagingBufferBucket is the buffer bucket used by every other environment.
+	StagingBufferBucket = "wptd-results-buffer-staging"
+)
+
+// BufferBucket returns the buffer bucket for the environment serving the
+// given hostname. Anything other than production defaults to the staging
+// bucket, to prevent accidental writes to production.
+func BufferBucket(hostname string) string {
+	if hostname == "wpt.fyi" {
+		return ProdBufferBucket
+	}
+
+	return StagingBufferBucket
+}
 
 // ResultsQueue is the name of the results processing TaskQueue.
 const ResultsQueue = "results-arrival"
@@ -113,13 +131,14 @@ func HandleResultsUpload(a API, w http.ResponseWriter, r *http.Request) {
 func saveToGCS(a API, uploader string, resultFiles, screenshotFiles []*multipart.FileHeader) (
 	resultGCS, screenshotGCS []string, err error) {
 	id := uuid.New()
+	bucket := BufferBucket(a.GetHostname())
 	resultGCS = make([]string, len(resultFiles))
 	screenshotGCS = make([]string, len(screenshotFiles))
 	for i := range resultFiles {
-		resultGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.json", BufferBucket, uploader, id, i)
+		resultGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.json", bucket, uploader, id, i)
 	}
 	for i := range screenshotFiles {
-		screenshotGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.db", BufferBucket, uploader, id, i)
+		screenshotGCS[i] = fmt.Sprintf("gs://%s/%s/%s/%d.db", bucket, uploader, id, i)
 	}
 
 	var wg sync.WaitGroup
