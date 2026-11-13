@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
+import './wpt-tooltip.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { WPTFlags } from './wpt-flags.js';
@@ -414,9 +414,9 @@ class TestSearch extends WPTFlags(PolymerElement) {
 
       <!-- TODO(markdittmer): Static id will break multiple search components. -->
       <datalist id="query-list"></datalist>
-      <paper-tooltip position="top" manual-mode="true">
+      <wpt-tooltip position="top" manual-mode="true">
         Press &lt;Enter&gt; to commit query
-      </paper-tooltip>
+      </wpt-tooltip>
     </div>
 `;
   }
@@ -605,11 +605,11 @@ class TestSearch extends WPTFlags(PolymerElement) {
   }
 
   handleFocus() {
-    this.shadowRoot.querySelector('paper-tooltip').show();
+    this.shadowRoot.querySelector('wpt-tooltip').show();
   }
 
   handleBlur() {
-    this.shadowRoot.querySelector('paper-tooltip').hide();
+    this.shadowRoot.querySelector('wpt-tooltip').hide();
   }
 
   clear() {
