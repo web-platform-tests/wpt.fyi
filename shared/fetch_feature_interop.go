@@ -7,11 +7,19 @@
 package shared
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"sync"
 )
 
 const (
@@ -187,4 +195,111 @@ func fetchCSV(ctx context.Context, url string) ([][]string, error) {
 // apiFeatureInteropHandler.
 func NewFetchFeatureInterop() FetchFeatureInterop {
 	return fetchFeatureInterop{}
+}
+
+var (
+	bundledSeriesOnce   sync.Once
+	bundledSeriesMap    map[string]string
+	bundledParsedCache  sync.Map
+	bundledManifestOnce sync.Once
+	bundledManifestJSON []byte
+	bundledManifestErr  error
+)
+
+func resolveBundledDataPath(filename string) string {
+	candidates := []string{
+		filepath.Join("webapp", "scripts", "data", filename),
+		filepath.Join("scripts", "data", filename),
+		filepath.Join("..", "webapp", "scripts", "data", filename),
+		filepath.Join("..", "..", "webapp", "scripts", "data", filename),
+	}
+	if _, thisFile, _, ok := runtime.Caller(0); ok {
+		candidates = append([]string{
+			filepath.Join(filepath.Dir(thisFile), "..", "webapp", "scripts", "data", filename),
+		}, candidates...)
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return candidates[0]
+}
+
+func readGzipFileBytes(filename string) ([]byte, error) {
+	f, err := os.Open(resolveBundledDataPath(filename))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return nil, err
+	}
+	defer gz.Close()
+
+	return io.ReadAll(gz)
+}
+
+// LoadBundledFeatureInteropData returns cached FeatureInteropData from
+// webapp/scripts/data/interop-series-bundle.json.gz for the requested
+// (isExperimental, mode, scope, tier) combination.
+func LoadBundledFeatureInteropData(isExperimental bool, mode, scope, tier string) (FeatureInteropData, bool) {
+	bundledSeriesOnce.Do(func() {
+		raw, err := readGzipFileBytes("interop-series-bundle.json.gz")
+		if err != nil {
+			return
+		}
+		_ = json.Unmarshal(raw, &bundledSeriesMap)
+	})
+	if len(bundledSeriesMap) == 0 {
+		return FeatureInteropData{}, false
+	}
+
+	channel := "stable"
+	if isExperimental {
+		channel = "experimental"
+	}
+	effectiveScope := "hybrid-dirs"
+	switch scope {
+	case "web-features", "hybrid-dirs", "web-features-tentative", "hybrid-dirs-tentative":
+		effectiveScope = scope
+	}
+	effectiveTier := "ge2"
+	switch tier {
+	case "eq3", "eq2", "eq1", "eq0", "ge3", "ge2", "ge1", "ge0":
+		effectiveTier = tier
+	}
+	csvKind := "fail"
+	if mode == "bsf-passrate" || mode == "bsf-feature-counts" || mode == "bsf" {
+		csvKind = "bsf"
+	}
+
+	key := fmt.Sprintf("%s--%s--%s--%s.csv", channel, effectiveScope, effectiveTier, csvKind)
+	if cached, ok := bundledParsedCache.Load(key); ok {
+		return cached.(FeatureInteropData), true
+	}
+	csvText, ok := bundledSeriesMap[key]
+	if !ok || csvText == "" {
+		return FeatureInteropData{}, false
+	}
+
+	rows, err := csv.NewReader(strings.NewReader(csvText)).ReadAll()
+	if err != nil || len(rows) < 2 {
+		return FeatureInteropData{}, false
+	}
+
+	parsed := ExtractFeatureInteropData(rows, nil)
+	bundledParsedCache.Store(key, parsed)
+	return parsed, true
+}
+
+// LoadBundledWebFeaturesManifest returns the decompressed JSON payload of
+// webapp/scripts/data/web-features-manifest.json.gz.
+func LoadBundledWebFeaturesManifest() ([]byte, error) {
+	bundledManifestOnce.Do(func() {
+		bundledManifestJSON, bundledManifestErr = readGzipFileBytes("web-features-manifest.json.gz")
+	})
+	return bundledManifestJSON, bundledManifestErr
 }

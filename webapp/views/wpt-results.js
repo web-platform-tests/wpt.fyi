@@ -30,6 +30,12 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/polymer/polymer-element.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
+import {
+  dirFeatureKeyForTable,
+  isTentativeTestPath,
+  loadWebFeaturesManifest,
+  updateChannelCoverageStats
+} from '../components/interop-shared.js';
 import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
 import { isViewOnlyQuery } from '../components/query-state.js';
@@ -239,6 +245,33 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         color: white;
       }
 
+      tr.row-status-included td:first-child {
+        border-left: 5px solid #16a34a;
+      }
+      tr.row-status-partial td:first-child {
+        border-left: 5px solid #f59e0b;
+        background-color: #fffbeb;
+      }
+      tr.row-status-excluded {
+        opacity: 0.56;
+        background: repeating-linear-gradient(
+          -45deg,
+          #f8fafc,
+          #f8fafc 8px,
+          #f1f5f9 8px,
+          #f1f5f9 16px
+        ) !important;
+      }
+      tr.row-status-excluded:hover {
+        opacity: 0.92;
+      }
+      tr.row-status-excluded td:first-child {
+        border-left: 5px dashed #94a3b8;
+      }
+      td.cell-excluded-bg {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+      }
       .selected::before {
         --_size: 1rem;
         --_half-size: calc(var(--_size) / 2);
@@ -335,7 +368,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             </template>
 
             <template is="dom-repeat" items="{{displayedNodes}}" as="node">
-              <tr>
+              <tr data-row-idx$="[[index]]" class$="[[computeRowStatusClass(node)]]">
                 <td onclick="[[handleTriageSelect(null, node, testRun)]]" onmouseover="[[handleTriageHover(null, node, testRun)]]">
                   <path-part
                       prefix="/results"
@@ -353,16 +386,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </td>
 
                 <template is="dom-repeat" items="[[testRuns]]" as="testRun">
-                  <td class\$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
+                  <td class$="numbers [[ testResultClass(node, index, testRun, 'passes') ]]" onclick="[[handleTriageSelect(index, node, testRun)]]" onmouseover="[[handleTriageHover(index, node, testRun)]]">
                     <template is="dom-if" if="[[diffRun]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_passes') }}</span>
+                      <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_passes') }}</span>
                       /
-                      <span class\$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_total') }}</span>
+                      <span class$="total [[ testResultClass(node, index, testRun, 'total') ]]">{{ getNodeResultDataByPropertyName(node, index, testRun, 'subtest_total') }}</span>
                     </template>
                     <template is="dom-if" if="[[!diffRun]]">
-                      <span class\$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
+                      <span class$="passes [[ testResultClass(node, index, testRun, 'passes') ]]">{{ getNodeResult(node, index) }}</span>
                       <template is="dom-if" if="[[ shouldDisplayHarnessWarning(node, index) ]]">
-                        <span class="pointer" title\$="Harness [[ getStatusDisplay(node, index) ]]"> ⚠️</span>
+                        <span class="pointer" title$="Harness [[ getStatusDisplay(node, index) ]]"> ⚠️</span>
                       </template>
                     </template>
                     <template is="dom-if" if="[[shouldDisplayMetadata(index, node.path, metadataMap)]]">
@@ -372,7 +405,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                 </template>
 
                 <template is="dom-if" if="[[diffRun]]">
-                  <td class\$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
+                  <td class$="numbers [[ testResultClass(node, index, diffRun, 'passes') ]]">
                     <template is="dom-if" if="[[node.diff]]">
                       <span class="delta passes">{{ getNodeResultDataByPropertyName(node, -1, diffRun, 'passes') }}</span>
                       /
@@ -391,8 +424,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
                   <code><strong>[[getTotalText(view, displayedTotals)]]</strong></code>
                 </td>
                 <template is="dom-repeat" items="[[displayedTotals]]" as="columnTotal">
-                  <td class\$="numbers [[ getTotalsClass(columnTotal, view) ]]">
-                    <span class\$="total [[ getTotalsClass(columnTotal, view) ]]">{{ getTotalDisplay(columnTotal, view) }}</span>
+                  <td class$="numbers [[ getTotalsClass(columnTotal, view) ]]">
+                    <span class$="total [[ getTotalsClass(columnTotal, view) ]]">{{ getTotalDisplay(columnTotal, view) }}</span>
                   </td>
                 </template>
               </tr>
@@ -520,6 +553,21 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       // path => {type, file[, refPath]} simplification.
       screenshots: Array,
       triageNotifier: Boolean,
+      graphMode: {
+        type: String,
+        value: 'raw-pass-3of3',
+        observer: '_graphSettingsChanged',
+      },
+      graphScope: {
+        type: String,
+        value: 'hybrid-dirs',
+        observer: '_graphSettingsChanged',
+      },
+      graphTier: {
+        type: String,
+        value: 'ge2',
+        observer: '_graphSettingsChanged',
+      },
     };
   }
 
@@ -590,6 +638,417 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     super.connectedCallback();
     this.addEventListener('triagemetadata', this.reloadPendingMetadata);
     this.addEventListener('subtestrows', this.handleGetSubtestRows);
+    this._ensureWebFeaturesManifest();
+  }
+
+  /**
+   * Loads the Web Features manifest (`/api/web-features-manifest`) so rows can
+   * indicate whether their tests are included in the active chart scope/tier.
+   */
+  async _ensureWebFeaturesManifest() {
+    const cache = await loadWebFeaturesManifest();
+    if (!cache) return;
+    this.testToWebFeatures = cache.testToWebFeatures;
+    this.webFeatureLabelTiers = cache.webFeatureLabelTiers;
+    this._buildActiveFeatureCatalog();
+    this.refreshDisplayedNodes();
+  }
+
+  _graphSettingsChanged() {
+    if (!this.searchResults || !this.searchResults.length || !this.displayedNodes || !this.displayedNodes.length) {
+      return;
+    }
+    if (this._pendingGraphSync) {
+      return;
+    }
+    this._pendingGraphSync = true;
+    Promise.resolve().then(() => {
+      this._pendingGraphSync = false;
+      const scope = this.graphScope || 'web-features';
+      const tier = this.graphTier || 'ge2';
+      const activeMode = this.graphMode || 'raw-pass-3of3';
+      const isBsf = activeMode === 'bsf-passrate' || activeMode === 'bsf-feature-counts' || activeMode === 'raw-bsf';
+      const scopeOrTierChanged = scope !== this._lastAppliedScope || tier !== this._lastAppliedTier;
+      const modeFamilyChanged = isBsf !== this._lastAppliedIsBsf;
+      if (!scopeOrTierChanged && !modeFamilyChanged) {
+        return;
+      }
+      if (scopeOrTierChanged) {
+        this._recomputeRowGraphTotals(this.displayedNodes, this.displayedTotals, this._totalsBuckets);
+      }
+      this._syncTableInteropClasses();
+      this._lastAppliedScope = scope;
+      this._lastAppliedTier = tier;
+      this._lastAppliedIsBsf = isBsf;
+    });
+  }
+
+  _tierBitmask(tier) {
+    switch (tier) {
+    case 'eq3':
+    case 'ge3':
+      return 8;
+    case 'eq2':
+      return 4;
+    case 'eq1':
+      return 2;
+    case 'eq0':
+      return 1;
+    case 'ge2':
+      return 12;
+    case 'ge1':
+      return 14;
+    case 'ge0':
+    default:
+      return 15;
+    }
+  }
+
+  _recomputeRowGraphTotals(rows, totals, totalsBuckets) {
+    if (!rows || !rows.length) return;
+    const scope = this.graphScope || 'web-features';
+    const shift = scope === 'web-features' ? 0
+      : (scope === 'hybrid-dirs' ? 4
+        : (scope === 'web-features-tentative' ? 8 : 12));
+    const tierMask = this._tierBitmask(this.graphTier || 'ge2');
+    const nCols = (this.testRuns && this.testRuns.length) || 0;
+
+    const isBucketIncluded = bId => {
+      if (scope === 'full-history') {
+        return true;
+      }
+      return (((bId >> shift) & 0x0f) & tierMask) !== 0;
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      let incTests = 0;
+      for (let c = 0; c < nCols && c < row.results.length; c++) {
+        row.results[c].inGraphPasses = 0;
+        row.results[c].inGraphTotal = 0;
+        row.results[c].inGraphBsf = 0;
+      }
+      if (row._buckets) {
+        for (const [bId, b] of row._buckets.entries()) {
+          if (!isBucketIncluded(bId)) continue;
+          incTests += b.count;
+          for (let c = 0; c < nCols && c < row.results.length; c++) {
+            row.results[c].inGraphPasses += b.passes[c];
+            row.results[c].inGraphTotal += b.count;
+            row.results[c].inGraphBsf += b.bsf[c];
+          }
+        }
+      }
+      row.inGraphTests = incTests;
+      const tot = row.totalTests;
+      if (tot === 0 || incTests === 0) {
+        row.filterStatus = 'excluded';
+      } else if (incTests === tot) {
+        row.filterStatus = 'included';
+      } else {
+        row.filterStatus = 'partial';
+      }
+    }
+
+    if (totals && totalsBuckets) {
+      for (let c = 0; c < nCols && c < totals.length; c++) {
+        totals[c].inGraphPasses = 0;
+        totals[c].inGraphTotal = 0;
+        totals[c].inGraphBsf = 0;
+      }
+      for (const [bId, b] of totalsBuckets.entries()) {
+        if (!isBucketIncluded(bId)) continue;
+        for (let c = 0; c < nCols && c < totals.length; c++) {
+          totals[c].inGraphPasses += b.passes[c];
+          totals[c].inGraphTotal += b.count;
+          totals[c].inGraphBsf += b.bsf[c];
+        }
+      }
+    }
+  }
+
+  _syncTableInteropClasses() {
+    if (!this.shadowRoot || !this.displayedNodes || !this.testRuns) return;
+    if (!this._cachedRowTrs || this._cachedRowTrs.length !== this.displayedNodes.length) {
+      this._cachedRowTrs = this.shadowRoot.querySelectorAll('tbody tr[data-row-idx]');
+    }
+    const trList = this._cachedRowTrs;
+    const runs = this.testRuns;
+    for (let i = 0; i < trList.length; i++) {
+      const tr = trList[i];
+      const node = this.displayedNodes[i];
+      if (!node) continue;
+      const nextRowCls = this.computeRowStatusClass(node);
+      if (tr.className !== nextRowCls) {
+        tr.className = nextRowCls;
+      }
+      let cells = tr._interopCells;
+      if (!cells || cells.length !== runs.length) {
+        const tds = tr.querySelectorAll('td.numbers');
+        if (tds.length) {
+          cells = [];
+          for (let c = 0; c < tds.length; c++) {
+            cells.push({
+              td: tds[c],
+              span: tds[c].querySelector('span.passes'),
+            });
+          }
+          if (cells.length === runs.length) {
+            tr._interopCells = cells;
+          }
+        }
+      }
+      if (cells) {
+        for (let c = 0; c < runs.length && c < cells.length; c++) {
+          const { td, span } = cells[c];
+          const cls = this.testResultClass(node, c, runs[c], 'passes');
+          const nextTdCls = `numbers ${cls}`;
+          if (td.className !== nextTdCls) {
+            td.className = nextTdCls;
+          }
+          if (span) {
+            const nextSpanCls = `passes ${cls}`;
+            if (span.className !== nextSpanCls) {
+              span.className = nextSpanCls;
+            }
+          }
+        }
+      }
+    }
+    if (this.displayedTotals) {
+      const totalsTds = this.shadowRoot.querySelectorAll('tbody tr.totals-row td.numbers');
+      for (let c = 0; c < this.displayedTotals.length && c < totalsTds.length; c++) {
+        const td = totalsTds[c];
+        const tCls = this.getTotalsClass(this.displayedTotals[c], this.view);
+        const nextTdCls = `numbers ${tCls}`;
+        if (td.className !== nextTdCls) {
+          td.className = nextTdCls;
+        }
+        const spanTotal = td.querySelector('span.total');
+        if (spanTotal) {
+          const nextSpanCls = `total ${tCls}`;
+          if (spanTotal.className !== nextSpanCls) {
+            spanTotal.className = nextSpanCls;
+          }
+        }
+      }
+    }
+  }
+
+  _getCoreEngineIndices() {
+    const runs = this.testRuns || [];
+    let cIdx = runs.findIndex(r => r && r.browser_name === 'chrome');
+    let fIdx = runs.findIndex(r => r && r.browser_name === 'firefox');
+    let sIdx = runs.findIndex(r => r && r.browser_name === 'safari');
+    if (cIdx < 0) cIdx = 0;
+    if (fIdx < 0) fIdx = runs.length > 2 ? 1 : 0;
+    if (sIdx < 0) sIdx = runs.length > 2 ? runs.length - 1 : 0;
+    return [cIdx, fIdx, sIdx];
+  }
+
+  _scoreSingleTestRecord(r, coreIndices) {
+    const [cIdx, fIdx, sIdx] = coreIndices || this._getCoreEngineIndices();
+    const cacheKey = `${cIdx},${fIdx},${sIdx}`;
+    if (r._scored && r._scoredKey === cacheKey) return r._scored;
+    const rs = r.legacy_status || [];
+    const s = [];
+    for (let i = 0; i < rs.length; i++) {
+      const passingStatus = PASSING_STATUSES.includes(rs[i].status);
+      let passRatio = 0;
+      if (!rs[i].newAggProcess) {
+        passRatio = rs[i].total === 0 ? 0 : rs[i].passes / rs[i].total;
+      } else if (passingStatus && rs[i].total === 0) {
+        passRatio = 1;
+      } else if (rs[i].total > 0) {
+        passRatio = rs[i].passes / rs[i].total;
+      }
+      s.push(passRatio);
+    }
+    const s0 = s[cIdx] !== undefined ? s[cIdx] : 0;
+    const s1 = s[fIdx] !== undefined ? s[fIdx] : 0;
+    const s2 = s[sIdx] !== undefined ? s[sIdx] : 0;
+    const minS = Math.min(s0, s1, s2);
+    const maxS = Math.max(s0, s1, s2);
+    const medS = s0 + s1 + s2 - minS - maxS;
+    const bsf = s.map(val => Math.max(0, medS - val));
+    r._dirKey = dirFeatureKeyForTable(r.test);
+    r._isTentative = isTentativeTestPath(r.test);
+    r._scoredKey = cacheKey;
+    r._scored = { s, s0, s1, s2, bsf };
+    return r._scored;
+  }
+
+  _buildActiveFeatureCatalog() {
+    if (!this.searchResults || !this.searchResults.length) return;
+    const testToWf = this.testToWebFeatures;
+    if (this._catalogResultsRef === this.searchResults && this._catalogWfRef === testToWf) {
+      return;
+    }
+    const featMap = new Map();
+    const coreIndices = this._getCoreEngineIndices();
+    const flatRows = { eq3: 0, eq2: 0, eq1: 0, eq0: 0 };
+    let totalValidTests = 0;
+
+    for (let i = 0; i < this.searchResults.length; i++) {
+      const r = this.searchResults[i];
+      if (r.test.startsWith('/third_party/')) continue;
+      totalValidTests++;
+      const sc = this._scoreSingleTestRecord(r, coreIndices);
+      const flatK = (sc.s0 >= 0.50 ? 1 : 0) + (sc.s1 >= 0.50 ? 1 : 0) + (sc.s2 >= 0.50 ? 1 : 0);
+      flatRows[`eq${flatK}`]++;
+      const wf = testToWf ? testToWf.get(r.test) : undefined;
+      const hybFeats = (wf && wf.length) ? wf : [r._dirKey];
+      for (let j = 0; j < hybFeats.length; j++) {
+        const fName = hybFeats[j];
+        let fObj = featMap.get(fName);
+        if (!fObj) {
+          fObj = {
+            name: fName,
+            sum0: 0,
+            sum1: 0,
+            sum2: 0,
+            count: 0,
+            tentSum0: 0,
+            tentSum1: 0,
+            tentSum2: 0,
+            tentCount: 0,
+            tierK: 0,
+          };
+          featMap.set(fName, fObj);
+        }
+        fObj.tentSum0 += sc.s0;
+        fObj.tentSum1 += sc.s1;
+        fObj.tentSum2 += sc.s2;
+        fObj.tentCount += 1;
+        if (!r._isTentative) {
+          fObj.sum0 += sc.s0;
+          fObj.sum1 += sc.s1;
+          fObj.sum2 += sc.s2;
+          fObj.count += 1;
+        }
+      }
+    }
+
+    const labelTiers = this.webFeatureLabelTiers || {};
+    const wfRows = { eq3: 0, eq2: 0, eq1: 0, eq0: 0 };
+    const hybRows = { eq3: 0, eq2: 0, eq1: 0, eq0: 0 };
+    const wfTentRows = { eq3: 0, eq2: 0, eq1: 0, eq0: 0 };
+    const hybTentRows = { eq3: 0, eq2: 0, eq1: 0, eq0: 0 };
+    for (const fObj of featMap.values()) {
+      const denom = fObj.count > 0 ? fObj.count : fObj.tentCount;
+      const r0 = denom > 0 ? (fObj.count > 0 ? fObj.sum0 : fObj.tentSum0) / denom : 0;
+      const r1 = denom > 0 ? (fObj.count > 0 ? fObj.sum1 : fObj.tentSum1) / denom : 0;
+      const r2 = denom > 0 ? (fObj.count > 0 ? fObj.sum2 : fObj.tentSum2) / denom : 0;
+      const isDir = fObj.name.startsWith('dir:');
+      const labelTier = !isDir ? labelTiers[fObj.name] : undefined;
+      fObj.tierK = labelTier !== undefined
+        ? labelTier
+        : ((r0 >= 0.50 ? 1 : 0) + (r1 >= 0.50 ? 1 : 0) + (r2 >= 0.50 ? 1 : 0));
+      fObj.isTentativeFeature = fObj.count * 2 < fObj.tentCount;
+      hybTentRows[`eq${fObj.tierK}`]++;
+      if (!isDir) {
+        wfTentRows[`eq${fObj.tierK}`]++;
+      }
+      if (fObj.count > 0 && !fObj.isTentativeFeature) {
+        hybRows[`eq${fObj.tierK}`]++;
+        if (!isDir) {
+          wfRows[`eq${fObj.tierK}`]++;
+        }
+      }
+    }
+
+    const wfMaskCounts = new Int32Array(16);
+    const hybMaskCounts = new Int32Array(16);
+    const wfTentMaskCounts = new Int32Array(16);
+    const hybTentMaskCounts = new Int32Array(16);
+    for (let i = 0; i < this.searchResults.length; i++) {
+      const r = this.searchResults[i];
+      if (r.test.startsWith('/third_party/')) continue;
+      const wf = testToWf ? testToWf.get(r.test) : undefined;
+      let wfMask = 0;
+      let wfTentMask = 0;
+      if (wf && wf.length) {
+        for (let j = 0; j < wf.length; j++) {
+          const fo = featMap.get(wf[j]);
+          const bit = 1 << (fo ? fo.tierK : 3);
+          wfTentMask |= bit;
+          if (!r._isTentative && !(fo && fo.isTentativeFeature)) {
+            wfMask |= bit;
+          }
+        }
+      }
+      let hybMask = wfMask;
+      let hybTentMask = wfTentMask;
+      if (!wfTentMask) {
+        const fo = featMap.get(r._dirKey);
+        const bit = 1 << (fo ? fo.tierK : 3);
+        hybTentMask = bit;
+        if (!r._isTentative && !(fo && fo.isTentativeFeature)) {
+          hybMask = bit;
+        }
+      }
+      r._bucketId = wfMask | (hybMask << 4) | (wfTentMask << 8) | (hybTentMask << 12);
+      wfTentMaskCounts[wfTentMask]++;
+      hybTentMaskCounts[hybTentMask]++;
+      wfMaskCounts[wfMask]++;
+      hybMaskCounts[hybMask]++;
+    }
+
+    if (testToWf && !this.search && totalValidTests > 0) {
+      const addCumulative = obj => {
+        obj.ge3 = obj.eq3;
+        obj.ge2 = obj.ge3 + obj.eq2;
+        obj.ge1 = obj.ge2 + obj.eq1;
+        obj.ge0 = obj.ge1 + obj.eq0;
+        return obj;
+      };
+      addCumulative(wfRows);
+      addCumulative(hybRows);
+      addCumulative(wfTentRows);
+      addCumulative(hybTentRows);
+      addCumulative(flatRows);
+
+      const tierKeys = ['eq3', 'eq2', 'eq1', 'eq0', 'ge3', 'ge2', 'ge1', 'ge0'];
+      const wfTests = {};
+      const hybTests = {};
+      const wfTentTests = {};
+      const hybTentTests = {};
+      for (let tIdx = 0; tIdx < tierKeys.length; tIdx++) {
+        const tKey = tierKeys[tIdx];
+        const tMask = this._tierBitmask(tKey);
+        let wSum = 0;
+        let hSum = 0;
+        let wtSum = 0;
+        let htSum = 0;
+        for (let m = 1; m < 16; m++) {
+          if ((m & tMask) !== 0) {
+            wSum += wfMaskCounts[m];
+            hSum += hybMaskCounts[m];
+            wtSum += wfTentMaskCounts[m];
+            htSum += hybTentMaskCounts[m];
+          }
+        }
+        wfTests[tKey] = wSum;
+        hybTests[tKey] = hSum;
+        wfTentTests[tKey] = wtSum;
+        hybTentTests[tKey] = htSum;
+      }
+      const isExp = !(this.labels && this.labels.includes('stable') && !this.labels.includes('experimental'));
+      updateChannelCoverageStats(isExp, {
+        totalTests: totalValidTests,
+        scopes: {
+          'web-features': { totalRows: wfRows.ge0, rows: wfRows, tests: wfTests },
+          'hybrid-dirs': { totalRows: hybRows.ge0, rows: hybRows, tests: hybTests },
+          'web-features-tentative': { totalRows: wfTentRows.ge0, rows: wfTentRows, tests: wfTentTests },
+          'hybrid-dirs-tentative': { totalRows: hybTentRows.ge0, rows: hybTentRows, tests: hybTentTests },
+          'no-grouping': { totalRows: totalValidTests, rows: flatRows, tests: Object.assign({}, flatRows) },
+        },
+      });
+    }
+
+    this.activeFeatureMap = featMap;
+    this._catalogResultsRef = this.searchResults;
+    this._catalogWfRef = testToWf;
   }
 
   disconnectedCallback() {
@@ -809,12 +1268,34 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
   }
 
   refreshDisplayedNodes() {
-    if (!this.searchResults || !this.searchResults.length) {
+    if (!this.searchResults || !this.searchResults.length || !this.testRuns || !this.testRuns.length) {
       this.displayedNodes = [];
       return;
     }
+    this._buildActiveFeatureCatalog();
+
     // Prefix: includes trailing slash, whether or not the path has one.
     const prefix = this.path && this.path.endsWith('/') ? this.path : `${this.path}/`;
+    const coreIndices = this._getCoreEngineIndices();
+    const nCols = this.testRuns.length;
+
+    const addBucketScore = (buckets, bId, rs, sc) => {
+      let b = buckets.get(bId);
+      if (!b) {
+        b = {
+          count: 0,
+          passes: new Float64Array(nCols),
+          bsf: new Float64Array(nCols),
+        };
+        buckets.set(bId, b);
+      }
+      b.count += 1;
+      for (let i = 0; i < rs.length && i < nCols; i++) {
+        b.passes[i] += sc.s[i] || 0;
+        b.bsf[i] += sc.bsf[i] || 0;
+      }
+    };
+
     const collapsePathOnto = (testPath, nodes) => {
       const suffix = testPath.substring(prefix.length);
       const slashIdx = suffix.split('?')[0].indexOf('/');
@@ -823,20 +1304,39 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       // Either add new node to acc, or add passes, total to an
       // existing node.
       if (!(name in nodes)) {
-        nodes[name] = {
+        const nodeObj = {
           path: `${prefix}${name}`,
           isDir,
-          results: this.testRuns.map(() => ({
-            passes: 0,
-            total: 0,
-          })),
+          results: this.testRuns.map(() => {
+            const resObj = {
+              passes: 0,
+              total: 0,
+              subtest_passes: 0,
+              subtest_total: 0,
+              test_view_passes: 0,
+              test_view_total: 0,
+            };
+            Object.defineProperties(resObj, {
+              inGraphPasses: { value: 0, writable: true, configurable: true },
+              inGraphTotal: { value: 0, writable: true, configurable: true },
+              inGraphBsf: { value: 0, writable: true, configurable: true },
+            });
+            return resObj;
+          }),
         };
+        Object.defineProperties(nodeObj, {
+          totalTests: { value: 0, writable: true, configurable: true },
+          inGraphTests: { value: 0, writable: true, configurable: true },
+          filterStatus: { value: 'included', writable: true, configurable: true },
+          _buckets: { value: new Map(), writable: true, configurable: true },
+        });
+        nodes[name] = nodeObj;
       }
       return name;
     };
 
     const aggregateTestTotals = this.aggregateTestTotals;
-    const diffRun = this.diffRun
+    const diffRun = this.diffRun;
 
     const resultsByPath = this.searchResults
       // Filter out files not in this directory.
@@ -869,12 +1369,29 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
         // Keep track of overall total.
         if (!acc.totals) {
-          acc.totals = this.testRuns.map(() => {
-            return { passes: 0, total: 0, subtest_passes: 0, subtest_total: 0, test_view_passes: 0, test_view_total: 0 };
-          });
+          acc.totals = this.testRuns.map(() => ({
+            passes: 0,
+            total: 0,
+            subtest_passes: 0,
+            subtest_total: 0,
+            test_view_passes: 0,
+            test_view_total: 0,
+            inGraphPasses: 0,
+            inGraphTotal: 0,
+            inGraphBsf: 0,
+          }));
         }
         // Accumulate the sums.
         aggregateTestTotals(acc, row, r.legacy_status, diffRun);
+
+        // Pre-bucket per-row scores by (wfMask, hybMask) so toggle changes run in <0.1ms.
+        if (!r.test.startsWith('/third_party/')) {
+          const sc = this._scoreSingleTestRecord(r, coreIndices);
+          const bId = r._bucketId !== undefined ? r._bucketId : 0x8888;
+          row.totalTests += 1;
+          addBucketScore(row._buckets, bId, rs, sc);
+          addBucketScore(acc.totalsBuckets, bId, rs, sc);
+        }
 
         if (previousTestPath) {
           const previous = this.searchResults.find(r => r.test === previousTestPath);
@@ -905,18 +1422,32 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
           }
         }
         return acc;
-      }, { rows: Object.create(null), totals: undefined });
+      }, { rows: Object.create(null), totals: undefined, totalsBuckets: new Map() });
+
+    const allRows = Object.values(resultsByPath.rows);
+    this._totalsBuckets = resultsByPath.totalsBuckets;
+    this._cachedRowTrs = null;
+    this._recomputeRowGraphTotals(allRows, resultsByPath.totals, resultsByPath.totalsBuckets);
+    const activeMode = this.graphMode || 'raw-pass-3of3';
+    this._lastAppliedScope = this.graphScope || 'web-features';
+    this._lastAppliedTier = this.graphTier || 'ge2';
+    this._lastAppliedIsBsf = activeMode === 'bsf-passrate' || activeMode === 'bsf-feature-counts' || activeMode === 'raw-bsf';
 
     // Take the calculated totals to be displayed at bottom of results page.
     this.displayedTotals = resultsByPath.totals;
 
-    this.displayedNodes = Object.values(resultsByPath.rows)
+    this.displayedNodes = allRows
       .filter(row => {
         if (!this.onlyShowDifferences) {
           return true;
         }
         return row.diff;
       });
+  }
+
+  computeRowStatusClass(node) {
+    if (!node || !node.filterStatus) return '';
+    return `row-status-${node.filterStatus}`;
   }
 
   computeDifferences(before, after) {
@@ -975,49 +1506,28 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return ((totalTests - passedTests) > 0 || failStatus) && this.isTriageMode;
   }
 
-  testResultClass(node, index, testRun, prop) {
-    // Guard against incomplete data.
+  testResultClass(node, index, testRun, prop, mode) {
     if (!node || !testRun) {
       return 'none';
     }
-
     const result = node.results[index];
     const isDiff = this.isDiff(testRun);
     if (isDiff) {
-      if (!node.diff) {
-        return 'none';
-      }
-      // Diff case: 'delta [positive|negative|<nothing>]' based on delta
-      // value;
+      if (!node.diff) return 'none';
       const delta = this.getDiffDelta(node, prop);
-      if (delta === 0) {
-        return 'delta';
-      }
-
+      if (delta === 0) return 'delta';
       return `delta ${delta > 0 ? 'positive' : 'negative'}`;
-    } else {
-      // Change prop by view.
-      let prefix = '';
-      if (this.isDefaultView()) {
-        prefix = 'subtest_'
-      } else if (this.isTestView()) {
-        prefix = 'test_view_';
-      }
-      // Non-diff case: result=undefined -> 'none'; path='/' -> 'top';
-      // result.passes=0 && result.total=0 -> 'top';
-      // otherwise -> 'passes-[colouring-by-percent]'.
-      if (typeof result === 'undefined' && prop === 'total') {
-        return 'none';
-      }
-      // Percent view (interop-202*) will allow the home results to be colorized.
-      if (this.path === '/' && !this.colorHomepage && !this.isInteropView()) {
-        return 'top';
-      }
-      if (result[`${prefix}passes`] === 0 && result[`${prefix}total`] === 0) {
-        return 'top';
-      }
-      return this.passRateClass(result[`${prefix}passes`], result[`${prefix}total`]);
     }
+    if (!result) return 'none';
+    if (result.inGraphTotal === 0) {
+      return 'cell-excluded-bg';
+    }
+    const activeMode = mode || this.graphMode || 'raw-pass-3of3';
+    if (activeMode === 'bsf-passrate' || activeMode === 'bsf-feature-counts' || activeMode === 'raw-bsf') {
+      const nonBsf = Math.max(0, result.inGraphTotal - result.inGraphBsf);
+      return this.passRateClass(nonBsf, result.inGraphTotal);
+    }
+    return this.passRateClass(result.inGraphPasses, result.inGraphTotal);
   }
 
   shouldDisplayToggle(canViewInteropScores, pathIsATestFile) {
@@ -1086,10 +1596,15 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     return this.view === VIEW_ENUM.Test;
   }
 
-  getTotalsClass(totalInfo) {
+  getTotalsClass(totalInfo, view, mode) {
     if ((this.path === '/' && !this.colorHomepage && this.isDefaultView())
-        || totalInfo.subtest_total === 0) {
+        || !totalInfo || !totalInfo.subtest_total || !Number.isFinite(totalInfo.subtest_passes)) {
       return 'top';
+    }
+    const activeMode = mode || this.graphMode || 'raw-pass-3of3';
+    if ((activeMode === 'bsf-passrate' || activeMode === 'bsf-feature-counts' || activeMode === 'raw-bsf') && totalInfo.inGraphTotal > 0) {
+      const nonBsf = Math.max(0, totalInfo.inGraphTotal - totalInfo.inGraphBsf);
+      return this.passRateClass(nonBsf, totalInfo.inGraphTotal);
     }
     if (this.isTestView()) {
       return this.passRateClass(totalInfo.test_view_passes, totalInfo.test_view_total);
