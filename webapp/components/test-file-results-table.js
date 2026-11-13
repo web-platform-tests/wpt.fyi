@@ -6,8 +6,6 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/iron-icon/iron-icon.js';
-import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -18,6 +16,7 @@ import { Pluralizer } from './pluralize.js';
 import { WPTFlags } from './wpt-flags.js';
 import { AmendMetadataMixin } from './wpt-amend-metadata.js';
 import { productFromRun } from './product-info.js';
+import './wpt-icon.js';
 
 class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
@@ -148,12 +147,12 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
             <code>[[ subtestMessage(result, verbose) ]]</code>
 
             <template is="dom-if" if="[[shouldDisplayMetadata(index, row.name, metadataMap, result.status, isTriageMode)]]">
-              <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank"><iron-icon class="bug" icon="bug-report"></iron-icon></a>
+              <a href="[[ getMetadataUrlForSubtest(index, row.name, metadataMap) ]]" target="_blank"><wpt-icon class="bug" icon="bug-report"></wpt-icon></a>
             </template>
 
             <template is="dom-if" if="[[result.screenshots]]">
               <a class="ref-button" href="[[ computeAnalyzerURL(result.screenshots) ]]">
-                <iron-icon icon="image:compare"></iron-icon>
+                <wpt-icon icon="image:compare"></wpt-icon>
                 COMPARE
               </a>
             </template>

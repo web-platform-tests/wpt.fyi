@@ -33,6 +33,15 @@ suite('TestRunsQueryBuilder', () => {
     assert.isTrue(queryBuilder instanceof window.customElements.get('test-runs-query-builder'));
   });
 
+  test('shows icons on its buttons', async() => {
+    await queryBuilder.updateComplete;
+    const icons = ['#add-button', '#clear-button', '#submit-button'].map(id => {
+      const icon = queryBuilder.shadowRoot.querySelector(`${id} wpt-icon`);
+      return icon && icon.getAttribute('icon');
+    });
+    assert.deepEqual(icons, ['add', 'delete', 'done']);
+  });
+
   test('add item', () => {
     queryBuilder.addProduct();
     assert.equal(queryBuilder.products.length, 3);
