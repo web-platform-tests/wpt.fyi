@@ -13,8 +13,6 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker-light.js';
-import '../node_modules/@vaadin/vaadin-date-picker/vaadin-date-picker.js';
 import './info-banner.js';
 import './product-builder.js';
 import { AllBrowserNames, SemanticLabels} from './product-info.js';
@@ -46,7 +44,10 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
         max-width: 180px;
         display: inline-block;
       }
-      vaadin-date-picker-light + vaadin-date-picker-light {
+      paper-input[type="date"] {
+        width: 200px;
+      }
+      paper-input[type="date"] + paper-input[type="date"] {
         margin-left: 16px;
       }
     </style>
@@ -75,12 +76,8 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
     </div>
     <template is="dom-if" if="[[showTimeRange]]">
       <paper-item>
-        <vaadin-date-picker-light attr-for-value="value" value="[[fromISO]]">
-          <paper-input label="From" value="{{fromISO}}"></paper-input>
-        </vaadin-date-picker-light>
-        <vaadin-date-picker-light attr-for-value="value" value="[[toISO]]">
-          <paper-input label="To" value="{{toISO}}"></paper-input>
-        </vaadin-date-picker-light>
+        <paper-input type="date" label="From" value="{{fromISO}}"></paper-input>
+        <paper-input type="date" label="To" value="{{toISO}}"></paper-input>
       </paper-item>
     </template>
     <paper-item>
@@ -308,6 +305,11 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   }
 
   fromISOChanged(from) {
+    // An emptied field drops the date from the query.
+    if (!from) {
+      this.from = undefined;
+      return;
+    }
     from = new Date(from);
     if (isFinite(from)) {
       this.from = from;
@@ -315,6 +317,10 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
   }
 
   toISOChanged(to) {
+    if (!to) {
+      this.to = undefined;
+      return;
+    }
     to = new Date(to);
     if (isFinite(to)) {
       this.to = to;
