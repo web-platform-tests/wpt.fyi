@@ -9,7 +9,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/iron-icon/iron-icon.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import './wpt-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
 import { WPTColors } from './wpt-colors.js';
@@ -116,10 +116,10 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
   }
 </style>
 
-<paper-toast id="selected-toast" duration="0">
+<wpt-toast id="selected-toast" duration="0">
   <span>[[triageToastMsg(selectedMetadata.length)]]</span>
   <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
-</paper-toast>
+</wpt-toast>
 
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">
   <thead>

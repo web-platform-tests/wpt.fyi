@@ -7,7 +7,7 @@
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-dialog-scrollable/paper-dialog-scrollable.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
-import '../node_modules/@polymer/paper-toast/paper-toast.js';
+import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
@@ -201,7 +201,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           <paper-button disabled="[[triageSubmitDisabled]]" onclick="[[triage]]" dialog-confirm>Triage</paper-button>
         </div>
       </paper-dialog>
-      <paper-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></paper-toast>
+      <wpt-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></wpt-toast>
 `;
   }
 
