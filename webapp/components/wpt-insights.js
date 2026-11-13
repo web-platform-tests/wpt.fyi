@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-card/paper-card.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
@@ -12,6 +11,7 @@ import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './channel-picker.js';
 import './info-banner.js';
+import './wpt-card.js';
 import { AllProducts, DefaultProductSpecs, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
 
@@ -40,7 +40,7 @@ class Insights extends ProductInfo(PolymerElement) {
 window.customElements.define(Insights.is, Insights);
 
 const cardStyle = html`
-  paper-card {
+  wpt-card {
     display: block;
     margin-top: 1em;
     width: 100%;
@@ -60,7 +60,7 @@ class Flakes extends ProductInfo(PolymerElement) {
     <style>
       ${cardStyle}
     </style>
-    <paper-card>
+    <wpt-card>
       <div class="card-content">
         <h3>Flakes</h3>
         <browser-picker browser="{{browser}}" products="[[allProducts]]"></browser-picker>
@@ -71,7 +71,7 @@ class Flakes extends ProductInfo(PolymerElement) {
           Tests that have both passing and non-passing results in the last 10 [[browserDisplayName]] runs
         </p>
       </div>
-    </paper-card>
+    </wpt-card>
 `;
   }
 
@@ -122,7 +122,7 @@ class Anomalies extends ProductInfo(PolymerElement) {
     <style>
       ${cardStyle}
     </style>
-    <paper-card>
+    <wpt-card>
       <div class="card-content">
         <h3>Anomalies</h3>
         <div>
@@ -142,7 +142,7 @@ class Anomalies extends ProductInfo(PolymerElement) {
           Tests that are failing in [[browserDisplayName]], but passing in the other browsers ([[othersDisplayNames]])
         </p>
       </div>
-    </paper-card>
+    </wpt-card>
 `;
   }
 
@@ -231,7 +231,7 @@ class ReleaseRegressions extends ProductInfo(PolymerElement) {
         margin-left: 32px;
       }
     </style>
-    <paper-card>
+    <wpt-card>
       <div class="card-content">
         <h3>Release Regressions</h3>
         <div class="wrapper">
@@ -249,7 +249,7 @@ class ReleaseRegressions extends ProductInfo(PolymerElement) {
           but not passing in the latest [[channel]] run.
         </p>
       </div>
-    </paper-card>
+    </wpt-card>
 `;
   }
 
