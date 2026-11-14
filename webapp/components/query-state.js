@@ -47,7 +47,7 @@ function paramsToQuery(params) {
 /**
  * The params of a URL query string, as an object: a repeated param becomes an
  * array of its values, and a single one a string. The results pages normalize
- * them further with normalizeTestRunsParams and normalizeTestRunsUIParams.
+ * them further with normalizeRunsParams and normalizeRunsUIParams.
  */
 function queryToParams(query) {
   const params = new URLSearchParams(query);
@@ -77,7 +77,7 @@ function showsDefaultView(view, q) {
  * - label, product and sha are always arrays;
  * - the aligned and master flags are true when present.
  */
-function normalizeTestRunsParams(params) {
+function normalizeRunsParams(params) {
   // The 'view' query string param should only be used on 'interop-202*'
   // results. Removing this allows special views (interop) to be
   // viewed on any results page.
@@ -103,10 +103,10 @@ function normalizeTestRunsParams(params) {
 
 /**
  * Normalizes the extra params of the results pages' query (on top of
- * normalizeTestRunsParams), in place, and returns them: run_id is always an
+ * normalizeRunsParams), in place, and returns them: run_id is always an
  * array, and the diff flag is true when present.
  */
-function normalizeTestRunsUIParams(params) {
+function normalizeRunsUIParams(params) {
   for (const repeatable of ['run_id']) {
     if (repeatable in params
         && !(params[repeatable] instanceof Array)) {
@@ -142,7 +142,7 @@ function isDefaultProductSpecs(productSpecs) {
  *   label is only added at this point, after max-count, offset, from and to;
  * - aligned, only for the latest revision, and view.
  */
-function testRunsStateToParams({ shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view }) {
+function runsStateToParams({ shas, aligned, master, labels, productSpecs, to, from, maxCount, offset, view }) {
   const params = {};
   if (!isLatestSha(shas)) {
     params.sha = shas;
@@ -204,12 +204,12 @@ function testRunsStateToParams({ shas, aligned, master, labels, productSpecs, to
 }
 
 /**
- * testRunsStateToParams, followed by the results pages' own params: diff with
+ * runsStateToParams, followed by the results pages' own params: diff with
  * the state's diffFilter as filter, q for the search, pr, and run_id (a copy
  * of the run IDs).
  */
-function testRunsUIStateToParams(state) {
-  const params = testRunsStateToParams(state);
+function runsUIStateToParams(state) {
+  const params = runsStateToParams(state);
   if (state.diff) {
     params.diff = true;
     if (state.diffFilter) {
@@ -232,7 +232,7 @@ function testRunsUIStateToParams(state) {
  * The state for no query: the latest runs of the default products, with no
  * labels or other options.
  */
-function emptyTestRunsState() {
+function emptyRunsState() {
   return {
     productSpecs: Array.from(DefaultProductSpecs),
     labels: [],
@@ -264,7 +264,7 @@ function parseDate(value) {
 
 /**
  * The state (the test runs properties) for normalized query params, the
- * reverse of testRunsStateToParams, starting from emptyTestRunsState():
+ * reverse of runsStateToParams, starting from emptyRunsState():
  * - shas is the params' own sha array, unless it is the latest;
  * - productSpecs is the params' own product array, unless a channel label
  *   applies to every product, which then gets that channel instead of its own;
@@ -273,8 +273,8 @@ function parseDate(value) {
  * - invalid from and to dates are left out.
  * The keys come in the order in which they should be set, as one batch.
  */
-function testRunsParamsToState(params) {
-  const batchUpdate = emptyTestRunsState();
+function runsParamsToState(params) {
+  const batchUpdate = emptyRunsState();
   if (!isLatestSha(params.sha)) {
     batchUpdate.shas = params.sha;
   }
@@ -308,7 +308,7 @@ function testRunsParamsToState(params) {
     batchUpdate.offset = params['offset'];
   }
   // An invalid date, such as from=garbage or an empty to=, is left out as if
-  // it weren't in the query. Keeping it would make testRunsStateToParams throw.
+  // it weren't in the query. Keeping it would make runsStateToParams throw.
   if ('from' in params) {
     batchUpdate.from = parseDate(params['from']);
   }
@@ -332,12 +332,12 @@ function testRunsParamsToState(params) {
 }
 
 /**
- * testRunsParamsToState, followed by the results pages' own state: pr,
+ * runsParamsToState, followed by the results pages' own state: pr,
  * search, diff with its filter (ADC by default), and a copy of the run IDs.
  */
-function testRunsUIParamsToState(params) {
+function runsUIParamsToState(params) {
   params = params || {};
-  const batchUpdate = testRunsParamsToState(params);
+  const batchUpdate = runsParamsToState(params);
   batchUpdate.pr = params.pr;
   batchUpdate.search = params.q;
   batchUpdate.diff = params.diff || false;
@@ -398,18 +398,18 @@ function isViewOnlyQuery(query) {
 }
 
 export {
-  emptyTestRunsState,
+  emptyRunsState,
   encodeParams,
   isDefaultProductSpecs,
   isViewOnlyQuery,
-  normalizeTestRunsParams,
-  normalizeTestRunsUIParams,
+  normalizeRunsParams,
+  normalizeRunsUIParams,
   paramsToQuery,
   queryToParams,
   resultsRangeMessage,
+  runsParamsToState,
+  runsStateToParams,
+  runsUIParamsToState,
+  runsUIStateToParams,
   showsDefaultView,
-  testRunsParamsToState,
-  testRunsStateToParams,
-  testRunsUIParamsToState,
-  testRunsUIStateToParams,
 };
