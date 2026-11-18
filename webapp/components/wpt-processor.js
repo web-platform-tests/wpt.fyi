@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
-import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@vaadin/vaadin-button/vaadin-button.js';
 import '../node_modules/@vaadin/vaadin-context-menu/vaadin-context-menu.js';
@@ -14,6 +13,7 @@ import '../node_modules/@vaadin/vaadin-grid/vaadin-grid.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
+import './wpt-tabs.js';
 
 class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
   static get template() {
@@ -37,22 +37,18 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
         text-align: left;
         color: #ccc;
       }
-      paper-tabs {
-        --paper-tabs-selection-bar-color: var(--wpt-blue-500);
+      wpt-tabs {
         margin-bottom: 20px;
-      }
-      paper-tab {
-        --paper-tab-ink: var(--wpt-blue-300);
       }
       vaadin-grid {
         flex-grow: 1;
       }
     </style>
 
-    <paper-tabs selected="{{selectedTab}}">
-      <paper-tab>Pending runs</paper-tab>
-      <paper-tab>Invalid runs</paper-tab>
-    </paper-tabs>
+    <wpt-tabs selected="{{selectedTab}}">
+      <wpt-tab>Pending runs</wpt-tab>
+      <wpt-tab>Invalid runs</wpt-tab>
+    </wpt-tabs>
 
     <template is="dom-if" if="[[testRuns.length]]" on-dom-change="refreshContextMenu">
       <x-data-provider data-provider="[[testRuns]]"></x-data-provider>

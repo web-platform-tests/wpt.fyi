@@ -167,7 +167,7 @@ function sameList(actual, expected) {
 }
 
 function tabs(el) {
-  return Array.from(el.shadowRoot.querySelectorAll('paper-tab'));
+  return Array.from(el.shadowRoot.querySelectorAll('wpt-tab'));
 }
 
 // Waits until the grid shows the given number of rows.
@@ -242,8 +242,8 @@ suite('<wpt-processor>', () => {
       const el = await fixture(html`<wpt-processor></wpt-processor>`);
       const tabEls = tabs(el);
       assert.deepEqual(tabEls.map(t => normalize(t.textContent)), ['Pending runs', 'Invalid runs']);
-      assert.isTrue(tabEls[0].classList.contains('iron-selected'));
-      assert.isFalse(tabEls[1].classList.contains('iron-selected'));
+      assert.isTrue(tabEls[0].selected);
+      assert.isFalse(tabEls[1].selected);
     });
   });
 
