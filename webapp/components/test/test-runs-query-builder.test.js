@@ -210,4 +210,37 @@ suite('TestRunsQueryBuilder', () => {
       expect(queryBuilder.query).to.not.contain('master');
     });
   });
+
+  suite('look', () => {
+    // Each option is a row with paper-item's look, but not a focusable list
+    // option: the control in it is what takes focus.
+    function assertRowLook(row, name) {
+      const style = getComputedStyle(row);
+      assert.equal(style.display, 'flex', name);
+      assert.equal(style.alignItems, 'center', name);
+      assert.equal(style.minHeight, '48px', name);
+      assert.equal(style.paddingLeft, '16px', name);
+      assert.equal(style.paddingRight, '16px', name);
+      assert.equal(style.fontSize, '16px', name);
+      assert.equal(style.lineHeight, '24px', name);
+      assert.include(style.fontFamily, 'Roboto', name);
+      assert.isFalse(row.hasAttribute('tabindex'), name);
+      assert.isFalse(row.hasAttribute('role'), name);
+    }
+
+    test('shows the options in 48px Roboto rows', async() => {
+      const el = fixtureSync(html`<test-runs-query-builder show-time-range></test-runs-query-builder>`);
+      await aTimeout(0);
+      const controls = [
+        el.shadowRoot.querySelector('vaadin-date-picker-light'),
+        el.shadowRoot.querySelector('#aligned-checkbox'),
+        el.shadowRoot.querySelector('#master-checkbox'),
+        el.shadowRoot.querySelector('[label="Labels"]'),
+        el.shadowRoot.querySelector('input[list="shas-datalist"]').closest('paper-input-container'),
+      ];
+      for (const control of controls) {
+        assertRowLook(control.parentElement, control.localName);
+      }
+    });
+  });
 });
