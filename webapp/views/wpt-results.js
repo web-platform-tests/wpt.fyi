@@ -23,7 +23,6 @@ import '../node_modules/@polymer/iron-icons/editor-icons.js';
 import '../node_modules/@polymer/iron-icons/image-icons.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';

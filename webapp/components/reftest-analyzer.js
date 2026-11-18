@@ -10,7 +10,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
 import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
-import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
+import './wpt-spinner.js';
 import '../node_modules/@polymer/paper-tooltip/paper-tooltip.js';
 import { LoadingState } from './loading-state.js';
 
@@ -103,7 +103,7 @@ class ReftestAnalyzer extends LoadingState(PolymerElement) {
             Apply a semi-transparent mask over the selected image, and highlight
             the areas where two images differ with a solid 1px red border.
           </paper-tooltip>
-          <paper-spinner-lite active="[[isLoading]]" class="blue"></paper-spinner-lite>
+          <wpt-spinner active="[[isLoading]]" class="blue"></wpt-spinner>
         </div>
 
 
