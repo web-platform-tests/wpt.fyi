@@ -501,11 +501,50 @@ suite('<wpt-app> page', () => {
       return graphBanner(el).textContent.replace(/\s+/g, ' ').trim();
     }
 
-    test('shows the Browser Specific Failures graph at the root', async() => {
+    test('shows the interop graph at the root and supports URL query params', async() => {
       const el = await createApp('/results/', HOME);
       await waitUntil(() => graphBanner(el), 'expected the graph banner');
-      assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to collapse)');
-      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-bsf')), 'expected the BSF graph');
+      assert.equal(bannerText(el), 'Proposed: Quorum — Fail % (click arrow to collapse)');
+      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-interop-graph')), 'expected the interop graph');
+    });
+
+    test('restores and updates graph state via URL query params without reloading runs', async() => {
+      const el = await createApp(
+        '/results/?label=experimental&label=master&aligned&tier=eq3&subdirs=0&tentative=1&metric=bsf-sum&range=3y&yscale=log&channel=stable',
+        HOME
+      );
+      await waitUntil(() => graphBanner(el), 'expected the graph banner');
+      await waitUntil(() => runsRequests().length === 1, 'expected initial runs load');
+      assert.equal(el.graphParadigm, 'proposed-feature');
+      assert.equal(el.proposedTierLevel, '3');
+      assert.isFalse(el.proposedCumulative);
+      assert.equal(el.proposedScope, 'web-features');
+      assert.isTrue(el.proposedTentative);
+      assert.equal(el.proposedMode, 'bsf-feature-counts');
+      assert.equal(el.graphTimeRange, '3y');
+      assert.equal(el.graphYScale, 'log');
+      assert.isFalse(el.graphIsExperimental);
+      assert.equal(el.graphTier, 'eq3');
+      assert.equal(el.graphScope, 'web-features-tentative');
+      assert.equal(bannerText(el), 'Proposed: Baseline — BSF Σ (click arrow to collapse)');
+      // wpt-results only receives the test-run query (without graph params).
+      assert.equal(results(el).query, 'label=experimental&label=master&aligned');
+      assert.deepEqual(runsRequests(), ['?label=experimental&label=master&aligned']);
+
+      // Toggling a graph setting updates the URL query string without reloading /api/runs.
+      el.proposedCumulative = true;
+      el.proposedTentative = false;
+      await waitUntil(
+        () => currentUrl().includes('tier=ge3') && !currentUrl().includes('tentative=1'),
+        'expected URL query params to update'
+      );
+      assert.equal(runsRequests().length, 1);
+
+      // Navigating via popstate to Old BSF updates the paradigm and renders <wpt-bsf>.
+      browserGoesTo('/results/?label=experimental&label=master&aligned&graph=old-bsf');
+      await waitUntil(() => el.graphParadigm === 'old-bsf', 'expected old-bsf paradigm');
+      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-bsf')), 'expected <wpt-bsf>');
+      assert.equal(runsRequests().length, 1);
     });
 
     test('collapses the graph and remembers it', async() => {
@@ -514,23 +553,23 @@ suite('<wpt-app> page', () => {
       const arrow = graphBanner(el).querySelector('paper-icon-button');
       assert.equal(arrow.src, '/static/expand_less.svg');
       arrow.click();
-      assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to expand)');
+      assert.equal(bannerText(el), 'Proposed: Quorum — Fail % (click arrow to expand)');
       assert.equal(arrow.src, '/static/expand_more.svg');
       assert.equal(localStorage.getItem('features.isBSFCollapsed'), 'true');
       await nextFrame();
-      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-bsf')));
+      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-interop-graph')));
 
       arrow.click();
       assert.equal(localStorage.getItem('features.isBSFCollapsed'), 'false');
-      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-bsf')), 'expected the graph');
+      await waitUntil(() => isShown(el.shadowRoot.querySelector('wpt-interop-graph')), 'expected the graph');
     });
 
     test('opens collapsed if it was collapsed before', async() => {
       localStorage.setItem('features.isBSFCollapsed', 'true');
       const el = await createApp('/results/', HOME);
       await waitUntil(() => graphBanner(el), 'expected the graph banner');
-      assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to expand)');
-      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-bsf')));
+      assert.equal(bannerText(el), 'Proposed: Quorum — Fail % (click arrow to expand)');
+      assert.isFalse(isShown(el.shadowRoot.querySelector('wpt-interop-graph')));
     });
 
     for (const [name, url, attributes] of [

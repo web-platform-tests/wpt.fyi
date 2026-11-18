@@ -106,6 +106,13 @@ func RegisterRoutes() {
 		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiFeatureInteropHandler)),
 	)
 
+	// API endpoint for fetching the cached web-features manifest and maturity tiers.
+	shared.AddRoute(
+		"/api/web-features-manifest",
+		"api-web-features-manifest",
+		shared.WrapApplicationJSON(shared.WrapPermissiveCORS(apiWebFeaturesManifestHandler)),
+	)
+
 	// API endpoint for fetching historical data of a specific test for each of the four major browsers.
 	shared.AddRoute("/api/history", "api-history",
 		shared.WrapApplicationJSON(

@@ -60,10 +60,14 @@ handlers:
 - url: /components
   static_dir: webapp/components
   expiration: 10m
+  http_headers:
+    Cache-Control: no-cache
   secure: always
 - url: /views
   static_dir: webapp/views
   expiration: 10m
+  http_headers:
+    Cache-Control: no-cache
   secure: always
 
 

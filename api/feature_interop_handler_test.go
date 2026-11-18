@@ -92,3 +92,28 @@ func TestFeatureInteropHandler_FetchError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Contains(t, w.Body.String(), "gh-pages is down")
 }
+
+func TestFeatureInteropHandler_BundledSeries(t *testing.T) {
+	r := httptest.NewRequest("GET", "/api/interop-features?experimental=true&mode=raw-pass-3of3&scope=hybrid-dirs&tier=ge2", nil)
+	w := httptest.NewRecorder()
+
+	FeatureInteropHandler{}.ServeHTTP(w, r)
+
+	var data shared.FeatureInteropData
+	assert.Equal(t, http.StatusOK, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &data))
+	assert.NotEmpty(t, data.Fields)
+	assert.NotEmpty(t, data.Data)
+	assert.Contains(t, data.Fields, "interop")
+	assert.Contains(t, data.Fields, "features")
+}
+
+func TestWebFeaturesManifestHandler(t *testing.T) {
+	r := httptest.NewRequest("GET", "/api/web-features-manifest", nil)
+	w := httptest.NewRecorder()
+
+	apiWebFeaturesManifestHandler(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "validWfFeatures")
+}

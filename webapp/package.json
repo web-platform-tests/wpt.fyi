@@ -43,6 +43,8 @@
     "test": "web-test-runner",
     "lint": "eslint 'components/**/*.js'",
     "lint-fix": "eslint --fix 'components/**/*.js'",
+    "interop-build-data": "node scripts/generate-interop-data.js",
+    "interop-validate-data": "node scripts/generate-interop-data.js --validate-only",
     "postinstall": "cpy 'node_modules/@browser-logos/{chrome,chrome-beta,chrome-canary,chrome-dev,chromium,deno,edge,edge-beta,edge-canary,edge-dev,firefox,firefox-beta,firefox-nightly,geckoview,node.js,safari,servo,uc}/*_64x64.png' static && cpy 'node_modules/@browser-logos/firefox-developer-edition/*_64x64.png' static --rename=firefox-dev_64x64.png && cpy 'node_modules/@browser-logos/safari/*_64x64.png' static --rename=safari-beta_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png'  static --rename=safari-dev_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png' static --rename=safari-preview_64x64.png && cpy 'node_modules/@browser-logos/webkit-nightly/*_64x64.png' static --rename=wktr_64x64.png"
   },
   "dependencies": {
