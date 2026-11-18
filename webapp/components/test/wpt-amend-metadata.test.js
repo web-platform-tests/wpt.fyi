@@ -210,7 +210,7 @@ suite('wpt-amend-metadata', () => {
         { product: 'firefox', test: 'testA.html' },
       ];
       appFixture.populateDisplayData();
-      const inputs = () => [...appFixture.shadowRoot.querySelectorAll('paper-input[label="Bug URL"]')];
+      const inputs = () => [...appFixture.shadowRoot.querySelectorAll('wpt-input[label="Bug URL"]')];
       await waitUntil(() => inputs().length === 2, 'expected an input per product');
       const input = inputs()[1];
       const type = value => {
@@ -223,8 +223,13 @@ suite('wpt-amend-metadata', () => {
       assert.notOk(inputs()[0].invalid);
       assert.isTrue(appFixture.triageSubmitDisabled);
 
+      const error = input.shadowRoot.querySelector('[aria-live="assertive"]');
+      assert.equal(error.textContent.trim(), 'Must be a valid URL (e.g. https://bug.com/123)');
+      assert.equal(getComputedStyle(error).visibility, 'visible');
+
       type('https://bug.com/123');
       await waitUntil(() => !input.invalid, 'expected the input to be valid');
+      await waitUntil(() => getComputedStyle(error).visibility === 'hidden', 'expected the error to be hidden');
       assert.equal(input.value, 'https://bug.com/123');
       assert.isTrue(inputs()[1] === input, 'the same input element is kept');
       assert.deepEqual(appFixture.displayedMetadata.map(node => node.url), ['', 'https://bug.com/123']);
