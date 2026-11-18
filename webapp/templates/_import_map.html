@@ -1,8 +1,14 @@
 {{- /* no data */ -}}
 {{- /*
-  Resolves the bare module specifiers that Lit uses. The /node_modules/
-  handler only rewrites unminified imports of scoped packages, so it leaves
-  Lit's published (minified) modules unchanged.
+  Resolves the bare module specifiers that Lit and google-chart use. The
+  /node_modules/ handler only rewrites unminified imports of scoped packages,
+  so it leaves Lit's published (minified) modules, and google-chart's imports
+  of lit and safevalues (which are not scoped), unchanged.
+
+  safevalues is mapped to its ES module build. package.json overrides the
+  version that google-chart asks for (0.5.x), whose ES modules import each
+  other without the .js extension, which the /node_modules/ handler can't
+  serve.
 
   Lit's own lit-element and lit-html are scoped to node_modules/lit/, because
   that is where npm installs them: the top-level lit-element and lit-html are
@@ -14,7 +20,9 @@
 {
   "imports": {
     "lit": "/node_modules/lit/index.js",
-    "lit/": "/node_modules/lit/"
+    "lit/": "/node_modules/lit/",
+    "safevalues": "/node_modules/safevalues/dist/mjs/index.js",
+    "safevalues/dom": "/node_modules/safevalues/dist/mjs/dom/index.js"
   },
   "scopes": {
     "/node_modules/lit/": {

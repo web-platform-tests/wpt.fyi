@@ -46,7 +46,7 @@
     "postinstall": "cpy 'node_modules/@browser-logos/{chrome,chrome-beta,chrome-canary,chrome-dev,chromium,deno,edge,edge-beta,edge-canary,edge-dev,firefox,firefox-beta,firefox-nightly,geckoview,node.js,safari,servo,uc}/*_64x64.png' static && cpy 'node_modules/@browser-logos/firefox-developer-edition/*_64x64.png' static --rename=firefox-dev_64x64.png && cpy 'node_modules/@browser-logos/safari/*_64x64.png' static --rename=safari-beta_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png'  static --rename=safari-dev_64x64.png && cpy 'node_modules/@browser-logos/safari-technology-preview/*_64x64.png' static --rename=safari-preview_64x64.png && cpy 'node_modules/@browser-logos/webkit-nightly/*_64x64.png' static --rename=wktr_64x64.png"
   },
   "dependencies": {
-    "@google-web-components/google-chart": "3.1.1",
+    "@google-web-components/google-chart": "5.1.0",
     "@polymer/app-route": "3.0.2",
     "@polymer/iron-collapse": "3.0.1",
     "@polymer/iron-form": "3.0.1",
@@ -80,5 +80,10 @@
     "countup.js": "2.10.1",
     "lit": "3.3.3",
     "pluralize": "8.0.0"
+  },
+  "overrides": {
+    "@google-web-components/google-chart": {
+      "safevalues": "0.7.0"
+    }
   }
 }
