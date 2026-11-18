@@ -6,7 +6,6 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
-import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
 import '../node_modules/@polymer/paper-button/paper-button.js';
 import '../node_modules/@polymer/paper-toast/paper-toast.js';
 import '../node_modules/@polymer/paper-progress/paper-progress.js';
@@ -23,6 +22,7 @@ import './test-run.js';
 import './test-runs-query-builder.js';
 import { TestRunsUIBase } from './test-runs.js';
 import { WPTFlags } from './wpt-flags.js';
+import './wpt-scroll-threshold.js';
 import { Pluralizer } from './pluralize.js';
 
 class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUIBase)))) {
@@ -222,8 +222,8 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
         </tbody>
       </table>
 
-      <iron-scroll-threshold lower-threshold="0" on-lower-threshold="loadNextPage" id="threshold" scroll-target="document">
-      </iron-scroll-threshold>
+      <wpt-scroll-threshold lower-threshold="0" on-lower-threshold="loadNextPage" id="threshold">
+      </wpt-scroll-threshold>
     </template>
 
     <div class="loading">
@@ -298,7 +298,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
   }
 
   resetScrollThreshold() {
-    const threshold = this.shadowRoot.querySelector('iron-scroll-threshold');
+    const threshold = this.shadowRoot.querySelector('wpt-scroll-threshold');
     threshold && threshold.clearTriggers();
   }
 
