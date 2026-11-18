@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/cloudtasks v1.21.1
 	cloud.google.com/go/datastore v1.28.1
 	cloud.google.com/go/logging v1.21.1
-	cloud.google.com/go/secretmanager v1.23.1
+	cloud.google.com/go/secretmanager v1.24.0
 	cloud.google.com/go/storage v1.70.0
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da
@@ -28,7 +28,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	go.uber.org/mock v0.6.0
 	golang.org/x/oauth2 v0.38.0
-	google.golang.org/api v0.310.0
+	google.golang.org/api v0.311.0
 	google.golang.org/genproto v0.0.0-20261026165753-2ffab32bce7e
 	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e
 	google.golang.org/grpc v1.85.0
