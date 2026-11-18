@@ -49,10 +49,12 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := h.ctx
 	store := shared.NewAppEngineDatastore(ctx, false)
-	query := store.NewQuery("TestRun").Filter("BrowserName =", product.BrowserName)
+	query := store.NewQuery("TestRun")
+	filterBuilder := query.FilterBuilder()
+	query = query.FilterEntity(filterBuilder.PropertyFilter("BrowserName", "=", product.BrowserName))
 	if product.Labels != nil {
 		for label := range product.Labels.Iter() {
-			query = query.Filter("Labels =", label)
+			query = query.FilterEntity(filterBuilder.PropertyFilter("Labels", "=", label))
 		}
 	}
 	distinctQuery := query.Project("BrowserVersion").Distinct()
@@ -61,7 +63,7 @@ func (h VersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		queries = []shared.Query{distinctQuery}
 	} else {
 		queries = []shared.Query{
-			query.Filter("BrowserVersion =", product.BrowserVersion).Limit(1),
+			query.FilterEntity(filterBuilder.PropertyFilter("BrowserVersion", "=", product.BrowserVersion)).Limit(1),
 			shared.VersionPrefix(distinctQuery, "BrowserVersion", product.BrowserVersion, false /*desc*/),
 		}
 	}
