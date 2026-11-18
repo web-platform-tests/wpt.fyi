@@ -8,7 +8,6 @@ import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
-import '../node_modules/@vaadin/vaadin-button/vaadin-button.js';
 import '../node_modules/@vaadin/vaadin-context-menu/vaadin-context-menu.js';
 import '../node_modules/@vaadin/vaadin-grid/vaadin-grid.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -47,6 +46,97 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
       vaadin-grid {
         flex-grow: 1;
       }
+      /* The look of the <vaadin-button theme="icon"> this button replaces,
+         with the values of Vaadin's Lumo theme. */
+      #select-columns {
+        all: unset;
+        display: inline-block;
+        position: relative;
+        box-sizing: border-box;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 9px;
+        margin: 4px 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 16px;
+        font-weight: 500;
+        color: hsl(214, 90%, 52%);
+        background-color: hsla(214, 61%, 25%, 0.05);
+        border-radius: 4px;
+        cursor: default;
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-font-smoothing: antialiased;
+      }
+      #select-columns:focus-visible {
+        box-shadow: 0 0 0 2px hsla(214, 90%, 52%, 0.5);
+      }
+      /* Shades for hover and press. */
+      #select-columns::before,
+      #select-columns::after {
+        content: "";
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: currentColor;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+      #select-columns:hover::before {
+        opacity: 0.05;
+      }
+      @media (pointer: coarse) {
+        #select-columns:not(:active):hover::before {
+          opacity: 0;
+        }
+      }
+      #select-columns::after {
+        transition: opacity 1.4s, transform 0.1s;
+        filter: blur(8px);
+      }
+      #select-columns:active::before {
+        opacity: 0.1;
+        transition-duration: 0s;
+      }
+      #select-columns:active::after {
+        opacity: 0.1;
+        transition-duration: 0s, 0s;
+        transform: scale(0);
+      }
+      #select-columns .button-content {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        min-height: inherit;
+        text-shadow: inherit;
+        user-select: none;
+      }
+      /* Aligns the button on the baseline. */
+      #select-columns .button-content::before {
+        content: "\\2003";
+        display: inline-block;
+        width: 0;
+      }
+      #select-columns .button-label {
+        padding: 6px 0;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #select-columns iron-icon {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+      }
     </style>
 
     <paper-tabs selected="{{selectedTab}}">
@@ -60,9 +150,7 @@ class WPTProcessor extends ProductInfo(LoadingState(PolymerElement)) {
       <div id="before-grid">
         <p>Note: timestamps are displayed in your local timezone.</p>
         <vaadin-context-menu open-on="click">
-          <vaadin-button theme="icon" aria-label="Select columns">
-            <iron-icon icon="icons:menu"></iron-icon>
-          </vaadin-button>
+          <button type="button" id="select-columns" aria-label="Select columns"><span class="button-content"><span class="button-label"><iron-icon icon="icons:menu"></iron-icon></span></span></button>
         </vaadin-context-menu>
       </div>
 
