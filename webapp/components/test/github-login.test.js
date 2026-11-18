@@ -206,6 +206,23 @@ suite('<github-login>', () => {
       assert.isTrue(triageToggle(el).checked);
     });
 
+    test('Space on the triage toggle turns triage mode on, like a click', async() => {
+      const el = await fixture(html`<github-login user="octocat" .isTriageMode=${false}></github-login>`);
+      const listener = sandbox.spy();
+      el.addEventListener('triagemode', listener);
+      const toggle = triageToggle(el);
+      for (const type of ['keydown', 'keyup']) {
+        toggle.dispatchEvent(new KeyboardEvent(type, {
+          key: ' ', code: 'Space', keyCode: 32, bubbles: true, composed: true, cancelable: true,
+        }));
+      }
+      await waitUntil(() => listener.called, 'a triagemode event');
+      assert.isTrue(listener.calledOnce);
+      assert.deepEqual(listener.firstCall.args[0].detail, {val: true});
+      assert.isTrue(el.isTriageMode);
+      assert.isTrue(toggle.checked);
+    });
+
     test('toggling triage mode off fires a triagemode event with false', async() => {
       const el = await fixture(html`<github-login user="octocat" .isTriageMode=${true}></github-login>`);
       const listener = sandbox.spy();
