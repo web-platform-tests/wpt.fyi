@@ -59,6 +59,21 @@ suite('TestRunsBase', () => {
           });
       });
 
+      test('keeps the runs of the latest call when an earlier call finishes later', async() => {
+        const el = fixtureSync(html`<wpt-results-base></wpt-results-base>`);
+        let releaseFirst;
+        window.fetch.onCall(window.fetch.callCount).callsFake(() => new Promise(resolve => {
+          releaseFirst = () => resolve(new Response(JSON.stringify(TEST_RUNS_DATA.slice(0, 1)),
+            { headers: { 'wpt-next-page': 'stale' } }));
+        }));
+        const first = el.loadRuns();
+        await el.loadRuns();
+        releaseFirst();
+        await first;
+        assert.lengthOf(el.testRuns, TEST_RUNS_DATA.length);
+        assert.notEqual(el.nextPageToken, 'stale');
+      });
+
       test('populates testRuns from fetch', () => {
         assert.equal(wrbf.testRuns, null);
         return waitingOn(() => wrbf.testRuns && wrbf.testRuns.length)
