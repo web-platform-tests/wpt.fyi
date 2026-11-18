@@ -1811,7 +1811,9 @@
       {
         "name": "WebVTT",
         "url": "https://github.com/web-platform-tests/interop-webvtt",
-        "scores_over_time": []
+        "scores_over_time": [
+          { "date": "2026-10-29", "score": 116 }
+        ]
       }
     ],
     "investigation_weight": 0.0,
