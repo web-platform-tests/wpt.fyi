@@ -42,15 +42,14 @@ const ALL_OPTIONS = [
 ];
 
 function dropdown(el) {
-  return el.shadowRoot.querySelector('paper-dropdown-menu');
+  return el.shadowRoot.querySelector('wpt-dropdown');
 }
 
 function optionItems(el) {
-  return [...el.shadowRoot.querySelector('paper-listbox').items];
+  return dropdown(el).items;
 }
 
-// The listbox selects items by their `value`, which the template sets as a
-// property rather than an attribute.
+// The dropdown matches items by their `value`.
 function optionValue(item) {
   return item.value;
 }
@@ -77,13 +76,13 @@ async function rendered(el, count) {
 
 // The text shown in the closed dropdown.
 function shownValue(el) {
-  return dropdown(el).shadowRoot.querySelector('paper-input').value;
+  return dropdown(el).shadowRoot.querySelector('input').value;
 }
 
 // Opens the dropdown and chooses the option with the given value, like a user.
 async function choose(el, value) {
   const menu = dropdown(el);
-  menu.click();
+  menu.shadowRoot.querySelector('#button').click();
   await waitUntil(() => menu.opened, 'dropdown did not open');
   const item = optionItems(el).find(i => optionValue(i) === value);
   assert.exists(item, `no option ${value}`);
