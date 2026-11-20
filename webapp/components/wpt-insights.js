@@ -4,7 +4,9 @@
  * found in the LICENSE file.
  */
 
+import '../node_modules/@polymer/iron-collapse/iron-collapse.js';
 import '../node_modules/@polymer/paper-card/paper-card.js';
+import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/paper-radio-button/paper-radio-button.js';
@@ -12,6 +14,7 @@ import '../node_modules/@polymer/paper-radio-group/paper-radio-group.js';
 import './browser-picker.js';
 import './channel-picker.js';
 import './info-banner.js';
+import './wpt-bsf.js';
 import { AllProducts, DefaultProductSpecs, DefaultBrowserNames, ProductInfo } from './product-info.js';
 import { TestStatuses } from './test-info.js';
 
@@ -25,8 +28,25 @@ class Insights extends ProductInfo(PolymerElement) {
       wpt-anomalies, wpt-flakes {
         display: block;
       }
+      paper-icon-button {
+        vertical-align: middle;
+        margin-right: 10px;
+        padding: 0px;
+        height: 28px;
+      }
     </style>
 
+    <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
+      <info-banner>
+        <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></paper-icon-button>
+        [[bsfBannerMessage]]
+      </info-banner>
+      <template is="dom-if" if="[[!isBSFCollapsed]]">
+        <iron-collapse opened="[[!isBSFCollapsed]]">
+          <wpt-bsf is-interacting="[[isInteracting]]" on-interactingchanged="bsfIsInteractingChanged"></wpt-bsf>
+        </iron-collapse>
+      </template>
+    </div>
     <wpt-anomalies></wpt-anomalies>
     <wpt-flakes></wpt-flakes>
     <wpt-release-regressions></wpt-release-regressions>
@@ -35,6 +55,104 @@ class Insights extends ProductInfo(PolymerElement) {
 
   static get is() {
     return 'wpt-insights';
+  }
+
+  static get properties() {
+    return {
+      bsfBannerMessage: {
+        type: String,
+        computed: 'computeBSFBannerMessage(isBSFCollapsed)',
+      },
+      isBSFCollapsed: {
+        type: Boolean,
+        computed: 'computeIsBSFCollapsed()',
+      },
+      bsfStartTime: {
+        type: Object,
+        value: null,
+      },
+      isInteracting: Boolean,
+    };
+  }
+
+  constructor() {
+    super();
+    this.handleCollapse = () => {
+      this.isBSFCollapsed = !this.isBSFCollapsed;
+      if ('gtag' in window) {
+        window.gtag('event', 'visibility change', {
+          'event_category': 'bsf',
+          'event_label': 'insights',
+          'value': this.isBSFCollapsed ? 1 : 0
+        });
+      }
+      this.setLocalStorageFlag(this.isBSFCollapsed, 'isBSFCollapsed');
+    };
+    this.enterBSF = () => {
+      if (this.isInteracting) {
+        return;
+      }
+      this.bsfStartTime = new Date();
+    };
+    this.exitBSF = () => {
+      if (this.isInteracting || !this.bsfStartTime) {
+        return;
+      }
+      const diff = new Date().getTime() - this.bsfStartTime.getTime();
+      const duration = Math.round(diff / 1000);
+      if (duration <= 0) {
+        return;
+      }
+      if ('gtag' in window) {
+        window.gtag('event', 'hover', {
+          'event_category': 'bsf',
+          'event_label': 'insights',
+          'value': duration
+        });
+      }
+      this.bsfStartTime = null;
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('interactingchanged', this.bsfIsInteractingChanged);
+  }
+
+  bsfIsInteractingChanged(e) {
+    this.isInteracting = e.detail.value;
+  }
+
+  setLocalStorageFlag(value, feature) {
+    localStorage.setItem(`features.${feature}`, JSON.stringify(value));
+  }
+
+  getLocalStorageFlag(feature) {
+    const stored = localStorage.getItem(`features.${feature}`);
+    if (stored === null) {
+      return null;
+    }
+    return JSON.parse(stored);
+  }
+
+  computeBSFBannerMessage(isBSFCollapsed) {
+    const actionText = isBSFCollapsed ? 'expand' : 'collapse';
+    return `Browser Specific Failures graph (click the arrow to ${actionText})`;
+  }
+
+  computeIsBSFCollapsed() {
+    const stored = this.getLocalStorageFlag('isBSFCollapsed');
+    if (stored === null) {
+      return false;
+    }
+    return stored;
+  }
+
+  getCollapseIcon(isBSFCollapsed) {
+    if (isBSFCollapsed) {
+      return '/static/expand_more.svg';
+    }
+    return '/static/expand_less.svg';
   }
 }
 window.customElements.define(Insights.is, Insights);
