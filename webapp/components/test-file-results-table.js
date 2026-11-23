@@ -17,6 +17,7 @@ import { WPTFlags } from './wpt-flags.js';
 import { AmendMetadataMixin } from './wpt-amend-metadata.js';
 import { productFromRun } from './product-info.js';
 import './wpt-icon.js';
+import './wpt-icon-button.js';
 
 class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTColors(PathInfo(TestRunsBase))))) {
   static get is() {
@@ -132,7 +133,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
       <template is="dom-if" if="[[diffRun]]">
         <th>
           <test-run test-run="[[diffRun]]"></test-run>
-          <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
+          <wpt-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></wpt-icon-button>
         </th>
       </template>
     </tr>

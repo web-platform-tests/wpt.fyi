@@ -8,12 +8,11 @@ import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import './wpt-button.js';
-import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import './wpt-icon.js';
+import './wpt-icon-button.js';
 
 class GitHubLogin extends PolymerElement {
   static get template() {
@@ -55,7 +54,7 @@ class GitHubLogin extends PolymerElement {
         </template>
         <img class="github-icon" src="/static/github.svg" alt="">
         [[user]]
-        <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
+        <wpt-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></wpt-icon-button>
       </div>
     </template>
     <paper-dialog id="dialog">

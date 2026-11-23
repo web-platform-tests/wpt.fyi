@@ -17,10 +17,7 @@ import { WPTFlags } from '../components/wpt-flags.js';
 import '../components/wpt-permalinks.js';
 import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
-import '../node_modules/@polymer/iron-icons/iron-icons.js';
-import '../node_modules/@polymer/iron-icons/editor-icons.js';
 import '../components/wpt-button.js';
-import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import '../components/wpt-toast.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -31,6 +28,7 @@ import { PathInfo } from '../components/path.js';
 import { Pluralizer } from '../components/pluralize.js';
 import { isViewOnlyQuery } from '../components/query-state.js';
 import '../components/wpt-icon.js';
+import '../components/wpt-icon-button.js';
 
 const TEST_TYPES = ['manual', 'reftest', 'testharness', 'visual', 'wdspec', 'test262'];
 
@@ -312,7 +310,7 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
               <template is="dom-if" if="[[diffRun]]">
                 <th>
                   <test-run test-run="[[diffRun]]"></test-run>
-                  <paper-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></paper-icon-button>
+                  <wpt-icon-button icon="filter-list" onclick="[[toggleDiffFilter]]" title="Toggle filtering to only show differences"></wpt-icon-button>
                 </th>
               </template>
             </tr>
@@ -322,11 +320,11 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
             <template is="dom-if" if="[[displayedNodes]]">
               <tr class="sort-col">
                 <td>
-                  <paper-icon-button class="sort-button" src=[[getSortIcon(isPathSorted)]] onclick="[[sortTestName]]" aria-label="Sort the test name column"></paper-icon-button>
+                  <wpt-icon-button class="sort-button" src=[[getSortIcon(isPathSorted)]] onclick="[[sortTestName]]" aria-label="Sort the test name column"></wpt-icon-button>
                 </td>
                 <template is="dom-repeat" items="[[sortCol]]" as="sortItem">
                   <td>
-                    <paper-icon-button class="sort-button" src=[[getSortIcon(sortItem)]] onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></paper-icon-button>
+                    <wpt-icon-button class="sort-button" src=[[getSortIcon(sortItem)]] onclick="[[sortTestResults(index)]]" aria-label="Sort the test result column"></wpt-icon-button>
                   </td>
                 </template>
               </tr>

@@ -11,13 +11,13 @@ import '../components/wpt-bsf.js';
 import '../components/wpt-collapse.js';
 import '../node_modules/@polymer/app-route/app-location.js';
 import '../node_modules/@polymer/app-route/app-route.js';
-import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
 import '../views/wpt-results.js';
 import '../components/wpt-toast.js';
 import '../components/wpt-button.js';
+import '../components/wpt-icon-button.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   static get is() {
@@ -68,7 +68,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         .query-actions wpt-button {
           display: inline-block;
         }
-        paper-icon-button {
+        wpt-icon-button {
           vertical-align: middle;
           margin-right: 10px;
           padding: 0px;
@@ -118,7 +118,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
       <template is="dom-if" if="[[showBSFGraph]]">
         <div onmouseenter="[[enterBSF]]" onmouseleave="[[exitBSF]]">
           <info-banner>
-            <paper-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></paper-icon-button>
+            <wpt-icon-button src="[[getCollapseIcon(isBSFCollapsed)]]" onclick="[[handleCollapse]]" aria-label="Hide BSF graph"></wpt-icon-button>
             [[bsfBannerMessage]]
           </info-banner>
           <template is="dom-if" if="[[!isBSFCollapsed]]">

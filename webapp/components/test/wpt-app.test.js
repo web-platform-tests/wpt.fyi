@@ -494,7 +494,7 @@ suite('<wpt-app> page', () => {
   suite('BSF graph', () => {
     function graphBanner(el) {
       return [...el.shadowRoot.querySelectorAll('info-banner')]
-        .find(b => b.querySelector('paper-icon-button'));
+        .find(b => b.querySelector('wpt-icon-button'));
     }
 
     function bannerText(el) {
@@ -511,7 +511,7 @@ suite('<wpt-app> page', () => {
     test('collapses the graph and remembers it', async() => {
       const el = await createApp('/results/', HOME);
       await waitUntil(() => graphBanner(el), 'expected the graph banner');
-      const arrow = graphBanner(el).querySelector('paper-icon-button');
+      const arrow = graphBanner(el).querySelector('wpt-icon-button');
       assert.equal(arrow.src, '/static/expand_less.svg');
       arrow.click();
       assert.equal(bannerText(el), 'Browser Specific Failures graph (click the arrow to expand)');
