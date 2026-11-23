@@ -385,7 +385,7 @@ suite('<wpt-app> page', () => {
     }
 
     function bannerButtons(el) {
-      return [...banner(el).querySelectorAll('paper-button')].filter(isShown)
+      return [...banner(el).querySelectorAll('wpt-button')].filter(isShown)
         .map(b => b.textContent.trim());
     }
 
@@ -426,7 +426,7 @@ suite('<wpt-app> page', () => {
     }
 
     function editButton(el) {
-      return [...el.shadowRoot.querySelectorAll('info-banner paper-button')]
+      return [...el.shadowRoot.querySelectorAll('info-banner wpt-button')]
         .find(b => b.textContent.trim() === 'Edit');
     }
 
@@ -473,7 +473,7 @@ suite('<wpt-app> page', () => {
 
     test('adds the master label from the warning', async() => {
       const el = await createApp('/results/?label=experimental', { labels: ['experimental'] });
-      const button = [...toast(el).querySelectorAll('paper-button')]
+      const button = [...toast(el).querySelectorAll('wpt-button')]
         .find(b => b.textContent.trim() === 'View master runs');
       button.click();
       assert.isFalse(toast(el).opened);
@@ -483,7 +483,7 @@ suite('<wpt-app> page', () => {
 
     test('can be dismissed', async() => {
       const el = await createApp('/results/?label=experimental', { labels: ['experimental'] });
-      const button = [...toast(el).querySelectorAll('paper-button')]
+      const button = [...toast(el).querySelectorAll('wpt-button')]
         .find(b => b.textContent.trim() === 'Dismiss');
       button.click();
       assert.isFalse(toast(el).opened);

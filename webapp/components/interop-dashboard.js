@@ -8,7 +8,7 @@ import { interopData } from './interop-data.js';
 import { InteropDataManager } from './interop-data-manager.js';
 import { WPTFlags } from './wpt-flags.js';
 import { calculateColor } from './utils.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -101,20 +101,20 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
           display: none;
         }
 
-        paper-button[hidden] {
+        wpt-button[hidden] {
           display: none;
         }
 
-        .channel-area > paper-button {
+        .channel-area > wpt-button {
           margin: 0;
         }
 
-        .channel-area > paper-button:first-of-type {
+        .channel-area > wpt-button:first-of-type {
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
         }
 
-        .channel-area > paper-button:last-of-type {
+        .channel-area > wpt-button:last-of-type {
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
         }
@@ -353,9 +353,9 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
         <div class="grid-item grid-item-header">
           <h1>[[dashboardTitle]]</h1>
           <div class="channel-area">
-            <paper-button id="toggleStable" class$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</paper-button>
-            <paper-button id="toggleExperimental" class$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</paper-button>
-            <paper-button id="toggleMobile" class$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</paper-button>
+            <wpt-button id="toggleStable" class$="[[stableButtonClass(stable, isMobileScoresView)]]" on-click="clickStable">Stable</wpt-button>
+            <wpt-button id="toggleExperimental" class$="[[experimentalButtonClass(stable, isMobileScoresView)]]" on-click="clickExperimental">Experimental</wpt-button>
+            <wpt-button id="toggleMobile" class$="[[mobileButtonClass(isMobileScoresView)]]" on-click="clickMobile" hidden$="[[!shouldShowMobileScoresView()]]">Mobile</wpt-button>
           </div>
           <div class="text-center" id="mobileWarning" hidden$="[[!isMobileScoresView]]">
             <p><i>Mobile browser results and how they are obtained are a work in progress. Scores may not reflect the real level of support for a given feature.</i></p>

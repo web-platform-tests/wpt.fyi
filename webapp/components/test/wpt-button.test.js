@@ -45,6 +45,17 @@ suite('<wpt-button>', () => {
       assert.notEqual(getComputedStyle(button).outlineStyle, 'none');
     });
 
+    test('passes aria-pressed on to the button', async() => {
+      const el = await fixture(html`<wpt-button aria-pressed="true">Stable</wpt-button>`);
+      assert.equal(innerButton(el).getAttribute('aria-pressed'), 'true');
+      el.setAttribute('aria-pressed', 'false');
+      await el.updateComplete;
+      assert.equal(innerButton(el).getAttribute('aria-pressed'), 'false');
+      el.removeAttribute('aria-pressed');
+      await el.updateComplete;
+      assert.isFalse(innerButton(el).hasAttribute('aria-pressed'));
+    });
+
     test('takes raised and disabled as properties, as Polymer bindings set them', async() => {
       const el = await fixture(html`<wpt-button>Go</wpt-button>`);
       el.raised = true;

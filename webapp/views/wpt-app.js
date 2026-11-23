@@ -16,6 +16,7 @@ import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../views/wpt-404.js';
 import '../views/wpt-results.js';
 import '../components/wpt-toast.js';
+import '../components/wpt-button.js';
 
 class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
   static get is() {
@@ -63,7 +64,7 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         .pages > :not([visible]) {
           display: none !important;
         }
-        .query-actions paper-button {
+        .query-actions wpt-button {
           display: inline-block;
         }
         paper-icon-button {
@@ -138,8 +139,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
                           query-params="[[queryParams]]"
                           test-runs="[[testRuns]]">
           </wpt-permalinks>
-          <paper-button onclick="[[togglePermalinks]]" slot="small">Link</paper-button>
-          <paper-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</paper-button>
+          <wpt-button onclick="[[togglePermalinks]]" slot="small">Link</wpt-button>
+          <wpt-button onclick="[[toggleQueryEdit]]" slot="small" hidden="[[!editable]]">Edit</wpt-button>
         </info-banner>
       </template>
       <wpt-collapse opened="[[editingQuery]]">
@@ -167,8 +168,8 @@ class WPTApp extends PathInfo(WPTFlags(TestRunsUIBase)) {
         <div style="display: flex;">
           wpt.fyi now includes affected tests results from PRs. <br>
           Did you intend to view results for complete (master) runs only?
-          <paper-button onclick="[[addMasterLabel]]">View master runs</paper-button>
-          <paper-button onclick="[[dismissToast]]">Dismiss</paper-button>
+          <wpt-button onclick="[[addMasterLabel]]">View master runs</wpt-button>
+          <wpt-button onclick="[[dismissToast]]">Dismiss</wpt-button>
         </div>
       </wpt-toast>
     `;

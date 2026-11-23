@@ -130,7 +130,7 @@ suite('<wpt-header>', () => {
       assert.notOk(login.user);
     }
     // The sign-in button is visible in the desktop layout.
-    const signIn = [...desktopLogin(el).shadowRoot.querySelectorAll('paper-button')]
+    const signIn = [...desktopLogin(el).shadowRoot.querySelectorAll('wpt-button')]
       .find(button => button.textContent.trim() === 'Sign in with GitHub');
     assert.isTrue(isShown(signIn));
   });

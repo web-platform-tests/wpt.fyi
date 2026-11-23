@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -85,8 +85,8 @@ class InteropFeatureChart extends PolymerElement {
         </div>
 
         <div class="buttons">
-          <paper-button dialog-dismiss>Cancel</paper-button>
-          <paper-button dialog-confirm on-click="clickFirefoxNightlyDialogGoButton">Go</paper-button>
+          <wpt-button dialog-dismiss>Cancel</wpt-button>
+          <wpt-button dialog-confirm on-click="clickFirefoxNightlyDialogGoButton">Go</wpt-button>
         </div>
       </paper-dialog>
 
@@ -110,7 +110,7 @@ class InteropFeatureChart extends PolymerElement {
         </template>
 
         <div class="buttons">
-          <paper-button dialog-dismiss>Dismiss</paper-button>
+          <wpt-button dialog-dismiss>Dismiss</wpt-button>
         </div>
       </paper-dialog>
 `;

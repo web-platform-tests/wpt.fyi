@@ -221,7 +221,7 @@ suite('<wpt-runs>', () => {
     }
 
     function visibleButtons(el) {
-      return [...toast(el).querySelectorAll('paper-button')]
+      return [...toast(el).querySelectorAll('wpt-button')]
         .filter(b => getComputedStyle(b).display !== 'none')
         .map(b => b.textContent.trim());
     }
@@ -264,7 +264,7 @@ suite('<wpt-runs>', () => {
       const el = await createRuns();
       const collapse = el.shadowRoot.querySelector('wpt-collapse');
       assert.isFalse(collapse.opened);
-      el.shadowRoot.querySelector('info-banner paper-button').click();
+      el.shadowRoot.querySelector('info-banner wpt-button').click();
       await nextFrame();
       assert.isTrue(collapse.opened);
     });

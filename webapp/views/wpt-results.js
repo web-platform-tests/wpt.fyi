@@ -19,7 +19,7 @@ import '../components/wpt-metadata.js';
 import { AmendMetadataMixin } from '../components/wpt-amend-metadata.js';
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
 import '../node_modules/@polymer/iron-icons/editor-icons.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../components/wpt-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
@@ -217,16 +217,16 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
         box-shadow: var(--wpt-shadow-2dp);
       }
 
-      .channel-area > paper-button {
+      .channel-area > wpt-button {
         margin: 0;
       }
 
-      .channel-area > paper-button:first-of-type {
+      .channel-area > wpt-button:first-of-type {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
       }
 
-      .channel-area > paper-button:last-of-type {
+      .channel-area > wpt-button:last-of-type {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
       }
@@ -255,12 +255,12 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
 
     <wpt-toast id="selected-toast" duration="0">
       <span>[[triageToastMsg(selectedMetadata.length)]]</span>
-      <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
+      <wpt-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</wpt-button>
     </wpt-toast>
 
     <template is="dom-if" if="[[isInvalidDiffUse(diff, testRuns)]]">
       <wpt-toast id="diffInvalid" duration="0" text="'diff' was requested, but is only valid when comparing two runs." opened>
-        <paper-button onclick="[[dismissToast]]" class="yellow-button">Close</paper-button>
+        <wpt-button onclick="[[dismissToast]]" class="yellow-button">Close</wpt-button>
       </wpt-toast>
     </template>
 
@@ -296,8 +296,8 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
       </template>
     <template is="dom-if" if="[[shouldDisplayToggle(canViewInteropScores, pathIsATestFile)]]">
       <div class="channel-area">
-        <paper-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</paper-button>
-        <paper-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</paper-button>
+        <wpt-button id="toggleInterop" class\$="[[ interopButtonClass(view) ]]" on-click="clickInterop">Interop View</wpt-button>
+        <wpt-button id="toggleDefault" class\$="[[ defaultButtonClass(view) ]]" on-click="clickDefault">Default View</wpt-button>
       </div>
     </template>
 
@@ -410,9 +410,9 @@ class WPTResults extends AmendMetadataMixin(Pluralizer(WPTColors(WPTFlags(PathIn
     <template is="dom-if" if="[[pathIsATestFile]]">
       <div class="history">
         <template is="dom-if" if="[[!showHistory]]">
-            <paper-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
+            <wpt-button id="show-history" onclick="[[showHistoryClicked()]]" raised>
               Show history timeline
-            </paper-button>
+            </wpt-button>
         </template>
         <template is="dom-if" if="[[showHistory]]">
         <h3>

@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import {
@@ -101,9 +101,9 @@ class WPTMetadata extends PathInfo(LoadingState(PolymerElement)) {
               ></wpt-metadata-node>
             </template>
           </wpt-collapse>
-          <paper-button id="metadata-toggle" on-click="handleOpenCollapsible">
+          <wpt-button id="metadata-toggle" on-click="handleOpenCollapsible">
             Show more
-          </paper-button>
+          </wpt-button>
         </template>
         <br>
       </template>

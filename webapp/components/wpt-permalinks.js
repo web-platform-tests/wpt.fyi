@@ -13,6 +13,7 @@ import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
 import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { paramsToQuery } from './query-state.js';
+import './wpt-button.js';
 
 // The permalinks only turn the query params they're given into URLs. They
 // don't use the QueryBuilder mixin, whose round trip through the query string
@@ -48,8 +49,8 @@ class Permalinks extends PolymerElement {
         <paper-input value="[[url]]"></paper-input>
 
         <div class="buttons">
-        <paper-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</paper-button>
-        <paper-button dialog-dismiss>Dismiss</paper-button>
+        <wpt-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</wpt-button>
+        <wpt-button dialog-dismiss>Dismiss</wpt-button>
         </div>
       </paper-dialog>
       <wpt-toast id="toast"></wpt-toast>
