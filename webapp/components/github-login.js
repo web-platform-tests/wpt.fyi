@@ -9,7 +9,7 @@ import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
@@ -42,10 +42,10 @@ class GitHubLogin extends PolymerElement {
       <template is="dom-if" if="[[showTriage]]">
         <wpt-icon class="help" icon="icons:help-outline" on-click="openHelpDialog"></wpt-icon>
       </template>
-      <paper-button class="login-button" raised on-click="handleLogIn">
+      <wpt-button class="login-button" raised on-click="handleLogIn">
         <img class="github-icon" src="/static/github.svg" alt="">
           Sign in with GitHub
-      </paper-button>
+      </wpt-button>
     </template>
     <template is="dom-if" if="[[user]]">
       <div class="logged-in">
@@ -64,7 +64,7 @@ class GitHubLogin extends PolymerElement {
       configurations, and triage tests from the wpt.fyi UI </div>
       <div>To enable the triage UI, toggle Triage Mode after login </div>
       <div class="buttons">
-        <paper-button dialog-dismiss>Dismiss</paper-button>
+        <wpt-button dialog-dismiss>Dismiss</wpt-button>
       </div>
     </paper-dialog>
 `;

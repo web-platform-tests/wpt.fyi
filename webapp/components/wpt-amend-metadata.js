@@ -12,6 +12,7 @@ import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-e
 import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
 import { PathInfo } from './path.js';
+import './wpt-button.js';
 
 const AmendMetadataMixin = (superClass) => class extends superClass {
   static get properties() {
@@ -135,7 +136,7 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           position: relative;
           margin-right: 10px;
         }
-        paper-button {
+        wpt-button {
           text-transform: none;
           margin-top: 5px;
         }
@@ -197,8 +198,8 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           </template>
         </paper-dialog-scrollable>
         <div class="buttons">
-          <paper-button onclick="[[close]]">Dismiss</paper-button>
-          <paper-button disabled="[[triageSubmitDisabled]]" onclick="[[triage]]" dialog-confirm>Triage</paper-button>
+          <wpt-button onclick="[[close]]">Dismiss</wpt-button>
+          <wpt-button disabled="[[triageSubmitDisabled]]" onclick="[[triage]]" dialog-confirm>Triage</wpt-button>
         </div>
       </paper-dialog>
       <wpt-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></wpt-toast>

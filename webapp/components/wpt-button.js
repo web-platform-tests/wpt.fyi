@@ -5,6 +5,7 @@
  */
 
 import { LitElement, css, html } from 'lit';
+import { ifDefined } from 'lit/directives/if-defined.js';
 
 /**
  * `<wpt-button>` is a button that replaces `paper-button` with the same look
@@ -21,12 +22,15 @@ import { LitElement, css, html } from 'lit';
  * darkens while it is pressed.
  *
  * Style it from outside like paper-button: margin, background, color,
- * border-radius, text-transform and so on apply to the element itself.
+ * border-radius, text-transform and so on apply to the element itself. An
+ * `aria-pressed` attribute on the element is passed on to the button, for
+ * toggle buttons.
  */
 class WptButton extends LitElement {
   static properties = {
     raised: { type: Boolean, reflect: true },
     disabled: { type: Boolean, reflect: true },
+    pressedState: { type: String, attribute: 'aria-pressed' },
   };
 
   static shadowRootOptions = { ...LitElement.shadowRootOptions, delegatesFocus: true };
@@ -132,7 +136,9 @@ class WptButton extends LitElement {
   }
 
   render() {
-    return html`<button type="button" part="button" ?disabled=${this.disabled}><slot></slot></button>`;
+    return html`
+      <button type="button" part="button" ?disabled=${this.disabled}
+        aria-pressed=${ifDefined(this.pressedState)}><slot></slot></button>`;
   }
 }
 

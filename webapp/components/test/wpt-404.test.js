@@ -34,11 +34,11 @@ suite('<wpt-404>', () => {
       const links = el.shadowRoot.querySelectorAll('a');
       assert.lengthOf(links, 1);
       assert.equal(links[0].getAttribute('href'), '/');
-      const button = links[0].querySelector('paper-button');
+      const button = links[0].querySelector('wpt-button');
       assert.isNotNull(button);
       assert.equal(button.textContent.trim(), 'Go to the home page');
-      // An upgraded paper-button is exposed to assistive technology as a button.
-      assert.equal(button.getAttribute('role'), 'button');
+      // It is exposed to assistive technology as a button.
+      assert.isNotNull(button.shadowRoot.querySelector('button'));
     });
 
     test('shows the error icon above the message', async() => {

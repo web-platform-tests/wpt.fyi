@@ -5,7 +5,7 @@
  */
 
 import '../node_modules/@polymer/iron-icons/iron-icons.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -115,15 +115,15 @@ class TestRunsQueryBuilder extends WPTFlags(TestRunsUIQuery(PolymerElement)) {
       </paper-input-container>
     </div>
     <br>
-    <paper-button raised id="add-button" onclick="[[addProduct]]">
+    <wpt-button raised id="add-button" onclick="[[addProduct]]">
       <wpt-icon icon="add"></wpt-icon> Add product
-    </paper-button>
-    <paper-button raised id="clear-button" onclick="[[clearAll]]">
+    </wpt-button>
+    <wpt-button raised id="clear-button" onclick="[[clearAll]]">
       <wpt-icon icon="delete"></wpt-icon> Clear all
-    </paper-button>
-    <paper-button raised id="submit-button" onclick="[[submit]]">
+    </wpt-button>
+    <wpt-button raised id="submit-button" onclick="[[submit]]">
       <wpt-icon icon="done"></wpt-icon> Submit
-    </paper-button>
+    </wpt-button>
 `;
   }
 

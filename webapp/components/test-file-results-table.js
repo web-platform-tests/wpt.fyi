@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import './wpt-toast.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { TestRunsBase } from './test-runs.js';
@@ -117,7 +117,7 @@ class TestFileResultsTable extends WPTFlags(Pluralizer(AmendMetadataMixin(WPTCol
 
 <wpt-toast id="selected-toast" duration="0">
   <span>[[triageToastMsg(selectedMetadata.length)]]</span>
-  <paper-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</paper-button>
+  <wpt-button class="view-triage" on-click="openAmendMetadata" raised="[[hasSelections]]" disabled="[[!hasSelections]]">TRIAGE</wpt-button>
 </wpt-toast>
 
 <table terse$="[[!verbose]]" verbose$="[[verbose]]">

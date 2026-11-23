@@ -12,6 +12,7 @@ import {
   PolymerElement
 } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { LoadingState } from './loading-state.js';
+import './wpt-button.js';
 
 class WPTBSF extends LoadingState(PolymerElement) {
   static get template() {
@@ -48,7 +49,7 @@ class WPTBSF extends LoadingState(PolymerElement) {
         .selected{
           background-color: var(--wpt-blue-100);
         }
-        paper-button {
+        wpt-button {
           color: black;
           text-transform: none;
         }
@@ -58,13 +59,13 @@ class WPTBSF extends LoadingState(PolymerElement) {
           <h5>Browser-specific failures are the number of WPT tests which fail in exactly one browser. This graph shows the BSF scores for Chrome, Firefox and Safari.</h5>
           <h5>Channel</h5>
           <div class="toggle">
-            <paper-button class\$="[[experimentalButtonClass(isExperimental)]]" onclick="[[clickExperimental]]">Experimental</paper-button>
-            <paper-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</paper-button>
+            <wpt-button class\$="[[experimentalButtonClass(isExperimental)]]" onclick="[[clickExperimental]]">Experimental</wpt-button>
+            <wpt-button class\$="[[stableButtonClass(isExperimental)]]" onclick="[[clickStable]]">Stable</wpt-button>
           </div>
           <h5>Test scope</h5>
           <div class="toggle">
-            <paper-button class\$="[[firstPartyButtonClass(includeThirdParty)]]" onclick="[[clickFirstParty]]">WPT</paper-button>
-            <paper-button class\$="[[includeThirdPartyButtonClass(includeThirdParty)]]" onclick="[[clickIncludeThirdParty]]">WPT + Test262</paper-button>
+            <wpt-button class\$="[[firstPartyButtonClass(includeThirdParty)]]" onclick="[[clickFirstParty]]">WPT</wpt-button>
+            <wpt-button class\$="[[includeThirdPartyButtonClass(includeThirdParty)]]" onclick="[[clickIncludeThirdParty]]">WPT + Test262</wpt-button>
           </div>
           <h5>Last update: <a class="link" href="[[githubHref]]" target="_blank">[[shortSHA]]</a></h5>
           <h5>Click + drag on graph to zoom, right click to un-zoom</h5>

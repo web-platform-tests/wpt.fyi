@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import '../node_modules/@polymer/iron-scroll-threshold/iron-scroll-threshold.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import './wpt-button.js';
 import './wpt-toast.js';
 import '../node_modules/@polymer/paper-progress/paper-progress.js';
 import '../node_modules/@polymer/paper-spinner/paper-spinner-lite.js';
@@ -103,7 +103,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
       wpt-toast span {
         flex-grow: 1;
       }
-      wpt-toast paper-button {
+      wpt-toast wpt-button {
         display: inline-block;
         flex-grow: 0;
         flex-shrink: 0;
@@ -127,9 +127,9 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
     <wpt-toast id="selected-toast" duration="0">
       <div style="display: flex;">
         <span>[[selectedRuns.length]] [[runPlural]] selected</span>
-        <paper-button onclick="[[showRuns]]">View [[runPlural]]</paper-button>
+        <wpt-button onclick="[[showRuns]]">View [[runPlural]]</wpt-button>
         <template is="dom-if" if="[[twoRunsSelected]]">
-          <paper-button onclick="[[showDiff]]">View diff</paper-button>
+          <wpt-button onclick="[[showDiff]]">View diff</wpt-button>
         </template>
       </div>
     </wpt-toast>
@@ -137,7 +137,7 @@ class WPTRuns extends Pluralizer(WPTFlags(SelfNavigation(LoadingState(TestRunsUI
     <template is="dom-if" if="[[resultsRangeMessage]]">
       <info-banner>
         [[resultsRangeMessage]]
-        <paper-button onclick="[[toggleBuilder]]" slot="small">Edit</paper-button>
+        <wpt-button onclick="[[toggleBuilder]]" slot="small">Edit</wpt-button>
       </info-banner>
     </template>
 

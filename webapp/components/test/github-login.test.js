@@ -16,7 +16,7 @@ function isShown(element) {
 }
 
 function signInButton(el) {
-  return [...el.shadowRoot.querySelectorAll('paper-button')]
+  return [...el.shadowRoot.querySelectorAll('wpt-button')]
     .find(button => button.textContent.trim() === 'Sign in with GitHub');
 }
 
@@ -140,7 +140,7 @@ suite('<github-login>', () => {
       await waitUntil(() => isShown(dialog), 'the dialog opens');
       assert.equal(dialog.querySelector('h3').textContent.trim(), 'wpt.fyi Login');
       assert.include(dialog.textContent, 'To enable the triage UI, toggle Triage Mode after login');
-      const dismiss = [...dialog.querySelectorAll('paper-button')]
+      const dismiss = [...dialog.querySelectorAll('wpt-button')]
         .find(button => button.textContent.trim() === 'Dismiss');
 
       dismiss.click();

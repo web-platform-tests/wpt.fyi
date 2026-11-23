@@ -304,7 +304,7 @@ suite('<wpt-results> views', () => {
     }
 
     function triageButton(el) {
-      return toast(el).querySelector('paper-button');
+      return toast(el).querySelector('wpt-button');
     }
 
     function resultCell(el, path, runIndex) {

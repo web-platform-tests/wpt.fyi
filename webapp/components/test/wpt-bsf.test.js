@@ -10,9 +10,8 @@ import { charts, FakeLineChart } from './util/fake-google-charts.js';
 import { aTimeout, assert, fixture, html, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../wpt-bsf.js';
-// wpt-bsf.js uses <paper-button> without importing it. On the page, wpt-app
-// (the only user of <wpt-bsf>) loads it, so load wpt-app too. The last suite
-// also uses <wpt-app> itself.
+// On the page, wpt-app is the only user of <wpt-bsf>, so load it the same
+// way. The last suite also uses <wpt-app> itself.
 import '../../views/wpt-app.js';
 
 // /api/bsf responses, in the shape of shared.BSFData: the CSV's header row as
@@ -183,7 +182,7 @@ async function chartShows(el, expected) {
 }
 
 function button(el, label) {
-  const buttons = [...el.shadowRoot.querySelectorAll('paper-button')];
+  const buttons = [...el.shadowRoot.querySelectorAll('wpt-button')];
   const found = buttons.find(b => b.textContent.trim() === label);
   assert.exists(found, `a "${label}" button`);
   return found;
@@ -191,7 +190,7 @@ function button(el, label) {
 
 // The labels of the buttons shown as selected.
 function selectedButtons(el) {
-  return [...el.shadowRoot.querySelectorAll('paper-button')]
+  return [...el.shadowRoot.querySelectorAll('wpt-button')]
     .filter(b => b.classList.contains('selected'))
     .map(b => b.textContent.trim());
 }

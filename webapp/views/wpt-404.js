@@ -1,6 +1,6 @@
 import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../components/wpt-icon.js';
-import '../node_modules/@polymer/paper-button/paper-button.js';
+import '../components/wpt-button.js';
 
 class WPT404 extends PolymerElement {
   static get template() {
@@ -26,7 +26,7 @@ class WPT404 extends PolymerElement {
       <h1>Sorry, we couldn't find that page</h1>
     </div>
     <a href="/">
-      <paper-button>Go to the home page</paper-button>
+      <wpt-button>Go to the home page</wpt-button>
     </a>
 `;
   }
