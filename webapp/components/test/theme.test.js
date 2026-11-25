@@ -22,7 +22,6 @@ const PAPER_COLORS = {
   'grey-200': '#eeeeee',
   'grey-300': '#e0e0e0',
   'grey-600': '#757575',
-  'light-blue-100': '#b3e5fc',
   'light-blue-500': '#03a9f4',
   'light-green-300': '#aed581',
   'lime-300': '#dce775',
