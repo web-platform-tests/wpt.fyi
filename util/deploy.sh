@@ -90,10 +90,9 @@ then
   VERSION="rev-$(git rev-parse --short HEAD)"
 fi
 
-# Branch previews of the webapp (anything but a release) run on fewer
-# instances than the staging release: each instance uses one of the staging
-# project's limited IP addresses, and a preview keeps running for as long as
-# its branch exists.
+# Branch previews (anything but a release) run on fewer instances than the
+# staging release: each instance uses one of the staging project's limited IP
+# addresses, and a preview keeps running for as long as its branch exists.
 if [[ -z ${RELEASE} && "${APP_PATH}" == "webapp/web/app.staging.yaml" ]]
 then
   PREVIEW_PATH="webapp/web/app.preview.yaml"
@@ -103,6 +102,17 @@ then
   trap 'rm -f "${PREVIEW_PATH}"' EXIT
   grep -q '^  min_num_instances: 1$' "${PREVIEW_PATH}" \
     && grep -q '^  max_num_instances: 2$' "${PREVIEW_PATH}" \
+    || fatal "Could not set the preview's scaling in ${PREVIEW_PATH}."
+  APP_PATH="${PREVIEW_PATH}"
+elif [[ -z ${RELEASE} && "${APP_PATH}" == "results-processor/app.staging.yaml" ]]
+then
+  # The results queue only sends tasks to the serving processor version, so a
+  # preview gets work only when it is sent a task directly, and one instance
+  # is enough for that.
+  PREVIEW_PATH="results-processor/app.preview.yaml"
+  sed -e 's/^\(  instances:\).*/\1 1/' "${APP_PATH}" > "${PREVIEW_PATH}"
+  trap 'rm -f "${PREVIEW_PATH}"' EXIT
+  grep -q '^  instances: 1$' "${PREVIEW_PATH}" \
     || fatal "Could not set the preview's scaling in ${PREVIEW_PATH}."
   APP_PATH="${PREVIEW_PATH}"
 fi
