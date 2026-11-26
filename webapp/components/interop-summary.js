@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+import { browserIcon, browserIconName, isChromeEdgeCombo } from './interop-browser-info.js';
 import { calculateColor } from './utils.js';
 import { CountUp } from '../node_modules/countup.js/dist/countUp.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
@@ -322,19 +323,15 @@ class InteropSummary extends PolymerElement {
 
   // Checks if this section is displaying the Chrome/Edge combo together.
   isChromeEdgeCombo(browserInfo) {
-    return browserInfo.tableName === 'Chrome/Edge';
+    return isChromeEdgeCombo(browserInfo);
   }
 
   getBrowserIcon(browserInfo, isStable) {
-    const icon = (isStable) ? browserInfo.stableIcon : browserInfo.experimentalIcon;
-    return `/static/${icon}_64x64.png`;
+    return browserIcon(browserInfo, isStable);
   }
 
   getBrowserIconName(browserInfo, isStable) {
-    if (isStable) {
-      return browserInfo.tableName;
-    }
-    return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
+    return browserIconName(browserInfo, isStable);
   }
 
   // Returns the browser full names as a list of strings so we can
