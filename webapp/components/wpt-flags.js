@@ -50,22 +50,28 @@ Object.defineProperty(wpt, 'ServerSideFeatures', {
   }
 });
 
+// The value of a feature flag: the one stored in localStorage (if
+// useLocalStorage), or else the environment's default.
+const featureFlagValue = function(feature, useLocalStorage) {
+  let value = null;
+  if (useLocalStorage) {
+    const stored = localStorage.getItem(`features.${feature}`);
+    value = stored && JSON.parse(stored);
+  }
+  // Fall back to env default.
+  if (value === null && typeof WPTEnvironmentFlags !== 'undefined') {
+    // 'false' is needed for [[!foo]] Polymer bindings
+    value = WPTEnvironmentFlags[feature] || false;
+  }
+  return value;
+};
+
 const makeFeatureProperties = function(target, features, readOnly, useLocalStorage) {
   for (const feature of features) {
-    let value = null;
-    if (useLocalStorage) {
-      const stored = localStorage.getItem(`features.${feature}`);
-      value = stored && JSON.parse(stored);
-    }
-    // Fall back to env default.
-    if (value === null && typeof WPTEnvironmentFlags !== 'undefined') {
-      // 'false' is needed for [[!foo]] Polymer bindings
-      value = WPTEnvironmentFlags[feature] || false;
-    }
     target[feature] = {
       type: Boolean,
       readOnly: readOnly,
-      value: value,
+      value: featureFlagValue(feature, useLocalStorage),
     };
   }
 };
@@ -73,7 +79,7 @@ const makeFeatureProperties = function(target, features, readOnly, useLocalStora
 // FlagsClass defines a shared superclass for reading feature flags. It assumes
 // that it will be part of a custom element class chain, as it relies on
 // Polymer's 'properties' concept to expose the feature flag values.
-wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superClass {
+wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends FlagsMethods(superClass) {
   static get is() {
     return 'wpt-flags';
   }
@@ -83,7 +89,10 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
     makeFeatureProperties(props, wpt.ClientSideFeatures, readOnly, useLocalStorage);
     return props;
   }
+};
 
+// The methods shared by FlagsClass (Polymer) and LitWPTFlags (Lit).
+const FlagsMethods = (superClass) => class extends superClass {
   setLocalStorageFlag(value, feature) {
     localStorage.setItem(`features.${feature}`, JSON.stringify(value));
     // flagUpdated is used in tests.
@@ -110,6 +119,37 @@ wpt.FlagsClass = (superClass, readOnly, useLocalStorage) => class extends superC
 //       }
 //     }
 const WPTFlags = (superClass) => wpt.FlagsClass(superClass, /*readOnly*/ true, /*useLocalStorage*/ true);
+
+// LitWPTFlags is WPTFlags for Lit elements. As with WPTFlags, each client-side
+// feature flag is a read-only property (assigning it does nothing, and there
+// is no attribute for it). Its value is read from localStorage or the
+// environment's default once, when the first element class made with it is
+// defined, as Polymer reads the WPTFlags properties then.
+const LitWPTFlags = (superClass) => {
+  let values;
+  const FlagsReader = class extends FlagsMethods(superClass) {
+    // Lit finalizes an element class when it's defined.
+    static finalize() {
+      if (!values) {
+        values = {};
+        for (const feature of wpt.ClientSideFeatures) {
+          values[feature] = featureFlagValue(feature, /*useLocalStorage*/ true);
+        }
+      }
+      super.finalize();
+    }
+  };
+  for (const feature of wpt.ClientSideFeatures) {
+    Object.defineProperty(FlagsReader.prototype, feature, {
+      get() {
+        return values[feature];
+      },
+      set() {},
+      configurable: true,
+    });
+  }
+  return FlagsReader;
+};
 
 // FlagsEditorClass is a 'writer' class function for feature flags. It allows
 // both reading values (identically to WPTFlags) and writing to them.
@@ -247,5 +287,5 @@ class WPTEnvironmentFlagsEditor extends FlagsEditorClass(/*environmentFlags*/ tr
 
 window.customElements.define(WPTEnvironmentFlagsEditor.is, WPTEnvironmentFlagsEditor);
 
-export { WPTFlags, WPTFlagsEditor, WPTEnvironmentFlagsEditor };
+export { LitWPTFlags, WPTFlags, WPTFlagsEditor, WPTEnvironmentFlagsEditor };
 
