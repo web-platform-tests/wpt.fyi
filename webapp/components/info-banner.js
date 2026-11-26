@@ -8,38 +8,47 @@
 `<info-banner>` is a stateless component for displaying an information banner,
 of type info, warning, or error.
 */
-import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LitElement, css, html } from 'lit';
 
-class InfoBanner extends PolymerElement {
-  static get template() {
+class InfoBanner extends LitElement {
+  static styles = css`
+    :host {
+      display: block;
+      margin-bottom: 1em;
+      margin-top: 1em;
+    }
+    .banner {
+      display: flex;
+      flex-direction: row;
+      justify-items: center;
+      justify-content: space-between;
+      background-color: var(--wpt-blue-100);
+      border-left: solid 4px var(--wpt-blue-300);
+    }
+    .main {
+      padding: 0.5em;
+    }
+    small {
+      display: flex;
+    }
+    .banner.error {
+      background-color: var(--wpt-red-100);
+      border-left: solid 4px var(--wpt-red-300);
+    }
+  `;
+
+  static properties = {
+    type: { type: String, reflect: true },
+  };
+
+  constructor() {
+    super();
+    this.type = 'info';
+  }
+
+  render() {
     return html`
-    <style>
-      :host {
-        display: block;
-        margin-bottom: 1em;
-        margin-top: 1em;
-      }
-      .banner {
-        display: flex;
-        flex-direction: row;
-        justify-items: center;
-        justify-content: space-between;
-        background-color: var(--wpt-blue-100);
-        border-left: solid 4px var(--wpt-blue-300);
-      }
-      .main {
-        padding: 0.5em;
-      }
-      small {
-        display: flex;
-      }
-      .banner.error {
-        background-color: var(--wpt-red-100);
-        border-left: solid 4px var(--wpt-red-300);
-      }
-    </style>
-
-    <section class\$="banner [[type]]">
+    <section class="banner ${this.type}">
       <span class="main">
         <slot></slot>
       </span>
@@ -49,22 +58,8 @@ class InfoBanner extends PolymerElement {
     </section>
 `;
   }
-
-  static get is() {
-    return 'info-banner';
-  }
-
-  static get properties() {
-    return {
-      type: {
-        type: String,
-        value: 'info',
-        reflectToAttribute: true,
-      },
-    };
-  }
 }
 
-window.customElements.define(InfoBanner.is, InfoBanner);
+window.customElements.define('info-banner', InfoBanner);
 
 export { InfoBanner };

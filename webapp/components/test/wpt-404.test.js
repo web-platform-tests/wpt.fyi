@@ -59,6 +59,11 @@ suite('<wpt-404>', () => {
       assert.isBelow(box.bottom, h1(el).getBoundingClientRect().top + 1);
     });
 
+    test('shows the icon as an inline block', () => {
+      const icon = el.shadowRoot.querySelector('wpt-icon');
+      assert.equal(getComputedStyle(icon).display, 'inline-block');
+    });
+
     test('centers its content', () => {
       const style = getComputedStyle(el);
       assert.equal(style.display, 'block');

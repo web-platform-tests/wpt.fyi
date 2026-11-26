@@ -22,7 +22,6 @@ const polymerFiles = [
     "components/browser-picker.js",
     "components/channel-picker.js",
     "components/github-login.js",
-    "components/info-banner.js",
     "components/interop-dashboard.js",
     "components/interop-feature-chart.js",
     "components/interop-summary.js",

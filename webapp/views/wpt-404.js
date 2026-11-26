@@ -1,26 +1,27 @@
-import { PolymerElement, html } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { LitElement, css, html } from 'lit';
 import '../components/wpt-icon.js';
 import '../components/wpt-button.js';
 
-class WPT404 extends PolymerElement {
-  static get template() {
+class WPT404 extends LitElement {
+  static styles = css`
+    :host {
+      display: block;
+      text-align: center;
+      color: var(--app-secondary-color);
+    }
+    wpt-icon {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+    }
+    h1 {
+      margin: 50px 0 50px 0;
+      font-weight: 300;
+    }
+  `;
+
+  render() {
     return html`
-    <style>
-      :host {
-        display: block;
-        text-align: center;
-        color: var(--app-secondary-color);
-      }
-      wpt-icon {
-        display: inline-block;
-        width: 60px;
-        height: 60px;
-      }
-      h1 {
-        margin: 50px 0 50px 0;
-        font-weight: 300;
-      }
-    </style>
     <div>
       <wpt-icon icon="error"></wpt-icon>
       <h1>Sorry, we couldn't find that page</h1>
@@ -30,8 +31,6 @@ class WPT404 extends PolymerElement {
     </a>
 `;
   }
-
-  static get is() { return 'wpt-404'; }
 }
 
-customElements.define(WPT404.is, WPT404);
+customElements.define('wpt-404', WPT404);
