@@ -7,6 +7,7 @@
 import { assert, fixture, html, nextFrame, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import '../github-login.js';
+import { deepActiveElement, isDialogShown, pressKey } from './util/dialogs.js';
 
 // Whether the element is rendered and takes up space on the page. Content
 // that a dom-if no longer shows is hidden, not removed, so checking that an
@@ -37,7 +38,7 @@ function loggedInArea(el) {
 }
 
 function helpDialog(el) {
-  return el.shadowRoot.querySelector('paper-dialog');
+  return el.shadowRoot.querySelector('wpt-dialog');
 }
 
 suite('<github-login>', () => {
@@ -134,17 +135,48 @@ suite('<github-login>', () => {
     test('the help icon opens a dialog about logging in, which can be dismissed', async() => {
       const el = await fixture(html`<github-login .isTriageMode=${false}></github-login>`);
       const dialog = helpDialog(el);
-      assert.isFalse(isShown(dialog));
+      assert.isFalse(isDialogShown(dialog));
 
       helpIcon(el).click();
-      await waitUntil(() => isShown(dialog), 'the dialog opens');
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
       assert.equal(dialog.querySelector('h3').textContent.trim(), 'wpt.fyi Login');
       assert.include(dialog.textContent, 'To enable the triage UI, toggle Triage Mode after login');
       const dismiss = [...dialog.querySelectorAll('wpt-button')]
         .find(button => button.textContent.trim() === 'Dismiss');
 
       dismiss.click();
-      await waitUntil(() => !isShown(dialog), 'the dialog closes');
+      await waitUntil(() => !isDialogShown(dialog), 'the dialog closes');
+    });
+
+    test('the help dialog takes the focus, and closes with Escape', async() => {
+      const el = await fixture(html`<github-login .isTriageMode=${false}></github-login>`);
+      const dialog = helpDialog(el);
+      helpIcon(el).click();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
+      // It has nothing with autofocus, so it focuses itself.
+      assert.equal(el.shadowRoot.activeElement, dialog);
+
+      pressKey(deepActiveElement(), 'Escape');
+      await waitUntil(() => !isDialogShown(dialog), 'the dialog closes');
+    });
+
+    test('a click outside the help dialog closes it and goes through', async() => {
+      const container = await fixture(html`<div><button>Outside</button><github-login .isTriageMode=${false}></github-login></div>`);
+      const el = container.querySelector('github-login');
+      const outside = container.querySelector('button');
+      const clicked = sinon.spy();
+      outside.addEventListener('click', clicked);
+      const dialog = helpDialog(el);
+      helpIcon(el).click();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
+
+      dialog.querySelector('h3').click();
+      await nextFrame();
+      assert.isTrue(isDialogShown(dialog), 'a click inside keeps it open');
+
+      outside.click();
+      await waitUntil(() => !isDialogShown(dialog), 'the dialog closes');
+      assert.isTrue(clicked.calledOnce);
     });
   });
 

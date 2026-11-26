@@ -10,6 +10,8 @@ import { charts } from './util/fake-google-charts.js';
 import { assert, fixture, html, waitUntil } from '@open-wc/testing';
 import { InteropDataManager } from '../interop-data-manager.js';
 import { InteropFeatureChart } from '../interop-feature-chart.js';
+import sinon from 'sinon';
+import { deepActiveElement, isDialogShown, pressKey } from './util/dialogs.js';
 
 window.customElements.define(InteropFeatureChart.is, InteropFeatureChart);
 
@@ -191,6 +193,58 @@ suite('<interop-feature-chart>', () => {
       await chartsDrawn(el, 2);
       assert.isNull(el.selectedChartIndex);
       assert.deepEqual(chartsFor(el)[1].getSelection(), []);
+    });
+  });
+  suite('changelog dialogs', () => {
+    let sandbox;
+    setup(() => {
+      sandbox = sinon.createSandbox();
+    });
+    teardown(() => {
+      sandbox.restore();
+    });
+
+    function button(dialog, text) {
+      return [...dialog.querySelectorAll('wpt-button')].find(b => b.textContent.trim() === text);
+    }
+
+    test('the Firefox Nightly dialog opens the pushlog of the given revisions', async() => {
+      sandbox.stub(window, 'open');
+      const el = await createChart();
+      const dialog = el.$.firefoxNightlyDialog;
+      dialog.open();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
+      el.$.firefoxNightlyDialogFrom.value = 'abc';
+      el.$.firefoxNightlyDialogTo.value = 'def';
+      button(dialog, 'Go').click();
+      await waitUntil(() => !isDialogShown(dialog), 'the dialog closes');
+      assert.deepEqual(window.open.firstCall.args,
+        ['https://hg.mozilla.org/mozilla-unified/pushloghtml?fromchange=abc&tochange=def']);
+    });
+
+    test('Cancel and Escape close the Firefox Nightly dialog', async() => {
+      sandbox.stub(window, 'open');
+      const el = await createChart();
+      const dialog = el.$.firefoxNightlyDialog;
+      dialog.open();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
+      button(dialog, 'Cancel').click();
+      await waitUntil(() => !isDialogShown(dialog), 'Cancel closes it');
+      dialog.open();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens again');
+      pressKey(deepActiveElement(), 'Escape');
+      await waitUntil(() => !isDialogShown(dialog), 'Escape closes it');
+      assert.isFalse(window.open.called);
+    });
+
+    test('the Safari dialog has a backdrop and closes with Dismiss', async() => {
+      const el = await createChart();
+      const dialog = el.$.safariDialog;
+      assert.isTrue(dialog.hasAttribute('with-backdrop'));
+      dialog.open();
+      await waitUntil(() => isDialogShown(dialog), 'the dialog opens');
+      button(dialog, 'Dismiss').click();
+      await waitUntil(() => !isDialogShown(dialog), 'the dialog closes');
     });
   });
 });
