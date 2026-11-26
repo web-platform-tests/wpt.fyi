@@ -132,7 +132,7 @@ suite('<wpt-results> directory table', () => {
   }
 
   function sortButtons(el) {
-    return [...table(el).querySelectorAll('tr.sort-col paper-icon-button')];
+    return [...table(el).querySelectorAll('tr.sort-col wpt-icon-button')];
   }
 
   suite('loading', () => {

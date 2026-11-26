@@ -5,7 +5,6 @@
  */
 
 import '../node_modules/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-icon-item.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
@@ -17,13 +16,14 @@ import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element
 import './display-logo.js';
 import './wpt-card.js';
 import './browser-picker.js';
+import './wpt-icon-button.js';
 import { Channels, DefaultBrowserNames, ProductInfo, SemanticLabels, Sources } from './product-info.js';
 
 class ProductBuilder extends ProductInfo(PolymerElement) {
   static get template() {
     return html`
     <style>
-      paper-icon-button {
+      wpt-icon-button {
         float: right;
       }
       display-logo[small] {
@@ -36,7 +36,7 @@ class ProductBuilder extends ProductInfo(PolymerElement) {
     </style>
     <wpt-card>
       <div class="card-content">
-        <paper-icon-button icon="delete" onclick="[[deleteProduct]]"></paper-icon-button>
+        <wpt-icon-button icon="delete" onclick="[[deleteProduct]]"></wpt-icon-button>
 
         <display-logo product="[[_product]]"></display-logo>
         <template is="dom-if" if="[[debug]]">

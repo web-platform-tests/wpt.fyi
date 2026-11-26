@@ -281,10 +281,10 @@ suite('<wpt-results> views', () => {
       // Every row has differences, so look one level down.
       el.path = '/dom/nodes';
       await waitUntil(() => rowPaths(el).length === 2, 'expected two rows');
-      table(el).querySelector('thead paper-icon-button').click();
+      table(el).querySelector('thead wpt-icon-button').click();
       await waitUntil(() => rowPaths(el).length === 1, 'expected one row');
       assert.deepEqual(rowPaths(el), ['/dom/nodes/Node-cloneNode.html']);
-      table(el).querySelector('thead paper-icon-button').click();
+      table(el).querySelector('thead wpt-icon-button').click();
       await waitUntil(() => rowPaths(el).length === 2, 'expected both rows again');
     });
 
