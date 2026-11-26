@@ -193,6 +193,37 @@ suite('<wpt-runs>', () => {
       assert.deepEqual(apiCalls().map(url => url.searchParams.get('page')), [null, 'page-2', 'page-3']);
     });
 
+    test('loads the next page only when a long page is scrolled to its end', async function() {
+      nextPageToken = 'page-2';
+      const spacer = document.createElement('div');
+      spacer.style.height = '5000px';
+      document.body.append(spacer);
+      try {
+        const el = await createRuns();
+        await new Promise(resolve => setTimeout(resolve, 300));
+        assert.lengthOf(apiCalls(), 1, 'not while the end of the page is out of reach');
+        const end = () => document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo(0, end() - 1);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        assert.lengthOf(apiCalls(), 1, 'not 1px before the end');
+        window.scrollTo(0, end());
+        if (window.pageYOffset < end()) {
+          // Firefox can stop a fraction of a pixel short of the end here, which
+          // a threshold of 0 never reaches (iron-scroll-threshold neither).
+          // Let the check that the scroll scheduled run first.
+          await new Promise(resolve => setTimeout(resolve, 300));
+          this.skip();
+        }
+        await waitUntil(() => rows(el).length === 3, 'expected a third revision');
+        assert.equal(apiCalls()[1].searchParams.get('page'), 'page-2');
+      } finally {
+        spacer.remove();
+        window.scrollTo(0, 0);
+        // Let the check that this scroll schedules run during this test.
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    });
+
     test('stops when there is no next page', async() => {
       nextPageToken = 'page-2';
       const el = await createRuns();
