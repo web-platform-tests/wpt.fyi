@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+import { browserIcon, browserIconName, isChromeEdgeCombo } from './interop-browser-info.js';
 import { interopData } from './interop-data.js';
 import { InteropDataManager } from './interop-data-manager.js';
 import { WPTFlags } from './wpt-flags.js';
@@ -1160,19 +1161,15 @@ class InteropDashboard extends WPTFlags(PolymerElement) {
 
   // Checks if this section is displaying the Chrome/Edge combo together.
   isChromeEdgeCombo(browserInfo) {
-    return browserInfo.tableName === 'Chrome/Edge';
+    return isChromeEdgeCombo(browserInfo);
   }
 
   getBrowserIcon(browserInfo, isStable) {
-    const icon = (isStable) ? browserInfo.stableIcon : browserInfo.experimentalIcon;
-    return `/static/${icon}_64x64.png`;
+    return browserIcon(browserInfo, isStable);
   }
 
   getBrowserIconName(browserInfo, isStable) {
-    if (isStable) {
-      return browserInfo.tableName;
-    }
-    return `${browserInfo.tableName} ${browserInfo.experimentalName}`;
+    return browserIconName(browserInfo, isStable);
   }
 
   // Handle the table header click to sort a column.
