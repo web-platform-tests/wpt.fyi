@@ -1,0 +1,28 @@
+name: Clean up staging versions
+on:
+  schedule:
+    # Every day. Deletes versions whose branch is gone and stops previews that
+    # haven't been deployed for a few days (see util/cleanup-versions.sh).
+    # deploy.yml also runs the cleanup after every push to main.
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    # Only in the main repository, not in forks.
+    if: github.repository == 'web-platform-tests/wpt.fyi'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate gcloud
+        run: |
+          echo "$GCLOUD_KEY_FILE_JSON" > "${RUNNER_TEMP}/client-secret.json"
+          gcloud auth activate-service-account --key-file "${RUNNER_TEMP}/client-secret.json"
+        env:
+          GCLOUD_KEY_FILE_JSON: ${{ secrets.GCLOUD_KEY_FILE_JSON }}
+      - name: Clean up staging versions
+        run: util/cleanup-versions.sh
+      - name: Remove credentials
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/client-secret.json"
