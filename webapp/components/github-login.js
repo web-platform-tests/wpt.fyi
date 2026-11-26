@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-if.js';
 import { html } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -14,6 +13,7 @@ import '../node_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../node_modules/@polymer/paper-menu-button/paper-menu-button.js';
 import '../node_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import './wpt-icon.js';
+import './wpt-dialog.js';
 
 class GitHubLogin extends PolymerElement {
   static get template() {
@@ -58,7 +58,7 @@ class GitHubLogin extends PolymerElement {
         <paper-icon-button title="Sign out" icon="exit-to-app" on-click="handleLogOut"></paper-icon-button>
       </div>
     </template>
-    <paper-dialog id="dialog">
+    <wpt-dialog id="dialog">
       <h3>wpt.fyi Login</h3>
       <div>Logging in to wpt.fyi enables users to have a customized landing page, set default
       configurations, and triage tests from the wpt.fyi UI </div>
@@ -66,7 +66,7 @@ class GitHubLogin extends PolymerElement {
       <div class="buttons">
         <wpt-button dialog-dismiss>Dismiss</wpt-button>
       </div>
-    </paper-dialog>
+    </wpt-dialog>
 `;
   }
 

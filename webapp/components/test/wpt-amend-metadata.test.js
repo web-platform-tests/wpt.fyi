@@ -1,4 +1,6 @@
 import { assert, expect, fixtureSync, html, waitUntil } from '@open-wc/testing';
+import sinon from 'sinon';
+import { deepActiveElement, dialogBox, isDialogShown } from './util/dialogs.js';
 import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { AmendMetadataMixin } from '../wpt-amend-metadata.js';
 
@@ -245,6 +247,68 @@ suite('wpt-amend-metadata', () => {
       expect(appFixture.getSearchURL('/a/b.html', 'ladybird')).to.equal('https://github.com/LadybirdBrowser/ladybird/issues?q="/a/b"');
       expect(appFixture.getSearchURL('/a/b.html', 'blitz')).to.equal('https://github.com/DioxusLabs/blitz/issues?q="/a/b"');
     });
+    suite('dialog', () => {
+      let sandbox;
+      setup(() => {
+        sandbox = sinon.createSandbox();
+      });
+      teardown(() => {
+        if (appFixture.dialog.opened) {
+          appFixture.close();
+        }
+        sandbox.restore();
+      });
+
+      function bugUrlInputs() {
+        return [...appFixture.dialog.querySelectorAll('paper-input[label="Bug URL"]')];
+      }
+
+      test('opens with the focus on the first bug URL, and triages the tests', async() => {
+        sandbox.stub(window, 'fetch').resolves(new Response(JSON.stringify('https://github.com/web-platform-tests/wpt-metadata/pull/1')));
+        appFixture.path = '/abc';
+        appFixture.selectedMetadata = [
+          { product: 'firefox', test: 'testA.html' },
+          { product: 'chrome', test: 'testA.html' },
+        ];
+        appFixture.open();
+        await waitUntil(() => isDialogShown(appFixture.dialog), 'the dialog opens');
+        await waitUntil(() => bugUrlInputs().length === 2 && deepActiveElement() === bugUrlInputs()[0].inputElement.inputElement,
+          'the first bug URL has the focus');
+
+        bugUrlInputs().forEach((input, i) => {
+          const native = input.inputElement.inputElement;
+          native.value = `https://bugs.example/${i}`;
+          native.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        });
+        const triage = [...appFixture.dialog.querySelectorAll('wpt-button')].find(b => b.textContent.trim() === 'Triage');
+        await waitUntil(() => !triage.disabled, 'Triage is enabled');
+        triage.click();
+        await waitUntil(() => !isDialogShown(appFixture.dialog), 'the dialog closes');
+        assert.equal(window.fetch.callCount, 1);
+        assert.equal(new URL(window.fetch.firstCall.args[0]).pathname, '/api/metadata/triage');
+        assert.deepEqual(JSON.parse(window.fetch.firstCall.args[1].body), {
+          'testA.html': [
+            { url: 'https://bugs.example/0', product: 'firefox' },
+            { url: 'https://bugs.example/1', product: 'chrome' },
+          ],
+        });
+      });
+
+      test('fits a long list in the window and scrolls it', async() => {
+        appFixture.path = '/abc';
+        appFixture.selectedMetadata = Array.from({ length: 60 }, (_, i) => ({ product: 'chrome', test: `test${i}.html` }));
+        appFixture.open();
+        await waitUntil(() => isDialogShown(appFixture.dialog), 'the dialog opens');
+        await waitUntil(() => appFixture.dialog.querySelectorAll('li').length === 60, 'the tests are listed');
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        const box = dialogBox(appFixture.dialog).getBoundingClientRect();
+        assert.isAtLeast(Math.round(box.top), 24);
+        assert.isAtMost(Math.round(box.bottom), window.innerHeight - 24);
+        const scroller = appFixture.dialog.querySelector('wpt-dialog-scrollable').scrollTarget;
+        assert.isAbove(scroller.scrollHeight, scroller.clientHeight);
+      });
+    });
+
     test('hasFileIssueURL', () => {
       expect(appFixture.hasFileIssueURL('')).to.be.true;
       expect(appFixture.hasFileIssueURL(null)).to.be.false;

@@ -4,8 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
-import '../node_modules/@polymer/paper-dialog-scrollable/paper-dialog-scrollable.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
@@ -13,6 +11,7 @@ import { LoadingState } from './loading-state.js';
 import { ProductInfo } from './product-info.js';
 import { PathInfo } from './path.js';
 import './wpt-button.js';
+import './wpt-dialog.js';
 
 const AmendMetadataMixin = (superClass) => class extends superClass {
   static get properties() {
@@ -169,9 +168,9 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
           vertical-align: bottom;
         }
       </style>
-      <paper-dialog id="dialog">
+      <wpt-dialog id="dialog">
         <h3>Triage Failing Tests (<a href="https://github.com/web-platform-tests/wpt-metadata/blob/master/README.md" target="_blank">See metadata documentation</a>)</h3>
-        <paper-dialog-scrollable>
+        <wpt-dialog-scrollable>
           <template is="dom-repeat" items="[[displayedMetadata]]" as="node">
             <div class="metadata-entry">
               <img class="browser" src="[[displayMetadataLogo(node.product)]]">
@@ -196,12 +195,12 @@ class AmendMetadata extends LoadingState(PathInfo(ProductInfo(PolymerElement))) 
               </li>
             </template>
           </template>
-        </paper-dialog-scrollable>
+        </wpt-dialog-scrollable>
         <div class="buttons">
           <wpt-button onclick="[[close]]">Dismiss</wpt-button>
           <wpt-button disabled="[[triageSubmitDisabled]]" onclick="[[triage]]" dialog-confirm>Triage</wpt-button>
         </div>
-      </paper-dialog>
+      </wpt-dialog>
       <wpt-toast id="show-pr" duration="10000"><span>[[errorMessage]]</span><a class="link" target="_blank" href="[[prLink]]">[[prText]]</a></wpt-toast>
 `;
   }

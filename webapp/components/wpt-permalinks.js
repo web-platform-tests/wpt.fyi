@@ -5,7 +5,6 @@
  */
 
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-tabs/paper-tab.js';
@@ -14,6 +13,7 @@ import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { paramsToQuery } from './query-state.js';
 import './wpt-button.js';
+import './wpt-dialog.js';
 
 // The permalinks only turn the query params they're given into URLs. They
 // don't use the QueryBuilder mixin, whose round trip through the query string
@@ -33,7 +33,7 @@ class Permalinks extends PolymerElement {
           --paper-tab-ink: var(--wpt-blue-300);
         }
       </style>
-      <paper-dialog>
+      <wpt-dialog>
         <paper-tabs selected="{{selectedTab}}">
           <paper-tab title="Link to these specific runs, via their IDs">These runs</paper-tab>
           <paper-tab title="Link to this query, showing the latest matching runs">This query</paper-tab>
@@ -52,7 +52,7 @@ class Permalinks extends PolymerElement {
         <wpt-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</wpt-button>
         <wpt-button dialog-dismiss>Dismiss</wpt-button>
         </div>
-      </paper-dialog>
+      </wpt-dialog>
       <wpt-toast id="toast"></wpt-toast>
 `;
   }
@@ -92,7 +92,7 @@ class Permalinks extends PolymerElement {
   }
 
   get dialog() {
-    return this.shadowRoot.querySelector('paper-dialog');
+    return this.shadowRoot.querySelector('wpt-dialog');
   }
 
   get toast() {

@@ -5,9 +5,9 @@
  */
 
 import './wpt-button.js';
-import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import './wpt-dialog.js';
 
 // InteropFeatureChart is a wrapper around a Google Charts chart. We cannot
 // use the polymer google-chart element as it does not support setting tooltip
@@ -53,7 +53,7 @@ class InteropFeatureChart extends PolymerElement {
             font-weight: 500;
         }
 
-        paper-dialog {
+        wpt-dialog::part(dialog) {
           max-width: 600px;
         }
       </style>
@@ -71,7 +71,7 @@ class InteropFeatureChart extends PolymerElement {
       </div>
       <div id="failuresChart" class="chart"></div>
 
-      <paper-dialog with-backdrop id="firefoxNightlyDialog">
+      <wpt-dialog with-backdrop id="firefoxNightlyDialog">
         <h2>Firefox Nightly Changelogs</h2>
         <div>
           Nightly builds of Firefox are all given the same sub-version,
@@ -88,9 +88,9 @@ class InteropFeatureChart extends PolymerElement {
           <wpt-button dialog-dismiss>Cancel</wpt-button>
           <wpt-button dialog-confirm on-click="clickFirefoxNightlyDialogGoButton">Go</wpt-button>
         </div>
-      </paper-dialog>
+      </wpt-dialog>
 
-      <paper-dialog with-backdrop id="safariDialog">
+      <wpt-dialog with-backdrop id="safariDialog">
         <h2>Safari Changelogs</h2>
         <template is="dom-if" if="[[stable]]">
           <div>
@@ -112,7 +112,7 @@ class InteropFeatureChart extends PolymerElement {
         <div class="buttons">
           <wpt-button dialog-dismiss>Dismiss</wpt-button>
         </div>
-      </paper-dialog>
+      </wpt-dialog>
 `;
   }
 
