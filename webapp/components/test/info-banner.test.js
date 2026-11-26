@@ -75,6 +75,14 @@ suite('<info-banner>', () => {
       assert.deepEqual(colors(el), {background: RED_100, border: `solid 4px ${RED_300}`});
     });
 
+    test('shows warning banners in blue, like info banners', async() => {
+      // wpt-results shows its invalid search banner with type="warning".
+      const el = await fixture(html`<info-banner type="warning">Careful</info-banner>`);
+      assert.equal(el.getAttribute('type'), 'warning');
+      assert.equal(section(el).className, 'banner warning');
+      assert.deepEqual(colors(el), {background: BLUE_100, border: `solid 4px ${BLUE_300}`});
+    });
+
     test('switches color when the type changes', async() => {
       const el = await fixture(html`<info-banner type="error">Oops</info-banner>`);
       el.type = 'info';
@@ -138,6 +146,19 @@ suite('<info-banner>', () => {
       assert.isBelow(edit.top, message.bottom);
       // The buttons are pushed to the right edge of the banner.
       assert.closeTo(edit.right, banner.right, 1);
+    });
+
+    test('stretches the small content to the height of the banner', async() => {
+      const el = await fixture(html`
+        <info-banner>
+          <span id="message">2 tests</span>
+          <span slot="small" id="small">Edit</span>
+        </info-banner>`);
+      const banner = section(el).getBoundingClientRect();
+      const small = el.querySelector('#small').getBoundingClientRect();
+      assert.isAbove(banner.height, 0);
+      assert.closeTo(small.height, banner.height, 0.5);
+      assert.closeTo(small.top, banner.top, 0.5);
     });
   });
 
