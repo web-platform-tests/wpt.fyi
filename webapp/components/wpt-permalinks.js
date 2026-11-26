@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
 import '../node_modules/@polymer/paper-input/paper-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
@@ -14,6 +13,7 @@ import './wpt-toast.js';
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import { paramsToQuery } from './query-state.js';
 import './wpt-button.js';
+import './wpt-checkbox.js';
 
 // The permalinks only turn the query params they're given into URLs. They
 // don't use the QueryBuilder mixin, whose round trip through the query string
@@ -38,13 +38,13 @@ class Permalinks extends PolymerElement {
           <paper-tab title="Link to these specific runs, via their IDs">These runs</paper-tab>
           <paper-tab title="Link to this query, showing the latest matching runs">This query</paper-tab>
         </paper-tabs>
-        <paper-checkbox checked="{{includePath}}">
+        <wpt-checkbox checked="{{includePath}}">
           Include the current path (directory)
-        </paper-checkbox>
+        </wpt-checkbox>
         <br>
-        <paper-checkbox checked="{{includeSearch}}">
+        <wpt-checkbox checked="{{includeSearch}}">
           Include the search query
-        </paper-checkbox>
+        </wpt-checkbox>
 
         <paper-input value="[[url]]"></paper-input>
 

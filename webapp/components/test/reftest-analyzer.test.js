@@ -31,4 +31,13 @@ suite('ReftestAnalyzer', () => {
     assert.equal(tooltip.target && tooltip.target.id, 'diff-button');
     assert.include(tooltip.textContent, 'the areas where two images differ');
   });
+
+  test('the Highlight diff checkbox turns the diff on and off', () => {
+    const checkbox = analyzer.shadowRoot.querySelector('#diff-button');
+    assert.isTrue(checkbox.checked);
+    checkbox.click();
+    assert.isFalse(analyzer.showDiff);
+    checkbox.click();
+    assert.isTrue(analyzer.showDiff);
+  });
 });

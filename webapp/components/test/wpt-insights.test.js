@@ -242,7 +242,7 @@ suite('wpt-insights.js', () => {
     }
 
     function checkboxes(el) {
-      return [...shadow(multiPicker(el)).querySelectorAll('paper-checkbox')];
+      return [...shadow(multiPicker(el)).querySelectorAll('wpt-checkbox')];
     }
 
     function radio(el, name) {
