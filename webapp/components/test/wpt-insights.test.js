@@ -246,7 +246,7 @@ suite('wpt-insights.js', () => {
     }
 
     function radio(el, name) {
-      return shadow(el).querySelector(`paper-radio-button[name="${name}"]`);
+      return shadow(el).querySelector(`wpt-radio-button[name="${name}"]`);
     }
 
     function cardText(el) {
