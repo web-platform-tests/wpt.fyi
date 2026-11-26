@@ -9,7 +9,7 @@
 */
 import { html, PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 
-const PathInfo = (superClass) => class extends superClass {
+const PathInfo = (superClass) => class extends PathInfoMethods(superClass) {
   static get properties() {
     return {
       path: {
@@ -37,7 +37,44 @@ const PathInfo = (superClass) => class extends superClass {
       }
     };
   }
+};
 
+/**
+ * LitPathInfo is PathInfo for Lit elements. The computed properties are
+ * getters; like the Polymer ones, they are undefined until `path` is set.
+ */
+const LitPathInfo = (superClass) => class extends PathInfoMethods(superClass) {
+  static properties = {
+    path: {
+      type: String,
+    },
+  };
+
+  get encodedPath() {
+    return this.path === undefined ? undefined : this.encodeTestPath(this.path);
+  }
+
+  get scheme() {
+    return this.path === undefined ? undefined : this.computeTestScheme(this.path);
+  }
+
+  get pathIsATestFile() {
+    return this.path === undefined ? undefined : this.computePathIsATestFile(this.path);
+  }
+
+  get pathIsASubfolder() {
+    return this.path === undefined ? undefined : this.computePathIsASubfolder(this.path);
+  }
+
+  get pathIsRootDir() {
+    return this.path === undefined ? undefined : this.computePathIsRootDir(this.path);
+  }
+};
+
+/**
+ * The logic shared by PathInfo (Polymer) and LitPathInfo (Lit).
+ */
+const PathInfoMethods = (superClass) => class extends superClass {
   encodeTestPath(path) {
     path = path || '/';
     console.assert(path.startsWith('/'));
@@ -210,4 +247,4 @@ class PathPart extends PathInfo(PolymerElement) {
 
 window.customElements.define(PathPart.is, PathPart);
 
-export { PathPart, PathInfo };
+export { LitPathInfo, PathPart, PathInfo };

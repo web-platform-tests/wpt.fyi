@@ -1,6 +1,8 @@
-import { assert, expect, fixtureSync, html } from '@open-wc/testing';
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import { ProductInfo, getSpec, isLatestSha, parseProductSpec } from '../product-info.js';
+import { assert, expect, fixture, fixtureSync, html } from '@open-wc/testing';
+import { LitElement } from 'lit';
+import '../../node_modules/@polymer/polymer/lib/elements/dom-if.js';
+import { html as polymerHtml, PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { AllProducts, ProductInfo, getSpec, isLatestSha, parseProductSpec } from '../product-info.js';
 
 class ConcreteProductInfo extends ProductInfo(PolymerElement) {}
 window.customElements.define('product-info-concrete', ConcreteProductInfo);
@@ -112,3 +114,84 @@ suite('isLatestSha', () => {
     }
   });
 });
+
+// ProductInfo on a Polymer element and on a Lit element. The Polymer hosts
+// bind allProducts in their template, as product-builder and wpt-insights do,
+// and in a dom-if; the Lit host passes it to a child in render().
+class PolymerProductInfoHost extends ProductInfo(PolymerElement) {
+  static get template() {
+    return polymerHtml`
+      <div id="child" products="[[allProducts]]"></div>
+      <template is="dom-if" if="[[showNested]]">
+        <div id="nested" products="[[allProducts]]"></div>
+      </template>`;
+  }
+  static get properties() {
+    return {
+      showNested: {
+        type: Boolean,
+        value: true,
+      },
+    };
+  }
+}
+window.customElements.define('polymer-product-info-host', PolymerProductInfoHost);
+
+class LitProductInfoHost extends ProductInfo(LitElement) {
+  render() {
+    return html`<div id="child" .products=${this.allProducts}></div>`;
+  }
+}
+window.customElements.define('lit-product-info-host', LitProductInfoHost);
+
+const productInfoHosts = [
+  {
+    name: 'ProductInfo (Polymer host, no template)',
+    create: () => fixture(html`<product-info-concrete></product-info-concrete>`),
+  },
+  {
+    name: 'ProductInfo (Polymer host binding allProducts)',
+    create: () => fixture(html`<polymer-product-info-host></polymer-product-info-host>`),
+    children: ['#child', '#nested'],
+  },
+  {
+    name: 'ProductInfo (Lit host)',
+    create: async() => {
+      const el = await fixture(html`<lit-product-info-host></lit-product-info-host>`);
+      await el.updateComplete;
+      return el;
+    },
+    children: ['#child'],
+  },
+];
+
+for (const host of productInfoHosts) {
+  suite(host.name, () => {
+    let el;
+
+    setup(async() => {
+      el = await host.create();
+    });
+
+    test('allProducts is AllProducts', () => {
+      assert.strictEqual(el.allProducts, AllProducts);
+      assert.isAbove(el.allProducts.length, 0);
+    });
+
+    if (host.children) {
+      test('passes allProducts to the children that bind it', () => {
+        for (const selector of host.children) {
+          assert.strictEqual(el.shadowRoot.querySelector(selector).products, AllProducts, selector);
+        }
+      });
+    }
+
+    test('has the ProductInfo methods', () => {
+      assert.equal(el.displayName('chrome'), 'Chrome');
+      assert.equal(el.displayLogo('chrome', ['dev']), '/static/chrome-dev_64x64.png');
+      assert.equal(el.shortVersion('chrome', '120.0.6099.71'), '120');
+      assert.equal(el.getSpec({browser_name: 'chrome', labels: ['beta']}), 'chrome[beta]');
+      assert.isTrue(el.computeIsLatest('latest'));
+    });
+  });
+}
