@@ -5,7 +5,8 @@
 
 # Waits until the staging webapp consistently serves the app, so that the
 # WebDriver tests that run against it right after a deploy don't hit it while
-# App Engine is still moving traffic to the new version.
+# App Engine is still moving traffic to the new version. deploy-production.sh
+# also uses it with https://wpt.fyi before stopping the previous versions.
 #
 # Each round loads the results and runs pages (which must contain their app
 # element and the import map) and two modules they load, all served by the Go

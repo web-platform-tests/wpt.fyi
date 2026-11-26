@@ -32,6 +32,12 @@ If there are changes to deploy but the checks have failed, it will provide the p
 
 If the deployment fails during one of the build or deployment steps in the docker VM (for transient or intermittent errors), you can skip the GitHub bug creation and proceed straight to retrying the build by using the `-b` flag.
 
+After moving traffic, the script waits until wpt.fyi serves the new version steadily, then stops the previous `processor` and `searchcache` versions. App Engine keeps running versions that receive no traffic, and these two services run on large fixed-size instances. The previous `default` (webapp) version keeps running, so the site can still be rolled back instantly. To roll all services back, including starting the stopped versions again, run:
+
+```sh
+util/rollback-production.sh <version>   # e.g. rev-9f9e929a
+```
+
 ### To staging
 
 ([GitHub Actions](../.github/workflows/deploy.yml) deploys all services automatically, but not
