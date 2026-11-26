@@ -13,9 +13,27 @@ import (
 // testRunCacheTTL is the expiration for each test run in Redis.
 var testRunCacheTTL = 48 * time.Hour
 
+// alignedRunSHAsCacheTTL is the expiration for the results of
+// GetAlignedRunSHAs in Redis. Finding aligned runs reads every recent TestRun
+// entity until enough SHAs have runs for all the products, which makes it the
+// most expensive Datastore query that the site runs, and the default results
+// page runs it on every load. A newly aligned set of runs shows up at most this
+// much later.
+var alignedRunSHAsCacheTTL = 2 * time.Minute
+
 type cachedDatastore struct {
 	Datastore
 	ctx context.Context
+}
+
+// TestRunQuery returns a TestRunQuery that caches the results of
+// GetAlignedRunSHAs. The other queries go to the underlying Datastore.
+func (d cachedDatastore) TestRunQuery() TestRunQuery {
+	return cachedTestRunQuery{
+		TestRunQuery: d.Datastore.TestRunQuery(),
+		store:        d.Datastore,
+		ctx:          d.ctx,
+	}
 }
 
 func (d cachedDatastore) Get(k Key, dst interface{}) error {
