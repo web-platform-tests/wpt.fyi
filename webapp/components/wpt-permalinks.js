@@ -6,7 +6,7 @@
 
 import '../node_modules/@polymer/paper-checkbox/paper-checkbox.js';
 import '../node_modules/@polymer/paper-dialog/paper-dialog.js';
-import '../node_modules/@polymer/paper-input/paper-input.js';
+import './wpt-input.js';
 import '../node_modules/@polymer/paper-item/paper-item.js';
 import '../node_modules/@polymer/paper-tabs/paper-tab.js';
 import '../node_modules/@polymer/paper-tabs/paper-tabs.js';
@@ -46,7 +46,7 @@ class Permalinks extends PolymerElement {
           Include the search query
         </paper-checkbox>
 
-        <paper-input value="[[url]]"></paper-input>
+        <wpt-input value="[[url]]"></wpt-input>
 
         <div class="buttons">
         <wpt-button onclick="[[copyToClipboard]]" title="Copy URL to the clipboard" autofocus>Copy link</wpt-button>
@@ -139,9 +139,10 @@ class Permalinks extends PolymerElement {
 
   async handleCopyToClipboard() {
     try {
-      const input = this
-        .shadowRoot.querySelector('paper-input')
-        .shadowRoot.querySelector('input');
+      // The field may not have rendered its input yet.
+      const field = this.shadowRoot.querySelector('wpt-input');
+      await field.updateComplete;
+      const input = field.shadowRoot.querySelector('input');
       input.select();
       document.execCommand('copy');
       this.toast.show('URL copied to clipboard!', 2000);
