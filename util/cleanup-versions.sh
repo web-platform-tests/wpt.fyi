@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Helper script to remove stale versions (without upstream branches) from the
-# staging project semi-automatically (users need to confirm before deleting).
+# staging project, and to stop previews that haven't been deployed recently.
+# Runs after every push to main (deploy.yml) and daily (cleanup-staging.yml).
 
 set -e
 
@@ -38,6 +39,31 @@ function cleanup() {
   gcloud app versions delete --quiet $PROJECT_ARG $SERVICE_ARG ${versions_to_delete[*]}
 }
 
+# Previews whose branch still exists keep running, and App Engine bills a
+# running version even when it receives no traffic. Stop (but don't delete)
+# the ones that haven't been deployed for IDLE_CUTOFF. The next push to the
+# branch deploys the preview again, which starts it; to start one without a
+# push, run:
+#   gcloud app versions start --project=wptdashboard-staging -s SERVICE VERSION
+IDLE_CUTOFF="-P3D"
+
+function stop_idle() {
+  info "Stopping idle versions of $1..."
+
+  local filter="traffic_split=0.0 version.servingStatus=SERVING last_deployed_time.datetime<$IDLE_CUTOFF"
+  local versions_to_stop
+  versions_to_stop=$(gcloud app versions list "$PROJECT_ARG" -s "$1" --filter="$filter" --format="value(id)")
+
+  if [[ -z "$versions_to_stop" ]]; then
+    debug "Nothing to do"
+    return 0
+  fi
+
+  debug "Not deployed since before $IDLE_CUTOFF, stopping: ${versions_to_stop//$'\n'/ }"
+  # shellcheck disable=SC2086 # One version ID per word.
+  gcloud app versions stop --quiet "$PROJECT_ARG" -s "$1" $versions_to_stop
+}
+
 
 # Sanity check (script will exit if origin does not exist because of set -e.)
 REMOTE_URL=$(git remote get-url origin)
@@ -48,3 +74,7 @@ fi
 cleanup "default"
 cleanup "processor"
 cleanup "searchcache"
+
+stop_idle "default"
+stop_idle "processor"
+stop_idle "searchcache"
