@@ -8,10 +8,12 @@ service: searchcache
 # Relevant AppEngine Flex documentation:
 # https://cloud.google.com/appengine/docs/flexible/nodejs/reference/app-yaml#resource-settings
 resources:
-  # TODO: Would prefer up to 96 CPUs for performance and memory capacity if/when
-  # available on AppEngine Flex.
-  cpu: 32
-  memory_gb: 207.5 # Max: FloorToNearest256MB(32 vCPU * 6.5 - 0.4) = 207.5 GB
+  # The searchcache is an in-memory cache of recent runs: it fills whatever
+  # memory it has, evicting the oldest runs, and loads older runs on demand.
+  # CPU use stays below 1%, so the instance size only sets how many days of
+  # runs stay loaded. Most searches are for runs from the last few days.
+  cpu: 16
+  memory_gb: 103.5 # Max: FloorToNearest256MB(16 vCPU * 6.5 - 0.4) = 103.5 GB
   disk_size_gb: 20
 
 manual_scaling:
