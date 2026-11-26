@@ -8,7 +8,7 @@
  * LoadingState is a behaviour component for indicating when information is
  * still being loaded (generally, fetched).
  */
-const LoadingState = (superClass) => class extends superClass {
+const LoadingState = (superClass) => class extends LoadingStateMethods(superClass) {
   static get properties() {
     return {
       /**
@@ -37,7 +37,12 @@ const LoadingState = (superClass) => class extends superClass {
       },
     };
   }
+};
 
+/**
+ * The logic shared by LoadingState (Polymer) and LitLoadingState (Lit).
+ */
+const LoadingStateMethods = (superClass) => class extends superClass {
   /**
    * Computes the `isLoading` property based on `loadingCount`.
    * @param {number} loadingCount The current loading count.
@@ -106,4 +111,60 @@ const LoadingState = (superClass) => class extends superClass {
   }
 };
 
-export { LoadingState };
+/**
+ * LitLoadingState is LoadingState for Lit elements.
+ *
+ * As with the Polymer property observer, `onLoadingComplete` is called
+ * synchronously, from the `loadingCount` setter, when the count goes from a
+ * positive number back to 0. `isLoading` is read-only and derived from
+ * `loadingCount`.
+ */
+const LitLoadingState = (superClass) => class extends LoadingStateMethods(superClass) {
+  static properties = {
+    /**
+     * The number of active loading operations.
+     */
+    loadingCount: {
+      type: Number,
+      attribute: 'loading-count',
+      noAccessor: true,
+    },
+    /**
+     * A callback function to be executed when loading is complete.
+     */
+    onLoadingComplete: {
+      attribute: false,
+    },
+  };
+
+  #loadingCount;
+
+  constructor() {
+    super();
+    this.loadingCount = 0;
+  }
+
+  get loadingCount() {
+    return this.#loadingCount;
+  }
+
+  set loadingCount(now) {
+    const then = this.#loadingCount;
+    // The same change check as Polymer's (NaN doesn't change to NaN).
+    if (now === then || (now !== now && then !== then)) {
+      return;
+    }
+    this.#loadingCount = now;
+    this.requestUpdate('loadingCount', then);
+    this._loadingCountChanged(now, then);
+  }
+
+  /**
+   * Whether the component is currently loading data.
+   */
+  get isLoading() {
+    return this._computeIsLoading(this.loadingCount);
+  }
+};
+
+export { LitLoadingState, LoadingState };

@@ -1,5 +1,6 @@
 import { assert, fixtureSync, html } from '@open-wc/testing';
 import '../product-builder.js';
+import { AllProducts } from '../product-info.js';
 
 suite('ProductBuilder', () => {
   let productBuilder;
@@ -18,6 +19,11 @@ suite('ProductBuilder', () => {
     assert.isTrue(content.querySelector('browser-picker') !== null);
     assert.equal(getComputedStyle(card).display, 'inline-block');
     assert.equal(getComputedStyle(content).paddingTop, '16px');
+  });
+
+  test('offers every product in its browser picker', () => {
+    const picker = productBuilder.shadowRoot.querySelector('browser-picker');
+    assert.strictEqual(picker.products, AllProducts);
   });
 
   suite('ProductBuilder.prototype.*', () => {

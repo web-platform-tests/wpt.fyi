@@ -157,18 +157,15 @@ function productFromRun(run) {
   return product;
 }
 
+// ProductInfo works for both Polymer and Lit elements: it declares no
+// properties, only methods and getters.
 const ProductInfo = (superClass) => class extends superClass {
-  static get properties() {
-    return {
-      // Polymer templates can only access variables in the scope of the owning
-      // class. Forward some declarations so that subclasses can use them in
-      // template parameters.
-      allProducts: {
-        type: Array,
-        value: AllProducts,
-        readOnly: true,
-      }
-    };
+  // Polymer templates can only access variables in the scope of the owning
+  // class. Forward some declarations so that subclasses can use them in
+  // template parameters. (A Polymer template that binds `allProducts` gets
+  // an accessor for it, which starts with this getter's value.)
+  get allProducts() {
+    return AllProducts;
   }
 
   displayName(name) {

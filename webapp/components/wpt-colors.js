@@ -4,19 +4,25 @@
  * found in the LICENSE file.
  */
 
+import { css } from 'lit';
+
+// The pass-rate background classes, for Lit elements' `static styles`.
+// Polymer elements get the same styles with `<style include="wpt-colors">`.
+const wptColorsStyles = css`
+  .passes-none { background-color: var(--wpt-red-300); }
+  .passes-hardly { background-color: var(--wpt-orange-300); }
+  .passes-a-few { background-color: var(--wpt-amber-300); }
+  .passes-half { background-color: var(--wpt-yellow-300); }
+  .passes-lots { background-color: var(--wpt-lime-300); }
+  .passes-most { background-color: var(--wpt-light-green-300); }
+  .passes-all { background-color: var(--wpt-green-300); }
+`;
+
 const $_documentContainer = document.createElement('template');
 
 $_documentContainer.innerHTML = `<dom-module id="wpt-colors">
   <template>
-    <style>
-      .passes-none { background-color: var(--wpt-red-300); }
-      .passes-hardly { background-color: var(--wpt-orange-300); }
-      .passes-a-few { background-color: var(--wpt-amber-300); }
-      .passes-half { background-color: var(--wpt-yellow-300); }
-      .passes-lots { background-color: var(--wpt-lime-300); }
-      .passes-most { background-color: var(--wpt-light-green-300); }
-      .passes-all { background-color: var(--wpt-green-300); }
-    </style>
+    <style>${wptColorsStyles.cssText}</style>
   </template>
 
 
@@ -64,4 +70,4 @@ const WPTColors = superClass => class extends superClass {
   }
 };
 
-export { WPTColors };
+export { WPTColors, wptColorsStyles };

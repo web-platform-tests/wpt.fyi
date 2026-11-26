@@ -1,7 +1,8 @@
-import { assert, expect, fixtureSync, html } from '@open-wc/testing';
+import { assert, expect, fixture, fixtureSync, html } from '@open-wc/testing';
+import { LitElement } from 'lit';
 import sinon from 'sinon';
-import { PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import { PathInfo, PathPart } from '../path.js';
+import { html as polymerHtml, PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import { LitPathInfo, PathInfo, PathPart } from '../path.js';
 
 class ConcreteType extends PathInfo(PolymerElement) {}
 window.customElements.define('path-info-concrete', ConcreteType);
@@ -186,3 +187,119 @@ suite('PathPart', () => {
     });
   });
 });
+
+// The same tests for PathInfo on a Polymer element and LitPathInfo on a Lit
+// element, so that both behave the same. Each host shows two of the computed
+// properties in its shadow DOM.
+class PolymerPathInfoHost extends PathInfo(PolymerElement) {
+  static get template() {
+    return polymerHtml`<span id="out">[[encodedPath]] [[pathIsATestFile]]</span>`;
+  }
+}
+window.customElements.define('polymer-path-info-host', PolymerPathInfoHost);
+
+class LitPathInfoHost extends LitPathInfo(LitElement) {
+  render() {
+    return html`<span id="out">${this.encodedPath} ${this.pathIsATestFile}</span>`;
+  }
+}
+window.customElements.define('lit-path-info-host', LitPathInfoHost);
+
+const pathInfoHosts = [
+  {
+    name: 'PathInfo (Polymer host)',
+    create: () => fixture(html`<polymer-path-info-host></polymer-path-info-host>`),
+    createWithPath: () => fixture(html`<polymer-path-info-host path="/a/b.html"></polymer-path-info-host>`),
+    rendered: async() => {},
+  },
+  {
+    name: 'LitPathInfo (Lit host)',
+    create: () => fixture(html`<lit-path-info-host></lit-path-info-host>`),
+    createWithPath: () => fixture(html`<lit-path-info-host path="/a/b.html"></lit-path-info-host>`),
+    rendered: el => el.updateComplete,
+  },
+];
+
+const COMPUTED_PATH_PROPERTIES = ['encodedPath', 'scheme', 'pathIsATestFile', 'pathIsASubfolder', 'pathIsRootDir'];
+
+function computedPathProperties(el, names = COMPUTED_PATH_PROPERTIES) {
+  return Object.fromEntries(names.map(name => [name, el[name]]));
+}
+
+for (const host of pathInfoHosts) {
+  suite(host.name, () => {
+    let el;
+
+    function out() {
+      return el.shadowRoot.querySelector('#out').textContent;
+    }
+
+    setup(async() => {
+      el = await host.create();
+    });
+
+    test('leaves the computed properties undefined until path is set', () => {
+      assert.isUndefined(el.path);
+      assert.deepEqual(computedPathProperties(el), {
+        encodedPath: undefined,
+        scheme: undefined,
+        pathIsATestFile: undefined,
+        pathIsASubfolder: undefined,
+        pathIsRootDir: undefined,
+      });
+    });
+
+    test('reads path from the path attribute', async() => {
+      el = await host.createWithPath();
+      assert.strictEqual(el.path, '/a/b.html');
+      assert.strictEqual(el.pathIsATestFile, true);
+      assert.equal(out(), '/a/b.html true');
+    });
+
+    test('computes the properties from path at once, and the view after rendering', async() => {
+      el.path = '/a/b/?c';
+      assert.strictEqual(el.encodedPath, '/a/b/%3Fc');
+      await host.rendered(el);
+      assert.equal(out(), '/a/b/%3Fc false');
+      el.path = '/a/b.html';
+      assert.strictEqual(el.pathIsATestFile, true);
+      await host.rendered(el);
+      assert.equal(out(), '/a/b.html true');
+    });
+
+    test('computes each property from path', () => {
+      const cases = [
+        ['/', {encodedPath: '/', scheme: 'http', pathIsATestFile: false, pathIsASubfolder: false, pathIsRootDir: true}],
+        ['/a/b.html', {encodedPath: '/a/b.html', scheme: 'http', pathIsATestFile: true, pathIsASubfolder: false, pathIsRootDir: false}],
+        ['/a/b/', {encodedPath: '/a/b/', scheme: 'http', pathIsATestFile: false, pathIsASubfolder: true, pathIsRootDir: false}],
+        ['/a/b.https.html', {encodedPath: '/a/b.https.html', scheme: 'https', pathIsATestFile: true, pathIsASubfolder: false, pathIsRootDir: false}],
+        ['/a/b.serviceworker.html?x=1', {encodedPath: '/a/b.serviceworker.html%3Fx%3D1', scheme: 'https', pathIsATestFile: true, pathIsASubfolder: false, pathIsRootDir: false}],
+        ['/a/b', {encodedPath: '/a/b', scheme: 'http', pathIsATestFile: false, pathIsASubfolder: true, pathIsRootDir: false}],
+      ];
+      for (const [path, expected] of cases) {
+        el.path = path;
+        assert.deepEqual(computedPathProperties(el), expected, path);
+      }
+    });
+
+    test('computes the properties from an empty or null path', () => {
+      // (pathIsATestFile is left out: it depends on the test page's URL.)
+      const names = ['encodedPath', 'scheme', 'pathIsASubfolder', 'pathIsRootDir'];
+      el.path = '';
+      assert.deepEqual(computedPathProperties(el, names),
+        {encodedPath: '/', scheme: 'http', pathIsASubfolder: false, pathIsRootDir: ''});
+      el.path = null;
+      assert.deepEqual(computedPathProperties(el, names),
+        {encodedPath: '/', scheme: 'http', pathIsASubfolder: false, pathIsRootDir: null});
+    });
+
+    test('has the PathInfo methods', () => {
+      assert.isTrue(el.isParentDir('/a', '/a/b'));
+      assert.equal(el.getDirname('/a/b.html'), '/a');
+      assert.deepEqual(el.splitPathIntoLinkedParts('/a/b.html'), [
+        {name: 'a', path: '/a'},
+        {name: 'b.html', path: '/a/b.html'},
+      ]);
+    });
+  });
+}
