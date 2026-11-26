@@ -10,7 +10,7 @@ resources:
   disk_size_gb: 20
 
 automatic_scaling:
-  min_num_instances: 4
+  min_num_instances: 2
   max_num_instances: 20
   cool_down_period_sec: 180
 
