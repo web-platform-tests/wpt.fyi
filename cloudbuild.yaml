@@ -33,10 +33,13 @@
 #            --project=interop-tooling-ops --region=us-central1 \
 #            --sha=<COMMIT_SHA> \
 #            --substitutions=_FORCE_DEPLOY=false,_SKIP_ISSUE_CREATION=false
-#      - Instant emergency traffic rollback (without waiting for a rebuild):
+#      - Emergency rollback to the previous version (without waiting for a rebuild):
+#          util/rollback-production.sh <OLD_VERSION_ID>
+#        Once a release serves steadily, deploy-production.sh stops the previous
+#        processor and searchcache versions; the script starts them again. The
+#        webapp keeps its previous version running, so the site's own rollback
+#        is instant:
 #          gcloud app services set-traffic default --project=wptdashboard \
-#            --splits=<OLD_VERSION_ID>=1
-#          gcloud app services set-traffic results-processor --project=wptdashboard \
 #            --splits=<OLD_VERSION_ID>=1
 #
 # Substitution Flags Reference:

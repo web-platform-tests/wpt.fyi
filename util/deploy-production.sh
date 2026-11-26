@@ -213,20 +213,58 @@ ${UTIL_DIR}/docker-dev/run.sh -s
 VERSION_URL=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .version.versionUrl')
 LATEST_VERSION=$(gcloud app --project=wptdashboard versions list --sort-by=~last_deployed_time --filter='service=default' --limit=1 --format=json | jq -r '.[] | .id')
 
+# Remember which version serves traffic before it moves, so that the previous
+# processor and searchcache versions can be stopped below.
+serving_version() {
+  gcloud app --project=wptdashboard versions list --service="$1" --hide-no-traffic --format='value(id)' | head -n 1
+}
+PREVIOUS_DEFAULT_VERSION=$(serving_version default)
+PREVIOUS_PROCESSOR_VERSION=$(serving_version processor)
+PREVIOUS_SEARCHCACHE_VERSION=$(serving_version searchcache)
+
+# The previous processor and searchcache versions are stopped once the new
+# release serves steadily. App Engine keeps running a version that has no
+# traffic, and these two run on large fixed-size instances, so an idle previous
+# version costs as much as the live one. A stopped version stays deployed and
+# can be started again with util/rollback-production.sh. The previous webapp
+# version keeps running, so the site itself can still be rolled back instantly.
+stop_previous_version() {
+  local SERVICE="$1" PREVIOUS_VERSION="$2"
+  if [[ -z "${PREVIOUS_VERSION}" || "${PREVIOUS_VERSION}" == "${LATEST_VERSION}" ]]; then
+    return 0
+  fi
+  echo "Stopping the previous ${SERVICE} version ${PREVIOUS_VERSION}..."
+  gcloud app --project=wptdashboard versions stop --service="${SERVICE}" --quiet "${PREVIOUS_VERSION}" \
+    || warn "Could not stop ${SERVICE} version ${PREVIOUS_VERSION}; please stop it manually."
+}
+
+TRAFFIC_MOVED="false"
 if [[ "${QUIET}" == "true" ]]; then
   echo "Non-interactive CI/CD mode (-q): Automatically redirecting 100% traffic to latest version ${LATEST_VERSION}..."
   for SERVICE in $SERVICES; do
     gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1 --quiet
   done
+  TRAFFIC_MOVED="true"
 else
   MESSAGE="Visit $VERSION_URL to confirm that everything works (page load, search, test expansion, show history). Wait 15 minutes before redirecting traffic (https://cloud.google.com/appengine/docs/flexible/known-issues). Redirect traffic now?"
   if confirm "$MESSAGE"; then
     for SERVICE in $SERVICES; do
       gcloud app --project=wptdashboard services set-traffic $SERVICE --splits $LATEST_VERSION=1
     done
+    TRAFFIC_MOVED="true"
   else
     echo "Don't forget to migrate traffic to the new version."
   fi
+fi
+
+if [[ "${TRAFFIC_MOVED}" == "true" ]]; then
+  # Only stop the previous versions once wpt.fyi serves the new release
+  # steadily. If it doesn't, leave them running so that a rollback is instant.
+  if ! "${UTIL_DIR}/wait-for-staging.sh" "https://wpt.fyi"; then
+    fatal "wpt.fyi did not serve the new version steadily. The previous versions are still running; to roll back, run: util/rollback-production.sh ${PREVIOUS_DEFAULT_VERSION}"
+  fi
+  stop_previous_version processor "${PREVIOUS_PROCESSOR_VERSION}"
+  stop_previous_version searchcache "${PREVIOUS_SEARCHCACHE_VERSION}"
 fi
 
 if [[ "${SKIP_ISSUE_CREATION}" != "true" ]]; then
