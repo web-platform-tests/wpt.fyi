@@ -20,12 +20,14 @@ func getOrCreateCheckSuite(
 	prNumbers ...int,
 ) (*shared.CheckSuite, error) {
 	ds := shared.NewAppEngineDatastore(ctx, false)
-	query := ds.NewQuery("CheckSuite").
-		Filter("SHA =", sha).
-		Filter("AppID =", appID).
-		Filter("InstallationID =", installationID).
-		Filter("Owner =", owner).
-		Filter("Repo =", repo).
+	query := ds.NewQuery("CheckSuite")
+	filterBuilder := query.FilterBuilder()
+	query = query.
+		FilterEntity(filterBuilder.PropertyFilter("SHA", "=", sha)).
+		FilterEntity(filterBuilder.PropertyFilter("AppID", "=", appID)).
+		FilterEntity(filterBuilder.PropertyFilter("InstallationID", "=", installationID)).
+		FilterEntity(filterBuilder.PropertyFilter("Owner", "=", owner)).
+		FilterEntity(filterBuilder.PropertyFilter("Repo", "=", repo)).
 		KeysOnly()
 	var suite shared.CheckSuite
 	if keys, err := ds.GetAll(query, nil); err != nil {
