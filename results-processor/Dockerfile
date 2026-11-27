@@ -11,9 +11,12 @@ RUN apt-get update -q && apt-get upgrade -qy && apt-get install -qy \
 
 # gcloud SDK
 RUN curl -s https://sdk.cloud.google.com > install-gcloud.sh
+# Keep the SDK's bundled Python in platform/bundledpythonunix, which gsutil
+# runs on. It comes with a current OpenSSL; under Debian bookworm's Python and
+# OpenSSL 3.0, gsutil used about twice the CPU and took over twice as long to
+# upload a run's split results.
 RUN bash install-gcloud.sh --disable-prompts --install-dir=/opt > /dev/null && \
-    rm -rf install-gcloud.sh /opt/google-cloud-sdk/platform/bundledpythonunix
-ENV CLOUDSDK_PYTHON=python3.11
+    rm -rf install-gcloud.sh
 ENV PATH=/opt/google-cloud-sdk/bin:$PATH
 RUN gcloud config set disable_usage_reporting false
 # This file caches whether we are running on GCE. When created during the image
