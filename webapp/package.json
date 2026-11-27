@@ -34,7 +34,7 @@
     "@web/test-runner": "1.0.1",
     "@web/test-runner-chrome": "1.0.2",
     "cpy-cli": "7.0.0",
-    "eslint": "10.14.0",
+    "eslint": "10.15.0",
     "eslint-plugin-lit": "2.3.1",
     "globals": "^17.14.0",
     "sinon": "22.1.0"
